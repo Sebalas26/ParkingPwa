@@ -1,13 +1,22 @@
 export interface CarEntry {
   id: string;
   licensePlate: string;
+  spot: string;
   entryTime: string;
-  status: 'parked' | 'exited';
+  status: 'entry' | 'exit';
+}
+
+export interface Alert {
+  id: string;
+  type: string;
+  licensePlate: string;
+  spot: string;
+  details: string;
 }
 
 export interface DashboardStats {
-  totalCarsToday: number;
-  currentlyParked: number;
-  availableSpots: number;
-  totalRevenue: number;
+  totalCapacity: number;
+  occupiedSpaces: number;
+  availableSpaces: number;
+  revenueToday: number;
 }
