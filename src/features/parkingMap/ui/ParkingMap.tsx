@@ -76,28 +76,28 @@ export const ParkingMap: React.FC = () => {
       <div className="map-toolbar card-shadow">
         <div className="legend-group">
           <div className="legend-item">
-            <span className="dot available"></span> <strong>33</strong> Available
+            <span className="dot available"></span> <strong>33</strong> Disponibles
           </div>
           <div className="legend-item">
-            <span className="dot occupied"></span> <strong>87</strong> Occupied
+            <span className="dot occupied"></span> <strong>87</strong> Ocupados
           </div>
           <div className="legend-item">
-            <span className="dot reserved"></span> <strong>8</strong> Reserved
+            <span className="dot reserved"></span> <strong>8</strong> Reservados
           </div>
           <div className="legend-item">
-            <span className="dot violation"></span> <strong>4</strong> Violations / Blocked
+            <span className="dot violation"></span> <strong>4</strong> Infracciones / Bloqueados
           </div>
         </div>
         <button className="btn-outline">
-          <RefreshCw size={16} /> Refresh Map
+          <RefreshCw size={16} /> Actualizar Mapa
         </button>
       </div>
 
       <div className="zones-grid">
         <div className="zone-card card-shadow">
           <div className="zone-header">
-            <h3>Zone A - Short Term</h3>
-            <span className="text-muted text-sm">10 Spots</span>
+            <h3>Zona A - Corta Estada</h3>
+            <span className="text-muted text-sm">10 Espacios</span>
           </div>
           <div className="spots-grid">
             {zoneA.slice(0,5).map(s => <SpotBox key={s.id} spot={s} />)}
@@ -110,8 +110,8 @@ export const ParkingMap: React.FC = () => {
 
         <div className="zone-card card-shadow">
           <div className="zone-header">
-            <h3>Zone B - Long Term</h3>
-            <span className="text-muted text-sm">10 Spots</span>
+            <h3>Zona B - Larga Estada</h3>
+            <span className="text-muted text-sm">10 Espacios</span>
           </div>
           <div className="spots-grid">
             {zoneB.slice(0,5).map(s => <SpotBox key={s.id} spot={s} />)}
@@ -124,8 +124,8 @@ export const ParkingMap: React.FC = () => {
 
         <div className="zone-card card-shadow">
           <div className="zone-header">
-            <h3>Zone C - General</h3>
-            <span className="text-muted text-sm">10 Spots</span>
+            <h3>Zona C - General</h3>
+            <span className="text-muted text-sm">10 Espacios</span>
           </div>
           <div className="spots-grid">
             {zoneC.slice(0,5).map(s => <SpotBox key={s.id} spot={s} />)}
@@ -138,8 +138,8 @@ export const ParkingMap: React.FC = () => {
 
         <div className="zone-card card-shadow">
           <div className="zone-header">
-            <h3>Zone D - Reserved / Cycles</h3>
-            <span className="text-muted text-sm">10 Spots</span>
+            <h3>Zona D - Reservados / Motos</h3>
+            <span className="text-muted text-sm">10 Espacios</span>
           </div>
           <div className="spots-grid">
             {zoneD.slice(0,5).map(s => <SpotBox key={s.id} spot={s} />)}

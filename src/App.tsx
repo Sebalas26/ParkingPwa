@@ -5,6 +5,7 @@ import { Dashboard } from './features/dashboard/ui/Dashboard';
 import { Vehicles } from './features/vehicles/ui/Vehicles';
 import { ParkingMap } from './features/parkingMap/ui/ParkingMap';
 import { EntryExitLog } from './features/logs/ui/EntryExitLog';
+import { Settings } from './features/settings/ui/Settings';
 
 function App() {
   return (
@@ -17,8 +18,8 @@ function App() {
           <Route path="vehicles" element={<Vehicles />} />
           <Route path="map" element={<ParkingMap />} />
           <Route path="logs" element={<EntryExitLog />} />
-          <Route path="reports" element={<div className="loading-screen">Reports Module (Coming Soon)</div>} />
-          <Route path="settings" element={<div className="loading-screen">Settings Module (Coming Soon)</div>} />
+          <Route path="reports" element={<div className="loading-screen">Módulo de Reportes (Próximamente)</div>} />
+          <Route path="settings" element={<Settings />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />

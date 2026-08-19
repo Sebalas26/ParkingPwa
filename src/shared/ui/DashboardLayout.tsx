@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { authService } from '../../features/auth/data/authService';
 import { Car, LayoutDashboard, Map, List, BarChart, Settings, LogOut, Search, User } from 'lucide-react';
+import { ThemeSelector } from './ThemeSelector';
 import './DashboardLayout.css';
 
 const WatermarkLogo = () => (
@@ -36,6 +37,15 @@ export const DashboardLayout: React.FC = () => {
   const location = useLocation();
   const user = authService.getCurrentUser();
 
+  const [currentTheme, setCurrentTheme] = useState<string>(() => {
+    return localStorage.getItem('parking_pwa_theme') || 'blanco-empresarial';
+  });
+
+  const handleSelectTheme = (themeId: string) => {
+    setCurrentTheme(themeId);
+    localStorage.setItem('parking_pwa_theme', themeId);
+  };
+
   const handleLogout = () => {
     authService.logout();
     navigate('/login');
@@ -43,44 +53,44 @@ export const DashboardLayout: React.FC = () => {
 
   const getPageTitle = () => {
     switch(location.pathname) {
-      case '/dashboard': return 'Dashboard';
-      case '/dashboard/vehicles': return 'Active Vehicles';
-      case '/dashboard/map': return 'Parking Map';
-      case '/dashboard/logs': return 'Entry/Exit Log';
-      case '/dashboard/reports': return 'Reports';
-      case '/dashboard/settings': return 'Settings';
-      default: return 'Dashboard';
+      case '/dashboard': return 'Panel Principal';
+      case '/dashboard/vehicles': return 'Vehículos Activos';
+      case '/dashboard/map': return 'Mapa del Estacionamiento';
+      case '/dashboard/logs': return 'Registro de Entradas y Salidas';
+      case '/dashboard/reports': return 'Reportes y Analíticas';
+      case '/dashboard/settings': return 'Configuración';
+      default: return 'Panel Principal';
     }
   };
 
   return (
-    <div className="dashboard-layout">
+    <div className="dashboard-layout" data-theme={currentTheme}>
       <aside className="sidebar">
         <WatermarkLogo />
         <div className="sidebar-header">
           <div className="logo-box-small">
             <Car size={20} />
           </div>
-          <h2>Parking Admin</h2>
+          <h2>Admin Estacionamiento</h2>
         </div>
         <nav className="sidebar-nav">
           <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard'); }} className={`nav-item ${location.pathname === '/dashboard' ? 'active' : ''}`}>
-            <LayoutDashboard size={18} /> Dashboard
+            <LayoutDashboard size={18} /> Panel Principal
           </a>
           <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/vehicles'); }} className={`nav-item ${location.pathname === '/dashboard/vehicles' ? 'active' : ''}`}>
-            <Car size={18} /> Vehicles
+            <Car size={18} /> Vehículos
           </a>
           <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/map'); }} className={`nav-item ${location.pathname === '/dashboard/map' ? 'active' : ''}`}>
-            <Map size={18} /> Parking Map
+            <Map size={18} /> Mapa del Estacionamiento
           </a>
           <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/logs'); }} className={`nav-item ${location.pathname === '/dashboard/logs' ? 'active' : ''}`}>
-            <List size={18} /> Entry/Exit Log
+            <List size={18} /> Entradas / Salidas
           </a>
           <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/reports'); }} className={`nav-item ${location.pathname === '/dashboard/reports' ? 'active' : ''}`}>
-            <BarChart size={18} /> Reports
+            <BarChart size={18} /> Reportes
           </a>
           <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/settings'); }} className={`nav-item ${location.pathname === '/dashboard/settings' ? 'active' : ''}`}>
-            <Settings size={18} /> Settings
+            <Settings size={18} /> Configuración
           </a>
         </nav>
         <div className="sidebar-footer">
@@ -88,10 +98,10 @@ export const DashboardLayout: React.FC = () => {
             <User size={16} />
           </div>
           <div className="profile-info">
-            <div className="profile-name">{user?.username || 'Marcus Vance'}</div>
-            <div className="profile-role">{user?.role || 'Operations Manager'}</div>
+            <div className="profile-name">{user?.username || 'Marcos Vance'}</div>
+            <div className="profile-role">{user?.role || 'Gerente de Operaciones'}</div>
           </div>
-          <button onClick={handleLogout} className="btn-logout-icon" title="Logout">
+          <button onClick={handleLogout} className="btn-logout-icon" title="Cerrar Sesión">
             <LogOut size={16} />
           </button>
         </div>
@@ -101,15 +111,16 @@ export const DashboardLayout: React.FC = () => {
         <header className="top-bar">
           <div className="header-titles">
             <h1>{getPageTitle()}</h1>
-            <p className="text-muted">Main Terminal • Lot A-D Configuration</p>
+            <p className="text-muted">Terminal Principal • Configuración Lotes A-D</p>
           </div>
           <div className="header-actions">
+            <ThemeSelector currentTheme={currentTheme} onSelectTheme={handleSelectTheme} />
             <div className="search-box">
               <Search size={16} />
-              <input type="text" placeholder="Search plate, spot or owner..." className="search-input" />
+              <input type="text" placeholder="Buscar placa, espacio o propietario..." className="search-input" />
             </div>
             <div className="date-display">
-              <strong>Oct 24, 2025</strong><br/>14:32:05 PM
+              <strong>19 Ago 2026</strong><br/>14:32:05 PM
             </div>
           </div>
         </header>

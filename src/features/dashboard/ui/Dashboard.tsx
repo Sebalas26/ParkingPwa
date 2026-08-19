@@ -21,43 +21,43 @@ export const Dashboard: React.FC = () => {
     loadData();
   }, []);
 
-  if (!stats) return <div className="loading-screen">Loading...</div>;
+  if (!stats) return <div className="loading-screen">Cargando...</div>;
 
   return (
     <>
       <div className="stats-row">
         <div className="stat-box">
           <div className="stat-header">
-            <span className="stat-title">TOTAL CAPACITY</span>
+            <span className="stat-title">CAPACIDAD TOTAL</span>
             <Car size={16} className="text-muted" />
           </div>
           <div className="stat-value">{stats.totalCapacity}</div>
-          <div className="stat-desc">Across Zones A, B, C, & D</div>
+          <div className="stat-desc">En Zonas A, B, C y D</div>
         </div>
         <div className="stat-box">
           <div className="stat-header">
-            <span className="stat-title">OCCUPIED SPACES</span>
+            <span className="stat-title">ESPACIOS OCUPADOS</span>
           </div>
           <div className="stat-value" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {stats.occupiedSpaces} <span className="badge badge-success" style={{ fontSize: '0.7rem' }}>72% Occupancy</span>
+            {stats.occupiedSpaces} <span className="badge badge-success" style={{ fontSize: '0.7rem' }}>72% Ocupación</span>
           </div>
-          <div className="stat-desc">87 Active vehicle parkings</div>
+          <div className="stat-desc">87 Vehículos estacionados</div>
         </div>
         <div className="stat-box">
           <div className="stat-header">
-            <span className="stat-title">AVAILABLE SPACES</span>
+            <span className="stat-title">ESPACIOS DISPONIBLES</span>
             <CheckCircle size={16} className="text-muted" />
           </div>
           <div className="stat-value" style={{ color: 'var(--success-color)' }}>{stats.availableSpaces}</div>
-          <div className="stat-desc">Ready for immediate entries</div>
+          <div className="stat-desc">Disponibles para ingreso</div>
         </div>
         <div className="stat-box">
           <div className="stat-header">
-            <span className="stat-title">REVENUE TODAY</span>
+            <span className="stat-title">RECAUDACIÓN HOY</span>
             <FileText size={16} className="text-muted" />
           </div>
           <div className="stat-value">${stats.revenueToday.toLocaleString()}</div>
-          <div className="stat-desc">+14.2% from yesterday average</div>
+          <div className="stat-desc">+14.2% vs promedio de ayer</div>
         </div>
       </div>
 
@@ -65,8 +65,8 @@ export const Dashboard: React.FC = () => {
         <div className="chart-box">
           <div className="box-header">
             <div>
-              <h3>Occupancy Over Time</h3>
-              <p className="text-muted" style={{ fontSize: '0.8rem' }}>Live 7 days historical tracking</p>
+              <h3>Ocupación en el Tiempo</h3>
+              <p className="text-muted" style={{ fontSize: '0.8rem' }}>Seguimiento histórico de los últimos 7 días</p>
             </div>
           </div>
           <div className="chart-mock">
@@ -79,14 +79,14 @@ export const Dashboard: React.FC = () => {
               />
             </svg>
             <div className="chart-labels">
-              <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+              <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
             </div>
           </div>
         </div>
 
         <div className="activity-box">
           <div className="box-header">
-            <h3>Recent Activity Feed</h3>
+            <h3>Actividad Reciente</h3>
           </div>
           <table className="activity-table">
             <tbody>
@@ -96,11 +96,11 @@ export const Dashboard: React.FC = () => {
                     <Car size={14} className="text-muted" style={{ marginRight: '6px', verticalAlign: 'middle' }}/> 
                     {entry.licensePlate}
                   </td>
-                  <td className="text-muted" style={{ fontSize: '0.8rem' }}>Spot {entry.spot}</td>
+                  <td className="text-muted" style={{ fontSize: '0.8rem' }}>Espacio {entry.spot}</td>
                   <td className="text-muted" style={{ fontSize: '0.8rem' }}>{entry.entryTime}</td>
                   <td className="td-right">
                     <span className={`badge ${entry.status === 'entry' ? 'badge-success' : 'badge-danger'}`}>
-                      {entry.status === 'entry' ? 'Entry' : 'Exit'}
+                      {entry.status === 'entry' ? 'Entrada' : 'Salida'}
                     </span>
                   </td>
                 </tr>
@@ -111,7 +111,7 @@ export const Dashboard: React.FC = () => {
       </div>
 
       <div className="alerts-section">
-        <h3>Alerts & Violations</h3>
+        <h3>Alertas e Infracciones</h3>
         <div className="alerts-grid">
           {alerts.map((alert, index) => {
             let badgeClass = "badge-warning";
@@ -121,11 +121,11 @@ export const Dashboard: React.FC = () => {
               <div key={alert.id} className="alert-card">
                 <div className="alert-header">
                   <span className={`badge ${badgeClass}`}>{alert.type}</span>
-                  <span className="text-muted">Spot {alert.spot}</span>
+                  <span className="text-muted">Espacio {alert.spot}</span>
                 </div>
                 <div className="alert-plate">{alert.licensePlate}</div>
                 <div className="alert-details">{alert.details}</div>
-                <button className="btn-outline mt-auto">Inspect Spot</button>
+                <button className="btn-outline mt-auto">Inspeccionar Espacio</button>
               </div>
             );
           })}

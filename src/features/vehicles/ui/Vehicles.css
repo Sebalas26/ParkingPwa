@@ -23,8 +23,8 @@
 }
 
 .filter-pill {
-  background: #ffffff;
-  border: 1px solid var(--border-color);
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
   padding: 6px 16px;
   border-radius: 20px;
   font-size: 0.8rem;
@@ -32,6 +32,11 @@
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s;
+}
+
+.filter-pill:hover {
+  border-color: var(--primary-color);
+  color: var(--text-primary);
 }
 
 .filter-pill.active {
@@ -48,7 +53,8 @@
 }
 
 .table-card {
-  background: #ffffff;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 12px;
   box-shadow: var(--card-shadow);
   overflow: hidden;
@@ -68,20 +74,21 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: 1px solid var(--border-color);
-  background: #f8fafc;
+  background: var(--table-header-bg, #f8fafc);
 }
 
 .data-table td {
   padding: 16px 24px;
   font-size: 0.85rem;
+  color: var(--text-primary);
   border-bottom: 1px solid var(--border-color);
 }
 
 .data-table tr:hover {
-  background: #f8fafc;
+  background: var(--table-hover-bg, #f8fafc);
 }
 
-.font-bold { font-weight: 700; }
+.font-bold { font-weight: 700; color: var(--text-primary); }
 .flex-cell { display: flex; align-items: center; gap: 8px; }
 .text-right { text-align: right; }
 
@@ -92,8 +99,14 @@
   padding: 6px 12px;
   font-size: 0.75rem;
   font-weight: 600;
+  color: var(--text-primary);
   cursor: pointer;
   margin-left: 8px;
+  transition: all 0.2s;
+}
+
+.btn-action:hover {
+  background: var(--table-hover-bg);
 }
 
 .btn-action.primary {
@@ -102,11 +115,16 @@
   border-color: var(--primary-color);
 }
 
+.btn-action.primary:hover {
+  background: var(--primary-hover);
+}
+
 .pagination {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 16px 24px;
+  border-top: 1px solid var(--border-color);
 }
 
 .page-buttons {
@@ -115,12 +133,18 @@
 }
 
 .page-btn {
-  background: #ffffff;
+  background: var(--bg-card, #ffffff);
   border: 1px solid var(--border-color);
   border-radius: 6px;
   padding: 6px 12px;
   font-size: 0.8rem;
+  color: var(--text-primary);
   cursor: pointer;
+  transition: all 0.2s;
+}
+
+.page-btn:hover {
+  background: var(--table-hover-bg);
 }
 
 .page-btn.active {

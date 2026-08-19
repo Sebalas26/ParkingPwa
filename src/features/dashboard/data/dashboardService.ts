@@ -22,10 +22,10 @@ export const dashboardService = {
 
   getAlerts: async (): Promise<Alert[]> => {
     return [
-      { id: '1', type: 'OVERSTAY ALERT', licensePlate: 'TX-882B', spot: 'B-12', details: 'Time elapsed: 4h 12m' },
-      { id: '2', type: 'PAYMENT ISSUE', licensePlate: 'NY-492M', spot: 'C-08', details: 'Time elapsed: 2h 45m' },
-      { id: '3', type: 'INVALID ZONE PERMIT', licensePlate: 'CA-9092', spot: 'A-19', details: 'Time elapsed: 1h 10m' },
-      { id: '4', type: 'BLOCKED VEHICLE', licensePlate: 'FL-771A', spot: 'D-11', details: 'Time elapsed: 0h 35m' },
+      { id: '1', type: 'EXCESO DE TIEMPO', licensePlate: 'TX-882B', spot: 'B-12', details: 'Tiempo transcurrido: 4h 12m' },
+      { id: '2', type: 'PROBLEMA DE PAGO', licensePlate: 'NY-492M', spot: 'C-08', details: 'Tiempo transcurrido: 2h 45m' },
+      { id: '3', type: 'PERMISO DE ZONA INVÁLIDO', licensePlate: 'CA-9092', spot: 'A-19', details: 'Tiempo transcurrido: 1h 10m' },
+      { id: '4', type: 'VEHÍCULO BLOQUEADO', licensePlate: 'FL-771A', spot: 'D-11', details: 'Tiempo transcurrido: 0h 35m' },
     ];
   }
 };

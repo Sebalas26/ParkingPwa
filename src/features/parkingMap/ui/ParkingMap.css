@@ -5,9 +5,11 @@
 }
 
 .card-shadow {
-  background: #ffffff;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 12px;
   box-shadow: var(--card-shadow);
+  color: var(--text-primary);
 }
 
 .map-toolbar {
@@ -64,6 +66,7 @@
 
 .zone-header h3 {
   font-size: 1.1rem;
+  color: var(--text-primary);
 }
 
 .text-sm {
@@ -112,4 +115,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
 }
