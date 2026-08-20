@@ -3,9 +3,10 @@ import { Login } from './features/auth/ui/Login';
 import { DashboardLayout } from './shared/ui/DashboardLayout';
 import { Dashboard } from './features/dashboard/ui/Dashboard';
 import { Vehicles } from './features/vehicles/ui/Vehicles';
-import { ParkingMap } from './features/parkingMap/ui/ParkingMap';
-import { EntryExitLog } from './features/logs/ui/EntryExitLog';
+import { Reports } from './features/reports/ui/Reports';
 import { Settings } from './features/settings/ui/Settings';
+import { Caja } from './features/caja/ui/Caja';
+import { Novedades } from './features/novedades/ui/Novedades';
 
 function App() {
   return (
@@ -15,10 +16,10 @@ function App() {
         
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<Dashboard />} />
+          <Route path="caja" element={<Caja />} />
           <Route path="vehicles" element={<Vehicles />} />
-          <Route path="map" element={<ParkingMap />} />
-          <Route path="logs" element={<EntryExitLog />} />
-          <Route path="reports" element={<div className="loading-screen">Módulo de Reportes (Próximamente)</div>} />
+          <Route path="reports" element={<Reports />} />
+          <Route path="novedades" element={<Novedades />} />
           <Route path="settings" element={<Settings />} />
         </Route>
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, X, Shield } from 'lucide-react';
+import { Plus, Edit2, X, Shield , Trash2} from 'lucide-react';
 import type { Usuario } from '../model/SettingsTypes';
 import { settingsService } from '../data/settingsService';
 
@@ -7,6 +7,7 @@ export const UsuariosTab: React.FC = () => {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUsuario, setEditingUsuario] = useState<Partial<Usuario> | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<Usuario | null>(null);
 
   useEffect(() => {
     loadUsuarios();
@@ -15,6 +16,13 @@ export const UsuariosTab: React.FC = () => {
   const loadUsuarios = async () => {
     const data = await settingsService.getUsuarios();
     setUsuarios(data);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!itemToDelete) return;
+    await settingsService.deleteUsuario(itemToDelete.id);
+    setItemToDelete(null);
+    await loadUsuarios();
   };
 
   const handleOpenCreate = () => {
@@ -83,9 +91,14 @@ export const UsuariosTab: React.FC = () => {
                 </span>
               </td>
               <td className="text-right">
-                <button className="btn-action primary" onClick={() => handleOpenEdit(u)}>
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                  <button className="btn-action primary" onClick={() => handleOpenEdit(u)}>
                   <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
                 </button>
+                <button className="btn-action danger" style={{ color: '#ef4444' }} onClick={() => setItemToDelete(u)}>
+                  <Trash2 size={14} style={{ marginRight: 4 }} /> Eliminar
+                </button>
+                              </div>
               </td>
             </tr>
           ))}
@@ -168,6 +181,28 @@ export const UsuariosTab: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+
+      {/* Modal Confirmar Eliminación */}
+      {itemToDelete && (
+        <div className="modal-overlay">
+          <div className="modal-card" style={{ maxWidth: '400px' }}>
+            <div className="modal-header">
+              <h3>Confirmar Eliminación</h3>
+              <button className="btn-close-modal" onClick={() => setItemToDelete(null)}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>¿Estás seguro de que deseas eliminar el registro <strong>{itemToDelete.id}</strong>?</p>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '8px' }}>Esta acción no se puede deshacer.</p>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-cancel" onClick={() => setItemToDelete(null)}>Cancelar</button>
+              <button className="btn-primary" style={{ background: '#ef4444' }} onClick={handleDeleteConfirm}>Eliminar</button>
+            </div>
+          </div>
+        </div>
+      )}
+      </div>
   );
 };

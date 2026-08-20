@@ -1,7 +1,7 @@
 export interface CarEntry {
   id: string;
   licensePlate: string;
-  spot: string;
+  vehicleType: string;
   entryTime: string;
   status: 'entry' | 'exit';
 }
@@ -10,13 +10,15 @@ export interface Alert {
   id: string;
   type: string;
   licensePlate: string;
-  spot: string;
-  details: string;
+  fechaIncidente: string;
+  propietario: string;
+  celular: string;
+  evidencia: string;
+  observacion: string;
 }
 
 export interface DashboardStats {
-  totalCapacity: number;
-  occupiedSpaces: number;
-  availableSpaces: number;
+  vehiculosIngresadosHoy: number;
+  vehiculosActuales: number;
   revenueToday: number;
 }

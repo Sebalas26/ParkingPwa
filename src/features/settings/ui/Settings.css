@@ -181,3 +181,15 @@
 .btn-cancel:hover {
   background: var(--table-hover-bg);
 }
+
+.data-table td:last-child {
+  white-space: nowrap;
+}
+.btn-action {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+}
+
+

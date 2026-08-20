@@ -49,6 +49,9 @@ export const settingsService = {
       return newTarifa;
     }
   },
+  deleteTarifa: async (id: string): Promise<void> => {
+    mockTarifas = mockTarifas.filter(t => t.id !== id);
+  },
 
   // Usuarios CRUD
   getUsuarios: async (): Promise<Usuario[]> => [...mockUsuarios],
@@ -68,6 +71,9 @@ export const settingsService = {
       mockUsuarios.push(newUsuario);
       return newUsuario;
     }
+  },
+  deleteUsuario: async (id: string): Promise<void> => {
+    mockUsuarios = mockUsuarios.filter(u => u.id !== id);
   },
 
   // Convenios CRUD
@@ -90,6 +96,9 @@ export const settingsService = {
       return newConvenio;
     }
   },
+  deleteConvenio: async (id: string): Promise<void> => {
+    mockConvenios = mockConvenios.filter(c => c.id !== id);
+  },
 
   // Vehiculos Config CRUD
   getVehiculoConfigs: async (): Promise<VehiculoConfig[]> => [...mockVehiculoConfigs],
@@ -109,5 +118,8 @@ export const settingsService = {
       mockVehiculoConfigs.push(newConfig);
       return newConfig;
     }
+  },
+  deleteVehiculoConfig: async (id: string): Promise<void> => {
+    mockVehiculoConfigs = mockVehiculoConfigs.filter(v => v.id !== id);
   }
 };

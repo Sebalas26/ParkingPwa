@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { authService } from '../../features/auth/data/authService';
-import { Car, LayoutDashboard, Map, List, BarChart, Settings, LogOut, Search, User } from 'lucide-react';
+import { Car, LayoutDashboard, BarChart, Settings, LogOut, User, Wallet, BellRing, RefreshCw } from 'lucide-react';
 import { ThemeSelector } from './ThemeSelector';
 import './DashboardLayout.css';
 
@@ -12,10 +12,10 @@ const WatermarkLogo = () => (
       <path d="M100 10 C50 10 20 40 20 80 C20 130 100 190 100 190 C100 190 180 130 180 80 C180 40 150 10 100 10 Z" fill="currentColor" />
       {/* Cutout P */}
       <path d="M80 45 L115 45 C135 45 140 60 140 70 C140 80 135 95 115 95 L95 95 L95 115 L80 115 Z M95 60 L95 80 L115 80 C122 80 122 60 115 60 Z" fill="var(--bg-sidebar)" />
-      
+
       {/* Car overlap outline (to create the cutout effect) */}
       <path d="M110 115 C125 105 165 105 180 115 L205 145 L205 175 L190 175 L190 190 L160 190 L160 175 L100 175 L100 190 L70 190 L70 175 L55 175 L55 145 Z" fill="var(--bg-sidebar)" />
-      
+
       {/* Actual Car */}
       <path d="M115 120 C125 110 165 110 175 120 L195 145 L195 170 L185 170 L185 180 L165 180 L165 170 L105 170 L105 180 L85 180 L85 170 L75 170 L75 145 Z" fill="currentColor" />
       {/* Car windshield */}
@@ -51,18 +51,6 @@ export const DashboardLayout: React.FC = () => {
     navigate('/login');
   };
 
-  const getPageTitle = () => {
-    switch(location.pathname) {
-      case '/dashboard': return 'Panel Principal';
-      case '/dashboard/vehicles': return 'Vehículos Activos';
-      case '/dashboard/map': return 'Mapa del Estacionamiento';
-      case '/dashboard/logs': return 'Registro de Entradas y Salidas';
-      case '/dashboard/reports': return 'Reportes y Analíticas';
-      case '/dashboard/settings': return 'Configuración';
-      default: return 'Panel Principal';
-    }
-  };
-
   return (
     <div className="dashboard-layout" data-theme={currentTheme}>
       <aside className="sidebar">
@@ -75,19 +63,19 @@ export const DashboardLayout: React.FC = () => {
         </div>
         <nav className="sidebar-nav">
           <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard'); }} className={`nav-item ${location.pathname === '/dashboard' ? 'active' : ''}`}>
-            <LayoutDashboard size={18} /> Panel Principal
+            <LayoutDashboard size={18} /> Dashboard
+          </a>
+          <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/caja'); }} className={`nav-item ${location.pathname === '/dashboard/caja' ? 'active' : ''}`}>
+            <Wallet size={18} /> Caja
           </a>
           <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/vehicles'); }} className={`nav-item ${location.pathname === '/dashboard/vehicles' ? 'active' : ''}`}>
-            <Car size={18} /> Vehículos
-          </a>
-          <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/map'); }} className={`nav-item ${location.pathname === '/dashboard/map' ? 'active' : ''}`}>
-            <Map size={18} /> Mapa del Estacionamiento
-          </a>
-          <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/logs'); }} className={`nav-item ${location.pathname === '/dashboard/logs' ? 'active' : ''}`}>
-            <List size={18} /> Entradas / Salidas
+            <Car size={18} /> Activos
           </a>
           <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/reports'); }} className={`nav-item ${location.pathname === '/dashboard/reports' ? 'active' : ''}`}>
             <BarChart size={18} /> Reportes
+          </a>
+          <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/novedades'); }} className={`nav-item ${location.pathname === '/dashboard/novedades' ? 'active' : ''}`}>
+            <BellRing size={18} /> Novedades
           </a>
           <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/settings'); }} className={`nav-item ${location.pathname === '/dashboard/settings' ? 'active' : ''}`}>
             <Settings size={18} /> Configuración
@@ -109,18 +97,13 @@ export const DashboardLayout: React.FC = () => {
 
       <main className="main-content">
         <header className="top-bar">
-          <div className="header-titles">
-            <h1>{getPageTitle()}</h1>
-            <p className="text-muted">Terminal Principal • Configuración Lotes A-D</p>
-          </div>
           <div className="header-actions">
             <ThemeSelector currentTheme={currentTheme} onSelectTheme={handleSelectTheme} />
-            <div className="search-box">
-              <Search size={16} />
-              <input type="text" placeholder="Buscar placa, espacio o propietario..." className="search-input" />
-            </div>
+            <button className="btn-action primary" style={{ height: '36px', padding: '0 16px' }} onClick={() => console.log('Refreshing data...')}>
+              <RefreshCw size={16} style={{ marginRight: '6px' }} /> Actualizar Datos
+            </button>
             <div className="date-display">
-              <strong>19 Ago 2026</strong><br/>14:32:05 PM
+              <strong>19 Ago 2026</strong><br />14:32:05 PM
             </div>
           </div>
         </header>

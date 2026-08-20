@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, X } from 'lucide-react';
+import { Plus, Edit2, X , Trash2} from 'lucide-react';
 import type { VehiculoConfig } from '../model/SettingsTypes';
 import { settingsService } from '../data/settingsService';
 
@@ -7,6 +7,7 @@ export const VehiculosConfigTab: React.FC = () => {
   const [configs, setConfigs] = useState<VehiculoConfig[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingConfig, setEditingConfig] = useState<Partial<VehiculoConfig> | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<VehiculoConfig | null>(null);
 
   useEffect(() => {
     loadConfigs();
@@ -15,6 +16,13 @@ export const VehiculosConfigTab: React.FC = () => {
   const loadConfigs = async () => {
     const data = await settingsService.getVehiculoConfigs();
     setConfigs(data);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!itemToDelete) return;
+    await settingsService.deleteVehiculoConfig(itemToDelete.id);
+    setItemToDelete(null);
+    await loadConfigs();
   };
 
   const handleOpenCreate = () => {
@@ -87,9 +95,14 @@ export const VehiculosConfigTab: React.FC = () => {
               </td>
               <td className="text-muted">{c.allowedZones.join(', ')}</td>
               <td className="text-right">
-                <button className="btn-action primary" onClick={() => handleOpenEdit(c)}>
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                  <button className="btn-action primary" onClick={() => handleOpenEdit(c)}>
                   <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
                 </button>
+                <button className="btn-action danger" style={{ color: '#ef4444' }} onClick={() => setItemToDelete(c)}>
+                  <Trash2 size={14} style={{ marginRight: 4 }} /> Eliminar
+                </button>
+                              </div>
               </td>
             </tr>
           ))}
@@ -170,6 +183,28 @@ export const VehiculosConfigTab: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+
+      {/* Modal Confirmar Eliminación */}
+      {itemToDelete && (
+        <div className="modal-overlay">
+          <div className="modal-card" style={{ maxWidth: '400px' }}>
+            <div className="modal-header">
+              <h3>Confirmar Eliminación</h3>
+              <button className="btn-close-modal" onClick={() => setItemToDelete(null)}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>¿Estás seguro de que deseas eliminar el registro <strong>{itemToDelete.id}</strong>?</p>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '8px' }}>Esta acción no se puede deshacer.</p>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-cancel" onClick={() => setItemToDelete(null)}>Cancelar</button>
+              <button className="btn-primary" style={{ background: '#ef4444' }} onClick={handleDeleteConfirm}>Eliminar</button>
+            </div>
+          </div>
+        </div>
+      )}
+      </div>
   );
 };

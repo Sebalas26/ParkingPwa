@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, X, Tag } from 'lucide-react';
+import { Plus, Edit2, X, Tag , Trash2} from 'lucide-react';
 import type { Convenio } from '../model/SettingsTypes';
 import { settingsService } from '../data/settingsService';
 
@@ -7,6 +7,7 @@ export const ConveniosTab: React.FC = () => {
   const [convenios, setConvenios] = useState<Convenio[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingConvenio, setEditingConvenio] = useState<Partial<Convenio> | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<Convenio | null>(null);
 
   useEffect(() => {
     loadConvenios();
@@ -15,6 +16,13 @@ export const ConveniosTab: React.FC = () => {
   const loadConvenios = async () => {
     const data = await settingsService.getConvenios();
     setConvenios(data);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!itemToDelete) return;
+    await settingsService.deleteConvenio(itemToDelete.id);
+    setItemToDelete(null);
+    await loadConvenios();
   };
 
   const handleOpenCreate = () => {
@@ -87,9 +95,14 @@ export const ConveniosTab: React.FC = () => {
                 </span>
               </td>
               <td className="text-right">
-                <button className="btn-action primary" onClick={() => handleOpenEdit(c)}>
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                  <button className="btn-action primary" onClick={() => handleOpenEdit(c)}>
                   <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
                 </button>
+                <button className="btn-action danger" style={{ color: '#ef4444' }} onClick={() => setItemToDelete(c)}>
+                  <Trash2 size={14} style={{ marginRight: 4 }} /> Eliminar
+                </button>
+                              </div>
               </td>
             </tr>
           ))}
@@ -195,6 +208,28 @@ export const ConveniosTab: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+
+      {/* Modal Confirmar Eliminación */}
+      {itemToDelete && (
+        <div className="modal-overlay">
+          <div className="modal-card" style={{ maxWidth: '400px' }}>
+            <div className="modal-header">
+              <h3>Confirmar Eliminación</h3>
+              <button className="btn-close-modal" onClick={() => setItemToDelete(null)}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>¿Estás seguro de que deseas eliminar el registro <strong>{itemToDelete.id}</strong>?</p>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '8px' }}>Esta acción no se puede deshacer.</p>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-cancel" onClick={() => setItemToDelete(null)}>Cancelar</button>
+              <button className="btn-primary" style={{ background: '#ef4444' }} onClick={handleDeleteConfirm}>Eliminar</button>
+            </div>
+          </div>
+        </div>
+      )}
+      </div>
   );
 };
