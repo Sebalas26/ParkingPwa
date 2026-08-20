@@ -8,7 +8,7 @@ export const Dashboard: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [entries, setEntries] = useState<CarEntry[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
-  
+
   // Modal state
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
 
@@ -67,11 +67,11 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="chart-mock">
             <svg viewBox="0 0 500 150" preserveAspectRatio="none" className="line-chart">
-              <polyline 
-                fill="none" 
-                stroke="var(--primary-color)" 
-                strokeWidth="2" 
-                points="0,100 70,80 140,120 210,60 280,100 350,40 420,50 500,60" 
+              <polyline
+                fill="none"
+                stroke="var(--primary-color)"
+                strokeWidth="2"
+                points="0,100 70,80 140,120 210,60 280,100 350,40 420,50 500,60"
               />
             </svg>
             <div className="chart-labels">
@@ -89,9 +89,9 @@ export const Dashboard: React.FC = () => {
               {entries.map(entry => (
                 <tr key={entry.id}>
                   <td className="font-medium">
-                    {entry.vehicleType === 'Moto' ? <Bike size={14} className="text-muted" style={{ marginRight: '6px', verticalAlign: 'middle' }}/> :
-                     entry.vehicleType === 'Camioneta' ? <Truck size={14} className="text-muted" style={{ marginRight: '6px', verticalAlign: 'middle' }}/> :
-                     <Car size={14} className="text-muted" style={{ marginRight: '6px', verticalAlign: 'middle' }}/>}
+                    {entry.vehicleType === 'Moto' ? <Bike size={14} className="text-muted" style={{ marginRight: '6px', verticalAlign: 'middle' }} /> :
+                      entry.vehicleType === 'Camioneta' ? <Truck size={14} className="text-muted" style={{ marginRight: '6px', verticalAlign: 'middle' }} /> :
+                        <Car size={14} className="text-muted" style={{ marginRight: '6px', verticalAlign: 'middle' }} />}
                     {entry.licensePlate}
                   </td>
                   <td className="text-muted" style={{ fontSize: '0.8rem' }}>{entry.vehicleType}</td>
@@ -109,12 +109,12 @@ export const Dashboard: React.FC = () => {
       </div>
 
       <div className="alerts-section">
-        <h3>Alertas y Novedades</h3>
+        <h3>Alertas y novedadades</h3>
         <div className="alerts-grid">
           {alerts.map((alert) => {
             let badgeClass = "badge-warning";
             if (alert.type === 'VEHÍCULO HURTADO') badgeClass = "badge-danger";
-            
+
             return (
               <div key={alert.id} className="alert-card">
                 <div className="alert-header">
@@ -141,50 +141,50 @@ export const Dashboard: React.FC = () => {
                 <X size={20} />
               </button>
             </div>
-            
+
             <div className="modal-body">
               <div className="modal-badge-wrapper">
                 <span className={`badge ${selectedAlert.type === 'VEHÍCULO HURTADO' ? 'badge-danger' : 'badge-warning'}`}>
                   {selectedAlert.type}
                 </span>
               </div>
-              
+
               <div className="modal-info-grid">
                 <div className="info-item">
-                  <Calendar size={16} className="text-muted"/>
+                  <Calendar size={16} className="text-muted" />
                   <div>
                     <div className="info-label">Fecha del Incidente</div>
                     <div className="info-value">{selectedAlert.fechaIncidente}</div>
                   </div>
                 </div>
                 <div className="info-item">
-                  <Car size={16} className="text-muted"/>
+                  <Car size={16} className="text-muted" />
                   <div>
                     <div className="info-label">Placa</div>
                     <div className="info-value font-bold">{selectedAlert.licensePlate}</div>
                   </div>
                 </div>
                 <div className="info-item">
-                  <User size={16} className="text-muted"/>
+                  <User size={16} className="text-muted" />
                   <div>
                     <div className="info-label">Nombre del Propietario</div>
                     <div className="info-value">{selectedAlert.propietario}</div>
                   </div>
                 </div>
                 <div className="info-item">
-                  <Phone size={16} className="text-muted"/>
+                  <Phone size={16} className="text-muted" />
                   <div>
                     <div className="info-label">Celular</div>
                     <div className="info-value">{selectedAlert.celular}</div>
                   </div>
                 </div>
               </div>
-              
+
               <div className="modal-section">
-                <div className="info-label flex-label"><FileSignature size={16}/> Observación</div>
+                <div className="info-label flex-label"><FileSignature size={16} /> Observación</div>
                 <p className="modal-obs">{selectedAlert.observacion}</p>
               </div>
-              
+
               <div className="modal-section">
                 <div className="info-label">Evidencia Fotográfica</div>
                 <div className="modal-evidence">
