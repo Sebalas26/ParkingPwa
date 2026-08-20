@@ -1,28 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, X , Trash2} from 'lucide-react';
-import type { VehiculoConfig } from '../model/SettingsTypes';
-import { settingsService } from '../data/settingsService';
+import { Plus, Edit2, X } from 'lucide-react';
+import type { VehiculoConfigDto, SaveVehiculoConfigDto } from '../model/VehiculosConfigContracts';
+import { vehiculosConfigService } from '../data/vehiculosConfigService';
 
 export const VehiculosConfigTab: React.FC = () => {
-  const [configs, setConfigs] = useState<VehiculoConfig[]>([]);
+  const [configs, setConfigs] = useState<VehiculoConfigDto[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingConfig, setEditingConfig] = useState<Partial<VehiculoConfig> | null>(null);
-  const [itemToDelete, setItemToDelete] = useState<VehiculoConfig | null>(null);
+  const [editingConfig, setEditingConfig] = useState<Partial<SaveVehiculoConfigDto> | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadConfigs();
   }, []);
 
   const loadConfigs = async () => {
-    const data = await settingsService.getVehiculoConfigs();
-    setConfigs(data);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!itemToDelete) return;
-    await settingsService.deleteVehiculoConfig(itemToDelete.id);
-    setItemToDelete(null);
-    await loadConfigs();
+    setIsLoading(true);
+    try {
+      const data = await vehiculosConfigService.getConfigs();
+      setConfigs(data || []);
+    } catch (err) {
+      console.error('Error al cargar configuraciones de vehículos:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleOpenCreate = () => {
@@ -31,23 +31,28 @@ export const VehiculosConfigTab: React.FC = () => {
       maxDurationHours: 12,
       requiresSpecialPermit: false,
       accessPriority: 'Normal',
-      allowedZones: ['Zona A', 'Zona B']
+      allowedZones: ['Zona A', 'Zona B'],
     });
     setIsModalOpen(true);
   };
 
-  const handleOpenEdit = (v: VehiculoConfig) => {
+  const handleOpenEdit = (v: VehiculoConfigDto) => {
     setEditingConfig({ ...v });
     setIsModalOpen(true);
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingConfig) return;
-    await settingsService.saveVehiculoConfig(editingConfig);
-    setIsModalOpen(false);
-    setEditingConfig(null);
-    await loadConfigs();
+    if (!editingConfig || !editingConfig.category) return;
+
+    try {
+      await vehiculosConfigService.saveConfig(editingConfig as SaveVehiculoConfigDto);
+      setIsModalOpen(false);
+      setEditingConfig(null);
+      await loadConfigs();
+    } catch (err: any) {
+      alert(err?.message || 'Error al guardar configuración.');
+    }
   };
 
   return (
@@ -67,7 +72,7 @@ export const VehiculosConfigTab: React.FC = () => {
           <tr>
             <th>ID</th>
             <th>CATEGORÍA DE VEHÍCULO</th>
-            <th>ESTADA MÁXIMA</th>
+            <th>ESTANCIA MÁXIMA</th>
             <th>PERMISO ESPECIAL</th>
             <th>PRIORIDAD ACCESO</th>
             <th>ZONAS PERMITIDAS</th>
@@ -75,37 +80,55 @@ export const VehiculosConfigTab: React.FC = () => {
           </tr>
         </thead>
         <tbody>
-          {configs.map((c) => (
-            <tr key={c.id}>
-              <td className="font-bold text-muted">{c.id}</td>
-              <td className="font-bold">{c.category}</td>
-              <td>{c.maxDurationHours} hrs</td>
-              <td>
-                <span className={`badge ${c.requiresSpecialPermit ? 'badge-warning' : 'badge-success'}`}>
-                  {c.requiresSpecialPermit ? 'Requerido' : 'No Requerido'}
-                </span>
-              </td>
-              <td>
-                <span className="badge" style={{ 
-                  background: c.accessPriority === 'Alta' ? 'rgba(16, 185, 129, 0.15)' : c.accessPriority === 'Baja' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(100, 116, 139, 0.15)',
-                  color: c.accessPriority === 'Alta' ? '#10b981' : c.accessPriority === 'Baja' ? '#ef4444' : '#64748b' 
-                }}>
-                  {c.accessPriority}
-                </span>
-              </td>
-              <td className="text-muted">{c.allowedZones.join(', ')}</td>
-              <td className="text-right">
-                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                  <button className="btn-action primary" onClick={() => handleOpenEdit(c)}>
-                  <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
-                </button>
-                <button className="btn-action danger" style={{ color: '#ef4444' }} onClick={() => setItemToDelete(c)}>
-                  <Trash2 size={14} style={{ marginRight: 4 }} /> Eliminar
-                </button>
-                              </div>
+          {configs.length > 0 ? (
+            configs.map((c) => (
+              <tr key={c.id}>
+                <td className="font-bold text-muted">{c.id}</td>
+                <td className="font-bold">{c.category}</td>
+                <td>{c.maxDurationHours} hrs</td>
+                <td>
+                  <span className={`badge ${c.requiresSpecialPermit ? 'badge-warning' : 'badge-success'}`}>
+                    {c.requiresSpecialPermit ? 'Requerido' : 'No Requerido'}
+                  </span>
+                </td>
+                <td>
+                  <span
+                    className="badge"
+                    style={{
+                      background:
+                        c.accessPriority === 'Alta'
+                          ? 'rgba(16, 185, 129, 0.15)'
+                          : c.accessPriority === 'Baja'
+                          ? 'rgba(239, 68, 68, 0.15)'
+                          : 'rgba(100, 116, 139, 0.15)',
+                      color:
+                        c.accessPriority === 'Alta'
+                          ? '#10b981'
+                          : c.accessPriority === 'Baja'
+                          ? '#ef4444'
+                          : '#64748b',
+                    }}
+                  >
+                    {c.accessPriority}
+                  </span>
+                </td>
+                <td className="text-muted">{c.allowedZones.join(', ')}</td>
+                <td className="text-right">
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                    <button className="btn-action primary" onClick={() => handleOpenEdit(c)}>
+                      <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
+                {isLoading ? 'Cargando categorías...' : 'No hay categorías de vehículos registradas.'}
               </td>
             </tr>
-          ))}
+          )}
         </tbody>
       </table>
 
@@ -124,9 +147,9 @@ export const VehiculosConfigTab: React.FC = () => {
               <div className="modal-body">
                 <div className="form-group">
                   <label>Nombre de Categoría</label>
-                  <input 
-                    type="text" 
-                    className="input-field" 
+                  <input
+                    type="text"
+                    className="input-field"
                     placeholder="Ej: Eléctrico / Carga Preferente"
                     value={editingConfig.category || ''}
                     onChange={(e) => setEditingConfig({ ...editingConfig, category: e.target.value })}
@@ -137,9 +160,9 @@ export const VehiculosConfigTab: React.FC = () => {
                 <div className="form-row">
                   <div className="form-group">
                     <label>Permanencia Máxima (Horas)</label>
-                    <input 
-                      type="number" 
-                      className="input-field" 
+                    <input
+                      type="number"
+                      className="input-field"
                       value={editingConfig.maxDurationHours || 0}
                       onChange={(e) => setEditingConfig({ ...editingConfig, maxDurationHours: Number(e.target.value) })}
                       required
@@ -147,8 +170,8 @@ export const VehiculosConfigTab: React.FC = () => {
                   </div>
                   <div className="form-group">
                     <label>Prioridad de Acceso</label>
-                    <select 
-                      className="input-field" 
+                    <select
+                      className="input-field"
                       value={editingConfig.accessPriority || 'Normal'}
                       onChange={(e) => setEditingConfig({ ...editingConfig, accessPriority: e.target.value as any })}
                     >
@@ -161,7 +184,7 @@ export const VehiculosConfigTab: React.FC = () => {
 
                 <div className="form-group">
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginTop: 8 }}>
-                    <input 
+                    <input
                       type="checkbox"
                       checked={editingConfig.requiresSpecialPermit || false}
                       onChange={(e) => setEditingConfig({ ...editingConfig, requiresSpecialPermit: e.target.checked })}
@@ -183,28 +206,6 @@ export const VehiculosConfigTab: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Modal Confirmar Eliminación */}
-      {itemToDelete && (
-        <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '400px' }}>
-            <div className="modal-header">
-              <h3>Confirmar Eliminación</h3>
-              <button className="btn-close-modal" onClick={() => setItemToDelete(null)}>
-                <X size={18} />
-              </button>
-            </div>
-            <div className="modal-body">
-              <p>¿Estás seguro de que deseas eliminar el registro <strong>{itemToDelete.id}</strong>?</p>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '8px' }}>Esta acción no se puede deshacer.</p>
-            </div>
-            <div className="modal-footer">
-              <button className="btn-cancel" onClick={() => setItemToDelete(null)}>Cancelar</button>
-              <button className="btn-primary" style={{ background: '#ef4444' }} onClick={handleDeleteConfirm}>Eliminar</button>
-            </div>
-          </div>
-        </div>
-      )}
-      </div>
+    </div>
   );
 };

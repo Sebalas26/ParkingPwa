@@ -1,307 +1,238 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
-import { FileSpreadsheet, Calendar, TrendingUp, Filter } from 'lucide-react';
+import { Calendar, Download } from 'lucide-react';
+import { reportsService } from '../data/reportsService';
+import type { ReportTicketDto } from '../model/ReportContracts';
 import './Reports.css';
 
-// Consolidado mock data
-const consolidatedData = {
-  diario: { periodo: 'Hoy (24 Oct 2025)', vehiculos: 64, ingresos: 4280000 },
-  semanal: { periodo: 'Esta Semana', vehiculos: 450, ingresos: 30500000 },
-  mensual: { periodo: 'Este Mes (Octubre)', vehiculos: 1850, ingresos: 125000000 }
-};
-
-// Generamos una base de datos falsa más grande para probar los filtros
-const allMockData = [
-  // HOY (Dia)
-  { Fecha: '24/10/2025 14:30', Placa: 'TX-998A', Tipo_Vehiculo: 'Auto', Duracion: '0h 0m', Convenio: 'Sin Convenio', Ingreso_COP: 0, Forma_Pago: '--', Usuario: 'System Auto' },
-  { Fecha: '24/10/2025 14:28', Placa: 'CA-442B', Tipo_Vehiculo: 'Moto', Duracion: '1h 15m', Convenio: 'Gimnasio Fit', Ingreso_COP: 6000, Forma_Pago: 'Efectivo', Usuario: 'Vance.M' },
-  { Fecha: '24/10/2025 14:15', Placa: 'FL-8820', Tipo_Vehiculo: 'Auto', Duracion: '3h 45m', Convenio: 'Sin Convenio', Ingreso_COP: 15000, Forma_Pago: 'Tarjeta', Usuario: 'Jenkins.T' },
-  
-  // OTRA FECHA EN LA SEMANA
-  { Fecha: '22/10/2025 10:00', Placa: 'CO-7711', Tipo_Vehiculo: 'Camioneta', Duracion: '2h 10m', Convenio: 'Supermercado X', Ingreso_COP: 8000, Forma_Pago: 'Transferencia', Usuario: 'Vance.M' },
-  { Fecha: '20/10/2025 09:15', Placa: 'TX-1002', Tipo_Vehiculo: 'Auto', Duracion: '0h 45m', Convenio: 'Sin Convenio', Ingreso_COP: 4000, Forma_Pago: 'Efectivo', Usuario: 'System Auto' },
-  
-  // OTRO MES (SEPTIEMBRE)
-  { Fecha: '15/09/2025 13:22', Placa: 'CA-9092', Tipo_Vehiculo: 'Camioneta', Duracion: '4h 05m', Convenio: 'Hotel Plaza', Ingreso_COP: 18000, Forma_Pago: 'Tarjeta', Usuario: 'Jenkins.T' },
-  { Fecha: '02/09/2025 16:02', Placa: 'TX-7761', Tipo_Vehiculo: 'Moto', Duracion: '1h 50m', Convenio: 'Sin Convenio', Ingreso_COP: 8000, Forma_Pago: 'Efectivo', Usuario: 'Vance.M' },
-  
-  // OTRO AÑO (2024)
-  { Fecha: '10/12/2024 11:22', Placa: 'ZZ-9092', Tipo_Vehiculo: 'Auto', Duracion: '5h 00m', Convenio: 'Sin Convenio', Ingreso_COP: 25000, Forma_Pago: 'Tarjeta', Usuario: 'Admin' },
-  { Fecha: '05/01/2024 08:02', Placa: 'AA-7761', Tipo_Vehiculo: 'Moto', Duracion: '2h 50m', Convenio: 'Gimnasio Fit', Ingreso_COP: 12000, Forma_Pago: 'Transferencia', Usuario: 'Admin' },
-];
-
 export const Reports: React.FC = () => {
+  const [tickets, setTickets] = useState<ReportTicketDto[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
-  
-  // Estados para los filtros UI
-  const [filterPeriod, setFilterPeriod] = useState('dia'); // dia, semana, mes, año, personalizado
-  const [selectedMonth, setSelectedMonth] = useState('10'); // Octubre por defecto
-  const [selectedYear, setSelectedYear] = useState('2025'); // 2025 por defecto
+
+  // Filtros
+  const [filterPeriod, setFilterPeriod] = useState<'dia' | 'mes' | 'todos' | 'personalizado'>('todos');
+  const [selectedDate, setSelectedDate] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
-  // Estado para la tabla filtrada real
-  const [appliedData, setAppliedData] = useState(allMockData.filter(d => d.Fecha.includes('24/10/2025'))); // Inicia mostrando solo hoy
+  useEffect(() => {
+    loadReportsData();
+  }, []);
 
-  // Función para aplicar los filtros a la tabla
-  const handleApplyFilters = () => {
-    let filtered = [...allMockData];
-    
-    if (filterPeriod === 'dia') {
-      filtered = allMockData.filter(d => d.Fecha.includes('24/10/2025')); // Mock para "Hoy"
-    } 
-    else if (filterPeriod === 'semana') {
-      // Mock para la semana actual (Octubre)
-      filtered = allMockData.filter(d => d.Fecha.includes('/10/2025')); 
-    } 
-    else if (filterPeriod === 'mes') {
-      // Filtrar por mes y año seleccionado
-      const monthStr = selectedMonth.padStart(2, '0');
-      filtered = allMockData.filter(d => d.Fecha.includes(`/${monthStr}/${selectedYear}`));
+  const loadReportsData = async () => {
+    setIsLoading(true);
+    try {
+      const data = await reportsService.getTicketsReport();
+      setTickets(data || []);
+    } catch (err) {
+      console.error('Error al cargar reportes:', err);
+    } finally {
+      setIsLoading(false);
     }
-    else if (filterPeriod === 'año') {
-      // Filtrar solo por año
-      filtered = allMockData.filter(d => d.Fecha.includes(`/${selectedYear} `));
-    }
-    else if (filterPeriod === 'personalizado') {
-      // Si usáramos fechas reales, haríamos parse de dateFrom y dateTo.
-      // Como es un mock, mostraremos toda la base si seleccionan fechas, o algo representativo.
-      if (dateFrom && dateTo) {
-        filtered = allMockData; // Mostrar todo como si abarcaran todo el rango
-      } else {
-        alert("Por favor selecciona ambas fechas");
-        return;
-      }
-    }
-    
-    setAppliedData(filtered);
   };
+
+  // Filtrado de tickets
+  const filteredTickets = tickets.filter((t) => {
+    if (!t.entryTimeUtc) return false;
+    const ticketDate = t.entryTimeUtc.slice(0, 10);
+
+    if (filterPeriod === 'dia' && selectedDate) {
+      return ticketDate === selectedDate;
+    }
+    if (filterPeriod === 'personalizado') {
+      if (dateFrom && ticketDate < dateFrom) return false;
+      if (dateTo && ticketDate > dateTo) return false;
+      return true;
+    }
+    return true;
+  });
+
+  // Métricas calculadas
+  const totalVehiculos = filteredTickets.length;
+  const totalIngresos = filteredTickets.reduce((acc, t) => acc + (t.amountPaid || 0), 0);
+  const totalDescuentos = filteredTickets.reduce((acc, t) => acc + (t.discountAmount || 0), 0);
+  const tiempoPromedioMin = totalVehiculos > 0
+    ? Math.round(filteredTickets.reduce((acc, t) => acc + (t.totalDurationMinutes || 0), 0) / totalVehiculos)
+    : 0;
 
   const handleExportExcel = () => {
     setIsExporting(true);
-    
-    setTimeout(() => {
+    try {
       const wb = XLSX.utils.book_new();
-      
-      // Hoja 1: Resumen Consolidado
-      const resumenList = [
-        { Periodo: 'Diario', Descripción: consolidatedData.diario.periodo, Vehiculos: consolidatedData.diario.vehiculos, Ingresos_COP: consolidatedData.diario.ingresos },
-        { Periodo: 'Semanal', Descripción: consolidatedData.semanal.periodo, Vehiculos: consolidatedData.semanal.vehiculos, Ingresos_COP: consolidatedData.semanal.ingresos },
-        { Periodo: 'Mensual', Descripción: consolidatedData.mensual.periodo, Vehiculos: consolidatedData.mensual.vehiculos, Ingresos_COP: consolidatedData.mensual.ingresos },
-      ];
-      const wsResumen = XLSX.utils.json_to_sheet(resumenList);
-      wsResumen['!cols'] = [{ wch: 15 }, { wch: 25 }, { wch: 15 }, { wch: 20 }];
-      XLSX.utils.book_append_sheet(wb, wsResumen, "Resumen_Consolidado");
 
-      // Hoja 2: Ingresos por Convenio
-      const conveniosMap: { [key: string]: { Vehiculos: number, Ingresos_COP: number } } = {};
-      appliedData.forEach(d => {
-        if (!conveniosMap[d.Convenio]) {
-          conveniosMap[d.Convenio] = { Vehiculos: 0, Ingresos_COP: 0 };
-        }
-        conveniosMap[d.Convenio].Vehiculos += 1;
-        conveniosMap[d.Convenio].Ingresos_COP += d.Ingreso_COP;
-      });
-      const conveniosList = Object.keys(conveniosMap).map(c => ({
-        Convenio: c,
-        Vehiculos: conveniosMap[c].Vehiculos,
-        Ingresos_COP: conveniosMap[c].Ingresos_COP
+      // Hoja 1: Detalle de Tiquetes
+      const ticketsExport = filteredTickets.map((t) => ({
+        'Número Tiquete': t.ticketNumber,
+        'Placa': t.plateNumber,
+        'Fecha Ingreso': t.entryTimeUtc ? new Date(t.entryTimeUtc).toLocaleString() : '--',
+        'Fecha Salida': t.exitTimeUtc ? new Date(t.exitTimeUtc).toLocaleString() : 'En parqueadero',
+        'Duración (min)': t.totalDurationMinutes || 0,
+        'Tarifa Base': t.hourlyRate || 0,
+        'Monto Bruto': t.grossAmount || 0,
+        'Descuento': t.discountAmount || 0,
+        'Monto Neto': t.netAmount || 0,
+        'Total Pagado (COP)': t.amountPaid || 0,
+        'Operador': t.operatorName || 'Sistema',
       }));
-      const wsConvenios = XLSX.utils.json_to_sheet(conveniosList);
-      wsConvenios['!cols'] = [{ wch: 25 }, { wch: 15 }, { wch: 20 }];
-      XLSX.utils.book_append_sheet(wb, wsConvenios, "Resumen_Convenios");
 
-      // Hoja 3: Detalle (Filtros aplicados que ves en la tabla)
-      const wsDetalle = XLSX.utils.json_to_sheet(appliedData);
-      wsDetalle['!cols'] = [
-        { wch: 18 }, // Fecha
-        { wch: 12 }, // Placa
-        { wch: 15 }, // Tipo_Vehiculo
-        { wch: 15 }, // Duracion
-        { wch: 20 }, // Convenio
-        { wch: 15 }, // Ingreso_COP
-        { wch: 15 }, // Forma_Pago
-        { wch: 15 }  // Usuario
+      const wsTickets = XLSX.utils.json_to_sheet(ticketsExport);
+      XLSX.utils.book_append_sheet(wb, wsTickets, 'Tiquetes');
+
+      // Hoja 2: Resumen Financiero
+      const summaryExport = [
+        { Concepto: 'Total Vehículos Atendidos', Valor: totalVehiculos },
+        { Concepto: 'Total Ingresos Recaudados (COP)', Valor: totalIngresos },
+        { Concepto: 'Total Descuentos Otorgados (COP)', Valor: totalDescuentos },
+        { Concepto: 'Tiempo Promedio Estancia (min)', Valor: tiempoPromedioMin },
       ];
-      XLSX.utils.book_append_sheet(wb, wsDetalle, `Detalle_${filterPeriod.toUpperCase()}`);
-      
-      XLSX.writeFile(wb, "Reporte_Contabilidad_ParkControl.xlsx");
+      const wsSummary = XLSX.utils.json_to_sheet(summaryExport);
+      XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumen');
+
+      XLSX.writeFile(wb, `Reporte_Estacionamiento_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    } catch (err) {
+      console.error('Error exportando Excel:', err);
+    } finally {
       setIsExporting(false);
-    }, 800);
+    }
   };
 
-  const totalRevenue = appliedData.reduce((acc, curr) => acc + curr.Ingreso_COP, 0);
-
   return (
-    <div className="reports-container">
-      <div className="reports-header-card card-shadow">
-        <div className="reports-info">
-          <h2>Consolidados de Operación</h2>
-          <p className="text-muted">Revisa las métricas de vehículos ingresados y recaudo. Exporta la información a Excel para contabilidad.</p>
+    <div className="reports-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', height: '100%', overflowY: 'auto', paddingBottom: '2rem' }}>
+      <div className="reports-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h1>Centro de Reportes Financieros y Operativos</h1>
+          <p className="text-muted" style={{ margin: 0, fontSize: '0.9rem' }}>Generación y descarga de métricas consolidadas a partir de transacciones reales.</p>
         </div>
+
         <button
-          className="btn-primary btn-export"
+          className="btn-primary"
+          style={{ width: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}
           onClick={handleExportExcel}
           disabled={isExporting}
         >
-          {isExporting ? <RefreshCw size={18} className="spin" /> : <FileSpreadsheet size={18} />}
-          {isExporting ? 'Generando...' : 'Exportar Consolidado Excel'}
+          <Download size={16} /> {isExporting ? 'Generando...' : 'Exportar a Excel'}
         </button>
       </div>
 
-      <div className="consolidated-grid">
-        <div className="stat-box">
-          <div className="stat-header">
-            <span className="stat-title">DIARIO (HOY)</span>
-            <Calendar size={16} className="text-muted" />
-          </div>
-          <div className="stat-value">{consolidatedData.diario.vehiculos} <span className="text-sm">vehículos</span></div>
-          <div className="stat-desc font-bold text-primary">$ {consolidatedData.diario.ingresos.toLocaleString()} COP</div>
+      {/* Tarjetas de Resumen */}
+      <div className="reports-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+        <div className="stat-card" style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+          <span className="text-muted" style={{ fontSize: '0.8rem', textTransform: 'uppercase' }}>Total Vehículos Registrados</span>
+          <p style={{ margin: '8px 0 0 0', fontSize: '1.6rem', fontWeight: 'bold' }}>{totalVehiculos}</p>
         </div>
-
-        <div className="stat-box">
-          <div className="stat-header">
-            <span className="stat-title">SEMANAL</span>
-            <Calendar size={16} className="text-muted" />
-          </div>
-          <div className="stat-value">{consolidatedData.semanal.vehiculos} <span className="text-sm">vehículos</span></div>
-          <div className="stat-desc font-bold text-primary">$ {consolidatedData.semanal.ingresos.toLocaleString()} COP</div>
+        <div className="stat-card" style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+          <span className="text-muted" style={{ fontSize: '0.8rem', textTransform: 'uppercase' }}>Ingresos Totales (COP)</span>
+          <p style={{ margin: '8px 0 0 0', fontSize: '1.6rem', fontWeight: 'bold', color: 'var(--primary-color)' }}>${totalIngresos.toLocaleString()} COP</p>
         </div>
-
-        <div className="stat-box">
-          <div className="stat-header">
-            <span className="stat-title">MENSUAL</span>
-            <Calendar size={16} className="text-muted" />
-          </div>
-          <div className="stat-value">{consolidatedData.mensual.vehiculos} <span className="text-sm">vehículos</span></div>
-          <div className="stat-desc font-bold text-primary">$ {consolidatedData.mensual.ingresos.toLocaleString()} COP</div>
+        <div className="stat-card" style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+          <span className="text-muted" style={{ fontSize: '0.8rem', textTransform: 'uppercase' }}>Descuentos / Convenios</span>
+          <p style={{ margin: '8px 0 0 0', fontSize: '1.6rem', fontWeight: 'bold', color: '#f59e0b' }}>${totalDescuentos.toLocaleString()} COP</p>
+        </div>
+        <div className="stat-card" style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+          <span className="text-muted" style={{ fontSize: '0.8rem', textTransform: 'uppercase' }}>Estancia Promedio</span>
+          <p style={{ margin: '8px 0 0 0', fontSize: '1.6rem', fontWeight: 'bold' }}>{tiempoPromedioMin} min</p>
         </div>
       </div>
 
-      <div className="reports-preview card-shadow">
-        <div className="preview-header-section">
-          <div className="preview-header-top">
+      {/* Barra de Filtros */}
+      <div className="table-card" style={{ padding: '20px' }}>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <button
+              className={`filter-pill ${filterPeriod === 'todos' ? 'active' : ''}`}
+              onClick={() => setFilterPeriod('todos')}
+            >
+              Todos los Registros
+            </button>
+            <button
+              className={`filter-pill ${filterPeriod === 'dia' ? 'active' : ''}`}
+              onClick={() => setFilterPeriod('dia')}
+            >
+              Por Día
+            </button>
+            <button
+              className={`filter-pill ${filterPeriod === 'personalizado' ? 'active' : ''}`}
+              onClick={() => setFilterPeriod('personalizado')}
+            >
+              Rango de Fechas
+            </button>
+          </div>
+
+          {filterPeriod === 'dia' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-body)', padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+              <Calendar size={16} className="text-muted" />
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                style={{ border: 'none', background: 'transparent', outline: 'none', color: 'var(--text-primary)', fontSize: '0.9rem' }}
+              />
+            </div>
+          )}
+
+          {filterPeriod === 'personalizado' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h3>Detalle de Operaciones</h3>
-              <TrendingUp size={18} className="text-muted" />
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="input-field"
+                style={{ width: 'auto', padding: '6px 12px' }}
+              />
+              <span className="text-muted">hasta</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="input-field"
+                style={{ width: 'auto', padding: '6px 12px' }}
+              />
             </div>
-            <span className="badge badge-success">
-              Total Generado en Tabla: $ {totalRevenue.toLocaleString()} COP
-            </span>
-          </div>
-
-          <div className="reports-filters">
-            <div className="filter-group">
-              <label>Fecha a consultar</label>
-              <div className="pill-group">
-                <button className={`filter-pill ${filterPeriod === 'dia' ? 'active' : ''}`} onClick={() => setFilterPeriod('dia')}>Día</button>
-                <button className={`filter-pill ${filterPeriod === 'semana' ? 'active' : ''}`} onClick={() => setFilterPeriod('semana')}>Semana</button>
-                <button className={`filter-pill ${filterPeriod === 'mes' ? 'active' : ''}`} onClick={() => setFilterPeriod('mes')}>Mes</button>
-                <button className={`filter-pill ${filterPeriod === 'año' ? 'active' : ''}`} onClick={() => setFilterPeriod('año')}>Año</button>
-                <button className={`filter-pill ${filterPeriod === 'personalizado' ? 'active' : ''}`} onClick={() => setFilterPeriod('personalizado')}>Desde - Hasta</button>
-              </div>
-            </div>
-
-            {/* Opciones Adicionales para MES */}
-            {filterPeriod === 'mes' && (
-              <>
-                <div className="filter-group custom-selects">
-                  <label>Mes</label>
-                  <select className="input-field" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)}>
-                    <option value="1">Enero</option>
-                    <option value="2">Febrero</option>
-                    <option value="3">Marzo</option>
-                    <option value="4">Abril</option>
-                    <option value="5">Mayo</option>
-                    <option value="6">Junio</option>
-                    <option value="7">Julio</option>
-                    <option value="8">Agosto</option>
-                    <option value="9">Septiembre</option>
-                    <option value="10">Octubre</option>
-                    <option value="11">Noviembre</option>
-                    <option value="12">Diciembre</option>
-                  </select>
-                </div>
-                <div className="filter-group custom-selects">
-                  <label>Año</label>
-                  <select className="input-field" value={selectedYear} onChange={e => setSelectedYear(e.target.value)}>
-                    <option value="2024">2024</option>
-                    <option value="2025">2025</option>
-                  </select>
-                </div>
-              </>
-            )}
-
-            {/* Opciones Adicionales para AÑO */}
-            {filterPeriod === 'año' && (
-              <div className="filter-group custom-selects">
-                <label>Año</label>
-                <select className="input-field" value={selectedYear} onChange={e => setSelectedYear(e.target.value)}>
-                  <option value="2024">2024</option>
-                  <option value="2025">2025</option>
-                </select>
-              </div>
-            )}
-
-            {/* Opciones Adicionales para PERSONALIZADO */}
-            {filterPeriod === 'personalizado' && (
-              <div className="filter-group custom-dates">
-                <div>
-                  <label>Desde</label>
-                  <input type="date" className="input-field" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
-                </div>
-                <div>
-                  <label>Hasta</label>
-                  <input type="date" className="input-field" value={dateTo} onChange={e => setDateTo(e.target.value)} />
-                </div>
-              </div>
-            )}
-
-            <div className="filter-group" style={{ marginLeft: 'auto', alignSelf: 'flex-end' }}>
-              <button className="btn-outline" onClick={handleApplyFilters}>
-                <Filter size={16} /> Aplicar Filtros
-              </button>
-            </div>
-          </div>
+          )}
         </div>
+      </div>
 
+      {/* Tabla de Detalle */}
+      <div className="table-card">
+        <div className="section-header" style={{ padding: '24px 24px 0 24px' }}>
+          <h2>Transacciones y Tiquetes ({filteredTickets.length})</h2>
+        </div>
         <table className="data-table">
           <thead>
             <tr>
-              <th>FECHA</th>
+              <th>TIQUETE</th>
               <th>PLACA</th>
-              <th>TIPO</th>
-              <th>TIEMPO QUE DURÓ</th>
-              <th>CONVENIO</th>
-              <th>PAGO</th>
-              <th>USUARIO</th>
-              <th className="text-right">INGRESO</th>
+              <th>INGRESO</th>
+              <th>SALIDA</th>
+              <th>DURACIÓN</th>
+              <th className="text-right">BRUTO</th>
+              <th className="text-right">DESCUENTO</th>
+              <th className="text-right">TOTAL PAGADO</th>
             </tr>
           </thead>
           <tbody>
-            {appliedData.length > 0 ? (
-              appliedData.map((row, idx) => (
-                <tr key={idx}>
-                  <td className="text-muted font-bold">{row.Fecha}</td>
-                  <td className="font-bold">{row.Placa}</td>
-                  <td>{row.Tipo_Vehiculo}</td>
-                  <td>{row.Duracion}</td>
-                  <td>
-                    <span className={`badge ${row.Convenio === 'Sin Convenio' ? 'badge-warning' : 'badge-success'}`} style={{ fontWeight: 500 }}>
-                      {row.Convenio}
-                    </span>
+            {filteredTickets.length > 0 ? (
+              filteredTickets.map((t) => (
+                <tr key={t.ticketId}>
+                  <td className="font-bold text-muted">{t.ticketNumber}</td>
+                  <td className="font-bold text-primary">{t.plateNumber}</td>
+                  <td className="text-muted">
+                    {t.entryTimeUtc ? new Date(t.entryTimeUtc).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : '--'}
                   </td>
-                  <td>{row.Forma_Pago}</td>
-                  <td className="text-muted">{row.Usuario}</td>
-                  <td className="text-right font-bold text-primary">
-                    {row.Ingreso_COP > 0 ? `$ ${row.Ingreso_COP.toLocaleString()} COP` : '--'}
+                  <td className="text-muted">
+                    {t.exitTimeUtc ? new Date(t.exitTimeUtc).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'En parqueadero'}
                   </td>
+                  <td>{t.totalDurationMinutes ? `${t.totalDurationMinutes} min` : '--'}</td>
+                  <td className="text-right text-muted">${(t.grossAmount || 0).toLocaleString()}</td>
+                  <td className="text-right text-muted">${(t.discountAmount || 0).toLocaleString()}</td>
+                  <td className="text-right font-bold text-primary">${(t.amountPaid || 0).toLocaleString()} COP</td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
-                  No se encontraron registros para los filtros seleccionados.
+                <td colSpan={8} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
+                  {isLoading ? 'Cargando datos...' : 'No hay registros que coincidan con los filtros seleccionados.'}
                 </td>
               </tr>
             )}
@@ -311,23 +242,3 @@ export const Reports: React.FC = () => {
     </div>
   );
 };
-
-// Simple Refresh Icon for loading state
-const RefreshCw = ({ size = 24, className = "" }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-  >
-    <polyline points="23 4 23 10 17 10"></polyline>
-    <polyline points="1 20 1 14 7 14"></polyline>
-    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-  </svg>
-);

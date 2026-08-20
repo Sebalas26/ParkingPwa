@@ -1,26 +1,51 @@
-import type { User } from '../model/AuthTypes';
+import { apiClient } from '../../../shared/api/apiClient';
+import type { AuthRequestDto, AuthResponseDto, UserSession } from '../model/AuthContracts';
 
-// Mock authentication service with hardcoded credentials
 export const authService = {
-  login: async (username: string, password: string): Promise<User> => {
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
+  login: async (credentials: AuthRequestDto): Promise<UserSession> => {
+    const response = await apiClient.post<AuthResponseDto>('/Auth/authenticate', credentials);
 
-    if (username === 'admin' && password === 'admin123') {
-      const user: User = { id: '1', username: 'admin', role: 'admin' };
-      localStorage.setItem('user', JSON.stringify(user));
-      return user;
+    if (!response || !response.token) {
+      throw new Error(response?.errorMessage || 'No se pudo obtener el token de autenticación.');
     }
-    
-    throw new Error('Invalid credentials');
+
+    const session: UserSession = {
+      userId: response.userId,
+      username: response.username,
+      fullName: response.fullName || response.username,
+      roleName: response.roleName || (response.isAdmin ? 'Administrador' : 'Operador'),
+      isAdmin: Boolean(response.isAdmin),
+      token: response.token,
+    };
+
+    localStorage.setItem('auth_token', session.token);
+    localStorage.setItem('auth_user', JSON.stringify(session));
+
+    return session;
   },
 
-  logout: (): void => {
-    localStorage.removeItem('user');
+  logout: async (): Promise<void> => {
+    try {
+      await apiClient.post('/Auth/logout');
+    } catch {
+      // Ignoramos errores de red en logout
+    } finally {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
+    }
   },
 
-  getCurrentUser: (): User | null => {
-    const userJson = localStorage.getItem('user');
-    return userJson ? JSON.parse(userJson) : null;
-  }
+  getCurrentUser: (): UserSession | null => {
+    const userJson = localStorage.getItem('auth_user');
+    if (!userJson) return null;
+    try {
+      return JSON.parse(userJson) as UserSession;
+    } catch {
+      return null;
+    }
+  },
+
+  isAuthenticated: (): boolean => {
+    return Boolean(localStorage.getItem('auth_token'));
+  },
 };

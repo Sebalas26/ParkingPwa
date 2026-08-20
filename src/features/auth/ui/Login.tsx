@@ -17,10 +17,10 @@ export const Login: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await authService.login(username, password);
+      await authService.login({ username: username.trim(), password });
       navigate('/dashboard');
-    } catch (err) {
-      setError('Credenciales inválidas. Usa admin / admin123');
+    } catch (err: any) {
+      setError(err?.message || 'Error al iniciar sesión. Verifica tus credenciales y que el servidor esté activo.');
     } finally {
       setIsLoading(false);
     }

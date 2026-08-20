@@ -1,54 +1,84 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, X , Trash2} from 'lucide-react';
-import type { Tarifa } from '../model/SettingsTypes';
-import { settingsService } from '../data/settingsService';
+import { Edit2, X } from 'lucide-react';
+import type { VehicleRateDto, UpdateVehicleRateDto } from '../model/TarifasContracts';
+import { tarifasService } from '../data/tarifasService';
 
 export const TarifasTab: React.FC = () => {
-  const [tarifas, setTarifas] = useState<Tarifa[]>([]);
+  const [tarifas, setTarifas] = useState<VehicleRateDto[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingTarifa, setEditingTarifa] = useState<Partial<Tarifa> | null>(null);
-  const [itemToDelete, setItemToDelete] = useState<Tarifa | null>(null);
+  const [editingTarifa, setEditingTarifa] = useState<VehicleRateDto | null>(null);
+  const [formData, setFormData] = useState<UpdateVehicleRateDto>({
+    hourRate: 2000,
+    minuteRate: 50,
+    fullDayRate: 15000,
+    gracePeriodMinutes: 15,
+  });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadTarifas();
   }, []);
 
   const loadTarifas = async () => {
-    const data = await settingsService.getTarifas();
-    setTarifas(data);
+    setIsLoading(true);
+    try {
+      const data = await tarifasService.getAllRates();
+      setTarifas(data || []);
+    } catch (err) {
+      console.error('Error al cargar tarifas:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDeleteConfirm = async () => {
-    if (!itemToDelete) return;
-    await settingsService.deleteTarifa(itemToDelete.id);
-    setItemToDelete(null);
-    await loadTarifas();
+  const getVehicleTypeName = (type: number | string) => {
+    switch (String(type)) {
+      case '0':
+      case 'Car':
+        return 'Sedán / Auto';
+      case '1':
+      case 'Motorcycle':
+        return 'Motocicleta';
+      case '2':
+      case 'Truck':
+        return 'Camión';
+      case '3':
+      case 'Van':
+        return 'Camioneta / Van';
+      case '4':
+      case 'Bicycle':
+        return 'Bicicleta';
+      case '5':
+      case 'Suv':
+        return 'SUV';
+      default:
+        return String(type);
+    }
   };
 
-  const handleOpenCreate = () => {
-    setEditingTarifa({
-      vehicleType: 'Sedán',
-      hourlyRate: 2000,
-      fractionRate: 500,
-      maxDailyRate: 15000,
-      gracePeriodMinutes: 15,
-      status: 'Activa'
+  const handleOpenEdit = (t: VehicleRateDto) => {
+    setEditingTarifa(t);
+    setFormData({
+      hourRate: t.hourRate,
+      minuteRate: t.minuteRate,
+      fullDayRate: t.fullDayRate,
+      gracePeriodMinutes: t.gracePeriodMinutes,
     });
-    setIsModalOpen(true);
-  };
-
-  const handleOpenEdit = (t: Tarifa) => {
-    setEditingTarifa({ ...t });
     setIsModalOpen(true);
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingTarifa) return;
-    await settingsService.saveTarifa(editingTarifa);
-    setIsModalOpen(false);
-    setEditingTarifa(null);
-    await loadTarifas();
+
+    try {
+      await tarifasService.updateRate(editingTarifa.rateId, formData);
+      setIsModalOpen(false);
+      setEditingTarifa(null);
+      await loadTarifas();
+    } catch (err: any) {
+      alert(err?.message || 'Error al actualizar tarifa.');
+    }
   };
 
   return (
@@ -56,20 +86,16 @@ export const TarifasTab: React.FC = () => {
       <div className="section-header">
         <div className="section-header-titles">
           <h2>Gestión de Tarifas y Precios</h2>
-          <p>Configura las tarifas por hora, fracciones, períodos de gracia y montos máximos por día según el tipo de vehículo.</p>
+          <p>Configura las tarifas por hora, fracciones por minuto, períodos de gracia y montos máximos por día según el tipo de vehículo.</p>
         </div>
-        <button className="btn-primary" style={{ width: 'auto' }} onClick={handleOpenCreate}>
-          <Plus size={16} /> Crear Tarifa
-        </button>
       </div>
 
       <table className="data-table">
         <thead>
           <tr>
-            <th>ID</th>
             <th>TIPO DE VEHÍCULO</th>
             <th>VALOR HORA</th>
-            <th>FRACCIÓN (15 min)</th>
+            <th>VALOR MINUTO</th>
             <th>MÁXIMO DÍA</th>
             <th>TIEMPO DE GRACIA</th>
             <th>ESTADO</th>
@@ -77,40 +103,44 @@ export const TarifasTab: React.FC = () => {
           </tr>
         </thead>
         <tbody>
-          {tarifas.map((t) => (
-            <tr key={t.id}>
-              <td className="font-bold text-muted">{t.id}</td>
-              <td className="font-bold">{t.vehicleType}</td>
-              <td>${t.hourlyRate.toLocaleString()}</td>
-              <td>${t.fractionRate.toLocaleString()}</td>
-              <td>${t.maxDailyRate.toLocaleString()}</td>
-              <td>{t.gracePeriodMinutes} min</td>
-              <td>
-                <span className={`badge ${t.status === 'Activa' ? 'badge-success' : 'badge-danger'}`}>
-                  {t.status}
-                </span>
-              </td>
-              <td className="text-right">
-                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                  <button className="btn-action primary" onClick={() => handleOpenEdit(t)}>
-                  <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
-                </button>
-                <button className="btn-action danger" style={{ color: '#ef4444' }} onClick={() => setItemToDelete(t)}>
-                  <Trash2 size={14} style={{ marginRight: 4 }} /> Eliminar
-                </button>
-                              </div>
+          {tarifas.length > 0 ? (
+            tarifas.map((t) => (
+              <tr key={t.rateId}>
+                <td className="font-bold">{getVehicleTypeName(t.vehicleType)}</td>
+                <td>${(t.hourRate || 0).toLocaleString()} COP</td>
+                <td>${(t.minuteRate || 0).toLocaleString()} COP</td>
+                <td>${(t.fullDayRate || 0).toLocaleString()} COP</td>
+                <td>{t.gracePeriodMinutes} min</td>
+                <td>
+                  <span className={`badge ${t.isActive ? 'badge-success' : 'badge-danger'}`}>
+                    {t.isActive ? 'Activa' : 'Inactiva'}
+                  </span>
+                </td>
+                <td className="text-right">
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                    <button className="btn-action primary" onClick={() => handleOpenEdit(t)}>
+                      <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
+                {isLoading ? 'Cargando tarifas...' : 'No se encontraron tarifas configuradas.'}
               </td>
             </tr>
-          ))}
+          )}
         </tbody>
       </table>
 
-      {/* Modal Crear / Editar Tarifa */}
+      {/* Modal Editar Tarifa */}
       {isModalOpen && editingTarifa && (
         <div className="modal-overlay">
           <div className="modal-card">
             <div className="modal-header">
-              <h3>{editingTarifa.id ? `Editar Tarifa (${editingTarifa.id})` : 'Crear Nueva Tarifa'}</h3>
+              <h3>Editar Tarifa: {getVehicleTypeName(editingTarifa.vehicleType)}</h3>
               <button className="btn-close-modal" onClick={() => setIsModalOpen(false)}>
                 <X size={18} />
               </button>
@@ -118,38 +148,27 @@ export const TarifasTab: React.FC = () => {
 
             <form onSubmit={handleSave}>
               <div className="modal-body">
-                <div className="form-group">
-                  <label>Tipo de Vehículo</label>
-                  <select 
-                    className="input-field" 
-                    value={editingTarifa.vehicleType || 'Sedán'}
-                    onChange={(e) => setEditingTarifa({ ...editingTarifa, vehicleType: e.target.value as any })}
-                  >
-                    <option value="Sedán">Sedán</option>
-                    <option value="SUV">SUV</option>
-                    <option value="Motocicleta">Motocicleta</option>
-                    <option value="Camión / Bus">Camión / Bus</option>
-                  </select>
-                </div>
-
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Valor Hora ($)</label>
-                    <input 
-                      type="number" 
-                      className="input-field" 
-                      value={editingTarifa.hourlyRate || 0}
-                      onChange={(e) => setEditingTarifa({ ...editingTarifa, hourlyRate: Number(e.target.value) })}
+                    <label>Valor Hora ($ COP)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="100"
+                      className="input-field"
+                      value={formData.hourRate}
+                      onChange={(e) => setFormData({ ...formData, hourRate: Number(e.target.value) })}
                       required
                     />
                   </div>
                   <div className="form-group">
-                    <label>Fracción 15 min ($)</label>
-                    <input 
-                      type="number" 
-                      className="input-field" 
-                      value={editingTarifa.fractionRate || 0}
-                      onChange={(e) => setEditingTarifa({ ...editingTarifa, fractionRate: Number(e.target.value) })}
+                    <label>Valor Minuto Fracción ($ COP)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      className="input-field"
+                      value={formData.minuteRate}
+                      onChange={(e) => setFormData({ ...formData, minuteRate: Number(e.target.value) })}
                       required
                     />
                   </div>
@@ -157,37 +176,28 @@ export const TarifasTab: React.FC = () => {
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Máximo Día ($)</label>
-                    <input 
-                      type="number" 
-                      className="input-field" 
-                      value={editingTarifa.maxDailyRate || 0}
-                      onChange={(e) => setEditingTarifa({ ...editingTarifa, maxDailyRate: Number(e.target.value) })}
+                    <label>Máximo Día Completo ($ COP)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="500"
+                      className="input-field"
+                      value={formData.fullDayRate}
+                      onChange={(e) => setFormData({ ...formData, fullDayRate: Number(e.target.value) })}
                       required
                     />
                   </div>
                   <div className="form-group">
-                    <label>Gracia (minutos)</label>
-                    <input 
-                      type="number" 
-                      className="input-field" 
-                      value={editingTarifa.gracePeriodMinutes || 0}
-                      onChange={(e) => setEditingTarifa({ ...editingTarifa, gracePeriodMinutes: Number(e.target.value) })}
+                    <label>Tiempo de Gracia (Minutos)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      className="input-field"
+                      value={formData.gracePeriodMinutes}
+                      onChange={(e) => setFormData({ ...formData, gracePeriodMinutes: Number(e.target.value) })}
                       required
                     />
                   </div>
-                </div>
-
-                <div className="form-group">
-                  <label>Estado</label>
-                  <select 
-                    className="input-field" 
-                    value={editingTarifa.status || 'Activa'}
-                    onChange={(e) => setEditingTarifa({ ...editingTarifa, status: e.target.value as any })}
-                  >
-                    <option value="Activa">Activa</option>
-                    <option value="Inactiva">Inactiva</option>
-                  </select>
                 </div>
               </div>
 
@@ -203,28 +213,6 @@ export const TarifasTab: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Modal Confirmar Eliminación */}
-      {itemToDelete && (
-        <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '400px' }}>
-            <div className="modal-header">
-              <h3>Confirmar Eliminación</h3>
-              <button className="btn-close-modal" onClick={() => setItemToDelete(null)}>
-                <X size={18} />
-              </button>
-            </div>
-            <div className="modal-body">
-              <p>¿Estás seguro de que deseas eliminar el registro <strong>{itemToDelete.id}</strong>?</p>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '8px' }}>Esta acción no se puede deshacer.</p>
-            </div>
-            <div className="modal-footer">
-              <button className="btn-cancel" onClick={() => setItemToDelete(null)}>Cancelar</button>
-              <button className="btn-primary" style={{ background: '#ef4444' }} onClick={handleDeleteConfirm}>Eliminar</button>
-            </div>
-          </div>
-        </div>
-      )}
-      </div>
+    </div>
   );
 };

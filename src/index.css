@@ -121,9 +121,10 @@ body {
 }
 
 /* Modern Inputs */
-.input-field {
+.input-field,
+select.input-field {
   width: 100%;
-  background: var(--input-bg, #ffffff);
+  background: var(--input-bg, var(--bg-card, #ffffff));
   border: 1px solid var(--border-color, #e2e8f0);
   color: var(--text-primary, #1e293b);
   padding: 10px 16px;
@@ -134,9 +135,14 @@ body {
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+select.input-field option {
+  background: var(--bg-card, #111827);
+  color: var(--text-primary, #f8fafc);
+}
+
 .input-field:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(23, 75, 92, 0.1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
 .input-field::placeholder {

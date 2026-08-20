@@ -1,0 +1,35 @@
+.pwa-network-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  z-index: 99999;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  animation: slideDownBanner 0.3s ease-out;
+}
+
+.pwa-network-banner.offline {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.pwa-network-banner.online {
+  background: #10b981;
+  color: #ffffff;
+}
+
+@keyframes slideDownBanner {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}

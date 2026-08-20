@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b" />
+      <stop offset="50%" stop-color="#312e81" />
+      <stop offset="100%" stop-color="#4338ca" />
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="5.76" stdDeviation="7.68" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="192" height="192" rx="42.24" fill="url(#bgGrad)" />
+
+  <!-- Inner Glowing Ring -->
+  <circle cx="96" cy="96" r="72.96000000000001" fill="none" stroke="url(#accentGrad)" stroke-width="4.800000000000001" opacity="0.4" />
+
+  <!-- Parking 'P' Symbol -->
+  <g filter="url(#shadow)">
+    <!-- Main P Letter -->
+    <path d="M 65.28 49.92 
+             L 99.84 49.92 
+             C 130.56 49.92, 130.56 103.68, 99.84 103.68 
+             L 84.48 103.68 
+             L 84.48 142.07999999999998 
+             L 65.28 142.07999999999998 Z" 
+          fill="#ffffff" />
+    
+    <!-- P Inner Hole -->
+    <path d="M 84.48 67.19999999999999 
+             L 97.92 67.19999999999999 
+             C 111.35999999999999 67.19999999999999, 111.35999999999999 86.4, 97.92 86.4 
+             L 84.48 86.4 Z" 
+          fill="#312e81" />
+
+    <!-- Stylized Car Accent on lower right -->
+    <path d="M 99.84 124.80000000000001 
+             L 111.35999999999999 111.35999999999999 
+             L 130.56 111.35999999999999 
+             L 142.07999999999998 124.80000000000001 
+             L 149.76 124.80000000000001 
+             C 153.60000000000002 124.80000000000001, 153.60000000000002 138.24, 149.76 138.24 
+             L 96 138.24 
+             C 92.16 138.24, 92.16 124.80000000000001, 99.84 124.80000000000001 Z" 
+          fill="url(#accentGrad)" />
+    <!-- Car Wheels -->
+    <circle cx="107.52000000000001" cy="138.24" r="5.76" fill="#ffffff" />
+    <circle cx="138.24" cy="138.24" r="5.76" fill="#ffffff" />
+  </g>
+</svg>

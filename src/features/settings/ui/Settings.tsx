@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { DollarSign, Users, FileText, Car } from 'lucide-react';
+import { DollarSign, Users, FileText, Car, CreditCard } from 'lucide-react';
 import { TarifasTab } from './TarifasTab';
 import { UsuariosTab } from './UsuariosTab';
 import { ConveniosTab } from './ConveniosTab';
 import { VehiculosConfigTab } from './VehiculosConfigTab';
+import { MediosPagoTab } from './MediosPagoTab';
 import './Settings.css';
 
-type ActiveTab = 'tarifas' | 'usuarios' | 'convenios' | 'vehiculos';
+type ActiveTab = 'tarifas' | 'usuarios' | 'convenios' | 'vehiculos' | 'mediosPago';
 
 export const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('tarifas');
@@ -38,6 +39,12 @@ export const Settings: React.FC = () => {
         >
           <Car size={18} /> Vehículos
         </button>
+        <button 
+          className={`settings-tab-btn ${activeTab === 'mediosPago' ? 'active' : ''}`}
+          onClick={() => setActiveTab('mediosPago')}
+        >
+          <CreditCard size={18} /> Medios de Pago
+        </button>
       </div>
 
       <div className="settings-tab-content">
@@ -45,7 +52,9 @@ export const Settings: React.FC = () => {
         {activeTab === 'usuarios' && <UsuariosTab />}
         {activeTab === 'convenios' && <ConveniosTab />}
         {activeTab === 'vehiculos' && <VehiculosConfigTab />}
+        {activeTab === 'mediosPago' && <MediosPagoTab />}
       </div>
     </div>
   );
 };
+

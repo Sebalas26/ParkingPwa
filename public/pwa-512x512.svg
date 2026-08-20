@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b" />
+      <stop offset="50%" stop-color="#312e81" />
+      <stop offset="100%" stop-color="#4338ca" />
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="15.36" stdDeviation="20.48" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="112.64" fill="url(#bgGrad)" />
+
+  <!-- Inner Glowing Ring -->
+  <circle cx="256" cy="256" r="194.56" fill="none" stroke="url(#accentGrad)" stroke-width="12.8" opacity="0.4" />
+
+  <!-- Parking 'P' Symbol -->
+  <g filter="url(#shadow)">
+    <!-- Main P Letter -->
+    <path d="M 174.08 133.12 
+             L 266.24 133.12 
+             C 348.16 133.12, 348.16 276.48, 266.24 276.48 
+             L 225.28 276.48 
+             L 225.28 378.88 
+             L 174.08 378.88 Z" 
+          fill="#ffffff" />
+    
+    <!-- P Inner Hole -->
+    <path d="M 225.28 179.2 
+             L 261.12 179.2 
+             C 296.96 179.2, 296.96 230.4, 261.12 230.4 
+             L 225.28 230.4 Z" 
+          fill="#312e81" />
+
+    <!-- Stylized Car Accent on lower right -->
+    <path d="M 266.24 332.8 
+             L 296.96 296.96 
+             L 348.16 296.96 
+             L 378.88 332.8 
+             L 399.36 332.8 
+             C 409.6 332.8, 409.6 368.64, 399.36 368.64 
+             L 256 368.64 
+             C 245.76 368.64, 245.76 332.8, 266.24 332.8 Z" 
+          fill="url(#accentGrad)" />
+    <!-- Car Wheels -->
+    <circle cx="286.72" cy="368.64" r="15.36" fill="#ffffff" />
+    <circle cx="368.64" cy="368.64" r="15.36" fill="#ffffff" />
+  </g>
+</svg>

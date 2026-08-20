@@ -1,76 +1,56 @@
-import React, { useState } from 'react';
-import { Bell, Search, Eye, AlertTriangle, Car, ShieldAlert, Image as ImageIcon, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Eye, AlertTriangle, Car, X } from 'lucide-react';
+import { novedadesService } from '../data/novedadesService';
+import type { NovedadDto } from '../model/NovedadesContracts';
 import './Novedades.css';
 
-interface Novedad {
-  id: string;
-  placa: string;
-  tipoVehiculo: 'Auto' | 'Camioneta' | 'Motocicleta';
-  tipoNovedad: 'Vehículo Hurtado' | 'Problema de Pago' | 'Vehículo con Problemas';
-  fecha: string;
-  hora: string;
-  propietario: string;
-  celular: string;
-  observacion: string;
-  estado: 'Activa' | 'Resuelta';
-}
-
-const mockNovedades: Novedad[] = [
-  { id: 'NOV-001', placa: 'TX-7762-K', tipoVehiculo: 'Auto', tipoNovedad: 'Vehículo Hurtado', fecha: '2023-10-24', hora: '11:30 AM', propietario: 'Juan Pérez', celular: '310 123 4567', observacion: 'Reportado por la policía, no permitir salida.', estado: 'Activa' },
-  { id: 'NOV-002', placa: 'NY-889-BB', tipoVehiculo: 'Camioneta', tipoNovedad: 'Problema de Pago', fecha: '2023-10-24', hora: '10:15 AM', propietario: 'María García', celular: '320 987 6543', observacion: 'Rechazo de tarjeta recurrente. Pendiente por pago de $15,000.', estado: 'Activa' },
-  { id: 'NOV-003', placa: 'CA-4432-P', tipoVehiculo: 'Motocicleta', tipoNovedad: 'Vehículo con Problemas', fecha: '2023-10-23', hora: '04:20 PM', propietario: 'Carlos López', celular: '300 555 1234', observacion: 'Fuga de aceite en el parqueadero B2.', estado: 'Activa' },
-];
-
 export const Novedades: React.FC = () => {
-  const [filter, setFilter] = useState('Todos');
+  const [novedades, setNovedades] = useState<NovedadDto[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedNovedad, setSelectedNovedad] = useState<Novedad | null>(null);
+  const [selectedNovedad, setSelectedNovedad] = useState<NovedadDto | null>(null);
 
-  const filteredData = mockNovedades.filter(n => {
-    const matchesFilter = filter === 'Todos' || n.tipoNovedad === filter;
-    const matchesSearch = n.placa.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          n.propietario.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesFilter && matchesSearch;
+  useEffect(() => {
+    loadNovedades();
+  }, []);
+
+  const loadNovedades = async () => {
+    setIsLoading(true);
+    try {
+      const data = await novedadesService.getNovedades();
+      setNovedades(data || []);
+    } catch (err) {
+      console.error('Error al cargar novedades:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const filteredData = novedades.filter((n) => {
+    const term = searchTerm.toLowerCase();
+    return (
+      n.placa.toLowerCase().includes(term) ||
+      n.propietario.toLowerCase().includes(term) ||
+      n.observacion.toLowerCase().includes(term)
+    );
   });
 
-  const getBadgeClass = (tipo: string) => {
-    switch (tipo) {
-      case 'Vehículo Hurtado': return 'badge-danger';
-      case 'Problema de Pago': return 'badge-warning';
-      default: return 'badge-warning';
-    }
-  };
-
-  const getIcon = (tipo: string) => {
-    switch (tipo) {
-      case 'Vehículo Hurtado': return <ShieldAlert size={16} />;
-      case 'Problema de Pago': return <AlertTriangle size={16} />;
-      default: return <Bell size={16} />;
-    }
-  };
-
   return (
-    <div className="novedades-container">
+    <div className="novedades-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', height: '100%', overflowY: 'auto', paddingBottom: '2rem' }}>
       <div className="novedades-header">
-        <h1>Novedades y Alertas</h1>
-        <p className="text-muted" style={{ margin: 0 }}>Gestión de vehículos con reportes o incidencias activas.</p>
+        <h1>Novedades e Incidencias en Sitio</h1>
+        <p className="text-muted" style={{ margin: 0, fontSize: '0.9rem' }}>Monitoreo de observaciones y alertas reportadas en los ingresos de vehículos activos.</p>
       </div>
 
       <div className="novedades-toolbar">
-        <div className="novedades-filters">
-          <button className={`filter-pill ${filter === 'Todos' ? 'active' : ''}`} onClick={() => setFilter('Todos')}>Todos</button>
-          <button className={`filter-pill ${filter === 'Problema de Pago' ? 'active' : ''}`} onClick={() => setFilter('Problema de Pago')}>Problemas de Pago</button>
-          <button className={`filter-pill ${filter === 'Vehículo Hurtado' ? 'active' : ''}`} onClick={() => setFilter('Vehículo Hurtado')}>Hurtados</button>
-          <button className={`filter-pill ${filter === 'Vehículo con Problemas' ? 'active' : ''}`} onClick={() => setFilter('Vehículo con Problemas')}>Otros Problemas</button>
-        </div>
-        
-        <div className="search-box">
-          <Search size={18} />
-          <input 
-            type="text" 
-            placeholder="Buscar por placa o propietario..." 
+        <div className="search-box" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-card)', padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100%', maxWidth: '400px' }}>
+          <Search size={18} className="text-muted" />
+          <input
+            type="text"
+            placeholder="Buscar por placa, operador u observación..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ border: 'none', background: 'transparent', outline: 'none', color: 'var(--text-primary)', fontSize: '0.85rem', width: '100%' }}
           />
         </div>
       </div>
@@ -79,30 +59,37 @@ export const Novedades: React.FC = () => {
         <table className="data-table">
           <thead>
             <tr>
+              <th>ID</th>
               <th>PLACA</th>
-              <th>TIPO ALERTA</th>
+              <th>TIPO ALERTA / NOVEDAD</th>
               <th>FECHA Y HORA</th>
-              <th>PROPIETARIO</th>
+              <th>OBSERVACIÓN</th>
               <th className="text-right">ACCIONES</th>
             </tr>
           </thead>
           <tbody>
             {filteredData.length > 0 ? (
-              filteredData.map((n, i) => (
-                <tr key={i}>
+              filteredData.map((n) => (
+                <tr key={n.id}>
+                  <td className="font-bold text-muted">{n.id}</td>
                   <td>
-                    <div className="novedades-plate-badge">
-                      <Car size={14} style={{ marginRight: 6, color: 'var(--text-secondary)' }}/>
+                    <div className="novedades-plate-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 'bold' }}>
+                      <Car size={14} style={{ color: 'var(--text-secondary)' }} />
                       {n.placa}
                     </div>
                   </td>
                   <td>
-                    <span className={`badge ${getBadgeClass(n.tipoNovedad)}`} style={{ display: 'inline-flex', gap: '6px' }}>
-                      {getIcon(n.tipoNovedad)} {n.tipoNovedad}
+                    <span className="badge badge-warning" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <AlertTriangle size={14} /> {n.tipoNovedad}
                     </span>
                   </td>
-                  <td className="text-muted">{n.fecha} <br/> <small>{n.hora}</small></td>
-                  <td>{n.propietario}</td>
+                  <td className="text-muted">
+                    {n.fecha} <br />
+                    <small>{n.hora}</small>
+                  </td>
+                  <td style={{ maxWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {n.observacion}
+                  </td>
                   <td className="text-right">
                     <button className="btn-action primary" onClick={() => setSelectedNovedad(n)}>
                       <Eye size={16} style={{ marginRight: '6px' }} /> Ver Detalle
@@ -112,8 +99,8 @@ export const Novedades: React.FC = () => {
               ))
             ) : (
               <tr>
-                <td colSpan={5} className="text-center text-muted" style={{ padding: '3rem' }}>
-                  No hay novedades registradas con estos filtros.
+                <td colSpan={6} className="text-center text-muted" style={{ padding: '3rem' }}>
+                  {isLoading ? 'Consultando novedades activas...' : 'No hay novedades u observaciones activas reportadas en los vehículos en parqueadero.'}
                 </td>
               </tr>
             )}
@@ -121,7 +108,7 @@ export const Novedades: React.FC = () => {
         </table>
       </div>
 
-      {/* Modal Dialog */}
+      {/* Modal Dialog Detalle */}
       {selectedNovedad && (
         <div className="modal-overlay">
           <div className="modal-card">
@@ -131,45 +118,37 @@ export const Novedades: React.FC = () => {
                 <X size={20} />
               </button>
             </div>
-            
+
             <div className="modal-body">
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
-                <span className={`badge ${getBadgeClass(selectedNovedad.tipoNovedad)}`} style={{ display: 'inline-flex', gap: '6px', fontSize: '1rem', padding: '6px 12px' }}>
-                  {getIcon(selectedNovedad.tipoNovedad)} {selectedNovedad.tipoNovedad}
+                <span className="badge badge-warning" style={{ display: 'inline-flex', gap: '6px', fontSize: '0.9rem', padding: '6px 12px' }}>
+                  <AlertTriangle size={16} /> {selectedNovedad.tipoNovedad}
                 </span>
               </div>
 
               <div className="novedad-details-grid">
                 <div className="detail-group">
-                  <label>Propietario</label>
+                  <label>Registrado por</label>
                   <p>{selectedNovedad.propietario}</p>
                 </div>
                 <div className="detail-group">
-                  <label>Celular de Contacto</label>
+                  <label>Teléfono de Contacto</label>
                   <p>{selectedNovedad.celular}</p>
                 </div>
                 <div className="detail-group">
-                  <label>Fecha y Hora</label>
+                  <label>Fecha y Hora de Ingreso</label>
                   <p>{selectedNovedad.fecha} - {selectedNovedad.hora}</p>
                 </div>
                 <div className="detail-group">
-                  <label>ID Reporte</label>
+                  <label>ID Registro</label>
                   <p>{selectedNovedad.id}</p>
                 </div>
               </div>
 
               <div className="detail-group" style={{ marginTop: '1rem' }}>
-                <label>Observaciones del Incidente</label>
-                <div style={{ background: 'var(--bg-main)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', marginTop: '6px' }}>
-                  <p style={{ fontSize: '0.95rem' }}>{selectedNovedad.observacion}</p>
-                </div>
-              </div>
-
-              <div className="detail-group" style={{ marginTop: '1rem' }}>
-                <label>Evidencia Adjunta</label>
-                <div className="evidence-photo">
-                  <ImageIcon size={32} opacity={0.5} />
-                  <span>Sin evidencia fotográfica</span>
+                <label>Observaciones Registradas</label>
+                <div style={{ background: 'var(--bg-body)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', marginTop: '6px' }}>
+                  <p style={{ fontSize: '0.95rem', margin: 0 }}>{selectedNovedad.observacion}</p>
                 </div>
               </div>
             </div>
