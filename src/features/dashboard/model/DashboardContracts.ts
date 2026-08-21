@@ -5,6 +5,7 @@ export interface DailySummaryDto {
   averageDurationMinutes?: number;
   revenueByVehicleType?: Record<string, number>;
   countByVehicleType?: Record<string, number>;
+  revenueByPaymentMethod?: Record<string, number>;
   // Fallbacks legacy
   totalTickets?: number;
   activeTickets?: number;
@@ -32,4 +33,7 @@ export interface RecentTicketDto {
   entryTimeUtc: string;
   status: number | string;
   hourlyRate?: number;
+  operatorName?: string;
+  customerPhone?: string | null;
+  notes?: string | null;
 }

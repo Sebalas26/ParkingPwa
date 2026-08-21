@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Car, Bike, Truck, Plus, CheckCircle, Search, X } from 'lucide-react';
 import { vehicleService } from '../data/vehicleService';
 import type { TicketDto } from '../model/VehicleContracts';
+import { formatTime, calculateDuration } from '../../../shared/utils/dateUtils';
 import './Vehicles.css';
 
 export const Vehicles: React.FC = () => {
@@ -68,17 +69,6 @@ export const Vehicles: React.FC = () => {
       default:
         return 'Auto';
     }
-  };
-
-  const calculateDuration = (entryDateUtc: string) => {
-    if (!entryDateUtc) return '0 min';
-    const entry = new Date(entryDateUtc).getTime();
-    const now = new Date().getTime();
-    const diffMs = Math.max(0, now - entry);
-    const diffMins = Math.floor(diffMs / 60000);
-    const hours = Math.floor(diffMins / 60);
-    const mins = diffMins % 60;
-    return hours > 0 ? `${hours}h ${mins}m` : `${mins} min`;
   };
 
   const displayedVehicles = vehicles.filter((v) => {
@@ -157,9 +147,11 @@ export const Vehicles: React.FC = () => {
                       </div>
                     </td>
                     <td className="text-muted">
-                      {v.entryTimeUtc ? new Date(v.entryTimeUtc).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}
+                      {formatTime(v.entryTimeUtc || (v as any).entryTime || (v as any).createdAtUtc || (v as any).entryDate)}
                     </td>
-                    <td className="font-bold">{calculateDuration(v.entryTimeUtc)}</td>
+                    <td className="font-bold">
+                      {calculateDuration(v.entryTimeUtc || (v as any).entryTime || (v as any).createdAtUtc || (v as any).entryDate)}
+                    </td>
                     <td className="text-muted">${(v.hourlyRate || 0).toLocaleString()} /hr</td>
                     <td>
                       <span className="badge badge-success" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>

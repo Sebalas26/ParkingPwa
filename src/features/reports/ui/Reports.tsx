@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx';
 import { Calendar, Download } from 'lucide-react';
 import { reportsService } from '../data/reportsService';
 import type { ReportTicketDto } from '../model/ReportContracts';
+import { formatDateTime } from '../../../shared/utils/dateUtils';
 import './Reports.css';
 
 export const Reports: React.FC = () => {
@@ -218,10 +219,10 @@ export const Reports: React.FC = () => {
                   <td className="font-bold text-muted">{t.ticketNumber}</td>
                   <td className="font-bold text-primary">{t.plateNumber}</td>
                   <td className="text-muted">
-                    {t.entryTimeUtc ? new Date(t.entryTimeUtc).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : '--'}
+                    {formatDateTime(t.entryTimeUtc || (t as any).entryTime || (t as any).createdAtUtc || (t as any).entryDate)}
                   </td>
                   <td className="text-muted">
-                    {t.exitTimeUtc ? new Date(t.exitTimeUtc).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'En parqueadero'}
+                    {t.exitTimeUtc ? formatDateTime(t.exitTimeUtc || (t as any).exitTime) : 'En parqueadero'}
                   </td>
                   <td>{t.totalDurationMinutes ? `${t.totalDurationMinutes} min` : '--'}</td>
                   <td className="text-right text-muted">${(t.grossAmount || 0).toLocaleString()}</td>
