@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, Users, ArrowUpRight, CheckCircle, XCircle, Download, Calendar, User, Plus, LogOut, X } from 'lucide-react';
+import { Wallet, Users, ArrowUpRight, CheckCircle, XCircle, Download, Calendar, User, Plus, LogOut, X, Building } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { cajaService } from '../data/cajaService';
 import type { WorkShiftDto } from '../model/CajaContracts';
+import { useParqueaderoContext } from '../../../shared/context/ParqueaderoContext';
+import { authService } from '../../auth/data/authService';
 import './Caja.css';
 
 export const Caja: React.FC = () => {
+  const { selectedParqueadero, selectedParqueaderoId } = useParqueaderoContext();
   const [activeShift, setActiveShift] = useState<WorkShiftDto | null>(null);
   const [shiftHistory, setShiftHistory] = useState<WorkShiftDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -24,7 +27,7 @@ export const Caja: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [selectedParqueaderoId]);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -121,16 +124,23 @@ export const Caja: React.FC = () => {
     <div className="caja-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', height: '100%', overflowY: 'auto', paddingBottom: '2rem' }}>
       <div className="caja-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1>Monitoreo y Control de Caja</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h1>Monitoreo y Control de Caja</h1>
+            <span className="badge badge-success" style={{ background: 'rgba(37, 99, 235, 0.12)', color: 'var(--primary-color)', fontSize: '0.82rem', padding: '4px 8px' }}>
+              <Building size={12} style={{ marginRight: 4 }} />
+              {selectedParqueadero ? selectedParqueadero.name : '🌐 Todos los Parqueaderos'}
+            </span>
+          </div>
           <p className="text-muted" style={{ margin: 0, fontSize: '0.9rem' }}>Gestión en tiempo real de apertura, turnos y recaudación del sistema POS.</p>
         </div>
 
         <div style={{ display: 'flex', gap: '10px' }}>
-          {!activeShift ? (
+          {!activeShift && authService.hasPermission('shift.open') && (
             <button className="btn-primary" style={{ width: 'auto' }} onClick={() => setIsOpenShiftModalOpen(true)}>
               <Plus size={16} /> Abrir Turno de Caja
             </button>
-          ) : (
+          )}
+          {activeShift && authService.hasPermission('shift.close') && (
             <button className="btn-primary" style={{ width: 'auto', background: 'var(--danger-color)' }} onClick={() => {
               setActualCashCounted(totalEnCajaTurno);
               setIsCloseShiftModalOpen(true);
@@ -265,9 +275,11 @@ export const Caja: React.FC = () => {
             </div>
 
             {/* Botón Exportar */}
-            <button className="btn-action primary" onClick={exportToExcel} style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Download size={16} /> Exportar Excel
-            </button>
+            {authService.hasPermission('shift.history') && (
+              <button className="btn-action primary" onClick={exportToExcel} style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Download size={16} /> Exportar Excel
+              </button>
+            )}
           </div>
         </div>
 

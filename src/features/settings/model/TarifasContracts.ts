@@ -1,12 +1,15 @@
 export interface VehicleRateDto {
   rateId: string;
   vehicleType: number | string;
+  displayName: string;
   hourRate: number;
   minuteRate: number;
   fullDayRate: number;
   gracePeriodMinutes: number;
-  effectiveFromUtc?: string;
+  iconKey?: string;
   isActive: boolean;
+  createdAtUtc?: string;
+  updatedAtUtc?: string;
 }
 
 export interface UpdateVehicleRateDto {
@@ -14,4 +17,6 @@ export interface UpdateVehicleRateDto {
   minuteRate: number;
   fullDayRate: number;
   gracePeriodMinutes: number;
+  displayName?: string;
+  iconKey?: string;
 }

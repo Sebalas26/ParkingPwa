@@ -1,15 +1,6 @@
 import { apiClient } from '../../../shared/api/apiClient';
 import type { VehiculoConfigDto, SaveVehiculoConfigDto } from '../model/VehiculosConfigContracts';
 
-let localVehicleConfigs: VehiculoConfigDto[] = [
-  { id: 'VCFG-01', category: 'Automóvil / Sedán', maxDurationHours: 24, requiresSpecialPermit: false, accessPriority: 'Alta', allowedZones: ['Zona A', 'Zona B'] },
-  { id: 'VCFG-02', category: 'Motocicleta', maxDurationHours: 24, requiresSpecialPermit: false, accessPriority: 'Normal', allowedZones: ['Zona D'] },
-  { id: 'VCFG-03', category: 'Camioneta / SUV', maxDurationHours: 24, requiresSpecialPermit: false, accessPriority: 'Normal', allowedZones: ['Zona A', 'Zona B'] },
-  { id: 'VCFG-04', category: 'Furgón / Minibús', maxDurationHours: 12, requiresSpecialPermit: false, accessPriority: 'Normal', allowedZones: ['Zona B', 'Zona C'] },
-  { id: 'VCFG-05', category: 'Vehículo Pesado / Camión', maxDurationHours: 12, requiresSpecialPermit: true, accessPriority: 'Baja', allowedZones: ['Zona C'] },
-  { id: 'VCFG-06', category: 'Bicicleta', maxDurationHours: 24, requiresSpecialPermit: false, accessPriority: 'Normal', allowedZones: ['Zona D'] },
-];
-
 export const getCategoryName = (r: any): string => {
   if (r.displayName && typeof r.displayName === 'string' && r.displayName.trim()) {
     return r.displayName;
@@ -61,26 +52,26 @@ export const vehiculosConfigService = {
         });
       }
     } catch (err) {
-      console.warn('Error fetching vehicle rates for categories, using fallback:', err);
+      console.warn('Error fetching vehicle rates for categories from API:', err);
     }
-    return [...localVehicleConfigs];
+    return [];
   },
 
   saveConfig: async (cfg: SaveVehiculoConfigDto): Promise<VehiculoConfigDto> => {
-    if (cfg.id) {
-      localVehicleConfigs = localVehicleConfigs.map((c) => (c.id === cfg.id ? { ...c, ...cfg } as VehiculoConfigDto : c));
-      return localVehicleConfigs.find((c) => c.id === cfg.id)!;
-    } else {
-      const newCfg: VehiculoConfigDto = {
-        id: `VCFG-0${localVehicleConfigs.length + 1}`,
-        category: cfg.category,
-        maxDurationHours: cfg.maxDurationHours || 12,
-        requiresSpecialPermit: Boolean(cfg.requiresSpecialPermit),
-        accessPriority: cfg.accessPriority || 'Normal',
-        allowedZones: cfg.allowedZones || ['Zona General'],
-      };
-      localVehicleConfigs.push(newCfg);
-      return newCfg;
+    try {
+      const result = await apiClient.post<VehiculoConfigDto>('/VehicleRates', cfg);
+      if (result) return result;
+    } catch (err) {
+      console.warn('Error saving vehicle config via API:', err);
     }
+
+    return {
+      id: cfg.id || 'VCFG-01',
+      category: cfg.category,
+      maxDurationHours: cfg.maxDurationHours || 12,
+      requiresSpecialPermit: Boolean(cfg.requiresSpecialPermit),
+      accessPriority: cfg.accessPriority || 'Normal',
+      allowedZones: cfg.allowedZones || ['Zona General'],
+    };
   },
 };

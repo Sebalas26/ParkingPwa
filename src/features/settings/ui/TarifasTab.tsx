@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Edit2, X } from 'lucide-react';
 import type { VehicleRateDto, UpdateVehicleRateDto } from '../model/TarifasContracts';
 import { tarifasService } from '../data/tarifasService';
+import { authService } from '../../auth/data/authService';
 
 export const TarifasTab: React.FC = () => {
   const [tarifas, setTarifas] = useState<VehicleRateDto[]>([]);
@@ -118,9 +119,11 @@ export const TarifasTab: React.FC = () => {
                 </td>
                 <td className="text-right">
                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                    <button className="btn-action primary" onClick={() => handleOpenEdit(t)}>
-                      <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
-                    </button>
+                    {(authService.hasPermission('settings.tarifas.manage') || authService.hasPermission('rates.manage')) && (
+                      <button className="btn-action primary" onClick={() => handleOpenEdit(t)}>
+                        <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>

@@ -7,25 +7,28 @@ import { Reports } from './features/reports/ui/Reports';
 import { Settings } from './features/settings/ui/Settings';
 import { Caja } from './features/caja/ui/Caja';
 import { Novedades } from './features/novedades/ui/Novedades';
+import { ParqueaderoProvider } from './shared/context/ParqueaderoContext';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        
-        <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="caja" element={<Caja />} />
-          <Route path="vehicles" element={<Vehicles />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="novedades" element={<Novedades />} />
-          <Route path="settings" element={<Settings />} />
-        </Route>
+    <ParqueaderoProvider>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          
+          <Route path="/dashboard" element={<DashboardLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="caja" element={<Caja />} />
+            <Route path="vehicles" element={<Vehicles />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="novedades" element={<Novedades />} />
+            <Route path="settings" element={<Settings />} />
+          </Route>
 
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </Router>
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </Router>
+    </ParqueaderoProvider>
   );
 }
 

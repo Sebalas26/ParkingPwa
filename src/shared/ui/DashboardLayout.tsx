@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { authService } from '../../features/auth/data/authService';
-import { Car, LayoutDashboard, BarChart, Settings, LogOut, User, Wallet, BellRing, RefreshCw } from 'lucide-react';
-import { ThemeSelector } from './ThemeSelector';
+import { Car, LayoutDashboard, BarChart, Settings, LogOut, User, Wallet, BellRing, RefreshCw, Building } from 'lucide-react';
 import { PwaInstallPrompt } from './PwaInstallPrompt';
 import { OfflineBanner } from './OfflineBanner';
+import { useParqueaderoContext } from '../context/ParqueaderoContext';
 import './DashboardLayout.css';
 
 const WatermarkLogo = () => (
@@ -28,10 +28,7 @@ export const DashboardLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const user = authService.getCurrentUser();
-
-  const [currentTheme, setCurrentTheme] = useState<string>(() => {
-    return localStorage.getItem('parking_pwa_theme') || 'blanco-empresarial';
-  });
+  const { parqueaderosList, selectedParqueaderoId, setSelectedParqueaderoId } = useParqueaderoContext();
 
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
 
@@ -39,11 +36,6 @@ export const DashboardLayout: React.FC = () => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
-
-  const handleSelectTheme = (themeId: string) => {
-    setCurrentTheme(themeId);
-    localStorage.setItem('parking_pwa_theme', themeId);
-  };
 
   const handleLogout = () => {
     authService.logout();
@@ -63,7 +55,7 @@ export const DashboardLayout: React.FC = () => {
   });
 
   return (
-    <div className="dashboard-layout" data-theme={currentTheme}>
+    <div className="dashboard-layout">
       <OfflineBanner />
 
       <aside className="sidebar">
@@ -75,24 +67,36 @@ export const DashboardLayout: React.FC = () => {
           <h2>Admin Estacionamiento</h2>
         </div>
         <nav className="sidebar-nav">
-          <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard'); }} className={`nav-item ${location.pathname === '/dashboard' ? 'active' : ''}`}>
-            <LayoutDashboard size={18} /> Dashboard
-          </a>
-          <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/caja'); }} className={`nav-item ${location.pathname === '/dashboard/caja' ? 'active' : ''}`}>
-            <Wallet size={18} /> Caja
-          </a>
-          <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/vehicles'); }} className={`nav-item ${location.pathname === '/dashboard/vehicles' ? 'active' : ''}`}>
-            <Car size={18} /> Activos
-          </a>
-          <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/reports'); }} className={`nav-item ${location.pathname === '/dashboard/reports' ? 'active' : ''}`}>
-            <BarChart size={18} /> Reportes
-          </a>
-          <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/novedades'); }} className={`nav-item ${location.pathname === '/dashboard/novedades' ? 'active' : ''}`}>
-            <BellRing size={18} /> Novedades
-          </a>
-          <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/settings'); }} className={`nav-item ${location.pathname === '/dashboard/settings' ? 'active' : ''}`}>
-            <Settings size={18} /> Configuración
-          </a>
+          {(authService.hasPermission('dashboard.view') || authService.hasModule('dashboard')) && (
+            <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard'); }} className={`nav-item ${location.pathname === '/dashboard' ? 'active' : ''}`}>
+              <LayoutDashboard size={18} /> Dashboard
+            </a>
+          )}
+          {(authService.hasPermission('checkout.view') || authService.hasModule('checkout')) && (
+            <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/caja'); }} className={`nav-item ${location.pathname === '/dashboard/caja' ? 'active' : ''}`}>
+              <Wallet size={18} /> Caja
+            </a>
+          )}
+          {(authService.hasPermission('checkin.view') || authService.hasModule('checkin')) && (
+            <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/vehicles'); }} className={`nav-item ${location.pathname === '/dashboard/vehicles' ? 'active' : ''}`}>
+              <Car size={18} /> Activos
+            </a>
+          )}
+          {(authService.hasPermission('reports.view') || authService.hasModule('reports')) && (
+            <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/reports'); }} className={`nav-item ${location.pathname === '/dashboard/reports' ? 'active' : ''}`}>
+              <BarChart size={18} /> Reportes
+            </a>
+          )}
+          {(authService.hasPermission('novedades.view') || authService.hasModule('novedades')) && (
+            <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/novedades'); }} className={`nav-item ${location.pathname === '/dashboard/novedades' ? 'active' : ''}`}>
+              <BellRing size={18} /> Novedades
+            </a>
+          )}
+          {(authService.hasPermission('settings.parqueaderos.view') || authService.hasPermission('settings.tarifas.view') || authService.hasPermission('settings.usuarios.view') || authService.hasModule('settings')) && (
+            <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/settings'); }} className={`nav-item ${location.pathname === '/dashboard/settings' ? 'active' : ''}`}>
+              <Settings size={18} /> Configuración
+            </a>
+          )}
         </nav>
         <div className="sidebar-footer">
           <div className="profile-avatar">
@@ -111,9 +115,38 @@ export const DashboardLayout: React.FC = () => {
       <main className="main-content">
         <header className="top-bar">
           <div className="header-actions">
+            {/* Selector Global de Parqueadero (Oculto en módulo de Configuración) */}
+            {!location.pathname.includes('/settings') && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-card, rgba(255,255,255,0.9))', padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border-color, #cbd5e1)', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                <Building size={16} style={{ color: '#07665e' }} />
+                <select
+                  value={selectedParqueaderoId}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSelectedParqueaderoId(val === 'all' ? 'all' : Number(val));
+                  }}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    fontWeight: 600,
+                    fontSize: '0.88rem',
+                    color: 'var(--text-primary, #1e293b)',
+                    outline: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <option value="all">🌐 Todos los Parqueaderos</option>
+                  {parqueaderosList.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      🏢 {p.name} {p.isMainImage ? '⭐' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <PwaInstallPrompt />
-            <ThemeSelector currentTheme={currentTheme} onSelectTheme={handleSelectTheme} />
-            <button className="btn-action primary" style={{ height: '36px', padding: '0 16px' }} onClick={() => window.location.reload()}>
+            <button className="btn-action primary" style={{ height: '36px', padding: '0 16px', background: '#07665e' }} onClick={() => window.location.reload()}>
               <RefreshCw size={16} style={{ marginRight: '6px' }} /> Actualizar Datos
             </button>
             <div className="date-display">

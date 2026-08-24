@@ -4,10 +4,15 @@ import type { PaymentMethodDto, SavePaymentMethodDto } from '../model/MediosPago
 export const mediosPagoService = {
   getPaymentMethods: async (): Promise<PaymentMethodDto[]> => {
     try {
-      const data = await apiClient.get<PaymentMethodDto[]>('/PaymentMethod');
+      const data = await apiClient.get<PaymentMethodDto[]>('/PaymentMethod/GetPaymentMethods');
       return data || [];
     } catch {
-      return [];
+      try {
+        const fallback = await apiClient.get<PaymentMethodDto[]>('/PaymentMethod');
+        return fallback || [];
+      } catch {
+        return [];
+      }
     }
   },
 

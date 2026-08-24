@@ -1,5 +1,5 @@
 import { apiClient } from '../../../shared/api/apiClient';
-import type { CommercialAgreementDto, SaveCommercialAgreementDto } from '../model/ConveniosContracts';
+import type { CommercialAgreementDto, SaveCommercialAgreementDto, StoreDto } from '../model/ConveniosContracts';
 
 export const conveniosService = {
   getAllAgreements: async (): Promise<CommercialAgreementDto[]> => {
@@ -13,6 +13,19 @@ export const conveniosService = {
 
   getAgreementById: async (id: string): Promise<CommercialAgreementDto | null> => {
     return await apiClient.get<CommercialAgreementDto>(`/Agreements/${id}`);
+  },
+
+  getStores: async (): Promise<StoreDto[]> => {
+    try {
+      const data = await apiClient.get<StoreDto[]>('/Stores');
+      return data || [];
+    } catch {
+      return [];
+    }
+  },
+
+  createStore: async (store: { name: string; contactPhone?: string; email?: string }): Promise<StoreDto> => {
+    return await apiClient.post<StoreDto>('/Stores', store);
   },
 
   createAgreement: async (agreement: SaveCommercialAgreementDto): Promise<CommercialAgreementDto> => {

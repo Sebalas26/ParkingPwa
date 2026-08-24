@@ -1,33 +1,63 @@
-export interface UserRoleDto {
+export interface GetIdentificationTypeDto {
   id: number;
   name: string;
-  description?: string;
-  isActive?: boolean;
+  identification?: string;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface GetUserRoleDto {
+  idUserRol: number;
+  roleName: string;
+  id?: number;
+  role?: string;
+  name?: string;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface UserDto {
   id: number;
-  name?: string;
-  fullName?: string;
-  username?: string;
-  email: string;
-  role?: string;
-  userRoleDto?: UserRoleDto;
-  status?: string | boolean;
-  isActive?: boolean;
+  userRoleId: number;
+  identificationTypeId: number;
+  identificationNumber: string;
+  firstName: string;
+  middleName?: string;
+  firstSurname: string;
+  secondLastName?: string;
+  fullName: string;
+  username: string;
   password?: string;
-  lastLogin?: string;
+  email: string;
+  assignmentDate?: string | null;
+  expirationDate?: string | null;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  userRoleDto?: GetUserRoleDto;
+  identificationTypeDto?: GetIdentificationTypeDto;
+  name?: string;
+  role?: string;
+  status?: string | boolean;
 }
 
 export interface SaveUserDto {
   id?: number;
-  name?: string;
-  fullName?: string;
-  email: string;
-  role?: string;
-  userRoleId?: number;
-  status?: string | boolean;
-  isActive?: boolean;
-  username?: string;
+  userRoleId: number;
+  identificationTypeId: number;
+  identificationNumber: string;
+  firstName: string;
+  middleName?: string;
+  firstSurname: string;
+  secondLastName?: string;
+  fullName: string;
+  username: string;
   password?: string;
+  email: string;
+  isActive: boolean;
+  name?: string;
+  role?: string;
+  status?: string | boolean;
 }

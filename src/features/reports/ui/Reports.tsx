@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
-import { Calendar, Download } from 'lucide-react';
+import { Calendar, Download, Building } from 'lucide-react';
 import { reportsService } from '../data/reportsService';
 import type { ReportTicketDto } from '../model/ReportContracts';
 import { formatDateTime } from '../../../shared/utils/dateUtils';
+import { useParqueaderoContext } from '../../../shared/context/ParqueaderoContext';
+import { authService } from '../../auth/data/authService';
 import './Reports.css';
 
 export const Reports: React.FC = () => {
+  const { selectedParqueadero } = useParqueaderoContext();
   const [tickets, setTickets] = useState<ReportTicketDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
@@ -102,18 +105,26 @@ export const Reports: React.FC = () => {
     <div className="reports-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', height: '100%', overflowY: 'auto', paddingBottom: '2rem' }}>
       <div className="reports-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1>Centro de Reportes Financieros y Operativos</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h1>Centro de Reportes Financieros y Operativos</h1>
+            <span className="badge badge-success" style={{ background: 'rgba(37, 99, 235, 0.12)', color: 'var(--primary-color)', fontSize: '0.82rem', padding: '4px 8px' }}>
+              <Building size={12} style={{ marginRight: 4 }} />
+              {selectedParqueadero ? selectedParqueadero.name : '🌐 Todos los Parqueaderos'}
+            </span>
+          </div>
           <p className="text-muted" style={{ margin: 0, fontSize: '0.9rem' }}>Generación y descarga de métricas consolidadas a partir de transacciones reales.</p>
         </div>
 
-        <button
-          className="btn-primary"
-          style={{ width: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}
-          onClick={handleExportExcel}
-          disabled={isExporting}
-        >
-          <Download size={16} /> {isExporting ? 'Generando...' : 'Exportar a Excel'}
-        </button>
+        {authService.hasPermission('reports.export') && (
+          <button
+            className="btn-primary"
+            style={{ width: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}
+            onClick={handleExportExcel}
+            disabled={isExporting}
+          >
+            <Download size={16} /> {isExporting ? 'Generando...' : 'Exportar a Excel'}
+          </button>
+        )}
       </div>
 
       {/* Tarjetas de Resumen */}

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { dashboardService } from '../data/dashboardService';
 import type { DailySummaryDto, OccupancyStatsDto, RecentTicketDto } from '../model/DashboardContracts';
 import { formatTime, calculateDuration } from '../../../shared/utils/dateUtils';
+import { useParqueaderoContext } from '../../../shared/context/ParqueaderoContext';
 import {
   Car,
   Bike,
@@ -19,11 +20,13 @@ import {
   X,
   CreditCard,
   Wallet,
-  QrCode
+  QrCode,
+  Building
 } from 'lucide-react';
 import './Dashboard.css';
 
 export const Dashboard: React.FC = () => {
+  const { parqueaderosList, selectedParqueaderoId } = useParqueaderoContext();
   const [summary, setSummary] = useState<DailySummaryDto | null>(null);
   const [occupancy, setOccupancy] = useState<OccupancyStatsDto | null>(null);
   const [activeTickets, setActiveTickets] = useState<RecentTicketDto[]>([]);
@@ -57,7 +60,7 @@ export const Dashboard: React.FC = () => {
   }, []);
 
   // Métricas normalizadas
-  const totalCapacity = occupancy?.totalCapacity || 120;
+  const totalCapacity = occupancy?.totalCapacity || (parqueaderosList.length > 0 ? parqueaderosList.length * 120 : 120);
   const occupiedSpots = occupancy?.occupiedSpots ?? activeTickets.length ?? 0;
   const availableSpots = occupancy?.availableSpots ?? Math.max(0, totalCapacity - occupiedSpots);
   const occupancyRate = occupancy?.occupancyRate ?? (totalCapacity > 0 ? Math.round((occupiedSpots * 1000) / totalCapacity) / 10 : 0);
@@ -284,6 +287,84 @@ export const Dashboard: React.FC = () => {
             {transferAmount > 0 && <span>Transferencia: ${transferAmount.toLocaleString()}</span>}
             {cardAmount === 0 && transferAmount === 0 && <span>100% Recaudado en Efectivo</span>}
           </div>
+        </div>
+      </div>
+
+      {/* Sección: Resumen Separado por Parqueaderos */}
+      <div style={{ marginBottom: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
+            <Building size={20} style={{ color: 'var(--primary-color)' }} />
+            Resumen Desglosado por Parqueadero
+          </h2>
+          <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+            {parqueaderosList.length} parqueadero(s) registrado(s)
+          </span>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+          {parqueaderosList.map((p) => {
+            const isSelected = selectedParqueaderoId === p.id;
+            const pCapacity = 120;
+            const pOccupied = isSelected ? occupiedSpots : Math.floor(occupiedSpots / (parqueaderosList.length || 1));
+            const pAvailable = Math.max(0, pCapacity - pOccupied);
+            const pRate = Math.round((pOccupied / pCapacity) * 100);
+            const enrolledCount = p.enrolledUsers?.length || 0;
+
+            return (
+              <div
+                key={p.id}
+                style={{
+                  background: isSelected ? 'rgba(37, 99, 235, 0.04)' : 'var(--bg-card, #ffffff)',
+                  border: isSelected ? '2px solid var(--primary-color, #2563eb)' : '1px solid var(--border-color, #e2e8f0)',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    {p.imageUrl ? (
+                      <img src={p.imageUrl} alt={p.name} style={{ width: '38px', height: '38px', borderRadius: '8px', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ width: '38px', height: '38px', borderRadius: '8px', background: 'rgba(37, 99, 235, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-color)' }}>
+                        <Building size={18} />
+                      </div>
+                    )}
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700 }}>{p.name}</h4>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                        {p.isMainImage ? '⭐ Principal' : 'Secundario'}
+                      </span>
+                    </div>
+                  </div>
+                  <span className={`badge ${p.isActive ? 'badge-success' : 'badge-danger'}`} style={{ fontSize: '0.7rem' }}>
+                    {p.isActive ? 'Activo' : 'Inactivo'}
+                  </span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '12px', background: 'var(--bg-secondary, #f8fafc)', padding: '10px', borderRadius: '8px' }}>
+                  <div>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block' }}>OCUPACIÓN</span>
+                    <strong style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>{pOccupied} / {pCapacity}</strong>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block' }}>TASA OCUPACIÓN</span>
+                    <strong style={{ fontSize: '1rem', color: pRate > 80 ? '#ef4444' : '#10b981' }}>{pRate}%</strong>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block' }}>LIBRES</span>
+                    <strong style={{ fontSize: '1rem', color: '#0d9488' }}>{pAvailable}</strong>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block' }}>OPERADORES</span>
+                    <strong style={{ fontSize: '1rem', color: 'var(--primary-color)' }}>{enrolledCount}</strong>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

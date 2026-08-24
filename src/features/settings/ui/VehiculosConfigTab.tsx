@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, X } from 'lucide-react';
 import type { VehiculoConfigDto, SaveVehiculoConfigDto } from '../model/VehiculosConfigContracts';
 import { vehiculosConfigService } from '../data/vehiculosConfigService';
+import { authService } from '../../auth/data/authService';
 
 export const VehiculosConfigTab: React.FC = () => {
   const [configs, setConfigs] = useState<VehiculoConfigDto[]>([]);
@@ -62,9 +63,11 @@ export const VehiculosConfigTab: React.FC = () => {
           <h2>Configuración de Categorías de Vehículos</h2>
           <p>Define reglas de permanencia máxima, prioridad de acceso y zonas autorizadas por categoría de vehículo.</p>
         </div>
-        <button className="btn-primary" style={{ width: 'auto' }} onClick={handleOpenCreate}>
-          <Plus size={16} /> Crear Categoría
-        </button>
+        {authService.hasPermission('settings.vehiculos.manage') && (
+          <button className="btn-primary" style={{ width: 'auto' }} onClick={handleOpenCreate}>
+            <Plus size={16} /> Crear Categoría
+          </button>
+        )}
       </div>
 
       <table className="data-table">
@@ -115,9 +118,11 @@ export const VehiculosConfigTab: React.FC = () => {
                 <td className="text-muted">{c.allowedZones.join(', ')}</td>
                 <td className="text-right">
                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                    <button className="btn-action primary" onClick={() => handleOpenEdit(c)}>
-                      <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
-                    </button>
+                    {authService.hasPermission('settings.vehiculos.manage') && (
+                      <button className="btn-action primary" onClick={() => handleOpenEdit(c)}>
+                        <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>

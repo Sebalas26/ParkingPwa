@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Eye, AlertTriangle, Car, X } from 'lucide-react';
+import { Search, Eye, AlertTriangle, Car, X, Building } from 'lucide-react';
 import { novedadesService } from '../data/novedadesService';
 import type { NovedadDto } from '../model/NovedadesContracts';
+import { useParqueaderoContext } from '../../../shared/context/ParqueaderoContext';
 import './Novedades.css';
 
 export const Novedades: React.FC = () => {
+  const { selectedParqueadero, selectedParqueaderoId } = useParqueaderoContext();
   const [novedades, setNovedades] = useState<NovedadDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -12,7 +14,7 @@ export const Novedades: React.FC = () => {
 
   useEffect(() => {
     loadNovedades();
-  }, []);
+  }, [selectedParqueaderoId]);
 
   const loadNovedades = async () => {
     setIsLoading(true);
@@ -38,7 +40,13 @@ export const Novedades: React.FC = () => {
   return (
     <div className="novedades-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', height: '100%', overflowY: 'auto', paddingBottom: '2rem' }}>
       <div className="novedades-header">
-        <h1>Novedades e Incidencias en Sitio</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <h1>Novedades e Incidencias en Sitio</h1>
+          <span className="badge badge-success" style={{ background: 'rgba(37, 99, 235, 0.12)', color: 'var(--primary-color)', fontSize: '0.82rem', padding: '4px 8px' }}>
+            <Building size={12} style={{ marginRight: 4 }} />
+            {selectedParqueadero ? selectedParqueadero.name : '🌐 Todos los Parqueaderos'}
+          </span>
+        </div>
         <p className="text-muted" style={{ margin: 0, fontSize: '0.9rem' }}>Monitoreo de observaciones y alertas reportadas en los ingresos de vehículos activos.</p>
       </div>
 
