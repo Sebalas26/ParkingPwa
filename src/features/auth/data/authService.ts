@@ -58,6 +58,7 @@ export const authService = {
       token: response.token,
       permissions: userPermissions,
       modules: userModules,
+      branches: response.branches || [],
     };
 
     localStorage.setItem('auth_user', JSON.stringify(session));

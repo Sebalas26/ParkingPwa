@@ -1,19 +1,38 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import type { BranchDto } from '../../features/settings/model/BranchesContracts';
+import { branchesService } from '../../features/settings/data/branchesService';
 import type { ParqueaderoDto } from '../../features/settings/model/ParqueaderosContracts';
-import { parqueaderosService } from '../../features/settings/data/parqueaderosService';
 
-interface ParqueaderoContextType {
+interface BranchContextType {
+  // Nueva API Multi-Sede
+  branchesList: BranchDto[];
+  activeBranchId: number | null;
+  activeBranch: BranchDto | null;
+  setActiveBranchId: (id: number | null) => void;
+  refreshBranches: () => Promise<void>;
+  isLoadingBranches: boolean;
+  hasZeroBranches: boolean;
+
+  // Compatibilidad con vistas existentes
   parqueaderosList: ParqueaderoDto[];
-  selectedParqueaderoId: number | 'all';
+  selectedParqueaderoId: number | null;
   selectedParqueadero: ParqueaderoDto | null;
-  setSelectedParqueaderoId: (id: number | 'all') => void;
+  setSelectedParqueaderoId: (id: number | null) => void;
   refreshParqueaderos: () => Promise<void>;
   isLoadingParqueaderos: boolean;
 }
 
-const ParqueaderoContext = createContext<ParqueaderoContextType>({
+const BranchContext = createContext<BranchContextType>({
+  branchesList: [],
+  activeBranchId: null,
+  activeBranch: null,
+  setActiveBranchId: () => {},
+  refreshBranches: async () => {},
+  isLoadingBranches: false,
+  hasZeroBranches: false,
+
   parqueaderosList: [],
-  selectedParqueaderoId: 'all',
+  selectedParqueaderoId: null,
   selectedParqueadero: null,
   setSelectedParqueaderoId: () => {},
   refreshParqueaderos: async () => {},
@@ -21,64 +40,131 @@ const ParqueaderoContext = createContext<ParqueaderoContextType>({
 });
 
 export const ParqueaderoProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [parqueaderosList, setParqueaderosList] = useState<ParqueaderoDto[]>([]);
-  const [isLoadingParqueaderos, setIsLoadingParqueaderos] = useState<boolean>(true);
-  const [selectedParqueaderoId, setSelectedParqueaderoIdState] = useState<number | 'all'>(() => {
-    const saved = localStorage.getItem('parkflow_selected_parqueadero_id');
-    if (saved === 'all') return 'all';
+  const [branchesList, setBranchesList] = useState<BranchDto[]>([]);
+  const [isLoadingBranches, setIsLoadingBranches] = useState<boolean>(true);
+  const [activeBranchId, setActiveBranchIdState] = useState<number | null>(() => {
+    const saved = localStorage.getItem('parkflow_active_branch_id') || localStorage.getItem('parkflow_selected_parqueadero_id');
+    if (!saved || saved === 'all') return null;
     const num = Number(saved);
-    return isNaN(num) ? 'all' : num;
+    return isNaN(num) ? null : num;
   });
 
-  const refreshParqueaderos = async () => {
-    setIsLoadingParqueaderos(true);
+  const refreshBranches = useCallback(async () => {
+    setIsLoadingBranches(true);
     try {
-      const data = await parqueaderosService.getParqueaderos();
-      setParqueaderosList(data || []);
-      
-      // Si el ID guardado no existe en la lista y no es 'all', seleccionar el primero disponible
-      if (data && data.length > 0 && selectedParqueaderoId !== 'all') {
-        const exists = data.some((p) => p.id === selectedParqueaderoId);
-        if (!exists) {
-          const main = data.find((p) => p.isMainImage) || data[0];
-          setSelectedParqueaderoIdState(main.id);
-          localStorage.setItem('parkflow_selected_parqueadero_id', String(main.id));
-        }
+      const data = await branchesService.getAll();
+      setBranchesList(data || []);
+
+      if (data && data.length > 0) {
+        // Si no hay sede activa seleccionada o la seleccionada ya no existe, elegir la primera
+        setActiveBranchIdState((prevId) => {
+          const exists = prevId !== null && data.some((b) => b.id === prevId);
+          if (!exists) {
+            const defaultBranch = data.find((b) => b.isActive) || data[0];
+            localStorage.setItem('parkflow_active_branch_id', String(defaultBranch.id));
+            localStorage.setItem('parkflow_selected_parqueadero_id', String(defaultBranch.id));
+            return defaultBranch.id;
+          }
+          return prevId;
+        });
+      } else {
+        setActiveBranchIdState(null);
+        localStorage.removeItem('parkflow_active_branch_id');
+        localStorage.removeItem('parkflow_selected_parqueadero_id');
       }
     } catch (err) {
-      console.error('Error al cargar lista de parqueaderos en contexto:', err);
+      console.error('Error al sincronizar sedes en contexto:', err);
     } finally {
-      setIsLoadingParqueaderos(false);
+      setIsLoadingBranches(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshBranches();
+  }, [refreshBranches]);
+
+  const setActiveBranchId = (id: number | null) => {
+    setActiveBranchIdState(id);
+    if (id !== null) {
+      localStorage.setItem('parkflow_active_branch_id', String(id));
+      localStorage.setItem('parkflow_selected_parqueadero_id', String(id));
+    } else {
+      localStorage.removeItem('parkflow_active_branch_id');
+      localStorage.removeItem('parkflow_selected_parqueadero_id');
     }
   };
 
-  useEffect(() => {
-    refreshParqueaderos();
-  }, []);
+  const activeBranch = activeBranchId !== null
+    ? branchesList.find((b) => b.id === activeBranchId) || null
+    : (branchesList.length > 0 ? branchesList[0] : null);
 
-  const setSelectedParqueaderoId = (id: number | 'all') => {
-    setSelectedParqueaderoIdState(id);
-    localStorage.setItem('parkflow_selected_parqueadero_id', String(id));
-  };
+  const hasZeroBranches = !isLoadingBranches && branchesList.length === 0;
 
-  const selectedParqueadero = selectedParqueaderoId === 'all'
-    ? null
-    : parqueaderosList.find((p) => p.id === selectedParqueaderoId) || null;
+  // Mapeo retrocompatible a ParqueaderoDto
+  const parqueaderosList: ParqueaderoDto[] = branchesList.map((b) => ({
+    id: b.id,
+    name: b.name,
+    description: b.notes || `${b.code} - ${b.city || ''}`,
+    address: b.address,
+    city: b.city,
+    totalCapacity: b.totalCapacity,
+    isActive: b.isActive,
+    imageUrl: b.imageUrl,
+    isMainImage: b.isMainImage,
+    enrolledUsers: [],
+    permissions: {
+      tarifas: true,
+      usuarios: true,
+      convenios: true,
+      vehiculos: true,
+      mediosPago: true,
+    },
+  }));
+
+  const selectedParqueadero = activeBranch ? {
+    id: activeBranch.id,
+    name: activeBranch.name,
+    description: activeBranch.notes,
+    address: activeBranch.address,
+    city: activeBranch.city,
+    totalCapacity: activeBranch.totalCapacity,
+    isActive: activeBranch.isActive,
+    imageUrl: activeBranch.imageUrl,
+    isMainImage: activeBranch.isMainImage,
+    enrolledUsers: [],
+    permissions: {
+      tarifas: true,
+      usuarios: true,
+      convenios: true,
+      vehiculos: true,
+      mediosPago: true,
+    },
+  } : null;
 
   return (
-    <ParqueaderoContext.Provider
+    <BranchContext.Provider
       value={{
+        branchesList,
+        activeBranchId,
+        activeBranch,
+        setActiveBranchId,
+        refreshBranches,
+        isLoadingBranches,
+        hasZeroBranches,
+
         parqueaderosList,
-        selectedParqueaderoId,
+        selectedParqueaderoId: activeBranchId,
         selectedParqueadero,
-        setSelectedParqueaderoId,
-        refreshParqueaderos,
-        isLoadingParqueaderos,
+        setSelectedParqueaderoId: setActiveBranchId,
+        refreshParqueaderos: refreshBranches,
+        isLoadingParqueaderos: isLoadingBranches,
       }}
     >
       {children}
-    </ParqueaderoContext.Provider>
+    </BranchContext.Provider>
   );
 };
 
-export const useParqueaderoContext = () => useContext(ParqueaderoContext);
+export const useBranchContext = () => useContext(BranchContext);
+export const useParqueaderoContext = () => useContext(BranchContext);
+

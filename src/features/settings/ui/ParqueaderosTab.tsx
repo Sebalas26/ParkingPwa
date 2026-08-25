@@ -1,350 +1,316 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, X, Star, Image as ImageIcon, Trash2, Building, SlidersHorizontal, CheckSquare, Square, Copy, ChevronDown, ChevronRight, DollarSign } from 'lucide-react';
-import type { ParqueaderoDto, SaveParqueaderoDto, ItemizedPermissionsDto } from '../model/ParqueaderosContracts';
-import type { VehicleRateDto, UpdateVehicleRateDto } from '../model/TarifasContracts';
-import { parqueaderosService } from '../data/parqueaderosService';
-import { tarifasService } from '../data/tarifasService';
-import { usuariosService } from '../data/usuariosService';
-import { conveniosService } from '../data/conveniosService';
+import {
+  Plus,
+  Edit2,
+  X,
+  Building2,
+  CreditCard,
+  Users,
+  CheckSquare,
+  Square,
+  Sparkles,
+  MapPin,
+  Phone,
+  Car,
+  Settings2,
+  UserCheck,
+  UserX,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  DollarSign,
+  Trash2,
+} from 'lucide-react';
+import type {
+  BranchDto,
+  CreateBranchDto,
+  UpdateBranchDto,
+  BranchPaymentMethodDto,
+} from '../model/BranchesContracts';
+import { branchesService } from '../data/branchesService';
 import { mediosPagoService } from '../data/mediosPagoService';
+import { usuariosService } from '../data/usuariosService';
+import { vehiculosConfigService } from '../data/vehiculosConfigService';
+import type { PaymentMethodDto } from '../model/MediosPagoContracts';
+import type { UserDto } from '../model/UsuariosContracts';
+import type { VehiculoConfigDto, SaveVehiculoConfigDto } from '../model/VehiculosConfigContracts';
+import { useBranchContext } from '../../../shared/context/ParqueaderoContext';
 import { authService } from '../../auth/data/authService';
 
-interface ModuleItem {
-  id: string | number;
-  name: string;
-  detail?: string;
-}
-
 export const ParqueaderosTab: React.FC = () => {
-  const [parqueaderos, setParqueaderos] = useState<ParqueaderoDto[]>([]);
+  const { refreshBranches, activeBranchId, setActiveBranchId } = useBranchContext();
+  const [branches, setBranches] = useState<BranchDto[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Modal Crear / Editar Sede
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingParqueadero, setEditingParqueadero] = useState<Partial<SaveParqueaderoDto> | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [editingBranch, setEditingBranch] = useState<(Partial<UpdateBranchDto> & { id?: number }) | null>(null);
+  const [isSavingBranch, setIsSavingBranch] = useState(false);
 
-  // Modal Parametrización
-  const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false);
-  const [targetParqueadero, setTargetParqueadero] = useState<ParqueaderoDto | null>(null);
-  const [inheritedFromId, setInheritedFromId] = useState<number | ''>('');
+  // Modal Parametrización por Sede
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [selectedBranch, setSelectedBranch] = useState<BranchDto | null>(null);
+  const [activeConfigTab, setActiveConfigTab] = useState<'payments' | 'users' | 'rates'>('payments');
 
-  // Listas Reales de los 4 Módulos
-  const [tarifasItems, setTarifasItems] = useState<ModuleItem[]>([]);
-  const [rawRates, setRawRates] = useState<VehicleRateDto[]>([]);
-  const [usuariosItems, setUsuariosItems] = useState<ModuleItem[]>([]);
-  const [conveniosItems, setConveniosItems] = useState<ModuleItem[]>([]);
-  const [mediosPagoItems, setMediosPagoItems] = useState<ModuleItem[]>([]);
-  const [isLoadingModuleItems, setIsLoadingModuleItems] = useState(false);
+  // Estado Medios de Pago por Sede
+  const [allPaymentMethods, setAllPaymentMethods] = useState<PaymentMethodDto[]>([]);
+  const [enabledPaymentMethodIds, setEnabledPaymentMethodIds] = useState<number[]>([]);
+  const [isLoadingPayments, setIsLoadingPayments] = useState(false);
+  const [isSavingPayments, setIsSavingPayments] = useState(false);
+  const [paymentSuccessMsg, setPaymentSuccessMsg] = useState<string | null>(null);
 
-  // Modal para Configurar Tarifa por Categoría de Vehículo
-  const [isRateModalOpen, setIsRateModalOpen] = useState(false);
-  const [editingRate, setEditingRate] = useState<VehicleRateDto | null>(null);
-  const [rateFormData, setRateFormData] = useState<UpdateVehicleRateDto>({
-    hourRate: 0,
-    minuteRate: 0,
-    fullDayRate: 0,
-    gracePeriodMinutes: 0,
-    displayName: '',
-  });
+  // Estado Asignación de Usuarios a Sede
+  const [allUsers, setAllUsers] = useState<UserDto[]>([]);
+  const [assignedUserIds, setAssignedUserIds] = useState<number[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [userSuccessMsg, setUserSuccessMsg] = useState<string | null>(null);
 
-  // Estado de ítems seleccionados por módulo
-  const [selectedItemized, setSelectedItemized] = useState<ItemizedPermissionsDto>({
-    tarifas: [],
-    usuarios: [],
-    convenios: [],
-    mediosPago: [],
-  });
-
-  // Módulos expandidos en el modal (Solo el primero abierto por defecto)
-  const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({
-    tarifas: true,
-    usuarios: false,
-    convenios: false,
-    mediosPago: false,
-  });
+  // Estado Tarifas Vehiculares de la Sede
+  const [branchRates, setBranchRates] = useState<VehiculoConfigDto[]>([]);
+  const [isLoadingRates, setIsLoadingRates] = useState(false);
+  const [isEditingRateModal, setIsEditingRateModal] = useState(false);
+  const [editingRate, setEditingRate] = useState<Partial<SaveVehiculoConfigDto> | null>(null);
+  const [isSavingRate, setIsSavingRate] = useState(false);
+  const [rateSuccessMsg, setRateSuccessMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    loadData();
+    loadBranches();
   }, []);
 
-  const loadData = async () => {
+  const loadBranches = async () => {
     setIsLoading(true);
     try {
-      const data = await parqueaderosService.getParqueaderos();
-      setParqueaderos(data || []);
+      const data = await branchesService.getAll();
+      setBranches(data || []);
     } catch (err) {
-      console.error('Error al cargar parqueaderos:', err);
+      console.error('Error al cargar sedes:', err);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleOpenCreate = () => {
-    setEditingParqueadero({
+    setEditingBranch({
+      code: `SEDE-0${branches.length + 1}`,
       name: '',
-      description: '',
-      imageUrl: '',
-      isMainImage: parqueaderos.length === 0,
+      address: '',
+      phone: '',
+      city: '',
+      totalCapacity: 100,
+      notes: '',
       isActive: true,
     });
     setIsEditModalOpen(true);
   };
 
-  const handleOpenEdit = (p: ParqueaderoDto) => {
-    setEditingParqueadero({
-      id: p.id,
-      name: p.name,
-      description: p.description || '',
-      imageUrl: p.imageUrl || '',
-      isMainImage: p.isMainImage,
-      isActive: p.isActive,
+  const handleOpenEdit = (b: BranchDto) => {
+    setEditingBranch({
+      id: b.id,
+      code: b.code,
+      name: b.name,
+      address: b.address || '',
+      phone: b.phone || '',
+      city: b.city || '',
+      totalCapacity: b.totalCapacity || 100,
+      notes: b.notes || '',
+      isActive: b.isActive ?? true,
     });
     setIsEditModalOpen(true);
   };
 
-  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (editingParqueadero && typeof reader.result === 'string') {
-          setEditingParqueadero({ ...editingParqueadero, imageUrl: reader.result });
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSaveEdit = async (e: React.FormEvent) => {
+  const handleSaveBranch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingParqueadero) return;
-
-    if (!editingParqueadero.name || !editingParqueadero.name.trim()) {
-      alert('Por favor ingrese el nombre del parqueadero.');
+    if (!editingBranch || !editingBranch.code || !editingBranch.name) {
+      alert('Por favor completa el código y nombre de la sede.');
       return;
     }
 
+    setIsSavingBranch(true);
     try {
-      await parqueaderosService.saveOrEditParqueadero({
-        id: editingParqueadero.id,
-        name: editingParqueadero.name.trim(),
-        description: editingParqueadero.description || '',
-        imageUrl: editingParqueadero.imageUrl || '',
-        isMainImage: !!editingParqueadero.isMainImage,
-        isActive: editingParqueadero.isActive ?? true,
-      });
-      setIsEditModalOpen(false);
-      setEditingParqueadero(null);
-      await loadData();
-    } catch (err: any) {
-      alert(err?.message || 'Error al guardar el parqueadero.');
-    }
-  };
-
-  // Carga de ítems reales de los 4 módulos para el modal "Parametrización"
-  const handleOpenPermissionsModal = async (p: ParqueaderoDto) => {
-    setTargetParqueadero(p);
-    setInheritedFromId(p.inheritedFromId || '');
-    setIsLoadingModuleItems(true);
-    setExpandedModules({
-      tarifas: true,
-      usuarios: false,
-      convenios: false,
-      mediosPago: false,
-    });
-    setIsPermissionsModalOpen(true);
-
-    try {
-      const [tList, uList, cList, mList] = await Promise.all([
-        tarifasService.getAllRates(),
-        usuariosService.getUsers(),
-        conveniosService.getAllAgreements(),
-        mediosPagoService.getPaymentMethods(),
-      ]);
-
-      setRawRates(tList || []);
-
-      // Normalización Tarifas por Categoría de Vehículo desde la API
-      const mappedTarifas: ModuleItem[] = (tList || []).map((r) => ({
-        id: r.rateId || r.vehicleType,
-        name: r.displayName || `Categoría ${r.vehicleType}`,
-        detail: `$${(r.hourRate || 0).toLocaleString()} / hora (Máx $${(r.fullDayRate || 0).toLocaleString()})`,
-      }));
-
-      // Normalización Usuarios desde la API
-      const mappedUsuarios: ModuleItem[] = (uList || []).map((u) => ({
-        id: u.id,
-        name: u.fullName || u.name || u.username || `Usuario #${u.id}`,
-        detail: `${u.email} (${u.userRoleDto?.roleName || u.userRoleDto?.role || u.role || 'Operador'})`,
-      }));
-
-      // Normalización Convenios desde la API
-      const mappedConvenios: ModuleItem[] = (cList || []).map((c, idx) => ({
-        id: c.agreementId || `CONV-${idx}`,
-        name: c.name,
-        detail: c.discountPercentage ? `${c.discountPercentage}% Descuento` : (c.discountFixedAmount ? `$${(c.discountFixedAmount).toLocaleString()} COP Descuento` : 'Convenio Comercial'),
-      }));
-
-      // Normalización Medios de Pago desde la API
-      const mappedMediosPago: ModuleItem[] = (mList || []).map((m, idx) => ({
-        id: m.id || `MP-${idx}`,
-        name: m.name,
-        detail: (m.isActive ?? (m.status === true || m.status === 'Activo')) ? 'Habilitado en Caja' : 'Inactivo',
-      }));
-
-      setTarifasItems(mappedTarifas);
-      setUsuariosItems(mappedUsuarios);
-      setConveniosItems(mappedConvenios);
-      setMediosPagoItems(mappedMediosPago);
-
-      // Cargar ítems ya guardados o seleccionar todos por defecto
-      if (p.permissions?.itemized) {
-        setSelectedItemized({
-          tarifas: p.permissions.itemized.tarifas || [],
-          usuarios: p.permissions.itemized.usuarios || [],
-          convenios: p.permissions.itemized.convenios || [],
-          mediosPago: p.permissions.itemized.mediosPago || [],
-        });
+      if (editingBranch.id) {
+        await branchesService.update(editingBranch.id, editingBranch as UpdateBranchDto);
       } else {
-        setSelectedItemized({
-          tarifas: mappedTarifas.map((i) => i.id),
-          usuarios: mappedUsuarios.map((i) => Number(i.id)),
-          convenios: mappedConvenios.map((i) => i.id),
-          mediosPago: mappedMediosPago.map((i) => i.id),
-        });
+        await branchesService.create(editingBranch as CreateBranchDto);
       }
-    } catch (err) {
-      console.error('Error cargando ítems de módulos:', err);
+      setIsEditModalOpen(false);
+      setEditingBranch(null);
+      await loadBranches();
+      await refreshBranches();
+    } catch (err: any) {
+      alert(err?.message || 'Error al guardar la sede.');
     } finally {
-      setIsLoadingModuleItems(false);
+      setIsSavingBranch(false);
     }
   };
 
-  const handleOpenEditRate = (rate: VehicleRateDto, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setEditingRate(rate);
-    setRateFormData({
-      hourRate: rate.hourRate || 0,
-      minuteRate: rate.minuteRate || 0,
-      fullDayRate: rate.fullDayRate || 0,
-      gracePeriodMinutes: rate.gracePeriodMinutes || 0,
-      displayName: rate.displayName || '',
+  // Apertura del modal de configuración por sede
+  const handleOpenConfig = async (branch: BranchDto) => {
+    setSelectedBranch(branch);
+    setActiveConfigTab('payments');
+    setIsConfigModalOpen(true);
+    setPaymentSuccessMsg(null);
+    setUserSuccessMsg(null);
+    setRateSuccessMsg(null);
+    setIsEditingRateModal(false);
+
+    // Cargar medios de pago
+    setIsLoadingPayments(true);
+    try {
+      const [methods, configured] = await Promise.all([
+        mediosPagoService.getMediosPago(),
+        branchesService.getBranchPaymentMethods(branch.id),
+      ]);
+      setAllPaymentMethods(methods || []);
+      const enabledIds = (configured || [])
+        .filter((bpm: BranchPaymentMethodDto) => bpm.isEnabled)
+        .map((bpm: BranchPaymentMethodDto) => bpm.paymentMethodId);
+      setEnabledPaymentMethodIds(enabledIds);
+    } catch (err) {
+      console.error('Error cargando medios de pago de sede:', err);
+    } finally {
+      setIsLoadingPayments(false);
+    }
+
+    // Cargar usuarios
+    setIsLoadingUsers(true);
+    try {
+      const [users, branchDetails] = await Promise.all([
+        usuariosService.getUsuarios(),
+        branchesService.getById(branch.id),
+      ]);
+      setAllUsers(users || []);
+      const assignedIds = (branchDetails?.userBranches || []).map((ub: any) => ub.userId);
+      setAssignedUserIds(assignedIds);
+    } catch (err) {
+      console.error('Error cargando usuarios asignados:', err);
+    } finally {
+      setIsLoadingUsers(false);
+    }
+
+    // Cargar tarifas de la sede
+    await loadBranchRates(branch.id);
+  };
+
+  const loadBranchRates = async (branchId: number) => {
+    setIsLoadingRates(true);
+    try {
+      const rates = await vehiculosConfigService.getConfigs(branchId);
+      setBranchRates(rates || []);
+    } catch (err) {
+      console.error('Error cargando tarifas de sede:', err);
+    } finally {
+      setIsLoadingRates(false);
+    }
+  };
+
+  const togglePaymentMethod = (methodId: number) => {
+    setEnabledPaymentMethodIds((prev) =>
+      prev.includes(methodId) ? prev.filter((id) => id !== methodId) : [...prev, methodId]
+    );
+  };
+
+  const handleSavePayments = async () => {
+    if (!selectedBranch) return;
+    setIsSavingPayments(true);
+    setPaymentSuccessMsg(null);
+    try {
+      await branchesService.configurePaymentMethods({
+        branchId: selectedBranch.id,
+        paymentMethodIds: enabledPaymentMethodIds,
+      });
+      setPaymentSuccessMsg('Medios de pago configurados exitosamente para esta sede.');
+      setTimeout(() => setPaymentSuccessMsg(null), 3000);
+    } catch (err: any) {
+      alert(err?.message || 'Error al guardar medios de pago.');
+    } finally {
+      setIsSavingPayments(false);
+    }
+  };
+
+  const handleToggleUserAssignment = async (userId: number, isCurrentlyAssigned: boolean) => {
+    if (!selectedBranch) return;
+    try {
+      if (isCurrentlyAssigned) {
+        await branchesService.unassignUser({ branchId: selectedBranch.id, userId });
+        setAssignedUserIds((prev) => prev.filter((id) => id !== userId));
+        setUserSuccessMsg('Usuario desasignado de esta sede.');
+      } else {
+        await branchesService.assignUser({ branchId: selectedBranch.id, userId, isDefault: false });
+        setAssignedUserIds((prev) => [...prev, userId]);
+        setUserSuccessMsg('Usuario asignado a esta sede exitosamente.');
+      }
+      setTimeout(() => setUserSuccessMsg(null), 3000);
+    } catch (err: any) {
+      alert(err?.message || 'Error al modificar asignación de usuario.');
+    }
+  };
+
+  // Manejadores de Tarifas Vehiculares por Sede
+  const handleOpenCreateRate = () => {
+    if (!selectedBranch) return;
+    setEditingRate({
+      branchId: selectedBranch.id,
+      vehicleType: 0,
+      category: 'Automóvil / Carro',
+      gracePeriodMinutes: 15,
+      hourRate: 4000,
+      minuteRate: 70,
+      fullDayRate: 35000,
+      iconKey: 'IconCar',
+      isActive: true,
     });
-    setIsRateModalOpen(true);
+    setIsEditingRateModal(true);
+  };
+
+  const handleOpenEditRate = (rate: VehiculoConfigDto) => {
+    setEditingRate({ ...rate });
+    setIsEditingRateModal(true);
+  };
+
+  const handleVehicleTypePresetChange = (typeVal: number) => {
+    let defaultName = 'Automóvil / Carro';
+    let defaultIcon = 'IconCar';
+    if (typeVal === 1) {
+      defaultName = 'Motocicleta';
+      defaultIcon = 'IconMotorcycle';
+    } else if (typeVal === 2) {
+      defaultName = 'Camión / Vehículo Pesado';
+      defaultIcon = 'IconTruck';
+    } else if (typeVal === 3) {
+      defaultName = 'Furgón / Minibús';
+      defaultIcon = 'IconVan';
+    } else if (typeVal === 4) {
+      defaultName = 'Bicicleta';
+      defaultIcon = 'IconBike';
+    } else if (typeVal === 5) {
+      defaultName = 'Camioneta / SUV';
+      defaultIcon = 'IconCar';
+    }
+
+    setEditingRate((prev) => ({
+      ...prev,
+      vehicleType: typeVal,
+      category: prev?.category && prev.category !== 'Automóvil / Carro' && prev.category !== 'Motocicleta' && prev.category !== 'Camión / Vehículo Pesado' && prev.category !== 'Furgón / Minibús' && prev.category !== 'Bicicleta' && prev.category !== 'Camioneta / SUV' ? prev.category : defaultName,
+      iconKey: defaultIcon,
+    }));
   };
 
   const handleSaveRate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingRate) return;
+    if (!selectedBranch || !editingRate || !editingRate.category) return;
 
+    setIsSavingRate(true);
     try {
-      await tarifasService.updateRate(editingRate.rateId, rateFormData);
-      setIsRateModalOpen(false);
+      await vehiculosConfigService.saveConfig(editingRate as SaveVehiculoConfigDto, selectedBranch.id);
+      setIsEditingRateModal(false);
       setEditingRate(null);
-
-      // Recargar lista de tarifas actualizada
-      const updatedRates = await tarifasService.getAllRates();
-      setRawRates(updatedRates || []);
-      const mappedTarifas: ModuleItem[] = (updatedRates || []).map((r) => ({
-        id: r.rateId || r.vehicleType,
-        name: r.displayName || `Categoría ${r.vehicleType}`,
-        detail: `$${(r.hourRate || 0).toLocaleString()} / hora (Máx $${(r.fullDayRate || 0).toLocaleString()})`,
-      }));
-      setTarifasItems(mappedTarifas);
+      setRateSuccessMsg('Tarifa vehicular guardada exitosamente para esta sede.');
+      await loadBranchRates(selectedBranch.id);
+      setTimeout(() => setRateSuccessMsg(null), 3000);
     } catch (err: any) {
-      alert(err?.message || 'Error al actualizar la tarifa.');
-    }
-  };
-
-  const handleToggleItem = (moduleKey: keyof ItemizedPermissionsDto, itemId: string | number) => {
-    setSelectedItemized((prev) => {
-      const currentList = (prev[moduleKey] || []) as any[];
-      const exists = currentList.includes(itemId);
-      const updatedList = exists
-        ? currentList.filter((id) => id !== itemId)
-        : [...currentList, itemId];
-      return { ...prev, [moduleKey]: updatedList };
-    });
-  };
-
-  const handleToggleModuleAll = (moduleKey: keyof ItemizedPermissionsDto, itemsList: ModuleItem[]) => {
-    setSelectedItemized((prev) => {
-      const currentList = (prev[moduleKey] || []) as any[];
-      const allSelected = itemsList.every((i) => currentList.includes(i.id));
-      const updatedList = allSelected ? [] : itemsList.map((i) => i.id);
-      return { ...prev, [moduleKey]: updatedList };
-    });
-  };
-
-  const handleGlobalSelectAll = (selectAll: boolean) => {
-    if (selectAll) {
-      setSelectedItemized({
-        tarifas: tarifasItems.map((i) => i.id),
-        usuarios: usuariosItems.map((i) => Number(i.id)),
-        convenios: conveniosItems.map((i) => i.id),
-        mediosPago: mediosPagoItems.map((i) => i.id),
-      });
-    } else {
-      setSelectedItemized({
-        tarifas: [],
-        usuarios: [],
-        convenios: [],
-        mediosPago: [],
-      });
-    }
-  };
-
-  const handleInheritFromParking = (sourceIdStr: string) => {
-    if (!sourceIdStr) {
-      setInheritedFromId('');
-      return;
-    }
-    const sourceId = Number(sourceIdStr);
-    setInheritedFromId(sourceId);
-
-    const sourceParking = parqueaderos.find((p) => p.id === sourceId);
-    if (sourceParking && sourceParking.permissions?.itemized) {
-      setSelectedItemized(sourceParking.permissions.itemized);
-    } else {
-      handleGlobalSelectAll(true);
-    }
-  };
-
-  const toggleAccordion = (moduleKey: string) => {
-    setExpandedModules((prev) => ({ ...prev, [moduleKey]: !prev[moduleKey] }));
-  };
-
-  const handleSavePermissions = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!targetParqueadero) return;
-
-    try {
-      await parqueaderosService.saveOrEditParqueadero({
-        id: targetParqueadero.id,
-        name: targetParqueadero.name,
-        description: targetParqueadero.description || '',
-        imageUrl: targetParqueadero.imageUrl || '',
-        isMainImage: targetParqueadero.isMainImage,
-        isActive: targetParqueadero.isActive,
-        permissions: {
-          tarifas: (selectedItemized.tarifas || []).length > 0,
-          usuarios: (selectedItemized.usuarios || []).length > 0,
-          convenios: (selectedItemized.convenios || []).length > 0,
-          mediosPago: (selectedItemized.mediosPago || []).length > 0,
-          itemized: selectedItemized,
-        },
-        inheritedFromId: inheritedFromId !== '' ? Number(inheritedFromId) : null,
-      });
-      setIsPermissionsModalOpen(false);
-      setTargetParqueadero(null);
-      await loadData();
-    } catch (err: any) {
-      alert(err?.message || 'Error al guardar la parametrización del parqueadero.');
-    }
-  };
-
-  const handleDeactivate = async (id: number) => {
-    if (confirm('¿Está seguro de desactivar este parqueadero?')) {
-      await parqueaderosService.deactivateParqueadero(id);
-      await loadData();
+      alert(err?.message || 'Error al guardar tarifa vehicular.');
+    } finally {
+      setIsSavingRate(false);
     }
   };
 
@@ -352,535 +318,221 @@ export const ParqueaderosTab: React.FC = () => {
     <div className="settings-section-card">
       <div className="section-header">
         <div className="section-header-titles">
-          <h2>Gestión de Parqueaderos</h2>
-          <p>Administra los parqueaderos del sistema, establece la imagen principal y parametriza tarifas por tipo de vehículo, usuarios, convenios y medios de pago.</p>
+          <h2>Gestión de Sedes (Parqueaderos)</h2>
+          <p>Administra las sedes físicas del sistema, parametrizando medios de pago, usuarios autorizados y tarifas por sede.</p>
         </div>
-        {authService.hasPermission('settings.parqueaderos.manage') && (
-          <button className="btn-primary" style={{ width: 'auto' }} onClick={handleOpenCreate}>
-            <Plus size={16} /> Crear Parqueadero
+        {authService.hasPermission('branches.create') && (
+          <button className="btn-primary" onClick={handleOpenCreate}>
+            <Plus size={16} /> Crear Sede
           </button>
         )}
       </div>
 
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>PARQUEADERO</th>
-            <th>DESCRIPCIÓN</th>
-            <th>IMAGEN PRINCIPAL</th>
-            <th>PARAMETRIZACIÓN</th>
-            <th>ESTADO</th>
-            <th className="text-right">ACCIONES</th>
-          </tr>
-        </thead>
-        <tbody>
-          {parqueaderos.length > 0 ? (
-            parqueaderos.map((p) => {
-              const itemized = p.permissions?.itemized;
-              const totalItemsSelected = itemized
-                ? (itemized.tarifas?.length || 0) +
-                  (itemized.usuarios?.length || 0) +
-                  (itemized.convenios?.length || 0) +
-                  (itemized.mediosPago?.length || 0)
-                : 4;
+      {/* Grid de Sedes Físicas */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem', marginTop: '1rem' }}>
+        {branches.length > 0 ? (
+          branches.map((b) => {
+            const isActive = b.isActive ?? true;
+            return (
+              <div
+                key={b.id}
+                style={{
+                  background: '#ffffff',
+                  border: activeBranchId === b.id ? '2px solid #07665e' : '1px solid #e2e8f0',
+                  borderRadius: '14px',
+                  padding: '1.25rem',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  position: 'relative',
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                    <span className="badge" style={{ background: '#f1f5f9', color: '#07665e', fontWeight: 800 }}>
+                      {b.code}
+                    </span>
+                    <span className={`badge ${isActive ? 'badge-success' : 'badge-danger'}`}>
+                      {isActive ? 'Activo' : 'Inactivo'}
+                    </span>
+                  </div>
 
-              return (
-                <tr key={p.id}>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      {p.imageUrl ? (
-                        <img
-                          src={p.imageUrl}
-                          alt={p.name}
-                          style={{
-                            width: '42px',
-                            height: '42px',
-                            borderRadius: '8px',
-                            objectFit: 'cover',
-                            border: '1px solid var(--border-color, #e2e8f0)',
-                          }}
-                        />
-                      ) : (
-                        <div
-                          style={{
-                            width: '42px',
-                            height: '42px',
-                            borderRadius: '8px',
-                            background: 'rgba(7, 102, 94, 0.08)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'var(--primary-color, #07665e)',
-                          }}
-                        >
-                          <Building size={20} />
-                        </div>
-                      )}
-                      <div>
-                        <div className="font-bold">{p.name}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #64748b)' }}>ID: #{p.id}</div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1e293b', marginBottom: '8px' }}>
+                    {b.name}
+                  </h3>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.84rem', color: '#64748b', marginBottom: '10px' }}>
+                    {b.city && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <MapPin size={14} color="#64748b" />
+                        <span>{b.city} {b.address ? `— ${b.address}` : ''}</span>
                       </div>
-                    </div>
-                  </td>
-                  <td className="text-muted" style={{ maxWidth: '240px' }}>
-                    {p.description || 'Sin descripción'}
-                  </td>
-                  <td>
-                    {p.isMainImage ? (
-                      <span className="badge badge-success" style={{ background: 'rgba(234, 179, 8, 0.15)', color: '#ca8a04', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
-                        <Star size={12} style={{ marginRight: 4, fill: '#ca8a04' }} /> Principal
-                      </span>
-                    ) : (
-                      <span className="text-muted" style={{ fontSize: '0.85rem' }}>Secundaria</span>
                     )}
-                  </td>
-                  <td>
-                    <span className="badge badge-success" style={{ background: 'rgba(7, 102, 94, 0.1)', color: '#07665e' }}>
-                      <SlidersHorizontal size={12} style={{ marginRight: 4 }} /> {totalItemsSelected} Parámetros Asignados
-                    </span>
-                  </td>
-                  <td>
-                    <span className={`badge ${p.isActive ? 'badge-success' : 'badge-danger'}`}>
-                      {p.isActive ? 'Activo' : 'Inactivo'}
-                    </span>
-                  </td>
-                  <td className="text-right">
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                      {(authService.hasPermission('settings.parqueaderos.assign_permissions') || authService.hasPermission('settings.parqueaderos.manage')) && (
-                        <button
-                          className="btn-action primary"
-                          style={{ background: 'var(--primary-color, #07665e)', color: '#ffffff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem' }}
-                          onClick={() => handleOpenPermissionsModal(p)}
-                        >
-                          <SlidersHorizontal size={13} style={{ marginRight: 4 }} /> Parametrización
-                        </button>
-                      )}
-                      {authService.hasPermission('settings.parqueaderos.manage') && (
-                        <>
-                          <button className="btn-action primary" onClick={() => handleOpenEdit(p)}>
-                            <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
-                          </button>
-                          {p.isActive && (
-                            <button className="btn-action danger" style={{ color: '#ef4444', background: 'rgba(239, 68, 68, 0.08)' }} onClick={() => handleDeactivate(p.id)}>
-                              <Trash2 size={14} />
-                            </button>
-                          )}
-                        </>
-                      )}
+                    {b.phone && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Phone size={14} color="#64748b" />
+                        <span>{b.phone}</span>
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Car size={14} color="#64748b" />
+                      <span>Capacidad: <strong>{b.totalCapacity} plazas</strong></span>
                     </div>
-                  </td>
-                </tr>
-              );
-            })
-          ) : (
-            <tr>
-              <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
-                {isLoading ? 'Cargando parqueaderos...' : 'No se encontraron parqueaderos registrados.'}
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+                  </div>
 
-      {/* Modal Crear / Editar Parqueadero */}
-      {isEditModalOpen && editingParqueadero && (
+                  {b.notes && (
+                    <p style={{ fontSize: '0.8rem', color: '#64748b', fontStyle: 'italic', background: '#f8fafc', padding: '6px 10px', borderRadius: '8px', margin: '8px 0' }}>
+                      "{b.notes}"
+                    </p>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px', marginTop: '14px', paddingTop: '12px', borderTop: '1px solid #f1f5f9' }}>
+                  <button
+                    className="btn-secondary"
+                    style={{ flex: 1, padding: '8px 10px', fontSize: '0.82rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                    onClick={() => handleOpenConfig(b)}
+                    title="Parametrizar Medios de Pago, Usuarios y Tarifas"
+                  >
+                    <Settings2 size={14} color="#07665e" />
+                    <span>Parametrizar</span>
+                  </button>
+
+                  <button
+                    className="btn-icon"
+                    style={{ padding: '8px', border: '1px solid #cbd5e1', borderRadius: '8px' }}
+                    onClick={() => handleOpenEdit(b)}
+                    title="Editar Sede"
+                  >
+                    <Edit2 size={15} />
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: '#64748b', background: '#f8fafc', borderRadius: '16px' }}>
+            {isLoading ? 'Cargando sedes registradas...' : 'No hay sedes registradas en la base de datos. Haz clic en "Crear Sede" para registrar tu primer parqueadero.'}
+          </div>
+        )}
+      </div>
+
+      {/* MODAL CREAR / EDITAR SEDE */}
+      {isEditModalOpen && editingBranch && (
         <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '540px' }}>
+          <div className="modal-content" style={{ maxWidth: '540px' }}>
             <div className="modal-header">
-              <h3>{editingParqueadero.id ? `Editar Parqueadero (#${editingParqueadero.id})` : 'Crear Nuevo Parqueadero'}</h3>
-              <button className="btn-close-modal" onClick={() => setIsEditModalOpen(false)}>
+              <h3>{editingBranch.id ? 'Editar Sede' : 'Crear Nueva Sede'}</h3>
+              <button className="btn-close" onClick={() => setIsEditModalOpen(false)}>
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleSaveEdit}>
+            <form onSubmit={handleSaveBranch}>
               <div className="modal-body">
+                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '12px' }}>
+                  <div className="form-group">
+                    <label>Código de Sede *</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={editingBranch.code || ''}
+                      onChange={(e) => setEditingBranch({ ...editingBranch, code: e.target.value })}
+                      placeholder="SEDE-01"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Nombre de la Sede *</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={editingBranch.name || ''}
+                      onChange={(e) => setEditingBranch({ ...editingBranch, name: e.target.value })}
+                      placeholder="Sede Principal Centro"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div className="form-group">
+                    <label>Ciudad</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={editingBranch.city || ''}
+                      onChange={(e) => setEditingBranch({ ...editingBranch, city: e.target.value })}
+                      placeholder="Bogotá D.C."
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Capacidad Total (Plazas) *</label>
+                    <input
+                      type="number"
+                      className="input-field"
+                      value={editingBranch.totalCapacity || 1}
+                      onChange={(e) => setEditingBranch({ ...editingBranch, totalCapacity: Number(e.target.value) })}
+                      min={1}
+                      required
+                    />
+                  </div>
+                </div>
+
                 <div className="form-group">
-                  <label>Nombre del Parqueadero</label>
+                  <label>Dirección</label>
                   <input
                     type="text"
                     className="input-field"
-                    placeholder="Ej: Parqueadero Centro Histórico"
-                    value={editingParqueadero.name || ''}
-                    onChange={(e) => setEditingParqueadero({ ...editingParqueadero, name: e.target.value })}
-                    required
+                    value={editingBranch.address || ''}
+                    onChange={(e) => setEditingBranch({ ...editingBranch, address: e.target.value })}
+                    placeholder="Carrera 10 # 20-30"
                   />
                 </div>
 
                 <div className="form-group">
-                  <label>Descripción</label>
+                  <label>Teléfono de Contacto</label>
+                  <input
+                    type="text"
+                    className="input-field"
+                    value={editingBranch.phone || ''}
+                    onChange={(e) => setEditingBranch({ ...editingBranch, phone: e.target.value })}
+                    placeholder="3001234567"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Notas / Descripción</label>
                   <textarea
                     className="input-field"
-                    rows={3}
-                    placeholder="Ingrese detalles del parqueadero, cupos, observaciones..."
-                    value={editingParqueadero.description || ''}
-                    onChange={(e) => setEditingParqueadero({ ...editingParqueadero, description: e.target.value })}
+                    rows={2}
+                    value={editingBranch.notes || ''}
+                    onChange={(e) => setEditingBranch({ ...editingBranch, notes: e.target.value })}
+                    placeholder="Observaciones de la sede..."
                   />
                 </div>
 
-                <div className="form-group">
-                  <label>Imagen del Parqueadero</label>
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    {editingParqueadero.imageUrl ? (
-                      <img
-                        src={editingParqueadero.imageUrl}
-                        alt="Vista previa"
-                        style={{
-                          width: '64px',
-                          height: '64px',
-                          borderRadius: '8px',
-                          objectFit: 'cover',
-                          border: '2px solid var(--primary-color, #07665e)',
-                        }}
-                      />
-                    ) : (
-                      <div
-                        style={{
-                          width: '64px',
-                          height: '64px',
-                          borderRadius: '8px',
-                          border: '2px dashed var(--border-color, #cbd5e1)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#94a3b8',
-                        }}
-                      >
-                        <ImageIcon size={24} />
-                      </div>
-                    )}
-                    <div style={{ flex: 1 }}>
+                {editingBranch.id && (
+                  <div className="form-group">
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                       <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageFileChange}
-                        style={{ display: 'none' }}
-                        id="parking-img-upload"
+                        type="checkbox"
+                        checked={editingBranch.isActive ?? true}
+                        onChange={(e) => setEditingBranch({ ...editingBranch, isActive: e.target.checked })}
                       />
-                      <label
-                        htmlFor="parking-img-upload"
-                        className="btn-action primary"
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          cursor: 'pointer',
-                          padding: '6px 12px',
-                          borderRadius: '6px',
-                        }}
-                      >
-                        <ImageIcon size={14} style={{ marginRight: 6 }} /> Subir Imagen
-                      </label>
-                      <input
-                        type="text"
-                        className="input-field"
-                        placeholder="O pegue una URL de imagen..."
-                        style={{ marginTop: '8px', fontSize: '0.85rem' }}
-                        value={editingParqueadero.imageUrl || ''}
-                        onChange={(e) => setEditingParqueadero({ ...editingParqueadero, imageUrl: e.target.value })}
-                      />
-                    </div>
-                  </div>
-
-                  <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <input
-                      type="checkbox"
-                      id="isMainImageCheck"
-                      checked={!!editingParqueadero.isMainImage}
-                      onChange={(e) => setEditingParqueadero({ ...editingParqueadero, isMainImage: e.target.checked })}
-                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                    />
-                    <label htmlFor="isMainImageCheck" style={{ cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem' }}>
-                      ⭐ Establecer esta imagen como la imagen principal del parqueadero
+                      <span>Sede Activa en Operación</span>
                     </label>
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label>Estado del Parqueadero</label>
-                  <select
-                    className="input-field"
-                    value={editingParqueadero.isActive ? 'Activo' : 'Inactivo'}
-                    onChange={(e) => setEditingParqueadero({ ...editingParqueadero, isActive: e.target.value === 'Activo' })}
-                  >
-                    <option value="Activo">Activo</option>
-                    <option value="Inactivo">Inactivo</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="modal-footer">
-                <button type="button" className="btn-cancel" onClick={() => setIsEditModalOpen(false)}>
-                  Cancelar
-                </button>
-                <button type="submit" className="btn-primary" style={{ width: 'auto' }}>
-                  Guardar Parqueadero
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Parametrización con Ítems Seleccionables y Configuración de Tarifas */}
-      {isPermissionsModalOpen && targetParqueadero && (
-        <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '680px', maxHeight: '88vh' }}>
-            <div className="modal-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <SlidersHorizontal size={18} style={{ color: 'var(--primary-color, #07665e)' }} />
-                <h3>Parametrización: {targetParqueadero.name}</h3>
-              </div>
-              <button className="btn-close-modal" onClick={() => setIsPermissionsModalOpen(false)}>
-                <X size={18} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSavePermissions} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-              <div className="modal-body" style={{ overflowY: 'auto', gap: '1.25rem' }}>
-                {/* Opción Superior: Heredar Parametrización De */}
-                <div className="form-group" style={{ background: 'rgba(7, 102, 94, 0.05)', padding: '12px 14px', borderRadius: '10px', border: '1px solid rgba(7, 102, 94, 0.2)' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.88rem', color: '#07665e', fontWeight: 700 }}>
-                    <Copy size={15} /> Heredar parametrización de:
-                  </label>
-                  <p style={{ fontSize: '0.78rem', color: '#64748b', margin: '2px 0 8px 0' }}>
-                    Seleccione un parqueadero existente para copiar automáticamente todas sus opciones e ítems parametrizados:
-                  </p>
-                  <select
-                    className="input-field"
-                    value={inheritedFromId}
-                    onChange={(e) => handleInheritFromParking(e.target.value)}
-                  >
-                    <option value="">-- Sin herencia (Configuración manual) --</option>
-                    {parqueaderos
-                      .filter((p) => p.id !== targetParqueadero.id)
-                      .map((p) => (
-                        <option key={p.id} value={p.id}>
-                          🏢 {p.name} {p.isMainImage ? '⭐ (Principal)' : ''}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-
-                {/* Acciones Globales: Marcar Todo / Desmarcar Todo */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary, #f8fafc)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color, #cbd5e1)' }}>
-                  <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
-                    Opciones y Parámetros Disponibles
-                  </span>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button
-                      type="button"
-                      onClick={() => handleGlobalSelectAll(true)}
-                      style={{
-                        background: '#07665e',
-                        color: '#ffffff',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '5px 12px',
-                        fontSize: '0.78rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                      }}
-                    >
-                      <CheckSquare size={13} /> Marcar Todo
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleGlobalSelectAll(false)}
-                      style={{
-                        background: 'transparent',
-                        border: '1px solid #ef4444',
-                        color: '#ef4444',
-                        borderRadius: '6px',
-                        padding: '5px 12px',
-                        fontSize: '0.78rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                      }}
-                    >
-                      <Square size={13} /> Desmarcar Todo
-                    </button>
-                  </div>
-                </div>
-
-                {isLoadingModuleItems ? (
-                  <div style={{ textAlign: 'center', padding: '24px', color: '#64748b' }}>Cargando parámetros desde la API...</div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {/* Renderizador de Secciones: Tarifas por Categoría de Vehículo, Usuarios, Convenios y Medios de Pago */}
-                    {[
-                      { key: 'tarifas' as const, title: '💲 Tarifas y Precios por Categoría de Vehículo', items: tarifasItems },
-                      { key: 'usuarios' as const, title: '👥 Usuarios y Operadores', items: usuariosItems },
-                      { key: 'convenios' as const, title: '📄 Convenios Comerciales', items: conveniosItems },
-                      { key: 'mediosPago' as const, title: '💳 Medios de Pago', items: mediosPagoItems },
-                    ].map((mod) => {
-                      const selectedCount = (selectedItemized[mod.key] || []).length;
-                      const isExpanded = expandedModules[mod.key] ?? false;
-                      const allSelected = mod.items.length > 0 && mod.items.every((i) => (selectedItemized[mod.key] || []).includes(i.id as never));
-
-                      return (
-                        <div
-                          key={mod.key}
-                          style={{
-                            border: '1px solid var(--border-color, #e2e8f0)',
-                            borderRadius: '10px',
-                            overflow: 'hidden',
-                            background: 'var(--bg-card, #ffffff)',
-                          }}
-                        >
-                          {/* Cabecera de la Sección */}
-                          <div
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              padding: '10px 14px',
-                              background: 'var(--table-header-bg, #f8fafc)',
-                              cursor: 'pointer',
-                              borderBottom: isExpanded ? '1px solid var(--border-color, #e2e8f0)' : 'none',
-                            }}
-                          >
-                            <div
-                              onClick={() => toggleAccordion(mod.key)}
-                              style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}
-                            >
-                              {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                              <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
-                                {mod.title}
-                              </span>
-                              <span className="badge badge-success" style={{ fontSize: '0.72rem', background: selectedCount > 0 ? 'rgba(7, 102, 94, 0.12)' : 'rgba(100,116,139,0.1)', color: selectedCount > 0 ? '#07665e' : '#64748b' }}>
-                                {selectedCount} / {mod.items.length} Habilitados
-                              </span>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleToggleModuleAll(mod.key, mod.items);
-                              }}
-                              style={{
-                                background: 'transparent',
-                                border: '1px solid var(--border-color)',
-                                borderRadius: '4px',
-                                padding: '3px 8px',
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                color: allSelected ? '#ef4444' : '#07665e',
-                              }}
-                            >
-                              {allSelected ? 'Desmarcar Todos' : 'Marcar Todos'}
-                            </button>
-                          </div>
-
-                          {/* Lista Seleccionable de la Sección */}
-                          {isExpanded && (
-                            <div style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px', background: 'var(--bg-card, #ffffff)' }}>
-                              {mod.items.length > 0 ? (
-                                mod.items.map((item) => {
-                                  const isChecked = (selectedItemized[mod.key] || []).includes(item.id as never);
-                                  const rateObj = mod.key === 'tarifas' ? rawRates.find(r => r.rateId === item.id || r.vehicleType === item.id) : null;
-
-                                  return (
-                                    <div
-                                      key={item.id}
-                                      onClick={() => handleToggleItem(mod.key, item.id)}
-                                      style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        padding: '10px 14px',
-                                        borderRadius: '8px',
-                                        cursor: 'pointer',
-                                        background: isChecked ? 'rgba(7, 102, 94, 0.06)' : 'var(--bg-card, #ffffff)',
-                                        border: isChecked ? '1px solid rgba(7, 102, 94, 0.3)' : '1px solid var(--border-color, #e2e8f0)',
-                                        transition: 'all 0.12s ease',
-                                      }}
-                                    >
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                                        <input
-                                          type="checkbox"
-                                          checked={isChecked}
-                                          onChange={() => {}}
-                                          style={{ width: '18px', height: '18px', pointerEvents: 'none' }}
-                                        />
-                                        <div style={{ flex: 1 }}>
-                                          <div style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                            {mod.key === 'tarifas' ? '🚗' : mod.key === 'usuarios' ? '👤' : mod.key === 'convenios' ? '📄' : '💳'} {item.name}
-                                          </div>
-                                          {rateObj ? (
-                                            <div style={{ fontSize: '0.78rem', color: '#475569', marginTop: '3px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                                              <span><strong>Hora:</strong> ${(rateObj.hourRate || 0).toLocaleString()}</span>
-                                              <span>•</span>
-                                              <span><strong>Minuto:</strong> ${(rateObj.minuteRate || 0).toLocaleString()}</span>
-                                              <span>•</span>
-                                              <span><strong>Día Máx:</strong> ${(rateObj.fullDayRate || 0).toLocaleString()}</span>
-                                              <span>•</span>
-                                              <span><strong>Gracia:</strong> {rateObj.gracePeriodMinutes || 0} min</span>
-                                            </div>
-                                          ) : (
-                                            item.detail && (
-                                              <span style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px', display: 'inline-block' }}>
-                                                {item.detail}
-                                              </span>
-                                            )
-                                          )}
-                                        </div>
-                                      </div>
-
-                                      {/* Botón para Configurar Tarifas directamente */}
-                                      {rateObj && (
-                                        <button
-                                          type="button"
-                                          className="btn-action primary"
-                                          onClick={(e) => handleOpenEditRate(rateObj, e)}
-                                          style={{
-                                            padding: '6px 12px',
-                                            fontSize: '0.78rem',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '5px',
-                                            background: '#07665e',
-                                            color: '#ffffff',
-                                            border: 'none',
-                                            borderRadius: '6px',
-                                            fontWeight: 600,
-                                            cursor: 'pointer',
-                                            marginLeft: '12px',
-                                          }}
-                                        >
-                                          <Edit2 size={12} /> Configurar Tarifa
-                                        </button>
-                                      )}
-                                    </div>
-                                  );
-                                })
-                              ) : (
-                                <div style={{ fontSize: '0.82rem', color: '#94a3b8', padding: '8px', textAlign: 'center' }}>
-                                  No hay parámetros registrados en esta sección.
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
                   </div>
                 )}
               </div>
 
               <div className="modal-footer">
-                <button type="button" className="btn-cancel" onClick={() => setIsPermissionsModalOpen(false)}>
+                <button type="button" className="btn-secondary" onClick={() => setIsEditModalOpen(false)}>
                   Cancelar
                 </button>
-                <button type="submit" className="btn-primary" style={{ width: 'auto' }}>
-                  Guardar Parametrización
+                <button type="submit" className="btn-primary" disabled={isSavingBranch}>
+                  {isSavingBranch ? 'Guardando...' : 'Guardar Sede'}
                 </button>
               </div>
             </form>
@@ -888,92 +540,381 @@ export const ParqueaderosTab: React.FC = () => {
         </div>
       )}
 
-      {/* Sub-modal: Configurar Tarifa por Categoría de Vehículo */}
-      {isRateModalOpen && editingRate && (
-        <div className="modal-overlay" style={{ zIndex: 10050, background: 'rgba(15, 23, 42, 0.75)' }}>
-          <div className="modal-card" style={{ maxWidth: '480px', zIndex: 10051, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+      {/* MODAL DE PARAMETRIZACIÓN POR SEDE (MEDIOS DE PAGO, USUARIOS & TARIFAS) */}
+      {isConfigModalOpen && selectedBranch && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '780px' }}>
             <div className="modal-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <DollarSign size={18} style={{ color: 'var(--primary-color, #07665e)' }} />
-                <h3>Configurar Tarifa: {editingRate.displayName || `Vehículo ${editingRate.vehicleType}`}</h3>
+              <div>
+                <h3>Parametrización por Sede</h3>
+                <span style={{ fontSize: '0.84rem', color: '#07665e', fontWeight: 700 }}>
+                  📍 {selectedBranch.code} — {selectedBranch.name} ({selectedBranch.totalCapacity} plazas)
+                </span>
               </div>
-              <button className="btn-close-modal" onClick={() => setIsRateModalOpen(false)}>
+              <button className="btn-close" onClick={() => setIsConfigModalOpen(false)}>
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleSaveRate}>
-              <div className="modal-body">
-                <div className="form-group">
-                  <label>Categoría / Tipo de Vehículo</label>
-                  <input
-                    type="text"
-                    className="input-field"
-                    value={rateFormData.displayName || ''}
-                    onChange={(e) => setRateFormData({ ...rateFormData, displayName: e.target.value })}
-                    required
-                  />
-                </div>
+            {/* Segmented Control Subtabs */}
+            <div className="modal-subtabs-nav">
+              <button
+                className={`modal-subtab-btn ${activeConfigTab === 'payments' ? 'active' : ''}`}
+                onClick={() => { setActiveConfigTab('payments'); setIsEditingRateModal(false); }}
+              >
+                <CreditCard size={16} /> Medios de Pago
+              </button>
+              <button
+                className={`modal-subtab-btn ${activeConfigTab === 'users' ? 'active' : ''}`}
+                onClick={() => { setActiveConfigTab('users'); setIsEditingRateModal(false); }}
+              >
+                <Users size={16} /> Asignación de Usuarios
+              </button>
+              <button
+                className={`modal-subtab-btn ${activeConfigTab === 'rates' ? 'active' : ''}`}
+                onClick={() => { setActiveConfigTab('rates'); setIsEditingRateModal(false); }}
+              >
+                <Car size={16} /> Tarifas Vehiculares
+              </button>
+            </div>
 
-                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div className="form-group">
-                    <label>Valor Hora ($ COP)</label>
-                    <input
-                      type="number"
-                      step="50"
-                      className="input-field"
-                      value={rateFormData.hourRate}
-                      onChange={(e) => setRateFormData({ ...rateFormData, hourRate: Number(e.target.value) })}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Valor Minuto ($ COP)</label>
-                    <input
-                      type="number"
-                      step="1"
-                      className="input-field"
-                      value={rateFormData.minuteRate}
-                      onChange={(e) => setRateFormData({ ...rateFormData, minuteRate: Number(e.target.value) })}
-                      required
-                    />
-                  </div>
-                </div>
+            <div className="modal-body" style={{ maxHeight: '480px', overflowY: 'auto' }}>
+              {/* TAB 1: MEDIOS DE PAGO */}
+              {activeConfigTab === 'payments' && (
+                <div>
+                  <p style={{ fontSize: '0.86rem', color: '#475569', marginBottom: '1rem', lineHeight: 1.4 }}>
+                    Selecciona qué medios de pago del catálogo maestro acepta y tiene habilitados esta sede para cobros en caja:
+                  </p>
 
-                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div className="form-group">
-                    <label>Tarifa Máxima Día ($)</label>
-                    <input
-                      type="number"
-                      step="100"
-                      className="input-field"
-                      value={rateFormData.fullDayRate}
-                      onChange={(e) => setRateFormData({ ...rateFormData, fullDayRate: Number(e.target.value) })}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Tiempo de Gracia (Minutos)</label>
-                    <input
-                      type="number"
-                      className="input-field"
-                      value={rateFormData.gracePeriodMinutes}
-                      onChange={(e) => setRateFormData({ ...rateFormData, gracePeriodMinutes: Number(e.target.value) })}
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
+                  {paymentSuccessMsg && (
+                    <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', color: '#065f46', padding: '10px 14px', borderRadius: '10px', marginBottom: '14px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>
+                      <CheckCircle2 size={16} color="#059669" /> {paymentSuccessMsg}
+                    </div>
+                  )}
 
-              <div className="modal-footer">
-                <button type="button" className="btn-cancel" onClick={() => setIsRateModalOpen(false)}>
-                  Cancelar
+                  {isLoadingPayments ? (
+                    <div className="text-center py-8 text-muted">Cargando medios de pago...</div>
+                  ) : allPaymentMethods.length > 0 ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '10px' }}>
+                      {allPaymentMethods.map((pm) => {
+                        const isChecked = enabledPaymentMethodIds.includes(pm.id);
+                        return (
+                          <div
+                            key={pm.id}
+                            onClick={() => togglePaymentMethod(pm.id)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '12px 14px',
+                              borderRadius: '10px',
+                              border: isChecked ? '2px solid #07665e' : '1px solid #e2e8f0',
+                              background: isChecked ? 'rgba(7, 102, 94, 0.05)' : '#ffffff',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <CreditCard size={18} color={isChecked ? '#07665e' : '#94a3b8'} />
+                              <span style={{ fontWeight: 600, fontSize: '0.88rem', color: '#1e293b' }}>
+                                {pm.name}
+                              </span>
+                            </div>
+                            {isChecked ? (
+                              <CheckSquare size={20} color="#07665e" />
+                            ) : (
+                              <Square size={20} color="#cbd5e1" />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '12px', padding: '28px 20px', textAlign: 'center' }}>
+                      <CreditCard size={32} style={{ color: '#94a3b8', margin: '0 auto 10px auto' }} />
+                      <p style={{ fontWeight: 700, fontSize: '0.92rem', color: '#334155', margin: '0 0 6px 0' }}>
+                        No hay medios de pago en el catálogo maestro
+                      </p>
+                      <p style={{ fontSize: '0.82rem', color: '#64748b', margin: 0, lineHeight: 1.4 }}>
+                        Crea primero los medios de pago en la pestaña superior <strong>"Medios de Pago"</strong> para habilitarlos en esta sede.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 2: ASIGNACIÓN DE USUARIOS */}
+              {activeConfigTab === 'users' && (
+                <div>
+                  <p style={{ fontSize: '0.86rem', color: '#475569', marginBottom: '1rem', lineHeight: 1.4 }}>
+                    Asocia qué usuarios (operadores, supervisores o administradores) tienen autorización para operar en esta sede:
+                  </p>
+
+                  {userSuccessMsg && (
+                    <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', color: '#065f46', padding: '10px 14px', borderRadius: '10px', marginBottom: '14px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>
+                      <CheckCircle2 size={16} color="#059669" /> {userSuccessMsg}
+                    </div>
+                  )}
+
+                  {isLoadingUsers ? (
+                    <div className="text-center py-8 text-muted">Cargando usuarios...</div>
+                  ) : allUsers.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {allUsers.map((u) => {
+                        const isAssigned = assignedUserIds.includes(u.id);
+                        return (
+                          <div
+                            key={u.id}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '11px 16px',
+                              borderRadius: '10px',
+                              border: isAssigned ? '2px solid #07665e' : '1px solid #e2e8f0',
+                              background: isAssigned ? 'rgba(7, 102, 94, 0.05)' : '#ffffff',
+                            }}
+                          >
+                            <div>
+                              <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#1e293b' }}>
+                                {u.fullName || u.username}
+                              </div>
+                              <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                                Rol: <strong>{u.roleName || (u.userRoleId === 1 ? 'Administrador' : 'Operador')}</strong> • @{u.username} • {u.email || 'Sin correo'}
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              className={isAssigned ? 'btn-secondary' : 'btn-primary'}
+                              style={{ padding: '6px 14px', fontSize: '0.8rem', width: 'auto' }}
+                              onClick={() => handleToggleUserAssignment(u.id, isAssigned)}
+                            >
+                              {isAssigned ? (
+                                <><UserX size={14} /> Desasignar</>
+                              ) : (
+                                <><UserCheck size={14} /> Asignar a Sede</>
+                              )}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '12px', padding: '28px 20px', textAlign: 'center' }}>
+                      <Users size={32} style={{ color: '#94a3b8', margin: '0 auto 10px auto' }} />
+                      <p style={{ fontWeight: 700, fontSize: '0.92rem', color: '#334155', margin: '0 0 6px 0' }}>
+                        No hay usuarios registrados
+                      </p>
+                      <p style={{ fontSize: '0.82rem', color: '#64748b', margin: 0 }}>
+                        Crea usuarios en la pestaña superior "Usuarios" para asignarlos a esta sede.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 3: TARIFAS VEHICULARES DE LA SEDE */}
+              {activeConfigTab === 'rates' && (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
+                    <p style={{ fontSize: '0.86rem', color: '#475569', margin: 0, lineHeight: 1.4 }}>
+                      Tarifas de cobro por tiempo (hora/minuto/día) parametrizadas exclusivamente para esta sede:
+                    </p>
+                    {!isEditingRateModal && (
+                      <button
+                        type="button"
+                        className="btn-primary"
+                        style={{ padding: '6px 14px', fontSize: '0.82rem' }}
+                        onClick={handleOpenCreateRate}
+                      >
+                        <Plus size={14} /> Agregar Tarifa a esta Sede
+                      </button>
+                    )}
+                  </div>
+
+                  {rateSuccessMsg && (
+                    <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', color: '#065f46', padding: '10px 14px', borderRadius: '10px', marginBottom: '14px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>
+                      <CheckCircle2 size={16} color="#059669" /> {rateSuccessMsg}
+                    </div>
+                  )}
+
+                  {/* Formulario Inline para Crear/Editar Tarifa */}
+                  {isEditingRateModal && editingRate && (
+                    <form onSubmit={handleSaveRate} style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                        <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: '#0f172a' }}>
+                          {editingRate.rateId ? 'Editar Tarifa Vehicular' : 'Nueva Tarifa para esta Sede'}
+                        </h4>
+                        <button type="button" className="btn-close" onClick={() => setIsEditingRateModal(false)}>
+                          <X size={16} />
+                        </button>
+                      </div>
+
+                      <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '10px' }}>
+                        <div className="form-group">
+                          <label>Tipo de Vehículo</label>
+                          <select
+                            className="input-field"
+                            value={editingRate.vehicleType ?? 0}
+                            onChange={(e) => handleVehicleTypePresetChange(Number(e.target.value))}
+                          >
+                            <option value={0}>🚗 Automóvil / Carro</option>
+                            <option value={1}>🏍️ Motocicleta</option>
+                            <option value={2}>🚚 Camión / Pesado</option>
+                            <option value={3}>🚐 Furgón / Minibús</option>
+                            <option value={4}>🚲 Bicicleta</option>
+                            <option value={5}>🚙 Camioneta / SUV</option>
+                          </select>
+                        </div>
+                        <div className="form-group">
+                          <label>Nombre / Categoría *</label>
+                          <input
+                            type="text"
+                            className="input-field"
+                            value={editingRate.category || ''}
+                            onChange={(e) => setEditingRate({ ...editingRate, category: e.target.value })}
+                            placeholder="Ej. Automóvil / Sedán"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                        <div className="form-group">
+                          <label>Valor Hora ($) *</label>
+                          <input
+                            type="number"
+                            className="input-field"
+                            value={editingRate.hourRate || 0}
+                            onChange={(e) => setEditingRate({ ...editingRate, hourRate: Number(e.target.value) })}
+                            min={0}
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label>Valor Minuto ($)</label>
+                          <input
+                            type="number"
+                            className="input-field"
+                            value={editingRate.minuteRate || 0}
+                            onChange={(e) => setEditingRate({ ...editingRate, minuteRate: Number(e.target.value) })}
+                            min={0}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label>Máximo Día ($)</label>
+                          <input
+                            type="number"
+                            className="input-field"
+                            value={editingRate.fullDayRate || 0}
+                            onChange={(e) => setEditingRate({ ...editingRate, fullDayRate: Number(e.target.value) })}
+                            min={0}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label>Gracia (min)</label>
+                          <input
+                            type="number"
+                            className="input-field"
+                            value={editingRate.gracePeriodMinutes || 0}
+                            onChange={(e) => setEditingRate({ ...editingRate, gracePeriodMinutes: Number(e.target.value) })}
+                            min={0}
+                          />
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                        <button type="button" className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.82rem' }} onClick={() => setIsEditingRateModal(false)}>
+                          Cancelar
+                        </button>
+                        <button type="submit" className="btn-primary" style={{ padding: '6px 14px', fontSize: '0.82rem' }} disabled={isSavingRate}>
+                          {isSavingRate ? 'Guardando...' : 'Guardar Tarifa'}
+                        </button>
+                      </div>
+                    </form>
+                  )}
+
+                  {isLoadingRates ? (
+                    <div className="text-center py-8 text-muted">Cargando tarifas vehiculares...</div>
+                  ) : branchRates.length > 0 ? (
+                    <table className="data-table" style={{ width: '100%', marginTop: '8px' }}>
+                      <thead>
+                        <tr>
+                          <th>Categoría / Tipo</th>
+                          <th>Valor Hora</th>
+                          <th>Valor Minuto</th>
+                          <th>Máximo Día</th>
+                          <th>Gracia</th>
+                          <th style={{ textAlign: 'right' }}>Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {branchRates.map((r) => (
+                          <tr key={r.rateId}>
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>
+                                <Car size={16} color="#07665e" />
+                                <span>{r.category}</span>
+                              </div>
+                            </td>
+                            <td><strong>${r.hourRate?.toLocaleString('es-CO') || 0}</strong></td>
+                            <td>${r.minuteRate?.toLocaleString('es-CO') || 0}</td>
+                            <td>${r.fullDayRate?.toLocaleString('es-CO') || 0}</td>
+                            <td>{r.gracePeriodMinutes || 0} min</td>
+                            <td style={{ textAlign: 'right' }}>
+                              <button
+                                type="button"
+                                className="btn-icon"
+                                style={{ padding: '6px' }}
+                                onClick={() => handleOpenEditRate(r)}
+                                title="Editar Tarifa"
+                              >
+                                <Edit2 size={14} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '12px', padding: '28px 20px', textAlign: 'center' }}>
+                      <Car size={32} style={{ color: '#94a3b8', margin: '0 auto 10px auto' }} />
+                      <p style={{ fontWeight: 700, fontSize: '0.92rem', color: '#334155', margin: '0 0 6px 0' }}>
+                        No hay tarifas vehiculares parametrizadas para esta sede
+                      </p>
+                      <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '0 0 12px 0' }}>
+                        Haz clic en el botón inferior para configurar las tarifas de cobro por hora/minuto en esta sede.
+                      </p>
+                      <button
+                        type="button"
+                        className="btn-primary"
+                        style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                        onClick={handleOpenCreateRate}
+                      >
+                        <Plus size={15} /> Parametrizar Primera Tarifa
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button type="button" className="btn-secondary" onClick={() => setIsConfigModalOpen(false)}>
+                Cerrar
+              </button>
+              {activeConfigTab === 'payments' && allPaymentMethods.length > 0 && (
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={handleSavePayments}
+                  disabled={isSavingPayments}
+                >
+                  {isSavingPayments ? 'Guardando...' : 'Guardar Medios de Pago'}
                 </button>
-                <button type="submit" className="btn-primary" style={{ width: 'auto' }}>
-                  Guardar Tarifa
-                </button>
-              </div>
-            </form>
+              )}
+            </div>
           </div>
         </div>
       )}

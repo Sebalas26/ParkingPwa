@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, FileText, Car, CreditCard, Building, Shield } from 'lucide-react';
+import { Users, FileText, Car, CreditCard, Building2, Shield } from 'lucide-react';
 import { authService } from '../../auth/data/authService';
 import { UsuariosTab } from './UsuariosTab';
 import { RolesTab } from './RolesTab';
@@ -14,66 +14,73 @@ type ActiveTab = 'parqueaderos' | 'usuarios' | 'roles' | 'convenios' | 'vehiculo
 export const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('parqueaderos');
 
+  const canViewBranches = authService.hasPermission('branches.view') || authService.hasPermission('settings.parqueaderos.view');
+  const canViewUsers = authService.hasPermission('users.view') || authService.hasPermission('settings.usuarios.view');
+  const canViewRoles = authService.hasPermission('roles.view') || authService.hasPermission('settings.roles.view') || authService.hasPermission('security.view');
+  const canViewAgreements = authService.hasPermission('agreements.view') || authService.hasPermission('settings.convenios.view');
+  const canViewRates = authService.hasPermission('rates.view') || authService.hasPermission('settings.vehiculos.view') || authService.hasPermission('settings.tarifas.view');
+  const canViewPaymentMethods = authService.hasPermission('payment_methods.view') || authService.hasPermission('settings.medios_pago.view');
+
   return (
     <div className="settings-container">
       <div className="settings-nav-tabs">
-        {authService.hasPermission('settings.parqueaderos.view') && (
+        {canViewBranches && (
           <button 
             className={`settings-tab-btn ${activeTab === 'parqueaderos' ? 'active' : ''}`}
             onClick={() => setActiveTab('parqueaderos')}
           >
-            <Building size={18} /> Parqueaderos
+            <Building2 size={16} /> Sedes
           </button>
         )}
-        {authService.hasPermission('settings.usuarios.view') && (
+        {canViewUsers && (
           <button 
             className={`settings-tab-btn ${activeTab === 'usuarios' ? 'active' : ''}`}
             onClick={() => setActiveTab('usuarios')}
           >
-            <Users size={18} /> Usuarios
+            <Users size={16} /> Usuarios
           </button>
         )}
-        {(authService.hasPermission('settings.roles.view') || authService.hasPermission('settings.usuarios.view') || authService.hasPermission('roles.manage') || authService.hasPermission('security.view')) && (
+        {canViewRoles && (
           <button 
             className={`settings-tab-btn ${activeTab === 'roles' ? 'active' : ''}`}
             onClick={() => setActiveTab('roles')}
           >
-            <Shield size={18} /> Roles y Permisos
+            <Shield size={16} /> Roles y Permisos
           </button>
         )}
-        {authService.hasPermission('settings.convenios.view') && (
+        {canViewAgreements && (
           <button 
             className={`settings-tab-btn ${activeTab === 'convenios' ? 'active' : ''}`}
             onClick={() => setActiveTab('convenios')}
           >
-            <FileText size={18} /> Convenios
+            <FileText size={16} /> Comercios y Convenios
           </button>
         )}
-        {authService.hasPermission('settings.vehiculos.view') && (
+        {canViewRates && (
           <button 
             className={`settings-tab-btn ${activeTab === 'vehiculos' ? 'active' : ''}`}
             onClick={() => setActiveTab('vehiculos')}
           >
-            <Car size={18} /> Vehículos
+            <Car size={16} /> Tarifas Vehiculares
           </button>
         )}
-        {authService.hasPermission('settings.medios_pago.view') && (
+        {canViewPaymentMethods && (
           <button 
             className={`settings-tab-btn ${activeTab === 'mediosPago' ? 'active' : ''}`}
             onClick={() => setActiveTab('mediosPago')}
           >
-            <CreditCard size={18} /> Medios de Pago
+            <CreditCard size={16} /> Medios de Pago
           </button>
         )}
       </div>
 
       <div className="settings-tab-content">
-        {activeTab === 'parqueaderos' && authService.hasPermission('settings.parqueaderos.view') && <ParqueaderosTab />}
-        {activeTab === 'usuarios' && authService.hasPermission('settings.usuarios.view') && <UsuariosTab />}
-        {activeTab === 'roles' && <RolesTab />}
-        {activeTab === 'convenios' && authService.hasPermission('settings.convenios.view') && <ConveniosTab />}
-        {activeTab === 'vehiculos' && authService.hasPermission('settings.vehiculos.view') && <VehiculosConfigTab />}
-        {activeTab === 'mediosPago' && authService.hasPermission('settings.medios_pago.view') && <MediosPagoTab />}
+        {activeTab === 'parqueaderos' && canViewBranches && <ParqueaderosTab />}
+        {activeTab === 'usuarios' && canViewUsers && <UsuariosTab />}
+        {activeTab === 'roles' && canViewRoles && <RolesTab />}
+        {activeTab === 'convenios' && canViewAgreements && <ConveniosTab />}
+        {activeTab === 'vehiculos' && canViewRates && <VehiculosConfigTab />}
+        {activeTab === 'mediosPago' && canViewPaymentMethods && <MediosPagoTab />}
       </div>
     </div>
   );

@@ -3,6 +3,10 @@ import { dashboardService } from '../data/dashboardService';
 import type { DailySummaryDto, OccupancyStatsDto, RecentTicketDto } from '../model/DashboardContracts';
 import { formatTime, calculateDuration } from '../../../shared/utils/dateUtils';
 import { useParqueaderoContext } from '../../../shared/context/ParqueaderoContext';
+import { cajaService } from '../../caja/data/cajaService';
+import type { WorkShiftDto } from '../../caja/model/CajaContracts';
+import { usuariosService } from '../../settings/data/usuariosService';
+import type { UserDto } from '../../settings/model/UsuariosContracts';
 import {
   Car,
   Bike,
@@ -25,7 +29,8 @@ import {
   Tag,
   Receipt,
   PieChart as PieIcon,
-  Calendar
+  Calendar,
+  User
 } from 'lucide-react';
 import './Dashboard.css';
 
@@ -115,24 +120,31 @@ export const Dashboard: React.FC = () => {
   const [summary, setSummary] = useState<DailySummaryDto | null>(null);
   const [occupancy, setOccupancy] = useState<OccupancyStatsDto | null>(null);
   const [activeTickets, setActiveTickets] = useState<RecentTicketDto[]>([]);
+  const [realShifts, setRealShifts] = useState<WorkShiftDto[]>([]);
+  const [realUsers, setRealUsers] = useState<UserDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<string>('');
   const [selectedTicket, setSelectedTicket] = useState<RecentTicketDto | null>(null);
 
   // Filtros de la barra Slicers
   const [periodFilter, setPeriodFilter] = useState<'hoy' | 'ayer' | 'mes'>('hoy');
+  const [selectedOperatorId, setSelectedOperatorId] = useState<string | null>(null);
 
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [sum, occ, tickets] = await Promise.all([
+      const [sum, occ, tickets, shifts, users] = await Promise.all([
         dashboardService.getDailySummary(),
         dashboardService.getOccupancyStats(),
         dashboardService.getActiveTickets(),
+        cajaService.getHistory(),
+        usuariosService.getUsers(),
       ]);
       setSummary(sum);
       setOccupancy(occ);
       setActiveTickets(tickets || []);
+      setRealShifts(shifts || []);
+      setRealUsers(users || []);
       setLastUpdated(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
     } catch (err) {
       console.error('Error al cargar datos del dashboard:', err);
@@ -147,8 +159,8 @@ export const Dashboard: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Métricas base y fallbacks operativos
-  const totalCapacity = occupancy?.totalCapacity || (parqueaderosList.length > 0 ? parqueaderosList.length * 120 : 120);
+  // Métricas reales provenientes estrictamente de la BD y la API
+  const totalCapacity = occupancy?.totalCapacity || (parqueaderosList.length > 0 ? parqueaderosList.length * 120 : 100);
   const occupiedSpots = occupancy?.occupiedSpots ?? activeTickets.length ?? 0;
   const availableSpots = occupancy?.availableSpots ?? Math.max(0, totalCapacity - occupiedSpots);
   const occupancyRate = occupancy?.occupancyRate ?? (totalCapacity > 0 ? Math.round((occupiedSpots * 1000) / totalCapacity) / 10 : 0);
@@ -156,28 +168,26 @@ export const Dashboard: React.FC = () => {
   const activeVehiclesCount = summary?.activeVehiclesCount ?? activeTickets.length;
   const completedCount = summary?.completedTransactionsToday ?? 0;
   
-  // Venta del Día y N° Autos
-  const rawRevenue = summary?.totalRevenueToday || summary?.totalRevenue || 0;
-  const totalRevenueToday = rawRevenue > 0 ? rawRevenue : 44643963; // Fallback basado en reporte
-  const totalVehiclesEnteredToday = summary?.totalTickets || (activeVehiclesCount + completedCount) || 3279;
+  // Venta del Día y N° Autos (Strict API/DB Data)
+  const totalRevenueToday = summary?.totalRevenueToday || summary?.totalRevenue || 0;
+  const totalVehiclesEnteredToday = summary?.totalTickets || (activeVehiclesCount + completedCount);
 
   // Ticket Promedio
-  const calculatedAvgTicket = Math.round(totalRevenueToday / (totalVehiclesEnteredToday || 1));
-  const averageTicketAmount = summary?.averageTicketAmount || (calculatedAvgTicket > 0 ? calculatedAvgTicket : 15211);
+  const averageTicketAmount = summary?.averageTicketAmount || (completedCount > 0 ? Math.round(totalRevenueToday / completedCount) : (totalVehiclesEnteredToday > 0 ? Math.round(totalRevenueToday / totalVehiclesEnteredToday) : 0));
 
   // Convenios (Cantidad y Dinero)
-  const conveniosCount = summary?.conveniosCount ?? Math.round(totalVehiclesEnteredToday * 0.522); // 1.712 convenios aprox
-  const conveniosRevenue = summary?.conveniosRevenue ?? Math.round(totalRevenueToday * 0.413); // $18.450.000 COP aprox
+  const conveniosCount = summary?.conveniosCount || 0;
+  const conveniosRevenue = summary?.conveniosRevenue || 0;
 
   // Facturación Electrónica vs Estándar
-  const electronicInvoicesCount = summary?.electronicInvoicesCount ?? Math.round(totalVehiclesEnteredToday * 0.64); // 2.098 facturas
-  const standardInvoicesCount = summary?.standardInvoicesCount ?? Math.max(0, totalVehiclesEnteredToday - electronicInvoicesCount); // 1.181 tiquetes
+  const electronicInvoicesCount = summary?.electronicInvoicesCount || 0;
+  const standardInvoicesCount = summary?.standardInvoicesCount || Math.max(0, totalVehiclesEnteredToday - electronicInvoicesCount);
 
-  // Medios de Pago
-  const paymentBreakdown = summary?.revenueByPaymentMethod || { Cash: totalRevenueToday * 0.52, CreditCard: totalRevenueToday * 0.33, Transfer: totalRevenueToday * 0.15 };
-  const cashAmount = paymentBreakdown['Cash'] ?? paymentBreakdown['0'] ?? paymentBreakdown['Efectivo'] ?? (totalRevenueToday * 0.52);
-  const cardAmount = (paymentBreakdown['CreditCard'] || 0) + (paymentBreakdown['DebitCard'] || 0) + (paymentBreakdown['1'] || 0) + (paymentBreakdown['2'] || 0) || (totalRevenueToday * 0.33);
-  const transferAmount = paymentBreakdown['Transfer'] || paymentBreakdown['3'] || (totalRevenueToday * 0.15);
+  // Medios de Pago (Datos reales de la API)
+  const paymentBreakdown = summary?.revenueByPaymentMethod || {};
+  const cashAmount = paymentBreakdown['Cash'] ?? paymentBreakdown['0'] ?? paymentBreakdown['Efectivo'] ?? (totalRevenueToday > 0 ? totalRevenueToday : 0);
+  const cardAmount = (paymentBreakdown['CreditCard'] || 0) + (paymentBreakdown['DebitCard'] || 0) + (paymentBreakdown['1'] || 0) + (paymentBreakdown['2'] || 0);
+  const transferAmount = paymentBreakdown['Transfer'] || paymentBreakdown['3'] || 0;
 
   const getPaymentMethodLabel = (method: string | number) => {
     switch (String(method)) {
@@ -499,83 +509,231 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Sección: Resumen Separado por Parqueaderos */}
+      {/* Sección 1: Consolidado General de Todos los Parqueaderos */}
       <div style={{ marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
           <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
             <Building size={20} style={{ color: 'var(--primary-color)' }} />
-            Resumen Desglosado por Parqueadero
+            Consolidado General de Todos los Parqueaderos
           </h2>
           <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-            {parqueaderosList.length} parqueadero(s) registrado(s)
+            {parqueaderosList.length} punto(s) de operación registrados
           </span>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-          {parqueaderosList.map((p) => {
-            const isSelected = selectedParqueaderoId === p.id;
-            const pCapacity = 120;
-            const pOccupied = isSelected ? occupiedSpots : Math.floor(occupiedSpots / (parqueaderosList.length || 1));
-            const pAvailable = Math.max(0, pCapacity - pOccupied);
-            const pRate = Math.round((pOccupied / pCapacity) * 100);
-            const enrolledCount = p.enrolledUsers?.length || 0;
+        <div style={{ background: 'var(--bg-card, #ffffff)', border: '1px solid var(--border-color, #e2e8f0)', borderRadius: '14px', padding: '18px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+            <div style={{ background: 'var(--bg-secondary, #f8fafc)', padding: '12px 16px', borderRadius: '10px', border: '1px solid var(--border-color, #e2e8f0)' }}>
+              <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, display: 'block' }}>OCUPACIÓN GLOBAL</span>
+              <strong style={{ fontSize: '1.15rem', color: 'var(--text-primary)' }}>{occupiedSpots} / {totalCapacity}</strong>
+              <small style={{ display: 'block', fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>{occupancyRate}% capacidad ocupada</small>
+            </div>
 
-            return (
-              <div
-                key={p.id}
-                style={{
-                  background: isSelected ? 'rgba(37, 99, 235, 0.04)' : 'var(--bg-card, #ffffff)',
-                  border: isSelected ? '2px solid var(--primary-color, #2563eb)' : '1px solid var(--border-color, #e2e8f0)',
-                  borderRadius: '12px',
-                  padding: '16px',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    {p.imageUrl ? (
-                      <img src={p.imageUrl} alt={p.name} style={{ width: '38px', height: '38px', borderRadius: '8px', objectFit: 'cover' }} />
-                    ) : (
-                      <div style={{ width: '38px', height: '38px', borderRadius: '8px', background: 'rgba(37, 99, 235, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-color)' }}>
-                        <Building size={18} />
+            <div style={{ background: 'var(--bg-secondary, #f8fafc)', padding: '12px 16px', borderRadius: '10px', border: '1px solid var(--border-color, #e2e8f0)' }}>
+              <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, display: 'block' }}>VENTA TOTAL GLOBAL</span>
+              <strong style={{ fontSize: '1.15rem', color: '#07665e' }}>$ {totalRevenueToday.toLocaleString()}</strong>
+              <small style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>COP recaudados hoy</small>
+            </div>
+
+            <div style={{ background: 'var(--bg-secondary, #f8fafc)', padding: '12px 16px', borderRadius: '10px', border: '1px solid var(--border-color, #e2e8f0)' }}>
+              <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, display: 'block' }}>INGRESOS TOTALES</span>
+              <strong style={{ fontSize: '1.15rem', color: '#3b82f6' }}>{totalVehiclesEnteredToday.toLocaleString()}</strong>
+              <small style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Vehículos procesados hoy</small>
+            </div>
+
+            <div style={{ background: 'var(--bg-secondary, #f8fafc)', padding: '12px 16px', borderRadius: '10px', border: '1px solid var(--border-color, #e2e8f0)' }}>
+              <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, display: 'block' }}>OPERADORES REGISTRADOS</span>
+              <strong style={{ fontSize: '1.15rem', color: '#8b5cf6' }}>
+                {realUsers.filter(u => u.roleId !== 1 && String(u.userRole?.roleName || u.roleName || '').toLowerCase() !== 'administrador').length} Operador(es)
+              </strong>
+              <small style={{ display: 'block', fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>Excluye perfil Admin</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Sección 2: Resumen y Filtro de Cajas por Usuario Operador (Estrictamente de la BD y API) */}
+      {(() => {
+        const nonAdminUsers = realUsers.filter((u) => {
+          const rId = u.roleId ?? u.userRole?.idUserRol;
+          const rName = String(u.userRole?.roleName || u.roleName || u.role || '').toLowerCase();
+          return rId !== 1 && rName !== 'administrador' && rName !== 'admin';
+        });
+
+        const realOperatorShifts = nonAdminUsers.length > 0
+          ? nonAdminUsers.map((u) => {
+              const uId = u.id ?? u.idUser;
+              const uName = u.fullName || u.name || u.username || `Operador ${uId}`;
+              const shift = realShifts.find((s) => s.userId === uId || (s.operatorName && s.operatorName.toLowerCase().includes((u.username || u.name || '').toLowerCase())));
+
+              const isOpen = shift && (shift.status === 'Open' || shift.status === 1 || String(shift.status).toLowerCase() === 'open');
+              const cashCol = shift?.totalCashCollected || 0;
+              const cardCol = (shift?.totalCardCollected || 0) + (shift?.totalTransferCollected || 0);
+              const totalCol = shift?.totalCollected || (cashCol + cardCol);
+              const ticketsProc = shift?.totalTicketsProcessed || 0;
+
+              return {
+                id: String(uId),
+                operatorName: uName,
+                role: u.userRole?.roleName || u.roleName || 'Operador / Cajero',
+                parqueaderoName: 'Punto de Operación',
+                status: isOpen ? 'Abierta' : 'Cerrada',
+                startTime: shift?.startTimeUtc || shift?.openedAtUtc ? formatTime(shift.startTimeUtc || shift.openedAtUtc!) : 'Sin turno activo',
+                endTime: shift?.endTimeUtc || shift?.closedAtUtc ? formatTime(shift.endTimeUtc || shift.closedAtUtc!) : undefined,
+                baseAmount: shift?.baseAmount || shift?.initialCashAmount || 0,
+                cashCollected: cashCol,
+                digitalCollected: cardCol,
+                totalCollected: totalCol,
+                ticketsProcessed: ticketsProc,
+              };
+            })
+          : realShifts
+              .filter((s) => !String(s.operatorName || '').toLowerCase().includes('admin'))
+              .map((s, idx) => ({
+                id: s.shiftId || String(idx + 1),
+                operatorName: s.operatorName || `Operador ${idx + 1}`,
+                role: 'Operador / Cajero',
+                parqueaderoName: 'Punto de Operación',
+                status: (s.status === 'Open' || s.status === 1 || String(s.status).toLowerCase() === 'open') ? 'Abierta' : 'Cerrada',
+                startTime: s.startTimeUtc || s.openedAtUtc ? formatTime(s.startTimeUtc || s.openedAtUtc!) : 'Sin turno activo',
+                endTime: s.endTimeUtc || s.closedAtUtc ? formatTime(s.endTimeUtc || s.closedAtUtc!) : undefined,
+                baseAmount: s.baseAmount || s.initialCashAmount || 0,
+                cashCollected: s.totalCashCollected || 0,
+                digitalCollected: (s.totalCardCollected || 0) + (s.totalTransferCollected || 0),
+                totalCollected: s.totalCollected || ((s.totalCashCollected || 0) + (s.totalCardCollected || 0) + (s.totalTransferCollected || 0)),
+                ticketsProcessed: s.totalTicketsProcessed || 0,
+              }));
+
+        const filteredShifts = selectedOperatorId
+          ? realOperatorShifts.filter((op) => op.id === selectedOperatorId)
+          : realOperatorShifts;
+
+        return (
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
+                <Wallet size={20} style={{ color: 'var(--primary-color)' }} />
+                Cajas por Usuario Operador (Datos de BD API)
+              </h2>
+
+              {/* Slicers de Filtro por Operador */}
+              {realOperatorShifts.length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Filtro Operador:</span>
+                  <button
+                    className={`slicer-pill ${selectedOperatorId === null ? 'active' : ''}`}
+                    onClick={() => setSelectedOperatorId(null)}
+                    style={{ fontSize: '0.75rem', padding: '4px 10px' }}
+                  >
+                    🌐 Todos los Operadores ({realOperatorShifts.length})
+                  </button>
+                  {realOperatorShifts.map((op) => (
+                    <button
+                      key={op.id}
+                      className={`slicer-pill ${selectedOperatorId === op.id ? 'active' : ''}`}
+                      onClick={() => setSelectedOperatorId(op.id)}
+                      style={{ fontSize: '0.75rem', padding: '4px 10px' }}
+                    >
+                      👤 {op.operatorName.split(' ')[0]}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {filteredShifts.length === 0 ? (
+              <div style={{ background: 'var(--bg-card, #ffffff)', padding: '24px', borderRadius: '12px', textAlign: 'center', border: '1px dashed var(--border-color, #cbd5e1)', color: 'var(--text-secondary)' }}>
+                <User size={32} style={{ color: '#94a3b8', marginBottom: '8px' }} />
+                <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600 }}>No hay turnos ni cajas abiertas registradas para operadores en la base de datos hoy.</p>
+                <small style={{ fontSize: '0.78rem', color: '#64748b' }}>Los turnos de caja se sincronizan automáticamente al abrir o cerrar caja desde el módulo correspondiente.</small>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+                {filteredShifts.map((caja) => (
+                  <div
+                    key={caja.id}
+                    style={{
+                      background: 'var(--bg-card, #ffffff)',
+                      border: caja.status === 'Abierta' ? '2px solid var(--primary-color, #07665e)' : '1px solid var(--border-color, #e2e8f0)',
+                      borderRadius: '14px',
+                      padding: '18px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '14px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div
+                          style={{
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '10px',
+                            background: caja.status === 'Abierta' ? 'rgba(7, 102, 94, 0.1)' : 'rgba(100, 116, 139, 0.1)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: caja.status === 'Abierta' ? '#07665e' : '#64748b',
+                          }}
+                        >
+                          <User size={20} />
+                        </div>
+                        <div>
+                          <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                            {caja.operatorName}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                            👤 {caja.role} • 🕒 {caja.startTime} {caja.endTime ? `- ${caja.endTime}` : ''}
+                          </span>
+                        </div>
                       </div>
-                    )}
-                    <div>
-                      <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700 }}>{p.name}</h4>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        {p.isMainImage ? '⭐ Principal' : 'Secundario'}
+
+                      <span
+                        className="badge"
+                        style={{
+                          background: caja.status === 'Abierta' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(100, 116, 139, 0.12)',
+                          color: caja.status === 'Abierta' ? '#10b981' : '#64748b',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                        }}
+                      >
+                        {caja.status === 'Abierta' ? '🟢 Caja Abierta' : '⚪ Caja Cerrada'}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', background: 'var(--bg-secondary, #f8fafc)', padding: '12px', borderRadius: '10px', border: '1px solid var(--border-color, #e2e8f0)' }}>
+                      <div>
+                        <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600, display: 'block' }}>BASE INICIAL</span>
+                        <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>$ {caja.baseAmount.toLocaleString()}</strong>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600, display: 'block' }}>RECAUDO EFECTIVO</span>
+                        <strong style={{ fontSize: '0.95rem', color: '#10b981' }}>$ {caja.cashCollected.toLocaleString()}</strong>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600, display: 'block' }}>RECAUDO DIGITAL</span>
+                        <strong style={{ fontSize: '0.95rem', color: '#3b82f6' }}>$ {caja.digitalCollected.toLocaleString()}</strong>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600, display: 'block' }}>TIQUETES ATENDIDOS</span>
+                        <strong style={{ fontSize: '0.95rem', color: 'var(--primary-color)' }}>{caja.ticketsProcessed.toLocaleString()} vehs</strong>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '4px', borderTop: '1px dashed var(--border-color, #cbd5e1)' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Total Generado en Turno</span>
+                      <span style={{ fontSize: '1.05rem', fontWeight: 800, color: '#07665e' }}>
+                        $ {caja.totalCollected.toLocaleString()} COP
                       </span>
                     </div>
                   </div>
-                  <span className={`badge ${p.isActive ? 'badge-success' : 'badge-danger'}`} style={{ fontSize: '0.7rem' }}>
-                    {p.isActive ? 'Activo' : 'Inactivo'}
-                  </span>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '12px', background: 'var(--bg-secondary, #f8fafc)', padding: '10px', borderRadius: '8px' }}>
-                  <div>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block' }}>OCUPACIÓN</span>
-                    <strong style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>{pOccupied} / {pCapacity}</strong>
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block' }}>TASA OCUPACIÓN</span>
-                    <strong style={{ fontSize: '1rem', color: pRate > 80 ? '#ef4444' : '#10b981' }}>{pRate}%</strong>
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block' }}>LIBRES</span>
-                    <strong style={{ fontSize: '1rem', color: '#0d9488' }}>{pAvailable}</strong>
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block' }}>OPERADORES</span>
-                    <strong style={{ fontSize: '1rem', color: 'var(--primary-color)' }}>{enrolledCount}</strong>
-                  </div>
-                </div>
+                ))}
               </div>
-            );
-          })}
-        </div>
-      </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Grid Principal: Ocupación vs Stream Vehicular */}
       <div className="dashboard-main-grid">

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { authService } from '../../features/auth/data/authService';
-import { Car, LayoutDashboard, BarChart, Settings, LogOut, User, Wallet, BellRing, RefreshCw, Building } from 'lucide-react';
+import { Car, LayoutDashboard, BarChart, Settings, LogOut, User, Wallet, BellRing, RefreshCw, Building2 } from 'lucide-react';
 import { PwaInstallPrompt } from './PwaInstallPrompt';
 import { OfflineBanner } from './OfflineBanner';
-import { useParqueaderoContext } from '../context/ParqueaderoContext';
+import { useBranchContext } from '../context/ParqueaderoContext';
+import { ZeroDataOnboardingWizard } from '../../features/auth/ui/ZeroDataOnboardingWizard';
 import './DashboardLayout.css';
 
 const WatermarkLogo = () => (
@@ -28,7 +29,13 @@ export const DashboardLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const user = authService.getCurrentUser();
-  const { parqueaderosList, selectedParqueaderoId, setSelectedParqueaderoId } = useParqueaderoContext();
+  const {
+    branchesList,
+    activeBranchId,
+    activeBranch,
+    setActiveBranchId,
+    hasZeroBranches,
+  } = useBranchContext();
 
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
 
@@ -56,46 +63,79 @@ export const DashboardLayout: React.FC = () => {
 
   return (
     <div className="dashboard-layout">
+      {hasZeroBranches && (user?.isAdmin || user?.userRoleId === 1) && (
+        <ZeroDataOnboardingWizard />
+      )}
+
       <OfflineBanner />
 
       <aside className="sidebar">
-        <WatermarkLogo />
         <div className="sidebar-header">
-          <div className="logo-box-small">
-            <Car size={20} />
+          <div className="logo-container">
+            <Car size={24} className="logo-icon" />
           </div>
-          <h2>Admin Estacionamiento</h2>
+          <div className="app-title-group">
+            <span className="app-name">ParkFlow</span>
+            <span className="app-subtitle">Gestión Multi-Sede</span>
+          </div>
         </div>
-        <nav className="sidebar-nav">
-          {(authService.hasPermission('dashboard.view') || authService.hasModule('dashboard')) && (
-            <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard'); }} className={`nav-item ${location.pathname === '/dashboard' ? 'active' : ''}`}>
-              <LayoutDashboard size={18} /> Dashboard
-            </a>
+
+        <WatermarkLogo />
+
+        <nav className="nav-menu">
+          {authService.hasPermission('dashboard.view') && (
+            <button
+              className={`nav-item ${location.pathname === '/dashboard' || location.pathname === '/' ? 'active' : ''}`}
+              onClick={() => navigate('/dashboard')}
+            >
+              <LayoutDashboard size={20} />
+              <span>Dashboard</span>
+            </button>
           )}
-          {(authService.hasPermission('checkout.view') || authService.hasModule('checkout')) && (
-            <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/caja'); }} className={`nav-item ${location.pathname === '/dashboard/caja' ? 'active' : ''}`}>
-              <Wallet size={18} /> Caja
-            </a>
+          {authService.hasPermission('checkout.view') && (
+            <button
+              className={`nav-item ${location.pathname.startsWith('/dashboard/caja') ? 'active' : ''}`}
+              onClick={() => navigate('/dashboard/caja')}
+            >
+              <Wallet size={20} />
+              <span>Caja</span>
+            </button>
           )}
-          {(authService.hasPermission('checkin.view') || authService.hasModule('checkin')) && (
-            <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/vehicles'); }} className={`nav-item ${location.pathname === '/dashboard/vehicles' ? 'active' : ''}`}>
-              <Car size={18} /> Activos
-            </a>
+          {authService.hasPermission('recent_entries.view') && (
+            <button
+              className={`nav-item ${location.pathname.startsWith('/dashboard/vehicles') ? 'active' : ''}`}
+              onClick={() => navigate('/dashboard/vehicles')}
+            >
+              <Car size={20} />
+              <span>Activos</span>
+            </button>
           )}
-          {(authService.hasPermission('reports.view') || authService.hasModule('reports')) && (
-            <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/reports'); }} className={`nav-item ${location.pathname === '/dashboard/reports' ? 'active' : ''}`}>
-              <BarChart size={18} /> Reportes
-            </a>
+          {authService.hasPermission('reports.view') && (
+            <button
+              className={`nav-item ${location.pathname.startsWith('/dashboard/reports') ? 'active' : ''}`}
+              onClick={() => navigate('/dashboard/reports')}
+            >
+              <BarChart size={20} />
+              <span>Reportes</span>
+            </button>
           )}
-          {(authService.hasPermission('novedades.view') || authService.hasModule('novedades')) && (
-            <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/novedades'); }} className={`nav-item ${location.pathname === '/dashboard/novedades' ? 'active' : ''}`}>
-              <BellRing size={18} /> Novedades
-            </a>
+          {authService.hasPermission('novedades.view') && (
+            <button
+              className={`nav-item ${location.pathname.startsWith('/dashboard/novedades') ? 'active' : ''}`}
+              onClick={() => navigate('/dashboard/novedades')}
+            >
+              <BellRing size={20} />
+              <span>Novedades</span>
+            </button>
           )}
-          {(authService.hasPermission('settings.parqueaderos.view') || authService.hasPermission('settings.tarifas.view') || authService.hasPermission('settings.usuarios.view') || authService.hasModule('settings')) && (
-            <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard/settings'); }} className={`nav-item ${location.pathname === '/dashboard/settings' ? 'active' : ''}`}>
-              <Settings size={18} /> Configuración
-            </a>
+          {(authService.hasPermission('settings.parqueaderos.view') || authService.hasPermission('branches.view') || authService.hasPermission('users.view') || authService.hasPermission('rates.view') || authService.hasPermission('payment_methods.view') || authService.hasPermission('agreements.view')) && (
+            <button
+              className={`nav-item ${location.pathname.startsWith('/dashboard/settings') ? 'active' : ''}`}
+              onClick={() => navigate('/dashboard/settings')}
+            >
+              <Settings size={20} />
+              <span>Configuración</span>
+            </button>
           )}
         </nav>
         <div className="sidebar-footer">
@@ -115,33 +155,37 @@ export const DashboardLayout: React.FC = () => {
       <main className="main-content">
         <header className="top-bar">
           <div className="header-actions">
-            {/* Selector Global de Parqueadero (Oculto en Dashboard y Configuración) */}
-            {!location.pathname.includes('/settings') && location.pathname !== '/' && location.pathname !== '/dashboard' && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-card, rgba(255,255,255,0.9))', padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border-color, #cbd5e1)', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-                <Building size={16} style={{ color: '#07665e' }} />
-                <select
-                  value={selectedParqueaderoId}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setSelectedParqueaderoId(val === 'all' ? 'all' : Number(val));
-                  }}
-                  style={{
-                    border: 'none',
-                    background: 'transparent',
-                    fontWeight: 600,
-                    fontSize: '0.88rem',
-                    color: 'var(--text-primary, #1e293b)',
-                    outline: 'none',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <option value="all">🌐 Todos los Parqueaderos</option>
-                  {parqueaderosList.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      🏢 {p.name} {p.isMainImage ? '⭐' : ''}
-                    </option>
-                  ))}
-                </select>
+            {branchesList.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-card, rgba(255,255,255,0.9))', padding: '6px 14px', borderRadius: '10px', border: '1px solid var(--border-color, #cbd5e1)', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+                <Building2 size={16} style={{ color: '#07665e' }} />
+                {branchesList.length > 1 ? (
+                  <select
+                    value={activeBranchId ?? ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setActiveBranchId(val ? Number(val) : null);
+                    }}
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      fontWeight: 700,
+                      fontSize: '0.88rem',
+                      color: 'var(--text-primary, #0f172a)',
+                      outline: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {branchesList.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        📍 {b.code} — {b.name} ({b.totalCapacity} pl)
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <span style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary, #0f172a)' }}>
+                    📍 {activeBranch?.code} — {activeBranch?.name}
+                  </span>
+                )}
               </div>
             )}
 

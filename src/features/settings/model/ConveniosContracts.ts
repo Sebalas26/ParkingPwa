@@ -1,5 +1,6 @@
 export interface StoreDto {
   storeId: string;
+  branchId?: number | null;
   name: string;
   taxId?: string;
   phoneNumber?: string;
@@ -11,6 +12,7 @@ export interface StoreDto {
 
 export interface SaveStoreDto {
   storeId?: string;
+  branchId?: number | null;
   name: string;
   taxId?: string;
   phoneNumber?: string;

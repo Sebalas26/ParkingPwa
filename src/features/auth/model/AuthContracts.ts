@@ -1,3 +1,5 @@
+import type { BranchDto } from '../../settings/model/BranchesContracts';
+
 export interface AuthRequestDto {
   username: string;
   password: string;
@@ -26,6 +28,7 @@ export interface AuthResponseDto {
   message?: string;
   permissions?: string[];
   modules?: string[];
+  branches?: BranchDto[];
 }
 
 export interface UserSession {
@@ -38,4 +41,5 @@ export interface UserSession {
   token: string;
   permissions: string[];
   modules: string[];
+  branches?: BranchDto[];
 }

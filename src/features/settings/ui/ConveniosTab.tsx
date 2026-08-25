@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, X, Tag, Store as StoreIcon, Clock, Trash2, DollarSign, Percent, Phone, Building } from 'lucide-react';
+import { Plus, Edit2, X, Tag, Store as StoreIcon, Clock, Trash2, DollarSign, Percent, Phone, Building2 } from 'lucide-react';
 import type { CommercialAgreementDto, SaveCommercialAgreementDto, StoreDto, SaveStoreDto } from '../model/ConveniosContracts';
 import { conveniosService } from '../data/conveniosService';
+import { useBranchContext } from '../../../shared/context/ParqueaderoContext';
 import { authService } from '../../auth/data/authService';
 
 export const ConveniosTab: React.FC = () => {
+  const { activeBranchId, activeBranch } = useBranchContext();
   const [convenios, setConvenios] = useState<CommercialAgreementDto[]>([]);
   const [stores, setStores] = useState<StoreDto[]>([]);
   const [activeSubTab, setActiveSubTab] = useState<'convenios' | 'comercios'>('convenios');
@@ -112,6 +114,7 @@ export const ConveniosTab: React.FC = () => {
   // --- Manejadores Comercios ---
   const handleOpenCreateStore = () => {
     setEditingStore({
+      branchId: activeBranchId,
       name: '',
       taxId: '',
       phoneNumber: '',
@@ -123,6 +126,7 @@ export const ConveniosTab: React.FC = () => {
   const handleOpenEditStore = (s: StoreDto) => {
     setEditingStore({
       storeId: s.storeId,
+      branchId: s.branchId ?? activeBranchId,
       name: s.name,
       taxId: s.taxId || '',
       phoneNumber: s.phoneNumber || s.contactPhone || '',
@@ -136,10 +140,15 @@ export const ConveniosTab: React.FC = () => {
     if (!editingStore || !editingStore.name.trim()) return;
 
     try {
+      const payload = {
+        ...editingStore,
+        branchId: editingStore.branchId ?? activeBranchId,
+      };
+
       if (editingStore.storeId) {
-        await conveniosService.updateStore(editingStore.storeId, editingStore);
+        await conveniosService.updateStore(editingStore.storeId, payload);
       } else {
-        const created = await conveniosService.createStore(editingStore);
+        const created = await conveniosService.createStore(payload);
         if (created?.storeId && editingConvenio) {
           setEditingConvenio({ ...editingConvenio, storeId: created.storeId });
         }
@@ -163,8 +172,15 @@ export const ConveniosTab: React.FC = () => {
     <div className="settings-section-card">
       <div className="section-header">
         <div className="section-header-titles">
-          <h2>Convenios Comerciales y Comercios Aliados</h2>
-          <p>Gestiona los convenios de descuento por compras y los comercios/locales aliados directamente con la base de datos.</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <h2>Convenios Comerciales y Comercios Aliados</h2>
+            {activeBranch && (
+              <span className="badge badge-info" style={{ background: '#e0f2fe', color: '#0369a1', fontWeight: 700, padding: '4px 10px', borderRadius: '8px' }}>
+                📍 Sede: {activeBranch.code} — {activeBranch.name}
+              </span>
+            )}
+          </div>
+          <p>Gestiona los convenios de descuento por compras y los comercios/locales aliados vinculados a la sede activa.</p>
         </div>
 
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>

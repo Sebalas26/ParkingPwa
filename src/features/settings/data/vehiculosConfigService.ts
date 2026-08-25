@@ -31,18 +31,24 @@ export const getCategoryName = (r: any): string => {
 };
 
 export const vehiculosConfigService = {
-  getConfigs: async (): Promise<VehiculoConfigDto[]> => {
+  getConfigs: async (branchId?: number | null): Promise<VehiculoConfigDto[]> => {
     try {
       const rates = await apiClient.get<any[]>('/VehicleRates');
       if (rates && rates.length > 0) {
-        return rates.map((r) => ({
+        let filtered = rates;
+        if (branchId !== undefined && branchId !== null) {
+          filtered = rates.filter((r) => r.branchId === branchId || r.branchId === null || r.branchId === undefined);
+        }
+        return filtered.map((r) => ({
           rateId: r.rateId || r.id,
+          branchId: r.branchId,
           vehicleType: r.vehicleType,
           category: getCategoryName(r),
           gracePeriodMinutes: r.gracePeriodMinutes ?? 15,
           hourRate: r.hourRate ?? 0,
           minuteRate: r.minuteRate ?? 0,
           fullDayRate: r.fullDayRate ?? 0,
+          iconKey: r.iconKey || 'IconCar',
           isActive: r.isActive ?? true,
         }));
       }
@@ -52,16 +58,19 @@ export const vehiculosConfigService = {
     return [];
   },
 
-  saveConfig: async (cfg: SaveVehiculoConfigDto): Promise<VehiculoConfigDto> => {
+  saveConfig: async (cfg: SaveVehiculoConfigDto, branchId?: number | null): Promise<VehiculoConfigDto> => {
     try {
+      const targetBranchId = cfg.branchId !== undefined ? cfg.branchId : (branchId ?? null);
       const payload = {
         rateId: cfg.rateId,
-        vehicleType: cfg.vehicleType,
+        branchId: targetBranchId,
+        vehicleType: typeof cfg.vehicleType === 'string' ? Number(cfg.vehicleType) || 0 : (cfg.vehicleType || 0),
         displayName: cfg.category,
         hourRate: cfg.hourRate,
         minuteRate: cfg.minuteRate,
         fullDayRate: cfg.fullDayRate,
         gracePeriodMinutes: cfg.gracePeriodMinutes,
+        iconKey: cfg.iconKey || 'IconCar',
         isActive: cfg.isActive ?? true,
       };
 
@@ -78,12 +87,14 @@ export const vehiculosConfigService = {
 
     return {
       rateId: cfg.rateId || '',
+      branchId: cfg.branchId ?? branchId ?? null,
       vehicleType: cfg.vehicleType || 0,
       category: cfg.category,
       gracePeriodMinutes: cfg.gracePeriodMinutes || 15,
       hourRate: cfg.hourRate || 0,
       minuteRate: cfg.minuteRate || 0,
       fullDayRate: cfg.fullDayRate || 0,
+      iconKey: cfg.iconKey || 'IconCar',
       isActive: cfg.isActive ?? true,
     };
   },
