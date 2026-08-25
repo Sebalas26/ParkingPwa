@@ -57,6 +57,13 @@ export const RolesTab: React.FC = () => {
     }
   };
 
+  const isAdminRole = (role?: RoleDto | null): boolean => {
+    if (!role) return false;
+    const roleId = role.idUserRol ?? role.id;
+    const name = (role.roleName || role.role || role.name || '').trim().toLowerCase();
+    return roleId === 1 || name === 'administrador' || name === 'admin';
+  };
+
   const handleOpenCreateRole = () => {
     setEditingRole({
       roleName: '',
@@ -66,6 +73,10 @@ export const RolesTab: React.FC = () => {
   };
 
   const handleOpenEditRole = (role: RoleDto) => {
+    if (isAdminRole(role)) {
+      alert('El rol Administrador es un rol del sistema y no se puede editar.');
+      return;
+    }
     setEditingRole({
       idUserRol: role.idUserRol ?? role.id,
       roleName: role.roleName || role.role || '',
@@ -77,6 +88,11 @@ export const RolesTab: React.FC = () => {
   const handleSaveRole = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingRole || !editingRole.roleName?.trim()) return;
+
+    if (editingRole.idUserRol === 1) {
+      alert('No está permitido modificar el rol Administrador.');
+      return;
+    }
 
     try {
       await rolesService.saveOrEditRole({
@@ -93,6 +109,10 @@ export const RolesTab: React.FC = () => {
   };
 
   const handleOpenPermissionsModal = (role: RoleDto) => {
+    if (isAdminRole(role)) {
+      alert('Los permisos del Administrador están protegidos y no se pueden modificar.');
+      return;
+    }
     const roleId = role.idUserRol ?? role.id ?? 1;
     setTargetRole(role);
     setSelectedActionIds(rolePermissionsMap[roleId] || []);
@@ -136,6 +156,10 @@ export const RolesTab: React.FC = () => {
 
   const handleSavePermissions = async () => {
     if (!targetRole) return;
+    if (isAdminRole(targetRole)) {
+      alert('No está permitido modificar los permisos del Administrador.');
+      return;
+    }
     const roleId = targetRole.idUserRol ?? targetRole.id ?? 1;
 
     setIsSavingPermissions(true);
@@ -204,6 +228,7 @@ export const RolesTab: React.FC = () => {
               const roleId = r.idUserRol ?? r.id ?? 1;
               const assignedCount = rolePermissionsMap[roleId]?.length || 0;
               const roleTitle = r.roleName || r.role || r.name || `Rol #${roleId}`;
+              const isSystemAdmin = isAdminRole(r);
 
               return (
                 <tr key={roleId}>
@@ -246,18 +271,20 @@ export const RolesTab: React.FC = () => {
                     </span>
                   </td>
                   <td className="text-right">
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                      <button
-                        className="btn-action primary"
-                        style={{ background: 'var(--primary-color, #07665e)', color: '#ffffff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem' }}
-                        onClick={() => handleOpenPermissionsModal(r)}
-                      >
-                        <Key size={13} style={{ marginRight: 4 }} /> Configurar Permisos
-                      </button>
-                      <button className="btn-action primary" onClick={() => handleOpenEditRole(r)}>
-                        <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
-                      </button>
-                    </div>
+                    {!isSystemAdmin && (
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                        <button
+                          className="btn-action primary"
+                          style={{ background: 'var(--primary-color, #07665e)', color: '#ffffff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem' }}
+                          onClick={() => handleOpenPermissionsModal(r)}
+                        >
+                          <Key size={13} style={{ marginRight: 4 }} /> Configurar Permisos
+                        </button>
+                        <button className="btn-action primary" onClick={() => handleOpenEditRole(r)}>
+                          <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               );

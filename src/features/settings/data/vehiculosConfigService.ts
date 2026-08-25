@@ -35,21 +35,16 @@ export const vehiculosConfigService = {
     try {
       const rates = await apiClient.get<any[]>('/VehicleRates');
       if (rates && rates.length > 0) {
-        return rates.map((r, i) => {
-          const categoryName = getCategoryName(r);
-          const isHeavy = r.vehicleType === 'Truck' || r.vehicleType === 2;
-          const isMoto = r.vehicleType === 'Motorcycle' || r.vehicleType === 1 || r.vehicleType === 'Bicycle' || r.vehicleType === 4;
-          const isCar = r.vehicleType === 'Car' || r.vehicleType === 0;
-
-          return {
-            id: `VCFG-0${i + 1}`,
-            category: categoryName,
-            maxDurationHours: 24,
-            requiresSpecialPermit: isHeavy,
-            accessPriority: isCar ? ('Alta' as const) : isHeavy ? ('Baja' as const) : ('Normal' as const),
-            allowedZones: isMoto ? ['Zona Moto/Bici'] : isHeavy ? ['Zona Carga'] : ['Zona General A', 'Zona General B'],
-          };
-        });
+        return rates.map((r) => ({
+          rateId: r.rateId || r.id,
+          vehicleType: r.vehicleType,
+          category: getCategoryName(r),
+          gracePeriodMinutes: r.gracePeriodMinutes ?? 15,
+          hourRate: r.hourRate ?? 0,
+          minuteRate: r.minuteRate ?? 0,
+          fullDayRate: r.fullDayRate ?? 0,
+          isActive: r.isActive ?? true,
+        }));
       }
     } catch (err) {
       console.warn('Error fetching vehicle rates for categories from API:', err);
@@ -59,19 +54,38 @@ export const vehiculosConfigService = {
 
   saveConfig: async (cfg: SaveVehiculoConfigDto): Promise<VehiculoConfigDto> => {
     try {
-      const result = await apiClient.post<VehiculoConfigDto>('/VehicleRates', cfg);
-      if (result) return result;
+      const payload = {
+        rateId: cfg.rateId,
+        vehicleType: cfg.vehicleType,
+        displayName: cfg.category,
+        hourRate: cfg.hourRate,
+        minuteRate: cfg.minuteRate,
+        fullDayRate: cfg.fullDayRate,
+        gracePeriodMinutes: cfg.gracePeriodMinutes,
+        isActive: cfg.isActive ?? true,
+      };
+
+      if (cfg.rateId) {
+        const result = await apiClient.put<VehiculoConfigDto>(`/VehicleRates/${cfg.rateId}`, payload);
+        if (result) return result;
+      } else {
+        const result = await apiClient.post<VehiculoConfigDto>('/VehicleRates', payload);
+        if (result) return result;
+      }
     } catch (err) {
       console.warn('Error saving vehicle config via API:', err);
     }
 
     return {
-      id: cfg.id || 'VCFG-01',
+      rateId: cfg.rateId || '',
+      vehicleType: cfg.vehicleType || 0,
       category: cfg.category,
-      maxDurationHours: cfg.maxDurationHours || 12,
-      requiresSpecialPermit: Boolean(cfg.requiresSpecialPermit),
-      accessPriority: cfg.accessPriority || 'Normal',
-      allowedZones: cfg.allowedZones || ['Zona General'],
+      gracePeriodMinutes: cfg.gracePeriodMinutes || 15,
+      hourRate: cfg.hourRate || 0,
+      minuteRate: cfg.minuteRate || 0,
+      fullDayRate: cfg.fullDayRate || 0,
+      isActive: cfg.isActive ?? true,
     };
   },
 };
+

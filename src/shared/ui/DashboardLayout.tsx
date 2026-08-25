@@ -115,8 +115,8 @@ export const DashboardLayout: React.FC = () => {
       <main className="main-content">
         <header className="top-bar">
           <div className="header-actions">
-            {/* Selector Global de Parqueadero (Oculto en módulo de Configuración) */}
-            {!location.pathname.includes('/settings') && (
+            {/* Selector Global de Parqueadero (Oculto en Dashboard y Configuración) */}
+            {!location.pathname.includes('/settings') && location.pathname !== '/' && location.pathname !== '/dashboard' && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-card, rgba(255,255,255,0.9))', padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border-color, #cbd5e1)', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
                 <Building size={16} style={{ color: '#07665e' }} />
                 <select

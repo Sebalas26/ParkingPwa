@@ -4,16 +4,25 @@ import type { DailySummaryDto, OccupancyStatsDto, RecentTicketDto } from '../mod
 export const dashboardService = {
   getDailySummary: async (): Promise<DailySummaryDto> => {
     try {
-      return await apiClient.get<DailySummaryDto>('/Analytics/daily-summary');
+      const summary = await apiClient.get<DailySummaryDto>('/Analytics/daily-summary');
+      if (summary) {
+        return summary;
+      }
     } catch {
-      return {
-        totalTickets: 0,
-        activeTickets: 0,
-        completedTickets: 0,
-        totalRevenue: 0,
-        averageDurationMinutes: 0,
-      };
+      // Fallback a objeto vacío
     }
+    return {
+      totalTickets: 0,
+      activeTickets: 0,
+      completedTickets: 0,
+      totalRevenue: 0,
+      averageDurationMinutes: 0,
+      averageTicketAmount: 0,
+      conveniosCount: 0,
+      conveniosRevenue: 0,
+      electronicInvoicesCount: 0,
+      standardInvoicesCount: 0,
+    };
   },
 
   getOccupancyStats: async (): Promise<OccupancyStatsDto> => {

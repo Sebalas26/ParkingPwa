@@ -29,10 +29,11 @@ export const VehiculosConfigTab: React.FC = () => {
   const handleOpenCreate = () => {
     setEditingConfig({
       category: '',
-      maxDurationHours: 12,
-      requiresSpecialPermit: false,
-      accessPriority: 'Normal',
-      allowedZones: ['Zona A', 'Zona B'],
+      gracePeriodMinutes: 15,
+      hourRate: 2000,
+      minuteRate: 50,
+      fullDayRate: 15000,
+      isActive: true,
     });
     setIsModalOpen(true);
   };
@@ -61,7 +62,7 @@ export const VehiculosConfigTab: React.FC = () => {
       <div className="section-header">
         <div className="section-header-titles">
           <h2>Configuración de Categorías de Vehículos</h2>
-          <p>Define reglas de permanencia máxima, prioridad de acceso y zonas autorizadas por categoría de vehículo.</p>
+          <p>Consulta y edita los tipos de vehículos parametrizados en el sistema y sus períodos de gracia.</p>
         </div>
         {authService.hasPermission('settings.vehiculos.manage') && (
           <button className="btn-primary" style={{ width: 'auto' }} onClick={handleOpenCreate}>
@@ -73,49 +74,29 @@ export const VehiculosConfigTab: React.FC = () => {
       <table className="data-table">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>CATEGORÍA DE VEHÍCULO</th>
-            <th>ESTANCIA MÁXIMA</th>
-            <th>PERMISO ESPECIAL</th>
-            <th>PRIORIDAD ACCESO</th>
-            <th>ZONAS PERMITIDAS</th>
+            <th>CATEGORÍA / TIPO</th>
+            <th>TIEMPO GRACIA</th>
+            <th>VALOR HORA</th>
+            <th>VALOR MINUTO</th>
+            <th>MÁXIMO DÍA</th>
+            <th>ESTADO</th>
             <th className="text-right">ACCIONES</th>
           </tr>
         </thead>
         <tbody>
           {configs.length > 0 ? (
             configs.map((c) => (
-              <tr key={c.id}>
-                <td className="font-bold text-muted">{c.id}</td>
+              <tr key={c.rateId || c.category}>
                 <td className="font-bold">{c.category}</td>
-                <td>{c.maxDurationHours} hrs</td>
+                <td>{c.gracePeriodMinutes} min</td>
+                <td>${(c.hourRate || 0).toLocaleString()} COP</td>
+                <td>${(c.minuteRate || 0).toLocaleString()} COP</td>
+                <td>${(c.fullDayRate || 0).toLocaleString()} COP</td>
                 <td>
-                  <span className={`badge ${c.requiresSpecialPermit ? 'badge-warning' : 'badge-success'}`}>
-                    {c.requiresSpecialPermit ? 'Requerido' : 'No Requerido'}
+                  <span className={`badge ${c.isActive ? 'badge-success' : 'badge-danger'}`}>
+                    {c.isActive ? 'Activo' : 'Inactivo'}
                   </span>
                 </td>
-                <td>
-                  <span
-                    className="badge"
-                    style={{
-                      background:
-                        c.accessPriority === 'Alta'
-                          ? 'rgba(16, 185, 129, 0.15)'
-                          : c.accessPriority === 'Baja'
-                          ? 'rgba(239, 68, 68, 0.15)'
-                          : 'rgba(100, 116, 139, 0.15)',
-                      color:
-                        c.accessPriority === 'Alta'
-                          ? '#10b981'
-                          : c.accessPriority === 'Baja'
-                          ? '#ef4444'
-                          : '#64748b',
-                    }}
-                  >
-                    {c.accessPriority}
-                  </span>
-                </td>
-                <td className="text-muted">{c.allowedZones.join(', ')}</td>
                 <td className="text-right">
                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
                     {authService.hasPermission('settings.vehiculos.manage') && (
@@ -142,7 +123,7 @@ export const VehiculosConfigTab: React.FC = () => {
         <div className="modal-overlay">
           <div className="modal-card">
             <div className="modal-header">
-              <h3>{editingConfig.id ? `Editar Categoría (${editingConfig.id})` : 'Crear Nueva Categoría'}</h3>
+              <h3>{editingConfig.rateId ? `Editar Categoría (${editingConfig.category})` : 'Crear Nueva Categoría'}</h3>
               <button className="btn-close-modal" onClick={() => setIsModalOpen(false)}>
                 <X size={18} />
               </button>
@@ -155,7 +136,7 @@ export const VehiculosConfigTab: React.FC = () => {
                   <input
                     type="text"
                     className="input-field"
-                    placeholder="Ej: Eléctrico / Carga Preferente"
+                    placeholder="Ej: Automóvil / Motocicleta"
                     value={editingConfig.category || ''}
                     onChange={(e) => setEditingConfig({ ...editingConfig, category: e.target.value })}
                     required
@@ -164,38 +145,66 @@ export const VehiculosConfigTab: React.FC = () => {
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Permanencia Máxima (Horas)</label>
+                    <label>Tiempo de Gracia (Minutos)</label>
                     <input
                       type="number"
+                      min="0"
                       className="input-field"
-                      value={editingConfig.maxDurationHours || 0}
-                      onChange={(e) => setEditingConfig({ ...editingConfig, maxDurationHours: Number(e.target.value) })}
+                      value={editingConfig.gracePeriodMinutes || 0}
+                      onChange={(e) => setEditingConfig({ ...editingConfig, gracePeriodMinutes: Number(e.target.value) })}
                       required
                     />
                   </div>
                   <div className="form-group">
-                    <label>Prioridad de Acceso</label>
-                    <select
+                    <label>Valor Hora ($ COP)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="100"
                       className="input-field"
-                      value={editingConfig.accessPriority || 'Normal'}
-                      onChange={(e) => setEditingConfig({ ...editingConfig, accessPriority: e.target.value as any })}
-                    >
-                      <option value="Alta">Alta</option>
-                      <option value="Normal">Normal</option>
-                      <option value="Baja">Baja</option>
-                    </select>
+                      value={editingConfig.hourRate || 0}
+                      onChange={(e) => setEditingConfig({ ...editingConfig, hourRate: Number(e.target.value) })}
+                      required
+                    />
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginTop: 8 }}>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Valor Minuto Fracción ($ COP)</label>
                     <input
-                      type="checkbox"
-                      checked={editingConfig.requiresSpecialPermit || false}
-                      onChange={(e) => setEditingConfig({ ...editingConfig, requiresSpecialPermit: e.target.checked })}
+                      type="number"
+                      min="0"
+                      className="input-field"
+                      value={editingConfig.minuteRate || 0}
+                      onChange={(e) => setEditingConfig({ ...editingConfig, minuteRate: Number(e.target.value) })}
+                      required
                     />
-                    <span>Requiere Permiso Especial de Operaciones</span>
-                  </label>
+                  </div>
+                  <div className="form-group">
+                    <label>Máximo Día Completo ($ COP)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="500"
+                      className="input-field"
+                      value={editingConfig.fullDayRate || 0}
+                      onChange={(e) => setEditingConfig({ ...editingConfig, fullDayRate: Number(e.target.value) })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group" style={{ marginTop: '8px' }}>
+                  <label>Estado</label>
+                  <select
+                    className="input-field"
+                    value={editingConfig.isActive ? 'true' : 'false'}
+                    onChange={(e) => setEditingConfig({ ...editingConfig, isActive: e.target.value === 'true' })}
+                  >
+                    <option value="true">Activo</option>
+                    <option value="false">Inactivo</option>
+                  </select>
                 </div>
               </div>
 
@@ -214,3 +223,4 @@ export const VehiculosConfigTab: React.FC = () => {
     </div>
   );
 };
+

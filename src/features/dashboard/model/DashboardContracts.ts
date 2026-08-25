@@ -3,6 +3,11 @@ export interface DailySummaryDto {
   activeVehiclesCount?: number;
   completedTransactionsToday?: number;
   averageDurationMinutes?: number;
+  averageTicketAmount?: number;
+  conveniosCount?: number;
+  conveniosRevenue?: number;
+  electronicInvoicesCount?: number;
+  standardInvoicesCount?: number;
   revenueByVehicleType?: Record<string, number>;
   countByVehicleType?: Record<string, number>;
   revenueByPaymentMethod?: Record<string, number>;

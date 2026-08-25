@@ -1,17 +1,22 @@
 export interface VehiculoConfigDto {
-  id: string;
+  rateId: string;
+  vehicleType: number | string;
   category: string;
-  maxDurationHours: number;
-  requiresSpecialPermit: boolean;
-  accessPriority: 'Alta' | 'Normal' | 'Baja';
-  allowedZones: string[];
+  gracePeriodMinutes: number;
+  hourRate: number;
+  minuteRate: number;
+  fullDayRate: number;
+  isActive: boolean;
 }
 
 export interface SaveVehiculoConfigDto {
-  id?: string;
+  rateId?: string;
+  vehicleType?: number | string;
   category: string;
-  maxDurationHours: number;
-  requiresSpecialPermit: boolean;
-  accessPriority: 'Alta' | 'Normal' | 'Baja';
-  allowedZones: string[];
+  gracePeriodMinutes: number;
+  hourRate: number;
+  minuteRate: number;
+  fullDayRate: number;
+  isActive?: boolean;
 }
+
