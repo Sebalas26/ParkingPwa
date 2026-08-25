@@ -155,7 +155,7 @@ export const DashboardLayout: React.FC = () => {
       <main className="main-content">
         <header className="top-bar">
           <div className="header-actions">
-            {branchesList.length > 0 && (
+            {!location.pathname.startsWith('/dashboard/settings') && branchesList.length > 0 && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-card, rgba(255,255,255,0.9))', padding: '6px 14px', borderRadius: '10px', border: '1px solid var(--border-color, #cbd5e1)', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
                 <Building2 size={16} style={{ color: '#07665e' }} />
                 {branchesList.length > 1 ? (

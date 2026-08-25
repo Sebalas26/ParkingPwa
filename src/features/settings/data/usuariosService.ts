@@ -16,6 +16,10 @@ export const usuariosService = {
     }
   },
 
+  getUsuarios: async (): Promise<UserDto[]> => {
+    return await usuariosService.getUsers();
+  },
+
   getIdentificationTypes: async (): Promise<GetIdentificationTypeDto[]> => {
     try {
       const data = await apiClient.get<any[]>('/IdentificationTypes/GetIdentificationTypesActive');
@@ -108,12 +112,17 @@ export const usuariosService = {
     return await apiClient.post<UserDto>('/Users/SaveOrEditUsers', user);
   },
 
-  deactivateUser: async (id: number): Promise<boolean> => {
+  deleteUser: async (id: number): Promise<boolean> => {
     try {
       await apiClient.delete(`/Users/${id}`);
       return true;
-    } catch {
-      return false;
+    } catch (err) {
+      console.error('Error al eliminar usuario en API:', err);
+      throw err;
     }
+  },
+
+  deactivateUser: async (id: number): Promise<boolean> => {
+    return await usuariosService.deleteUser(id);
   },
 };

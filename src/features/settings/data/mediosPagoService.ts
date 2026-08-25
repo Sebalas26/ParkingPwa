@@ -16,6 +16,10 @@ export const mediosPagoService = {
     }
   },
 
+  getMediosPago: async (): Promise<PaymentMethodDto[]> => {
+    return await mediosPagoService.getPaymentMethods();
+  },
+
   getPaymentMethodById: async (id: number): Promise<PaymentMethodDto | null> => {
     return await apiClient.get<PaymentMethodDto>(`/PaymentMethod/${id}`);
   },

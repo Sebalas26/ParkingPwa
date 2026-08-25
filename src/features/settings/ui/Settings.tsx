@@ -53,7 +53,7 @@ export const Settings: React.FC = () => {
             className={`settings-tab-btn ${activeTab === 'convenios' ? 'active' : ''}`}
             onClick={() => setActiveTab('convenios')}
           >
-            <FileText size={16} /> Comercios y Convenios
+            <FileText size={16} /> Convenios
           </button>
         )}
         {canViewRates && (
@@ -61,7 +61,7 @@ export const Settings: React.FC = () => {
             className={`settings-tab-btn ${activeTab === 'vehiculos' ? 'active' : ''}`}
             onClick={() => setActiveTab('vehiculos')}
           >
-            <Car size={16} /> Tarifas Vehiculares
+            <Car size={16} /> Tipos Vehículos
           </button>
         )}
         {canViewPaymentMethods && (

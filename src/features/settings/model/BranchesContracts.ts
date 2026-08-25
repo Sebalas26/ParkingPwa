@@ -12,6 +12,8 @@ export interface BranchDto {
   // Campos auxiliares UI
   imageUrl?: string;
   isMainImage?: boolean;
+  userBranches?: { userId: number; branchId: number; isDefault?: boolean }[];
+  branchPaymentMethods?: BranchPaymentMethodDto[];
 }
 
 export interface CreateBranchDto {

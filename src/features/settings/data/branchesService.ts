@@ -71,6 +71,10 @@ export const branchesService = {
     }
   },
 
+  getBranchPaymentMethods: async (branchId: number): Promise<BranchPaymentMethodDto[]> => {
+    return await branchesService.getPaymentMethods(branchId);
+  },
+
   configurePaymentMethods: async (dto: ConfigureBranchPaymentMethodsDto): Promise<{ message: string }> => {
     return await apiClient.post<{ message: string }>('/branches/configure-payment-methods', dto);
   },

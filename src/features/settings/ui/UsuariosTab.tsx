@@ -1,17 +1,51 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, X, Shield, Trash2, IdCard } from 'lucide-react';
+import { Plus, Edit2, X, Shield, Trash2, IdCard, Building2, CheckCircle2, Search, Loader2, AlertTriangle } from 'lucide-react';
 import type { UserDto, SaveUserDto, GetIdentificationTypeDto, GetUserRoleDto } from '../model/UsuariosContracts';
+import type { BranchDto } from '../model/BranchesContracts';
 import { usuariosService } from '../data/usuariosService';
+import { branchesService } from '../data/branchesService';
 import { authService } from '../../auth/data/authService';
+
+const getDocTypeLabel = (identification?: string, name?: string) => {
+  const code = (identification || '').trim().toUpperCase();
+  if (name && name.trim().toUpperCase() !== code && name.trim() !== '') {
+    return `${code} - ${name}`;
+  }
+  switch (code) {
+    case 'CC':
+      return 'CC - Cédula de Ciudadanía';
+    case 'CE':
+      return 'CE - Cédula de Extranjería';
+    case 'NIT':
+      return 'NIT - Número de Identificación Tributaria';
+    case 'PAS':
+      return 'PAS - Pasaporte';
+    case 'PEP':
+      return 'PEP - Permiso Especial de Permanencia';
+    case 'TI':
+      return 'TI - Tarjeta de Identidad';
+    default:
+      return code || 'Documento';
+  }
+};
 
 export const UsuariosTab: React.FC = () => {
   const [usuarios, setUsuarios] = useState<UserDto[]>([]);
   const [identTypes, setIdentTypes] = useState<GetIdentificationTypeDto[]>([]);
   const [allUserRoles, setAllUserRoles] = useState<GetUserRoleDto[]>([]);
   const [assignableRoles, setAssignableRoles] = useState<GetUserRoleDto[]>([]);
+  const [allBranches, setAllBranches] = useState<BranchDto[]>([]);
+  const [selectedBranchIds, setSelectedBranchIds] = useState<number[]>([]);
+  const [initialAssignedBranchIds, setInitialAssignedBranchIds] = useState<number[]>([]);
+  const [branchSearch, setBranchSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUsuario, setEditingUsuario] = useState<SaveUserDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSavingUser, setIsSavingUser] = useState(false);
+
+  // Estado para el modal de confirmación de eliminación con loader
+  const [userToDelete, setUserToDelete] = useState<UserDto | null>(null);
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -20,23 +54,19 @@ export const UsuariosTab: React.FC = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [usersData, typesData, rolesData] = await Promise.all([
+      const [usersData, typesData, rolesData, branchesData] = await Promise.all([
         usuariosService.getUsers(),
         usuariosService.getIdentificationTypes(),
         usuariosService.getUserRoles(),
+        branchesService.getAll(),
       ]);
       setUsuarios(usersData || []);
       setIdentTypes(typesData || []);
       setAllUserRoles(rolesData || []);
-
-      // Filtrar roles no-administrador para asignación estándar en nuevo usuario
-      const nonAdminRoles = (rolesData || []).filter((r) => {
-        const name = (r.roleName || r.role || r.name || '').toLowerCase();
-        return name !== 'administrador' && name !== 'admin' && (r.idUserRol ?? r.id) !== 1;
-      });
-      setAssignableRoles(nonAdminRoles);
+      setAssignableRoles(rolesData || []);
+      setAllBranches(branchesData || []);
     } catch (err) {
-      console.error('Error al cargar datos de usuarios:', err);
+      console.error('Error al cargar datos de usuarios y sedes:', err);
     } finally {
       setIsLoading(false);
     }
@@ -44,7 +74,7 @@ export const UsuariosTab: React.FC = () => {
 
   const handleOpenCreate = () => {
     const defaultTypeId = identTypes.length > 0 ? (identTypes[0].id || 1) : 1;
-    const defaultRoleId = assignableRoles.length > 0 ? (assignableRoles[0].idUserRol ?? assignableRoles[0].id ?? 2) : 2;
+    const defaultRoleId = allUserRoles.length > 0 ? (allUserRoles[0].idUserRol ?? allUserRoles[0].id ?? 2) : 2;
 
     setEditingUsuario({
       identificationTypeId: defaultTypeId,
@@ -60,10 +90,13 @@ export const UsuariosTab: React.FC = () => {
       userRoleId: defaultRoleId,
       isActive: true,
     });
+    setSelectedBranchIds([]);
+    setInitialAssignedBranchIds([]);
+    setBranchSearch('');
     setIsModalOpen(true);
   };
 
-  const handleOpenEdit = (u: UserDto) => {
+  const handleOpenEdit = async (u: UserDto) => {
     const isUserActive = u.isActive ?? (u.status === true || u.status === 'Activo' || u.status === 'Active');
     const roleId = u.userRoleId || u.userRoleDto?.idUserRol || u.userRoleDto?.id || 2;
     setEditingUsuario({
@@ -81,6 +114,19 @@ export const UsuariosTab: React.FC = () => {
       userRoleId: roleId,
       isActive: isUserActive,
     });
+    setBranchSearch('');
+
+    // Cargar sedes asignadas al usuario
+    try {
+      const userBranches = await branchesService.getByUser(u.id);
+      const branchIds = (userBranches || []).map((b) => b.id);
+      setSelectedBranchIds(branchIds);
+      setInitialAssignedBranchIds(branchIds);
+    } catch {
+      setSelectedBranchIds([]);
+      setInitialAssignedBranchIds([]);
+    }
+
     setIsModalOpen(true);
   };
 
@@ -88,10 +134,10 @@ export const UsuariosTab: React.FC = () => {
     e.preventDefault();
     if (!editingUsuario) return;
 
-    // Calcular fullName si está vacío
     const computedFullName = editingUsuario.fullName.trim() ||
       `${editingUsuario.firstName} ${editingUsuario.middleName || ''} ${editingUsuario.firstSurname} ${editingUsuario.secondLastName || ''}`.replace(/\s+/g, ' ').trim();
 
+    setIsSavingUser(true);
     try {
       const payload: SaveUserDto = {
         ...editingUsuario,
@@ -99,19 +145,55 @@ export const UsuariosTab: React.FC = () => {
         username: editingUsuario.username.trim() || editingUsuario.email.trim(),
       };
 
-      await usuariosService.saveOrEditUser(payload);
+      const savedUser = await usuariosService.saveOrEditUser(payload);
+      const targetUserId = savedUser?.id || editingUsuario.id;
+
+      // Si el rol NO es Administrador, sincronizar asignaciones de sedes
+      if (targetUserId && editingUsuario.userRoleId !== 1) {
+        // Sedes a asignar
+        const toAssign = selectedBranchIds.filter((bId) => !initialAssignedBranchIds.includes(bId));
+        // Sedes a desasignar
+        const toUnassign = initialAssignedBranchIds.filter((bId) => !selectedBranchIds.includes(bId));
+
+        await Promise.all([
+          ...toAssign.map((branchId, idx) =>
+            branchesService.assignUser({ branchId, userId: targetUserId, isDefault: idx === 0 })
+          ),
+          ...toUnassign.map((branchId) =>
+            branchesService.unassignUser({ branchId, userId: targetUserId })
+          ),
+        ]);
+      }
+
       setIsModalOpen(false);
       setEditingUsuario(null);
-      await loadData();
+      const freshUsers = await usuariosService.getUsers();
+      setUsuarios(freshUsers || []);
     } catch (err: any) {
       alert(err?.message || 'Error al guardar el usuario en la base de datos.');
+    } finally {
+      setIsSavingUser(false);
     }
   };
 
-  const handleDeactivate = async (id: number) => {
-    if (confirm('¿Estás seguro de desactivar este usuario?')) {
-      await usuariosService.deactivateUser(id);
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return;
+    setIsDeletingUser(true);
+    const targetId = userToDelete.id;
+
+    // 1. Eliminación reactiva instantánea en la UI
+    setUsuarios((prev) => prev.filter((u) => u.id !== targetId));
+
+    try {
+      await usuariosService.deleteUser(targetId);
+      const freshUsers = await usuariosService.getUsers();
+      setUsuarios(freshUsers || []);
+      setUserToDelete(null);
+    } catch (err: any) {
+      alert(err?.message || 'Error al eliminar el usuario de la base de datos.');
       await loadData();
+    } finally {
+      setIsDeletingUser(false);
     }
   };
 
@@ -119,10 +201,10 @@ export const UsuariosTab: React.FC = () => {
     <div className="settings-section-card">
       <div className="section-header">
         <div className="section-header-titles">
-          <h2>Gestión de Usuarios y Accesos</h2>
-          <p>Administra las cuentas de usuario, tipos de documento, datos personales y asignación de roles operativos en la BD.</p>
+          <h2>Gestión de Usuarios</h2>
+          <p>Administra los operadores, supervisores y administradores con acceso al sistema.</p>
         </div>
-        {(authService.hasPermission('settings.usuarios.manage') || authService.hasPermission('users.manage')) && (
+        {authService.hasPermission('users.create') && (
           <button className="btn-primary" style={{ width: 'auto' }} onClick={handleOpenCreate}>
             <Plus size={16} /> Crear Usuario
           </button>
@@ -132,11 +214,10 @@ export const UsuariosTab: React.FC = () => {
       <table className="data-table">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>DOCUMENTO</th>
             <th>NOMBRE COMPLETO</th>
+            <th>DOCUMENTO</th>
             <th>USUARIO / CORREO</th>
-            <th>ROL ASIGNADO</th>
+            <th>ROL</th>
             <th>ESTADO</th>
             <th className="text-right">ACCIONES</th>
           </tr>
@@ -144,56 +225,51 @@ export const UsuariosTab: React.FC = () => {
         <tbody>
           {usuarios.length > 0 ? (
             usuarios.map((u) => {
-              const displayName = u.fullName || u.name || `${u.firstName || ''} ${u.firstSurname || ''}`.trim() || u.username;
-              const typeCode = u.identificationTypeDto?.identification || (identTypes.find(t => t.id === u.identificationTypeId)?.identification) || 'CC';
-              const docNumber = u.identificationNumber || '--';
-              const displayRole =
-                u.userRoleDto?.roleName ||
-                u.userRoleDto?.role ||
-                u.userRoleDto?.name ||
-                allUserRoles.find(r => (r.idUserRol ?? r.id) === u.userRoleId)?.roleName ||
-                allUserRoles.find(r => (r.idUserRol ?? r.id) === u.userRoleId)?.role ||
-                u.role ||
-                'Operador';
-              const isUserActive = u.isActive ?? (u.status === 'Activo' || u.status === true || u.status === 'Active');
+              const docTypeName = u.identificationTypeDto?.name || u.identificationTypeDto?.identification || 'CC';
+              const roleTitle = u.userRoleDto?.roleName || u.roleName || u.role || (u.userRoleId === 1 ? 'Administrador' : 'Operador');
+              const isActive = u.isActive ?? (u.status === true || u.status === 'Activo' || u.status === 'Active');
 
               return (
                 <tr key={u.id}>
-                  <td className="font-bold text-muted">#{u.id}</td>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <IdCard size={14} style={{ color: 'var(--text-secondary)' }} />
-                      <span className="font-bold">{typeCode}</span> {docNumber}
+                  <td className="font-bold">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <IdCard size={16} color="#07665e" />
+                      <span>{u.fullName || `${u.firstName || ''} ${u.firstSurname || ''}`.trim() || u.username}</span>
                     </div>
                   </td>
-                  <td className="font-bold">{displayName}</td>
-                  <td className="text-muted">
-                    <div>{u.username}</div>
-                    <small style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{u.email}</small>
-                  </td>
                   <td>
-                    <span className="badge badge-success" style={{ background: 'rgba(7, 102, 94, 0.1)', color: 'var(--primary-color)' }}>
-                      <Shield size={12} style={{ marginRight: 4 }} /> {displayRole}
+                    <span style={{ fontSize: '0.85rem', color: '#475569' }}>
+                      <strong>{docTypeName}:</strong> {u.identificationNumber || 'N/A'}
                     </span>
                   </td>
                   <td>
-                    <span className={`badge ${isUserActive ? 'badge-success' : 'badge-danger'}`}>
-                      {isUserActive ? 'Activo' : 'Inactivo'}
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontWeight: 600, color: '#1e293b' }}>@{u.username}</span>
+                      <span style={{ fontSize: '0.78rem', color: '#64748b' }}>{u.email}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span className={`badge ${u.userRoleId === 1 || roleTitle.toLowerCase().includes('admin') ? 'badge-primary' : 'badge-info'}`}>
+                      <Shield size={12} style={{ marginRight: '4px' }} />
+                      {roleTitle}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`badge ${isActive ? 'badge-success' : 'badge-danger'}`}>
+                      {isActive ? 'Activo' : 'Inactivo'}
                     </span>
                   </td>
                   <td className="text-right">
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                      {(authService.hasPermission('settings.usuarios.manage') || authService.hasPermission('users.manage')) && (
-                        <>
-                          <button className="btn-action primary" onClick={() => handleOpenEdit(u)}>
-                            <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
-                          </button>
-                          {isUserActive && (
-                            <button className="btn-action danger" style={{ color: '#ef4444', background: 'rgba(239, 68, 68, 0.08)' }} onClick={() => handleDeactivate(u.id)}>
-                              <Trash2 size={14} />
-                            </button>
-                          )}
-                        </>
+                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                      {authService.hasPermission('users.edit') && (
+                        <button className="btn-icon" onClick={() => handleOpenEdit(u)} title="Editar Usuario">
+                          <Edit2 size={16} />
+                        </button>
+                      )}
+                      {authService.hasPermission('users.edit') && (
+                        <button className="btn-icon danger" onClick={() => setUserToDelete(u)} title="Eliminar Usuario de la BD">
+                          <Trash2 size={16} />
+                        </button>
                       )}
                     </div>
                   </td>
@@ -202,33 +278,29 @@ export const UsuariosTab: React.FC = () => {
             })
           ) : (
             <tr>
-              <td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
-                {isLoading ? 'Cargando usuarios desde la API...' : 'No se encontraron usuarios registrados en la base de datos.'}
+              <td colSpan={6} className="text-center py-6 text-muted">
+                {isLoading ? 'Cargando usuarios...' : 'No hay usuarios registrados.'}
               </td>
             </tr>
           )}
         </tbody>
       </table>
 
-      {/* Modal Crear / Editar Usuario con Campos BD Completos */}
+      {/* Modal Crear/Editar Usuario */}
       {isModalOpen && editingUsuario && (
         <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '580px' }}>
+          <div className="modal-content" style={{ maxWidth: '640px' }}>
             <div className="modal-header">
-              <h3>{editingUsuario.id ? `Editar Usuario (#${editingUsuario.id})` : 'Crear Nuevo Usuario en BD'}</h3>
-              <button className="btn-close-modal" onClick={() => setIsModalOpen(false)}>
+              <h3>{editingUsuario.id ? 'Editar Usuario' : 'Crear Nuevo Usuario'}</h3>
+              <button className="btn-close" onClick={() => !isSavingUser && setIsModalOpen(false)} disabled={isSavingUser}>
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleSave}>
-              <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-                
-                {/* Sección Identificación */}
-                <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--primary-color)', marginBottom: '8px', textTransform: 'uppercase' }}>
-                  1. Documento de Identidad
-                </div>
-                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '12px' }}>
+            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <div className="modal-body">
+                {/* 1. DOCUMENTO DE IDENTIDAD */}
+                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '12px' }}>
                   <div className="form-group">
                     <label>Tipo Doc.</label>
                     <select
@@ -236,9 +308,12 @@ export const UsuariosTab: React.FC = () => {
                       value={editingUsuario.identificationTypeId}
                       onChange={(e) => setEditingUsuario({ ...editingUsuario, identificationTypeId: Number(e.target.value) })}
                       required
+                      disabled={isSavingUser}
                     >
                       {identTypes.map((t) => (
-                        <option key={t.id} value={t.id}>{t.identification} - {t.name || t.identification}</option>
+                        <option key={t.id} value={t.id}>
+                          {getDocTypeLabel(t.identification, t.name)}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -251,14 +326,16 @@ export const UsuariosTab: React.FC = () => {
                       value={editingUsuario.identificationNumber}
                       onChange={(e) => setEditingUsuario({ ...editingUsuario, identificationNumber: e.target.value })}
                       required
+                      disabled={isSavingUser}
                     />
                   </div>
                 </div>
 
-                {/* Sección Nombres y Apellidos */}
-                <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--primary-color)', margin: '14px 0 8px 0', textTransform: 'uppercase' }}>
+                {/* 2. DATOS PERSONALES */}
+                <h4 style={{ fontSize: '0.82rem', color: '#07665e', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '14px 0 8px 0', borderBottom: '1px solid #e2e8f0', paddingBottom: '4px' }}>
                   2. Datos Personales
-                </div>
+                </h4>
+
                 <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div className="form-group">
                     <label>Primer Nombre *</label>
@@ -269,6 +346,7 @@ export const UsuariosTab: React.FC = () => {
                       value={editingUsuario.firstName}
                       onChange={(e) => setEditingUsuario({ ...editingUsuario, firstName: e.target.value })}
                       required
+                      disabled={isSavingUser}
                     />
                   </div>
                   <div className="form-group">
@@ -279,6 +357,7 @@ export const UsuariosTab: React.FC = () => {
                       placeholder="Opcional"
                       value={editingUsuario.middleName || ''}
                       onChange={(e) => setEditingUsuario({ ...editingUsuario, middleName: e.target.value })}
+                      disabled={isSavingUser}
                     />
                   </div>
                 </div>
@@ -293,6 +372,7 @@ export const UsuariosTab: React.FC = () => {
                       value={editingUsuario.firstSurname}
                       onChange={(e) => setEditingUsuario({ ...editingUsuario, firstSurname: e.target.value })}
                       required
+                      disabled={isSavingUser}
                     />
                   </div>
                   <div className="form-group">
@@ -303,14 +383,16 @@ export const UsuariosTab: React.FC = () => {
                       placeholder="Opcional"
                       value={editingUsuario.secondLastName || ''}
                       onChange={(e) => setEditingUsuario({ ...editingUsuario, secondLastName: e.target.value })}
+                      disabled={isSavingUser}
                     />
                   </div>
                 </div>
 
-                {/* Sección Credenciales y Rol */}
-                <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--primary-color)', margin: '14px 0 8px 0', textTransform: 'uppercase' }}>
+                {/* 3. CREDENCIALES Y PERMISOS */}
+                <h4 style={{ fontSize: '0.82rem', color: '#07665e', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '14px 0 8px 0', borderBottom: '1px solid #e2e8f0', paddingBottom: '4px' }}>
                   3. Credenciales y Permisos
-                </div>
+                </h4>
+
                 <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div className="form-group">
                     <label>Nombre de Usuario *</label>
@@ -321,6 +403,7 @@ export const UsuariosTab: React.FC = () => {
                       value={editingUsuario.username}
                       onChange={(e) => setEditingUsuario({ ...editingUsuario, username: e.target.value })}
                       required
+                      disabled={isSavingUser}
                     />
                   </div>
                   <div className="form-group">
@@ -332,6 +415,7 @@ export const UsuariosTab: React.FC = () => {
                       value={editingUsuario.email}
                       onChange={(e) => setEditingUsuario({ ...editingUsuario, email: e.target.value })}
                       required
+                      disabled={isSavingUser}
                     />
                   </div>
                 </div>
@@ -346,6 +430,7 @@ export const UsuariosTab: React.FC = () => {
                       value={editingUsuario.password || ''}
                       onChange={(e) => setEditingUsuario({ ...editingUsuario, password: e.target.value })}
                       required={!editingUsuario.id}
+                      disabled={isSavingUser}
                     />
                   </div>
                   <div className="form-group">
@@ -355,20 +440,17 @@ export const UsuariosTab: React.FC = () => {
                       value={editingUsuario.userRoleId}
                       onChange={(e) => setEditingUsuario({ ...editingUsuario, userRoleId: Number(e.target.value) })}
                       required
+                      disabled={isSavingUser}
                     >
-                      {(() => {
-                        const isEditingAdmin = editingUsuario.userRoleId === 1;
-                        const roleOptions = isEditingAdmin ? allUserRoles : assignableRoles;
-                        return roleOptions.map((r) => {
-                          const roleId = r.idUserRol ?? r.id ?? 2;
-                          const roleTitle = r.roleName || r.role || r.name || 'Operador';
-                          return (
-                            <option key={roleId} value={roleId}>
-                              {roleTitle}
-                            </option>
-                          );
-                        });
-                      })()}
+                      {allUserRoles.map((r) => {
+                        const roleId = r.idUserRol ?? r.id ?? 2;
+                        const roleTitle = r.roleName || r.role || r.name || 'Operador';
+                        return (
+                          <option key={roleId} value={roleId}>
+                            {roleTitle}
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
                 </div>
@@ -379,23 +461,217 @@ export const UsuariosTab: React.FC = () => {
                     className="input-field"
                     value={editingUsuario.isActive ? 'true' : 'false'}
                     onChange={(e) => setEditingUsuario({ ...editingUsuario, isActive: e.target.value === 'true' })}
+                    disabled={isSavingUser}
                   >
                     <option value="true">Activo (Habilitado para operar)</option>
                     <option value="false">Inactivo (Acceso bloqueado)</option>
                   </select>
                 </div>
 
+                {/* 4. ASIGNACIÓN DE SEDES (PARQUEADEROS) */}
+                <h4 style={{ fontSize: '0.82rem', color: '#07665e', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '14px 0 8px 0', borderBottom: '1px solid #e2e8f0', paddingBottom: '4px' }}>
+                  4. Sedes Autorizadas (Parqueaderos)
+                </h4>
+
+                {editingUsuario.userRoleId === 1 ? (
+                  <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '10px', padding: '10px 14px', fontSize: '0.84rem', color: '#166534', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Shield size={16} color="#16a34a" />
+                    <span>
+                      <strong>Acceso Global:</strong> Los usuarios con rol <strong>Administrador</strong> tienen acceso automático a todas las sedes del sistema.
+                    </span>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                      <p style={{ fontSize: '0.8rem', color: '#64748b', margin: 0 }}>
+                        Selecciona las sedes físicas donde este operador podrá operar:
+                      </p>
+                      <span className="badge badge-info" style={{ background: '#e0f2fe', color: '#0369a1', fontSize: '0.78rem', fontWeight: 700, padding: '2px 8px', borderRadius: '6px' }}>
+                        {selectedBranchIds.length} de {allBranches.length} seleccionada(s)
+                      </span>
+                    </div>
+
+                    {allBranches.length > 0 && (
+                      <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                        <div style={{ position: 'relative', flex: 1 }}>
+                          <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                          <input
+                            type="text"
+                            className="input-field"
+                            placeholder="Buscar sede por nombre, código o ciudad..."
+                            value={branchSearch}
+                            onChange={(e) => setBranchSearch(e.target.value)}
+                            style={{ paddingLeft: '32px', height: '36px', fontSize: '0.84rem' }}
+                            disabled={isSavingUser}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          onClick={() => {
+                            if (selectedBranchIds.length === allBranches.length) {
+                              setSelectedBranchIds([]);
+                            } else {
+                              setSelectedBranchIds(allBranches.map((b) => b.id));
+                            }
+                          }}
+                          style={{ padding: '0 12px', fontSize: '0.78rem', height: '36px', whiteSpace: 'nowrap' }}
+                          disabled={isSavingUser}
+                        >
+                          {selectedBranchIds.length === allBranches.length ? 'Deseleccionar todas' : 'Seleccionar todas'}
+                        </button>
+                      </div>
+                    )}
+
+                    {(() => {
+                      const filteredBranches = allBranches.filter((b) => {
+                        const query = branchSearch.trim().toLowerCase();
+                        if (!query) return true;
+                        return (
+                          (b.name || '').toLowerCase().includes(query) ||
+                          (b.code || '').toLowerCase().includes(query) ||
+                          (b.city || '').toLowerCase().includes(query) ||
+                          (b.address || '').toLowerCase().includes(query)
+                        );
+                      });
+
+                      return filteredBranches.length > 0 ? (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '6px', maxHeight: '170px', overflowY: 'auto', padding: '6px', border: '1px solid #e2e8f0', borderRadius: '10px', background: '#f8fafc' }}>
+                          {filteredBranches.map((b) => {
+                            const isChecked = selectedBranchIds.includes(b.id);
+                            return (
+                              <label
+                                key={b.id}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  padding: '8px 12px',
+                                  borderRadius: '8px',
+                                  background: isChecked ? 'rgba(7, 102, 94, 0.08)' : '#ffffff',
+                                  border: isChecked ? '1px solid #07665e' : '1px solid #e2e8f0',
+                                  cursor: isSavingUser ? 'not-allowed' : 'pointer',
+                                  transition: 'all 0.15s',
+                                  userSelect: 'none',
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedBranchIds((prev) => [...prev, b.id]);
+                                      } else {
+                                        setSelectedBranchIds((prev) => prev.filter((id) => id !== b.id));
+                                      }
+                                    }}
+                                    disabled={isSavingUser}
+                                    style={{ width: '16px', height: '16px', accentColor: '#07665e' }}
+                                  />
+                                  <div>
+                                    <div style={{ fontSize: '0.86rem', fontWeight: 700, color: '#1e293b' }}>
+                                      📍 {b.code} — {b.name}
+                                    </div>
+                                    {b.city && (
+                                      <div style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                                        {b.city} {b.address ? `• ${b.address}` : ''}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                <span style={{ fontSize: '0.76rem', fontWeight: 600, color: '#475569', background: '#f1f5f9', padding: '2px 8px', borderRadius: '4px' }}>
+                                  {b.totalCapacity} plazas
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      ) : allBranches.length > 0 ? (
+                        <div style={{ padding: '16px', background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '10px', fontSize: '0.82rem', color: '#64748b', textAlign: 'center' }}>
+                          No se encontraron sedes con el término "{branchSearch}".
+                        </div>
+                      ) : (
+                        <div style={{ padding: '16px', background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '10px', fontSize: '0.82rem', color: '#64748b', textAlign: 'center' }}>
+                          No hay sedes registradas en el sistema.
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
               </div>
 
               <div className="modal-footer">
-                <button type="button" className="btn-cancel" onClick={() => setIsModalOpen(false)}>
+                <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)} disabled={isSavingUser}>
                   Cancelar
                 </button>
-                <button type="submit" className="btn-primary" style={{ width: 'auto' }}>
-                  Guardar Usuario en BD
+                <button type="submit" className="btn-primary" style={{ width: 'auto' }} disabled={isSavingUser}>
+                  {isSavingUser ? (
+                    <>
+                      <Loader2 size={16} className="spinner" />
+                      {editingUsuario.id ? 'Guardando...' : 'Creando...'}
+                    </>
+                  ) : (
+                    editingUsuario.id ? 'Guardar Cambios' : 'Crear Usuario'
+                  )}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal / Dialog de Confirmación de Eliminación al estilo PWA */}
+      {userToDelete && (
+        <div className="confirm-dialog-overlay">
+          <div className="confirm-dialog-card">
+            <div style={{ margin: '0 auto 14px auto', width: '52px', height: '52px', borderRadius: '50%', background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <AlertTriangle size={26} />
+            </div>
+
+            <h3 style={{ fontSize: '1.18rem', fontWeight: 800, color: '#0f172a', margin: '0 0 8px 0' }}>
+              ¿Eliminar Usuario?
+            </h3>
+
+            <p style={{ fontSize: '0.88rem', color: '#64748b', lineHeight: 1.5, margin: '0 0 16px 0' }}>
+              Estás a punto de eliminar a <strong style={{ color: '#0f172a' }}>{userToDelete.fullName || `${userToDelete.firstName || ''} ${userToDelete.firstSurname || ''}`.trim() || userToDelete.username}</strong> (<span style={{ color: '#07665e', fontWeight: 600 }}>@{userToDelete.username}</span>) de la base de datos.
+            </p>
+
+            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '10px 14px', fontSize: '0.8rem', color: '#991b1b', textAlign: 'left', marginBottom: '20px', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+              <span style={{ fontSize: '0.95rem' }}>⚠️</span>
+              <span>Esta acción es irreversible y eliminará todos los permisos y asignaciones a sedes de este usuario.</span>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setUserToDelete(null)}
+                disabled={isDeletingUser}
+                style={{ flex: 1 }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn-danger-confirm"
+                onClick={handleConfirmDelete}
+                disabled={isDeletingUser}
+                style={{ flex: 1 }}
+              >
+                {isDeletingUser ? (
+                  <>
+                    <Loader2 size={16} className="spinner" />
+                    Eliminando...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={16} />
+                    Sí, Eliminar
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

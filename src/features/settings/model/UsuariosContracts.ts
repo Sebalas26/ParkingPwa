@@ -38,6 +38,8 @@ export interface UserDto {
   updatedAt?: string;
   userRoleDto?: GetUserRoleDto;
   identificationTypeDto?: GetIdentificationTypeDto;
+  roleName?: string;
+  roleDescription?: string;
   name?: string;
   role?: string;
   status?: string | boolean;
@@ -57,6 +59,7 @@ export interface SaveUserDto {
   password?: string;
   email: string;
   isActive: boolean;
+  roleName?: string;
   name?: string;
   role?: string;
   status?: string | boolean;

@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, X, Car, Bike, Truck, ShieldAlert, Building2 } from 'lucide-react';
+import { Plus, Edit2, X, Car, Bike, Truck, ShieldAlert } from 'lucide-react';
 import type { VehiculoConfigDto, SaveVehiculoConfigDto } from '../model/VehiculosConfigContracts';
 import { vehiculosConfigService } from '../data/vehiculosConfigService';
-import { useBranchContext } from '../../../shared/context/ParqueaderoContext';
 import { authService } from '../../auth/data/authService';
 
 export const VehiculosConfigTab: React.FC = () => {
-  const { activeBranchId, activeBranch } = useBranchContext();
   const [configs, setConfigs] = useState<VehiculoConfigDto[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingConfig, setEditingConfig] = useState<Partial<SaveVehiculoConfigDto> | null>(null);
@@ -14,15 +12,15 @@ export const VehiculosConfigTab: React.FC = () => {
 
   useEffect(() => {
     loadConfigs();
-  }, [activeBranchId]);
+  }, []);
 
   const loadConfigs = async () => {
     setIsLoading(true);
     try {
-      const data = await vehiculosConfigService.getConfigs(activeBranchId);
+      const data = await vehiculosConfigService.getConfigs();
       setConfigs(data || []);
     } catch (err) {
-      console.error('Error al cargar configuraciones de vehículos:', err);
+      console.error('Error al cargar tipos de vehículos:', err);
     } finally {
       setIsLoading(false);
     }
@@ -30,13 +28,13 @@ export const VehiculosConfigTab: React.FC = () => {
 
   const handleOpenCreate = () => {
     setEditingConfig({
-      branchId: activeBranchId,
+      branchId: null,
       vehicleType: 0,
-      category: 'Automóvil / Carro',
-      gracePeriodMinutes: 15,
-      hourRate: 4000,
-      minuteRate: 70,
-      fullDayRate: 35000,
+      category: '',
+      gracePeriodMinutes: undefined,
+      hourRate: undefined,
+      minuteRate: undefined,
+      fullDayRate: undefined,
       iconKey: 'IconCar',
       isActive: true,
     });
@@ -48,39 +46,44 @@ export const VehiculosConfigTab: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleVehicleTypePresetChange = (typeVal: number) => {
-    let defaultName = 'Automóvil / Carro';
-    let defaultIcon = 'IconCar';
-    if (typeVal === 1) {
-      defaultName = 'Motocicleta';
-      defaultIcon = 'IconMotorcycle';
-    } else if (typeVal === 2) {
-      defaultName = 'Camión / Vehículo Pesado';
-      defaultIcon = 'IconTruck';
-    } else if (typeVal === 3) {
-      defaultName = 'Bicicleta';
-      defaultIcon = 'IconBike';
-    }
-
-    setEditingConfig((prev) => ({
-      ...prev,
-      vehicleType: typeVal,
-      category: prev?.category && prev.category !== 'Automóvil / Carro' && prev.category !== 'Motocicleta' && prev.category !== 'Camión / Vehículo Pesado' && prev.category !== 'Bicicleta' ? prev.category : defaultName,
-      iconKey: defaultIcon,
-    }));
+  const inferVehicleType = (name: string): { type: number; icon: string } => {
+    const lower = (name || '').toLowerCase();
+    if (lower.includes('moto')) return { type: 1, icon: 'IconMotorcycle' };
+    if (lower.includes('camion') || lower.includes('camión') || lower.includes('pesado')) return { type: 2, icon: 'IconTruck' };
+    if (lower.includes('furgon') || lower.includes('furgón') || lower.includes('van')) return { type: 3, icon: 'IconVan' };
+    if (lower.includes('bici') || lower.includes('cicla')) return { type: 4, icon: 'IconBike' };
+    if (lower.includes('suv') || lower.includes('camioneta')) return { type: 5, icon: 'IconCar' };
+    return { type: 0, icon: 'IconCar' };
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingConfig || !editingConfig.category) return;
+    if (!editingConfig || !editingConfig.category || !editingConfig.category.trim()) {
+      alert('Por favor ingresa el nombre o tipo de vehículo.');
+      return;
+    }
+
+    const { type, icon } = inferVehicleType(editingConfig.category);
+    const payload: SaveVehiculoConfigDto = {
+      rateId: editingConfig.rateId,
+      branchId: editingConfig.branchId ?? null,
+      vehicleType: editingConfig.vehicleType ?? type,
+      category: editingConfig.category.trim(),
+      hourRate: editingConfig.hourRate ?? 0,
+      minuteRate: editingConfig.minuteRate ?? 0,
+      fullDayRate: editingConfig.fullDayRate ?? 0,
+      gracePeriodMinutes: editingConfig.gracePeriodMinutes ?? 0,
+      iconKey: editingConfig.iconKey || icon,
+      isActive: editingConfig.isActive ?? true,
+    };
 
     try {
-      await vehiculosConfigService.saveConfig(editingConfig as SaveVehiculoConfigDto, activeBranchId);
+      await vehiculosConfigService.saveConfig(payload, null);
       setIsModalOpen(false);
       setEditingConfig(null);
       await loadConfigs();
     } catch (err: any) {
-      alert(err?.message || 'Error al guardar configuración de tarifa.');
+      alert(err?.message || 'Error al guardar tipo de vehículo.');
     }
   };
 
@@ -88,19 +91,12 @@ export const VehiculosConfigTab: React.FC = () => {
     <div className="settings-section-card">
       <div className="section-header">
         <div className="section-header-titles">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-            <h2>Configuración de Tarifas Vehiculares</h2>
-            {activeBranch && (
-              <span className="badge badge-info" style={{ background: '#e0f2fe', color: '#0369a1', fontWeight: 700, padding: '4px 10px', borderRadius: '8px' }}>
-                📍 Sede: {activeBranch.code} — {activeBranch.name}
-              </span>
-            )}
-          </div>
-          <p>Parametriza los tipos de vehículos, tarifas por hora/minuto/día y tiempos de gracia para la sede activa.</p>
+          <h2>Tipos de Vehículos</h2>
+          <p>Parametriza el catálogo general de tipos de vehículos y tarifas base del sistema.</p>
         </div>
         {(authService.hasPermission('settings.vehiculos.manage') || authService.hasPermission('rates.create')) && (
           <button className="btn-primary" style={{ width: 'auto' }} onClick={handleOpenCreate}>
-            <Plus size={16} /> Crear Tarifa
+            <Plus size={16} /> Crear Tipo de Vehículo
           </button>
         )}
       </div>
@@ -109,7 +105,6 @@ export const VehiculosConfigTab: React.FC = () => {
         <thead>
           <tr>
             <th>CATEGORÍA / TIPO</th>
-            <th>TIPO CÓDIGO</th>
             <th>TIEMPO GRACIA</th>
             <th>VALOR HORA</th>
             <th>VALOR MINUTO</th>
@@ -128,13 +123,8 @@ export const VehiculosConfigTab: React.FC = () => {
                     <span>{c.category}</span>
                   </div>
                 </td>
-                <td>
-                  <span style={{ fontFamily: 'monospace', fontSize: '0.85rem', background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>
-                    Tipo {c.vehicleType}
-                  </span>
-                </td>
-                <td>{c.gracePeriodMinutes} min</td>
-                <td>${(c.hourRate || 0).toLocaleString()} COP</td>
+                <td>{c.gracePeriodMinutes || 0} min</td>
+                <td><strong>${(c.hourRate || 0).toLocaleString()} COP</strong></td>
                 <td>${(c.minuteRate || 0).toLocaleString()} COP</td>
                 <td>${(c.fullDayRate || 0).toLocaleString()} COP</td>
                 <td>
@@ -144,7 +134,7 @@ export const VehiculosConfigTab: React.FC = () => {
                 </td>
                 <td className="text-right">
                   {(authService.hasPermission('settings.vehiculos.manage') || authService.hasPermission('rates.edit')) && (
-                    <button className="btn-icon" onClick={() => handleOpenEdit(c)} title="Editar Tarifa">
+                    <button className="btn-icon" onClick={() => handleOpenEdit(c)} title="Editar Tipo de Vehículo">
                       <Edit2 size={16} />
                     </button>
                   )}
@@ -153,8 +143,8 @@ export const VehiculosConfigTab: React.FC = () => {
             ))
           ) : (
             <tr>
-              <td colSpan={8} className="text-center py-6 text-muted">
-                {isLoading ? 'Cargando tarifas vehiculares...' : 'No hay tarifas parametrizadas para esta sede. Crea la primera con el botón superior.'}
+              <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
+                {isLoading ? 'Cargando tipos de vehículos...' : 'No hay tipos de vehículos registrados en el catálogo general. Crea el primero con el botón superior.'}
               </td>
             </tr>
           )}
@@ -165,7 +155,7 @@ export const VehiculosConfigTab: React.FC = () => {
         <div className="modal-overlay">
           <div className="modal-content" style={{ maxWidth: '520px' }}>
             <div className="modal-header">
-              <h3>{editingConfig.rateId ? 'Editar Tarifa Vehicular' : 'Nueva Tarifa Vehicular'}</h3>
+              <h3>{editingConfig.rateId ? 'Editar Tipo de Vehículo' : 'Nuevo Tipo de Vehículo'}</h3>
               <button className="btn-close" onClick={() => setIsModalOpen(false)}>
                 <X size={18} />
               </button>
@@ -173,35 +163,16 @@ export const VehiculosConfigTab: React.FC = () => {
 
             <form onSubmit={handleSave}>
               <div className="modal-body">
-                {activeBranch && (
-                  <div style={{ background: '#f8fafc', padding: '8px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '14px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Building2 size={16} color="#07665e" />
-                    <strong>Sede Asignada:</strong> {activeBranch.code} — {activeBranch.name}
-                  </div>
-                )}
-
                 <div className="form-group">
-                  <label>Tipo de Vehículo (Categoría Base)</label>
-                  <select
-                    className="input-field"
-                    value={Number(editingConfig.vehicleType) || 0}
-                    onChange={(e) => handleVehicleTypePresetChange(Number(e.target.value))}
-                  >
-                    <option value={0}>0 — Automóvil / Carro / Sedán</option>
-                    <option value={1}>1 — Motocicleta</option>
-                    <option value={2}>2 — Camión / Vehículo Pesado</option>
-                    <option value={3}>3 — Bicicleta / Otros</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Nombre a Mostrar *</label>
+                  <label>Nombre / Tipo de Vehículo *</label>
                   <input
                     type="text"
                     className="input-field"
+                    placeholder="Ej: Automóvil, Motocicleta, Camión, Bicicleta"
                     value={editingConfig.category || ''}
                     onChange={(e) => setEditingConfig({ ...editingConfig, category: e.target.value })}
                     required
+                    autoFocus
                   />
                 </div>
 
@@ -211,8 +182,9 @@ export const VehiculosConfigTab: React.FC = () => {
                     <input
                       type="number"
                       className="input-field"
-                      value={editingConfig.hourRate || 0}
-                      onChange={(e) => setEditingConfig({ ...editingConfig, hourRate: Number(e.target.value) })}
+                      placeholder="0"
+                      value={editingConfig.hourRate !== undefined && editingConfig.hourRate !== null ? editingConfig.hourRate : ''}
+                      onChange={(e) => setEditingConfig({ ...editingConfig, hourRate: e.target.value === '' ? undefined : Number(e.target.value) })}
                       min={0}
                       required
                     />
@@ -222,8 +194,9 @@ export const VehiculosConfigTab: React.FC = () => {
                     <input
                       type="number"
                       className="input-field"
-                      value={editingConfig.minuteRate || 0}
-                      onChange={(e) => setEditingConfig({ ...editingConfig, minuteRate: Number(e.target.value) })}
+                      placeholder="0"
+                      value={editingConfig.minuteRate !== undefined && editingConfig.minuteRate !== null ? editingConfig.minuteRate : ''}
+                      onChange={(e) => setEditingConfig({ ...editingConfig, minuteRate: e.target.value === '' ? undefined : Number(e.target.value) })}
                       min={0}
                       required
                     />
@@ -236,8 +209,9 @@ export const VehiculosConfigTab: React.FC = () => {
                     <input
                       type="number"
                       className="input-field"
-                      value={editingConfig.fullDayRate || 0}
-                      onChange={(e) => setEditingConfig({ ...editingConfig, fullDayRate: Number(e.target.value) })}
+                      placeholder="0"
+                      value={editingConfig.fullDayRate !== undefined && editingConfig.fullDayRate !== null ? editingConfig.fullDayRate : ''}
+                      onChange={(e) => setEditingConfig({ ...editingConfig, fullDayRate: e.target.value === '' ? undefined : Number(e.target.value) })}
                       min={0}
                       required
                     />
@@ -247,22 +221,23 @@ export const VehiculosConfigTab: React.FC = () => {
                     <input
                       type="number"
                       className="input-field"
-                      value={editingConfig.gracePeriodMinutes ?? 15}
-                      onChange={(e) => setEditingConfig({ ...editingConfig, gracePeriodMinutes: Number(e.target.value) })}
+                      placeholder="0"
+                      value={editingConfig.gracePeriodMinutes !== undefined && editingConfig.gracePeriodMinutes !== null ? editingConfig.gracePeriodMinutes : ''}
+                      onChange={(e) => setEditingConfig({ ...editingConfig, gracePeriodMinutes: e.target.value === '' ? undefined : Number(e.target.value) })}
                       min={0}
                       required
                     />
                   </div>
                 </div>
 
-                <div className="form-group" style={{ marginTop: '12px' }}>
+                <div className="form-group" style={{ marginTop: '8px' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                     <input
                       type="checkbox"
                       checked={editingConfig.isActive ?? true}
                       onChange={(e) => setEditingConfig({ ...editingConfig, isActive: e.target.checked })}
                     />
-                    <span>Tarifa Activa para operaciones de Parqueadero</span>
+                    <span>Tipo de Vehículo Activo en el Sistema</span>
                   </label>
                 </div>
               </div>
@@ -272,7 +247,7 @@ export const VehiculosConfigTab: React.FC = () => {
                   Cancelar
                 </button>
                 <button type="submit" className="btn-primary">
-                  Guardar Tarifa
+                  Guardar Tipo de Vehículo
                 </button>
               </div>
             </form>

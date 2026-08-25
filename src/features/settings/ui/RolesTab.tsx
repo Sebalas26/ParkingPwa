@@ -342,7 +342,7 @@ export const RolesTab: React.FC = () => {
                   Cancelar
                 </button>
                 <button type="submit" className="btn-primary" style={{ width: 'auto' }}>
-                  Guardar Rol
+                  Crear Rol
                 </button>
               </div>
             </form>
@@ -528,7 +528,7 @@ export const RolesTab: React.FC = () => {
                                     <input
                                       type="checkbox"
                                       checked={isChecked}
-                                      onChange={() => {}}
+                                      onChange={() => { }}
                                       style={{ width: '16px', height: '16px', pointerEvents: 'none' }}
                                     />
                                     <span style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text-primary)' }}>
