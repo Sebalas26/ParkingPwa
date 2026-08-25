@@ -10,7 +10,7 @@ export interface ItemizedPermissionsDto {
   tarifas: (string | number)[];
   usuarios: number[];
   convenios: (string | number)[];
-  vehiculos: string[];
+  vehiculos?: string[];
   mediosPago: (string | number)[];
 }
 
@@ -18,7 +18,7 @@ export interface ParqueaderoPermissionsDto {
   tarifas: boolean;
   usuarios: boolean;
   convenios: boolean;
-  vehiculos: boolean;
+  vehiculos?: boolean;
   mediosPago: boolean;
   itemized?: ItemizedPermissionsDto;
 }

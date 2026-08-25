@@ -7,7 +7,8 @@ import { authService } from '../../auth/data/authService';
 export const UsuariosTab: React.FC = () => {
   const [usuarios, setUsuarios] = useState<UserDto[]>([]);
   const [identTypes, setIdentTypes] = useState<GetIdentificationTypeDto[]>([]);
-  const [userRoles, setUserRoles] = useState<GetUserRoleDto[]>([]);
+  const [allUserRoles, setAllUserRoles] = useState<GetUserRoleDto[]>([]);
+  const [assignableRoles, setAssignableRoles] = useState<GetUserRoleDto[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUsuario, setEditingUsuario] = useState<SaveUserDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,7 +27,14 @@ export const UsuariosTab: React.FC = () => {
       ]);
       setUsuarios(usersData || []);
       setIdentTypes(typesData || []);
-      setUserRoles(rolesData || []);
+      setAllUserRoles(rolesData || []);
+
+      // Filtrar roles no-administrador para asignación estándar en nuevo usuario
+      const nonAdminRoles = (rolesData || []).filter((r) => {
+        const name = (r.roleName || r.role || r.name || '').toLowerCase();
+        return name !== 'administrador' && name !== 'admin' && (r.idUserRol ?? r.id) !== 1;
+      });
+      setAssignableRoles(nonAdminRoles);
     } catch (err) {
       console.error('Error al cargar datos de usuarios:', err);
     } finally {
@@ -36,7 +44,7 @@ export const UsuariosTab: React.FC = () => {
 
   const handleOpenCreate = () => {
     const defaultTypeId = identTypes.length > 0 ? (identTypes[0].id || 1) : 1;
-    const defaultRoleId = userRoles.length > 0 ? (userRoles.find(r => (r.roleName || r.role) === 'Operador')?.idUserRol || userRoles[0].idUserRol || userRoles[0].id || 2) : 2;
+    const defaultRoleId = assignableRoles.length > 0 ? (assignableRoles[0].idUserRol ?? assignableRoles[0].id ?? 2) : 2;
 
     setEditingUsuario({
       identificationTypeId: defaultTypeId,
@@ -57,6 +65,7 @@ export const UsuariosTab: React.FC = () => {
 
   const handleOpenEdit = (u: UserDto) => {
     const isUserActive = u.isActive ?? (u.status === true || u.status === 'Activo' || u.status === 'Active');
+    const roleId = u.userRoleId || u.userRoleDto?.idUserRol || u.userRoleDto?.id || 2;
     setEditingUsuario({
       id: u.id,
       identificationTypeId: u.identificationTypeId || 1,
@@ -69,7 +78,7 @@ export const UsuariosTab: React.FC = () => {
       username: u.username || u.email || '',
       email: u.email || '',
       password: '', // Dejar vacío para no sobreescribir si no se cambia
-      userRoleId: u.userRoleId || u.userRoleDto?.id || 2,
+      userRoleId: roleId,
       isActive: isUserActive,
     });
     setIsModalOpen(true);
@@ -138,7 +147,14 @@ export const UsuariosTab: React.FC = () => {
               const displayName = u.fullName || u.name || `${u.firstName || ''} ${u.firstSurname || ''}`.trim() || u.username;
               const typeCode = u.identificationTypeDto?.identification || (identTypes.find(t => t.id === u.identificationTypeId)?.identification) || 'CC';
               const docNumber = u.identificationNumber || '--';
-              const displayRole = u.userRoleDto?.role || (userRoles.find(r => r.id === u.userRoleId)?.role) || u.role || 'Operador';
+              const displayRole =
+                u.userRoleDto?.roleName ||
+                u.userRoleDto?.role ||
+                u.userRoleDto?.name ||
+                allUserRoles.find(r => (r.idUserRol ?? r.id) === u.userRoleId)?.roleName ||
+                allUserRoles.find(r => (r.idUserRol ?? r.id) === u.userRoleId)?.role ||
+                u.role ||
+                'Operador';
               const isUserActive = u.isActive ?? (u.status === 'Activo' || u.status === true || u.status === 'Active');
 
               return (
@@ -340,15 +356,19 @@ export const UsuariosTab: React.FC = () => {
                       onChange={(e) => setEditingUsuario({ ...editingUsuario, userRoleId: Number(e.target.value) })}
                       required
                     >
-                      {userRoles.map((r) => {
-                        const roleId = r.idUserRol ?? r.id ?? 2;
-                        const roleTitle = r.roleName || r.role || r.name || 'Operador';
-                        return (
-                          <option key={roleId} value={roleId}>
-                            {roleTitle}
-                          </option>
-                        );
-                      })}
+                      {(() => {
+                        const isEditingAdmin = editingUsuario.userRoleId === 1;
+                        const roleOptions = isEditingAdmin ? allUserRoles : assignableRoles;
+                        return roleOptions.map((r) => {
+                          const roleId = r.idUserRol ?? r.id ?? 2;
+                          const roleTitle = r.roleName || r.role || r.name || 'Operador';
+                          return (
+                            <option key={roleId} value={roleId}>
+                              {roleTitle}
+                            </option>
+                          );
+                        });
+                      })()}
                     </select>
                   </div>
                 </div>

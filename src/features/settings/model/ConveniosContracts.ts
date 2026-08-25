@@ -1,10 +1,20 @@
 export interface StoreDto {
   storeId: string;
   name: string;
+  taxId?: string;
+  phoneNumber?: string;
   contactPhone?: string;
   email?: string;
   isActive: boolean;
   createdAtUtc?: string;
+}
+
+export interface SaveStoreDto {
+  storeId?: string;
+  name: string;
+  taxId?: string;
+  phoneNumber?: string;
+  isActive?: boolean;
 }
 
 export interface CommercialAgreementDto {
@@ -18,10 +28,7 @@ export interface CommercialAgreementDto {
   isActive: boolean;
   createdAtUtc?: string;
   store?: StoreDto;
-  // Campos de compatibilidad
   storeName?: string;
-  freeMinutes?: number;
-  effectiveToUtc?: string;
 }
 
 export interface SaveCommercialAgreementDto {
@@ -33,6 +40,4 @@ export interface SaveCommercialAgreementDto {
   discountFixedAmount?: number | null;
   maxHoursApplicable?: number | null;
   isActive: boolean;
-  freeMinutes?: number;
-  effectiveToUtc?: string;
 }

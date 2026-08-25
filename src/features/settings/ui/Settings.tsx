@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { DollarSign, Users, FileText, Car, CreditCard, Building } from 'lucide-react';
+import { Users, FileText, Car, CreditCard, Building, Shield } from 'lucide-react';
 import { authService } from '../../auth/data/authService';
-import { TarifasTab } from './TarifasTab';
 import { UsuariosTab } from './UsuariosTab';
+import { RolesTab } from './RolesTab';
 import { ConveniosTab } from './ConveniosTab';
 import { VehiculosConfigTab } from './VehiculosConfigTab';
 import { MediosPagoTab } from './MediosPagoTab';
 import { ParqueaderosTab } from './ParqueaderosTab';
 import './Settings.css';
 
-type ActiveTab = 'parqueaderos' | 'tarifas' | 'usuarios' | 'convenios' | 'vehiculos' | 'mediosPago';
+type ActiveTab = 'parqueaderos' | 'usuarios' | 'roles' | 'convenios' | 'vehiculos' | 'mediosPago';
 
 export const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('parqueaderos');
@@ -25,20 +25,20 @@ export const Settings: React.FC = () => {
             <Building size={18} /> Parqueaderos
           </button>
         )}
-        {authService.hasPermission('settings.tarifas.view') && (
-          <button 
-            className={`settings-tab-btn ${activeTab === 'tarifas' ? 'active' : ''}`}
-            onClick={() => setActiveTab('tarifas')}
-          >
-            <DollarSign size={18} /> Tarifas
-          </button>
-        )}
         {authService.hasPermission('settings.usuarios.view') && (
           <button 
             className={`settings-tab-btn ${activeTab === 'usuarios' ? 'active' : ''}`}
             onClick={() => setActiveTab('usuarios')}
           >
             <Users size={18} /> Usuarios
+          </button>
+        )}
+        {(authService.hasPermission('settings.roles.view') || authService.hasPermission('settings.usuarios.view') || authService.hasPermission('roles.manage') || authService.hasPermission('security.view')) && (
+          <button 
+            className={`settings-tab-btn ${activeTab === 'roles' ? 'active' : ''}`}
+            onClick={() => setActiveTab('roles')}
+          >
+            <Shield size={18} /> Roles y Permisos
           </button>
         )}
         {authService.hasPermission('settings.convenios.view') && (
@@ -69,8 +69,8 @@ export const Settings: React.FC = () => {
 
       <div className="settings-tab-content">
         {activeTab === 'parqueaderos' && authService.hasPermission('settings.parqueaderos.view') && <ParqueaderosTab />}
-        {activeTab === 'tarifas' && authService.hasPermission('settings.tarifas.view') && <TarifasTab />}
         {activeTab === 'usuarios' && authService.hasPermission('settings.usuarios.view') && <UsuariosTab />}
+        {activeTab === 'roles' && <RolesTab />}
         {activeTab === 'convenios' && authService.hasPermission('settings.convenios.view') && <ConveniosTab />}
         {activeTab === 'vehiculos' && authService.hasPermission('settings.vehiculos.view') && <VehiculosConfigTab />}
         {activeTab === 'mediosPago' && authService.hasPermission('settings.medios_pago.view') && <MediosPagoTab />}

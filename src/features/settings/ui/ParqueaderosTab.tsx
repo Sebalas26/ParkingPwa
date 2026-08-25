@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, X, Star, Image as ImageIcon, Trash2, Building, Key, CheckSquare, Square, Copy, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, Edit2, X, Star, Image as ImageIcon, Trash2, Building, SlidersHorizontal, CheckSquare, Square, Copy, ChevronDown, ChevronRight, DollarSign } from 'lucide-react';
 import type { ParqueaderoDto, SaveParqueaderoDto, ItemizedPermissionsDto } from '../model/ParqueaderosContracts';
+import type { VehicleRateDto, UpdateVehicleRateDto } from '../model/TarifasContracts';
 import { parqueaderosService } from '../data/parqueaderosService';
 import { tarifasService } from '../data/tarifasService';
 import { usuariosService } from '../data/usuariosService';
 import { conveniosService } from '../data/conveniosService';
-import { vehiculosConfigService } from '../data/vehiculosConfigService';
 import { mediosPagoService } from '../data/mediosPagoService';
 import { authService } from '../../auth/data/authService';
 
@@ -21,35 +21,44 @@ export const ParqueaderosTab: React.FC = () => {
   const [editingParqueadero, setEditingParqueadero] = useState<Partial<SaveParqueaderoDto> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Modal Asignar Permisos
+  // Modal Parametrización
   const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false);
   const [targetParqueadero, setTargetParqueadero] = useState<ParqueaderoDto | null>(null);
   const [inheritedFromId, setInheritedFromId] = useState<number | ''>('');
 
-  // Listas Reales de los 5 Módulos
+  // Listas Reales de los 4 Módulos
   const [tarifasItems, setTarifasItems] = useState<ModuleItem[]>([]);
+  const [rawRates, setRawRates] = useState<VehicleRateDto[]>([]);
   const [usuariosItems, setUsuariosItems] = useState<ModuleItem[]>([]);
   const [conveniosItems, setConveniosItems] = useState<ModuleItem[]>([]);
-  const [vehiculosItems, setVehiculosItems] = useState<ModuleItem[]>([]);
   const [mediosPagoItems, setMediosPagoItems] = useState<ModuleItem[]>([]);
   const [isLoadingModuleItems, setIsLoadingModuleItems] = useState(false);
+
+  // Modal para Configurar Tarifa por Categoría de Vehículo
+  const [isRateModalOpen, setIsRateModalOpen] = useState(false);
+  const [editingRate, setEditingRate] = useState<VehicleRateDto | null>(null);
+  const [rateFormData, setRateFormData] = useState<UpdateVehicleRateDto>({
+    hourRate: 0,
+    minuteRate: 0,
+    fullDayRate: 0,
+    gracePeriodMinutes: 0,
+    displayName: '',
+  });
 
   // Estado de ítems seleccionados por módulo
   const [selectedItemized, setSelectedItemized] = useState<ItemizedPermissionsDto>({
     tarifas: [],
     usuarios: [],
     convenios: [],
-    vehiculos: [],
     mediosPago: [],
   });
 
-  // Módulos expandidos en el modal
+  // Módulos expandidos en el modal (Solo el primero abierto por defecto)
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({
     tarifas: true,
-    usuarios: true,
-    convenios: true,
-    vehiculos: true,
-    mediosPago: true,
+    usuarios: false,
+    convenios: false,
+    mediosPago: false,
   });
 
   useEffect(() => {
@@ -130,87 +139,75 @@ export const ParqueaderosTab: React.FC = () => {
     }
   };
 
-  // Carga de ítems reales de los 5 módulos para el modal "Asignar Permisos"
+  // Carga de ítems reales de los 4 módulos para el modal "Parametrización"
   const handleOpenPermissionsModal = async (p: ParqueaderoDto) => {
     setTargetParqueadero(p);
     setInheritedFromId(p.inheritedFromId || '');
     setIsLoadingModuleItems(true);
+    setExpandedModules({
+      tarifas: true,
+      usuarios: false,
+      convenios: false,
+      mediosPago: false,
+    });
     setIsPermissionsModalOpen(true);
 
     try {
-      const [tList, uList, cList, vList, mList] = await Promise.all([
+      const [tList, uList, cList, mList] = await Promise.all([
         tarifasService.getAllRates(),
         usuariosService.getUsers(),
         conveniosService.getAllAgreements(),
-        vehiculosConfigService.getConfigs(),
         mediosPagoService.getPaymentMethods(),
       ]);
 
-      // Normalización Tarifas
-      const mappedTarifas: ModuleItem[] = tList.length > 0
-        ? tList.map((r) => ({ id: r.rateId || r.vehicleType, name: (r as any).displayName || `Tarifa ${r.vehicleType}`, detail: `$${r.hourRate || r.minuteRate}/hr` }))
-        : [
-            { id: 'T-01', name: 'Tarifa Automóvil / Sedán', detail: '$3.000 / hora' },
-            { id: 'T-02', name: 'Tarifa Motocicleta', detail: '$1.500 / hora' },
-            { id: 'T-03', name: 'Tarifa Camioneta / SUV', detail: '$3.500 / hora' },
-            { id: 'T-04', name: 'Tarifa Furgón / Minibús', detail: '$4.500 / hora' },
-            { id: 'T-05', name: 'Tarifa Vehículo Pesado', detail: '$6.000 / hora' },
-          ];
+      setRawRates(tList || []);
 
-      // Normalización Usuarios
-      const mappedUsuarios: ModuleItem[] = uList.length > 0
-        ? uList.map((u) => ({ id: u.id, name: u.fullName || u.name || u.username || `Usuario #${u.id}`, detail: `${u.email} (${u.userRoleDto?.name || u.role || 'Operador'})` }))
-        : [
-            { id: 1, name: 'Sofía Ramírez', detail: 'sofia@parkcontrol.cl (Supervisor)' },
-            { id: 2, name: 'Carlos Mendoza', detail: 'carlos@parkcontrol.cl (Operador)' },
-          ];
+      // Normalización Tarifas por Categoría de Vehículo desde la API
+      const mappedTarifas: ModuleItem[] = (tList || []).map((r) => ({
+        id: r.rateId || r.vehicleType,
+        name: r.displayName || `Categoría ${r.vehicleType}`,
+        detail: `$${(r.hourRate || 0).toLocaleString()} / hora (Máx $${(r.fullDayRate || 0).toLocaleString()})`,
+      }));
 
-      // Normalización Convenios
-      const mappedConvenios: ModuleItem[] = cList.length > 0
-        ? cList.map((c, idx) => ({ id: c.agreementId || `CONV-${idx}`, name: c.name, detail: (c as any).description || `${c.discountPercentage || 0}% Descuento` }))
-        : [
-            { id: 'C-01', name: 'Convenio Centro Comercial Plaza', detail: '50% Descuento en Parqueo' },
-            { id: 'C-02', name: 'Convenio Gimnasio SmartFit', detail: '2 Horas Gratis de Parqueo' },
-            { id: 'C-03', name: 'Convenio CineMark', detail: '3 Horas Gratis con Boleta' },
-            { id: 'C-04', name: 'Convenio Supermercado Éxito', detail: '30% Descuento por Compras' },
-          ];
+      // Normalización Usuarios desde la API
+      const mappedUsuarios: ModuleItem[] = (uList || []).map((u) => ({
+        id: u.id,
+        name: u.fullName || u.name || u.username || `Usuario #${u.id}`,
+        detail: `${u.email} (${u.userRoleDto?.roleName || u.userRoleDto?.role || u.role || 'Operador'})`,
+      }));
 
-      // Normalización Vehículos
-      const mappedVehiculos: ModuleItem[] = vList.length > 0
-        ? vList.map((v) => ({ id: v.id || v.category, name: v.category, detail: `Zonas: ${v.allowedZones.join(', ')}` }))
-        : [
-            { id: 'VCFG-01', name: 'Automóvil / Sedán', detail: 'Zona A, Zona B' },
-            { id: 'VCFG-02', name: 'Motocicleta', detail: 'Zona D (Moto)' },
-            { id: 'VCFG-03', name: 'Camioneta / SUV', detail: 'Zona A, Zona B' },
-            { id: 'VCFG-04', name: 'Furgón / Minibús', detail: 'Zona B, Zona C' },
-            { id: 'VCFG-05', name: 'Vehículo Pesado / Camión', detail: 'Zona C (Carga)' },
-          ];
+      // Normalización Convenios desde la API
+      const mappedConvenios: ModuleItem[] = (cList || []).map((c, idx) => ({
+        id: c.agreementId || `CONV-${idx}`,
+        name: c.name,
+        detail: c.discountPercentage ? `${c.discountPercentage}% Descuento` : (c.discountFixedAmount ? `$${(c.discountFixedAmount).toLocaleString()} COP Descuento` : 'Convenio Comercial'),
+      }));
 
-      // Normalización Medios de Pago
-      const mappedMediosPago: ModuleItem[] = mList.length > 0
-        ? mList.map((m, idx) => ({ id: m.id || `MP-${idx}`, name: m.name, detail: (m as any).description || (m.status ? 'Habilitado' : 'Inactivo') }))
-        : [
-            { id: 'MP-01', name: 'Efectivo (Cash)', detail: 'Pago en caja física' },
-            { id: 'MP-02', name: 'Tarjeta de Crédito', detail: 'Visa / Mastercard Datáfono' },
-            { id: 'MP-03', name: 'Tarjeta de Débito', detail: 'Redbanc / Débito' },
-            { id: 'MP-04', name: 'Transferencia / PSE / Nequi', detail: 'Cobro digital QR' },
-          ];
+      // Normalización Medios de Pago desde la API
+      const mappedMediosPago: ModuleItem[] = (mList || []).map((m, idx) => ({
+        id: m.id || `MP-${idx}`,
+        name: m.name,
+        detail: (m.isActive ?? (m.status === true || m.status === 'Activo')) ? 'Habilitado en Caja' : 'Inactivo',
+      }));
 
       setTarifasItems(mappedTarifas);
       setUsuariosItems(mappedUsuarios);
       setConveniosItems(mappedConvenios);
-      setVehiculosItems(mappedVehiculos);
       setMediosPagoItems(mappedMediosPago);
 
       // Cargar ítems ya guardados o seleccionar todos por defecto
       if (p.permissions?.itemized) {
-        setSelectedItemized(p.permissions.itemized);
+        setSelectedItemized({
+          tarifas: p.permissions.itemized.tarifas || [],
+          usuarios: p.permissions.itemized.usuarios || [],
+          convenios: p.permissions.itemized.convenios || [],
+          mediosPago: p.permissions.itemized.mediosPago || [],
+        });
       } else {
         setSelectedItemized({
           tarifas: mappedTarifas.map((i) => i.id),
           usuarios: mappedUsuarios.map((i) => Number(i.id)),
           convenios: mappedConvenios.map((i) => i.id),
-          vehiculos: mappedVehiculos.map((i) => String(i.id)),
           mediosPago: mappedMediosPago.map((i) => i.id),
         });
       }
@@ -221,9 +218,45 @@ export const ParqueaderosTab: React.FC = () => {
     }
   };
 
+  const handleOpenEditRate = (rate: VehicleRateDto, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingRate(rate);
+    setRateFormData({
+      hourRate: rate.hourRate || 0,
+      minuteRate: rate.minuteRate || 0,
+      fullDayRate: rate.fullDayRate || 0,
+      gracePeriodMinutes: rate.gracePeriodMinutes || 0,
+      displayName: rate.displayName || '',
+    });
+    setIsRateModalOpen(true);
+  };
+
+  const handleSaveRate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingRate) return;
+
+    try {
+      await tarifasService.updateRate(editingRate.rateId, rateFormData);
+      setIsRateModalOpen(false);
+      setEditingRate(null);
+
+      // Recargar lista de tarifas actualizada
+      const updatedRates = await tarifasService.getAllRates();
+      setRawRates(updatedRates || []);
+      const mappedTarifas: ModuleItem[] = (updatedRates || []).map((r) => ({
+        id: r.rateId || r.vehicleType,
+        name: r.displayName || `Categoría ${r.vehicleType}`,
+        detail: `$${(r.hourRate || 0).toLocaleString()} / hora (Máx $${(r.fullDayRate || 0).toLocaleString()})`,
+      }));
+      setTarifasItems(mappedTarifas);
+    } catch (err: any) {
+      alert(err?.message || 'Error al actualizar la tarifa.');
+    }
+  };
+
   const handleToggleItem = (moduleKey: keyof ItemizedPermissionsDto, itemId: string | number) => {
     setSelectedItemized((prev) => {
-      const currentList = prev[moduleKey] as any[];
+      const currentList = (prev[moduleKey] || []) as any[];
       const exists = currentList.includes(itemId);
       const updatedList = exists
         ? currentList.filter((id) => id !== itemId)
@@ -234,7 +267,7 @@ export const ParqueaderosTab: React.FC = () => {
 
   const handleToggleModuleAll = (moduleKey: keyof ItemizedPermissionsDto, itemsList: ModuleItem[]) => {
     setSelectedItemized((prev) => {
-      const currentList = prev[moduleKey] as any[];
+      const currentList = (prev[moduleKey] || []) as any[];
       const allSelected = itemsList.every((i) => currentList.includes(i.id));
       const updatedList = allSelected ? [] : itemsList.map((i) => i.id);
       return { ...prev, [moduleKey]: updatedList };
@@ -247,7 +280,6 @@ export const ParqueaderosTab: React.FC = () => {
         tarifas: tarifasItems.map((i) => i.id),
         usuarios: usuariosItems.map((i) => Number(i.id)),
         convenios: conveniosItems.map((i) => i.id),
-        vehiculos: vehiculosItems.map((i) => String(i.id)),
         mediosPago: mediosPagoItems.map((i) => i.id),
       });
     } else {
@@ -255,7 +287,6 @@ export const ParqueaderosTab: React.FC = () => {
         tarifas: [],
         usuarios: [],
         convenios: [],
-        vehiculos: [],
         mediosPago: [],
       });
     }
@@ -294,11 +325,10 @@ export const ParqueaderosTab: React.FC = () => {
         isMainImage: targetParqueadero.isMainImage,
         isActive: targetParqueadero.isActive,
         permissions: {
-          tarifas: selectedItemized.tarifas.length > 0,
-          usuarios: selectedItemized.usuarios.length > 0,
-          convenios: selectedItemized.convenios.length > 0,
-          vehiculos: selectedItemized.vehiculos.length > 0,
-          mediosPago: selectedItemized.mediosPago.length > 0,
+          tarifas: (selectedItemized.tarifas || []).length > 0,
+          usuarios: (selectedItemized.usuarios || []).length > 0,
+          convenios: (selectedItemized.convenios || []).length > 0,
+          mediosPago: (selectedItemized.mediosPago || []).length > 0,
           itemized: selectedItemized,
         },
         inheritedFromId: inheritedFromId !== '' ? Number(inheritedFromId) : null,
@@ -307,7 +337,7 @@ export const ParqueaderosTab: React.FC = () => {
       setTargetParqueadero(null);
       await loadData();
     } catch (err: any) {
-      alert(err?.message || 'Error al guardar los permisos del parqueadero.');
+      alert(err?.message || 'Error al guardar la parametrización del parqueadero.');
     }
   };
 
@@ -323,7 +353,7 @@ export const ParqueaderosTab: React.FC = () => {
       <div className="section-header">
         <div className="section-header-titles">
           <h2>Gestión de Parqueaderos</h2>
-          <p>Administra los parqueaderos del sistema, establece la imagen principal y asigna los permisos por ítems de cada módulo.</p>
+          <p>Administra los parqueaderos del sistema, establece la imagen principal y parametriza tarifas por tipo de vehículo, usuarios, convenios y medios de pago.</p>
         </div>
         {authService.hasPermission('settings.parqueaderos.manage') && (
           <button className="btn-primary" style={{ width: 'auto' }} onClick={handleOpenCreate}>
@@ -338,7 +368,7 @@ export const ParqueaderosTab: React.FC = () => {
             <th>PARQUEADERO</th>
             <th>DESCRIPCIÓN</th>
             <th>IMAGEN PRINCIPAL</th>
-            <th>PERMISOS ACTIVOS</th>
+            <th>PARAMETRIZACIÓN</th>
             <th>ESTADO</th>
             <th className="text-right">ACCIONES</th>
           </tr>
@@ -351,9 +381,8 @@ export const ParqueaderosTab: React.FC = () => {
                 ? (itemized.tarifas?.length || 0) +
                   (itemized.usuarios?.length || 0) +
                   (itemized.convenios?.length || 0) +
-                  (itemized.vehiculos?.length || 0) +
                   (itemized.mediosPago?.length || 0)
-                : 5;
+                : 4;
 
               return (
                 <tr key={p.id}>
@@ -407,7 +436,7 @@ export const ParqueaderosTab: React.FC = () => {
                   </td>
                   <td>
                     <span className="badge badge-success" style={{ background: 'rgba(7, 102, 94, 0.1)', color: '#07665e' }}>
-                      <Key size={12} style={{ marginRight: 4 }} /> {totalItemsSelected} Ítems Asignados
+                      <SlidersHorizontal size={12} style={{ marginRight: 4 }} /> {totalItemsSelected} Parámetros Asignados
                     </span>
                   </td>
                   <td>
@@ -417,13 +446,13 @@ export const ParqueaderosTab: React.FC = () => {
                   </td>
                   <td className="text-right">
                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                      {authService.hasPermission('settings.parqueaderos.assign_permissions') && (
+                      {(authService.hasPermission('settings.parqueaderos.assign_permissions') || authService.hasPermission('settings.parqueaderos.manage')) && (
                         <button
                           className="btn-action primary"
                           style={{ background: 'var(--primary-color, #07665e)', color: '#ffffff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem' }}
                           onClick={() => handleOpenPermissionsModal(p)}
                         >
-                          <Key size={13} style={{ marginRight: 4 }} /> Asignar Permisos
+                          <SlidersHorizontal size={13} style={{ marginRight: 4 }} /> Parametrización
                         </button>
                       )}
                       {authService.hasPermission('settings.parqueaderos.manage') && (
@@ -453,7 +482,7 @@ export const ParqueaderosTab: React.FC = () => {
         </tbody>
       </table>
 
-      {/* Modal Crear / Editar Parqueadero (Sin usuarios enrolados) */}
+      {/* Modal Crear / Editar Parqueadero */}
       {isEditModalOpen && editingParqueadero && (
         <div className="modal-overlay">
           <div className="modal-card" style={{ maxWidth: '540px' }}>
@@ -592,14 +621,14 @@ export const ParqueaderosTab: React.FC = () => {
         </div>
       )}
 
-      {/* Modal Asignar Permisos con Ítems Seleccionables por Módulo */}
+      {/* Modal Parametrización con Ítems Seleccionables y Configuración de Tarifas */}
       {isPermissionsModalOpen && targetParqueadero && (
         <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '640px', maxHeight: '88vh' }}>
+          <div className="modal-card" style={{ maxWidth: '680px', maxHeight: '88vh' }}>
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Key size={18} style={{ color: 'var(--primary-color, #07665e)' }} />
-                <h3>Asignar Permisos: {targetParqueadero.name}</h3>
+                <SlidersHorizontal size={18} style={{ color: 'var(--primary-color, #07665e)' }} />
+                <h3>Parametrización: {targetParqueadero.name}</h3>
               </div>
               <button className="btn-close-modal" onClick={() => setIsPermissionsModalOpen(false)}>
                 <X size={18} />
@@ -608,13 +637,13 @@ export const ParqueaderosTab: React.FC = () => {
 
             <form onSubmit={handleSavePermissions} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
               <div className="modal-body" style={{ overflowY: 'auto', gap: '1.25rem' }}>
-                {/* Opción Superior: Heredar Permisos De */}
+                {/* Opción Superior: Heredar Parametrización De */}
                 <div className="form-group" style={{ background: 'rgba(7, 102, 94, 0.05)', padding: '12px 14px', borderRadius: '10px', border: '1px solid rgba(7, 102, 94, 0.2)' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.88rem', color: '#07665e', fontWeight: 700 }}>
-                    <Copy size={15} /> Heredar permisos de:
+                    <Copy size={15} /> Heredar parametrización de:
                   </label>
                   <p style={{ fontSize: '0.78rem', color: '#64748b', margin: '2px 0 8px 0' }}>
-                    Seleccione un parqueadero existente para copiar automáticamente todas sus opciones e ítems seleccionados:
+                    Seleccione un parqueadero existente para copiar automáticamente todas sus opciones e ítems parametrizados:
                   </p>
                   <select
                     className="input-field"
@@ -635,7 +664,7 @@ export const ParqueaderosTab: React.FC = () => {
                 {/* Acciones Globales: Marcar Todo / Desmarcar Todo */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary, #f8fafc)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color, #cbd5e1)' }}>
                   <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
-                    Lista de Módulos y Opciones Seleccionables
+                    Opciones y Parámetros Disponibles
                   </span>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button
@@ -680,20 +709,19 @@ export const ParqueaderosTab: React.FC = () => {
                 </div>
 
                 {isLoadingModuleItems ? (
-                  <div style={{ textAlign: 'center', padding: '24px', color: '#64748b' }}>Cargando lista de opciones...</div>
+                  <div style={{ textAlign: 'center', padding: '24px', color: '#64748b' }}>Cargando parámetros desde la API...</div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {/* Renderizador de Secciones de Módulos con Lista de Ítems */}
+                    {/* Renderizador de Secciones: Tarifas por Categoría de Vehículo, Usuarios, Convenios y Medios de Pago */}
                     {[
-                      { key: 'tarifas' as const, title: '💲 Módulo 1: Tarifas y Precios', items: tarifasItems },
-                      { key: 'usuarios' as const, title: '👥 Módulo 2: Usuarios y Operadores', items: usuariosItems },
-                      { key: 'convenios' as const, title: '📄 Módulo 3: Convenios Comerciales', items: conveniosItems },
-                      { key: 'vehiculos' as const, title: '🚗 Módulo 4: Tipos de Vehículo', items: vehiculosItems },
-                      { key: 'mediosPago' as const, title: '💳 Módulo 5: Medios de Pago', items: mediosPagoItems },
+                      { key: 'tarifas' as const, title: '💲 Tarifas y Precios por Categoría de Vehículo', items: tarifasItems },
+                      { key: 'usuarios' as const, title: '👥 Usuarios y Operadores', items: usuariosItems },
+                      { key: 'convenios' as const, title: '📄 Convenios Comerciales', items: conveniosItems },
+                      { key: 'mediosPago' as const, title: '💳 Medios de Pago', items: mediosPagoItems },
                     ].map((mod) => {
                       const selectedCount = (selectedItemized[mod.key] || []).length;
-                      const isExpanded = expandedModules[mod.key] ?? true;
-                      const allSelected = mod.items.length > 0 && mod.items.every((i) => selectedItemized[mod.key].includes(i.id as never));
+                      const isExpanded = expandedModules[mod.key] ?? false;
+                      const allSelected = mod.items.length > 0 && mod.items.every((i) => (selectedItemized[mod.key] || []).includes(i.id as never));
 
                       return (
                         <div
@@ -705,7 +733,7 @@ export const ParqueaderosTab: React.FC = () => {
                             background: 'var(--bg-card, #ffffff)',
                           }}
                         >
-                          {/* Cabecera del Módulo */}
+                          {/* Cabecera de la Sección */}
                           <div
                             style={{
                               display: 'flex',
@@ -726,7 +754,7 @@ export const ParqueaderosTab: React.FC = () => {
                                 {mod.title}
                               </span>
                               <span className="badge badge-success" style={{ fontSize: '0.72rem', background: selectedCount > 0 ? 'rgba(7, 102, 94, 0.12)' : 'rgba(100,116,139,0.1)', color: selectedCount > 0 ? '#07665e' : '#64748b' }}>
-                                {selectedCount} / {mod.items.length} Seleccionados
+                                {selectedCount} / {mod.items.length} Habilitados
                               </span>
                             </div>
 
@@ -747,16 +775,18 @@ export const ParqueaderosTab: React.FC = () => {
                                 color: allSelected ? '#ef4444' : '#07665e',
                               }}
                             >
-                              {allSelected ? 'Desmarcar Módulo' : 'Marcar Módulo'}
+                              {allSelected ? 'Desmarcar Todos' : 'Marcar Todos'}
                             </button>
                           </div>
 
-                          {/* Lista Seleccionable del Módulo */}
+                          {/* Lista Seleccionable de la Sección */}
                           {isExpanded && (
-                            <div style={{ padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: '6px', background: 'var(--bg-card, #ffffff)' }}>
+                            <div style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px', background: 'var(--bg-card, #ffffff)' }}>
                               {mod.items.length > 0 ? (
                                 mod.items.map((item) => {
-                                  const isChecked = selectedItemized[mod.key].includes(item.id as never);
+                                  const isChecked = (selectedItemized[mod.key] || []).includes(item.id as never);
+                                  const rateObj = mod.key === 'tarifas' ? rawRates.find(r => r.rateId === item.id || r.vehicleType === item.id) : null;
+
                                   return (
                                     <div
                                       key={item.id}
@@ -765,38 +795,75 @@ export const ParqueaderosTab: React.FC = () => {
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'space-between',
-                                        padding: '8px 12px',
-                                        borderRadius: '6px',
+                                        padding: '10px 14px',
+                                        borderRadius: '8px',
                                         cursor: 'pointer',
-                                        background: isChecked ? 'rgba(7, 102, 94, 0.06)' : 'transparent',
-                                        border: isChecked ? '1px solid rgba(7, 102, 94, 0.25)' : '1px solid transparent',
+                                        background: isChecked ? 'rgba(7, 102, 94, 0.06)' : 'var(--bg-card, #ffffff)',
+                                        border: isChecked ? '1px solid rgba(7, 102, 94, 0.3)' : '1px solid var(--border-color, #e2e8f0)',
                                         transition: 'all 0.12s ease',
                                       }}
                                     >
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                                         <input
                                           type="checkbox"
                                           checked={isChecked}
                                           onChange={() => {}}
-                                          style={{ width: '16px', height: '16px', pointerEvents: 'none' }}
+                                          style={{ width: '18px', height: '18px', pointerEvents: 'none' }}
                                         />
-                                        <div>
-                                          <span style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text-primary)' }}>
-                                            {item.name}
-                                          </span>
-                                          {item.detail && (
-                                            <span style={{ fontSize: '0.78rem', color: '#64748b', marginLeft: '8px' }}>
-                                              ({item.detail})
-                                            </span>
+                                        <div style={{ flex: 1 }}>
+                                          <div style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            {mod.key === 'tarifas' ? '🚗' : mod.key === 'usuarios' ? '👤' : mod.key === 'convenios' ? '📄' : '💳'} {item.name}
+                                          </div>
+                                          {rateObj ? (
+                                            <div style={{ fontSize: '0.78rem', color: '#475569', marginTop: '3px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                                              <span><strong>Hora:</strong> ${(rateObj.hourRate || 0).toLocaleString()}</span>
+                                              <span>•</span>
+                                              <span><strong>Minuto:</strong> ${(rateObj.minuteRate || 0).toLocaleString()}</span>
+                                              <span>•</span>
+                                              <span><strong>Día Máx:</strong> ${(rateObj.fullDayRate || 0).toLocaleString()}</span>
+                                              <span>•</span>
+                                              <span><strong>Gracia:</strong> {rateObj.gracePeriodMinutes || 0} min</span>
+                                            </div>
+                                          ) : (
+                                            item.detail && (
+                                              <span style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px', display: 'inline-block' }}>
+                                                {item.detail}
+                                              </span>
+                                            )
                                           )}
                                         </div>
                                       </div>
+
+                                      {/* Botón para Configurar Tarifas directamente */}
+                                      {rateObj && (
+                                        <button
+                                          type="button"
+                                          className="btn-action primary"
+                                          onClick={(e) => handleOpenEditRate(rateObj, e)}
+                                          style={{
+                                            padding: '6px 12px',
+                                            fontSize: '0.78rem',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '5px',
+                                            background: '#07665e',
+                                            color: '#ffffff',
+                                            border: 'none',
+                                            borderRadius: '6px',
+                                            fontWeight: 600,
+                                            cursor: 'pointer',
+                                            marginLeft: '12px',
+                                          }}
+                                        >
+                                          <Edit2 size={12} /> Configurar Tarifa
+                                        </button>
+                                      )}
                                     </div>
                                   );
                                 })
                               ) : (
                                 <div style={{ fontSize: '0.82rem', color: '#94a3b8', padding: '8px', textAlign: 'center' }}>
-                                  No hay ítems registrados en este módulo.
+                                  No hay parámetros registrados en esta sección.
                                 </div>
                               )}
                             </div>
@@ -813,7 +880,97 @@ export const ParqueaderosTab: React.FC = () => {
                   Cancelar
                 </button>
                 <button type="submit" className="btn-primary" style={{ width: 'auto' }}>
-                  Guardar Permisos
+                  Guardar Parametrización
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Sub-modal: Configurar Tarifa por Categoría de Vehículo */}
+      {isRateModalOpen && editingRate && (
+        <div className="modal-overlay" style={{ zIndex: 10050, background: 'rgba(15, 23, 42, 0.75)' }}>
+          <div className="modal-card" style={{ maxWidth: '480px', zIndex: 10051, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+            <div className="modal-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <DollarSign size={18} style={{ color: 'var(--primary-color, #07665e)' }} />
+                <h3>Configurar Tarifa: {editingRate.displayName || `Vehículo ${editingRate.vehicleType}`}</h3>
+              </div>
+              <button className="btn-close-modal" onClick={() => setIsRateModalOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveRate}>
+              <div className="modal-body">
+                <div className="form-group">
+                  <label>Categoría / Tipo de Vehículo</label>
+                  <input
+                    type="text"
+                    className="input-field"
+                    value={rateFormData.displayName || ''}
+                    onChange={(e) => setRateFormData({ ...rateFormData, displayName: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div className="form-group">
+                    <label>Valor Hora ($ COP)</label>
+                    <input
+                      type="number"
+                      step="50"
+                      className="input-field"
+                      value={rateFormData.hourRate}
+                      onChange={(e) => setRateFormData({ ...rateFormData, hourRate: Number(e.target.value) })}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Valor Minuto ($ COP)</label>
+                    <input
+                      type="number"
+                      step="1"
+                      className="input-field"
+                      value={rateFormData.minuteRate}
+                      onChange={(e) => setRateFormData({ ...rateFormData, minuteRate: Number(e.target.value) })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div className="form-group">
+                    <label>Tarifa Máxima Día ($)</label>
+                    <input
+                      type="number"
+                      step="100"
+                      className="input-field"
+                      value={rateFormData.fullDayRate}
+                      onChange={(e) => setRateFormData({ ...rateFormData, fullDayRate: Number(e.target.value) })}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Tiempo de Gracia (Minutos)</label>
+                    <input
+                      type="number"
+                      className="input-field"
+                      value={rateFormData.gracePeriodMinutes}
+                      onChange={(e) => setRateFormData({ ...rateFormData, gracePeriodMinutes: Number(e.target.value) })}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="btn-cancel" onClick={() => setIsRateModalOpen(false)}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn-primary" style={{ width: 'auto' }}>
+                  Guardar Tarifa
                 </button>
               </div>
             </form>
