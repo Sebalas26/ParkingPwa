@@ -103,9 +103,13 @@ export const UpdatePromptModal: React.FC = () => {
     } catch (error) {
       console.error('[PWA Update Execution Error]:', error);
     } finally {
-      // 3. Forzar recarga total limpia de la aplicación
+      // 3. Forzar recarga total limpia de la aplicación en la raíz o ruta actual
       setTimeout(() => {
-        window.location.reload();
+        if (window.location.pathname === '/login') {
+          window.location.href = '/';
+        } else {
+          window.location.reload();
+        }
       }, 250);
     }
   };

@@ -1,3 +1,4 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Login } from './features/auth/ui/Login';
 import { DashboardLayout } from './shared/ui/DashboardLayout';
@@ -9,6 +10,21 @@ import { Caja } from './features/caja/ui/Caja';
 import { Novedades } from './features/novedades/ui/Novedades';
 import { ParqueaderoProvider } from './shared/context/ParqueaderoContext';
 import { UpdatePromptModal } from './shared/ui/UpdatePromptModal';
+import { authService } from './features/auth/data/authService';
+
+const RootAuthHandler: React.FC = () => {
+  if (authService.isAuthenticated()) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <Login />;
+};
+
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  if (!authService.isAuthenticated()) {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
+};
 
 function App() {
   return (
@@ -16,9 +32,21 @@ function App() {
       <UpdatePromptModal />
       <Router>
         <Routes>
-          <Route path="/login" element={<Login />} />
+          {/* Ruta raíz limpia: Muestra el Login directamente o Dashboard si ya inició sesión */}
+          <Route path="/" element={<RootAuthHandler />} />
           
-          <Route path="/dashboard" element={<DashboardLayout />}>
+          {/* Redirección retrocompatible de /login hacia la raíz limpia */}
+          <Route path="/login" element={<Navigate to="/" replace />} />
+          
+          {/* Rutas protegidas del Dashboard */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout />
+              </ProtectedRoute>
+            }
+          >
             <Route index element={<Dashboard />} />
             <Route path="caja" element={<Caja />} />
             <Route path="vehicles" element={<Vehicles />} />
@@ -27,7 +55,8 @@ function App() {
             <Route path="settings" element={<Settings />} />
           </Route>
 
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          {/* Fallback general de rutas desconocidas hacia la raíz */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
     </ParqueaderoProvider>

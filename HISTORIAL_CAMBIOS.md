@@ -7,7 +7,30 @@
 
 ## 📋 Registro Cronológico de Cambios
 
-### [2026-08-26 15:55:00] - [FEAT] [PWA] [INSTANT-UPDATE] - Doble Motor de Detección Instantánea de Actualizaciones (5-10s Estilo Angular SwUpdate) y Generación de version.json
+### [2026-08-26 16:07:00] - [FIX] [PWA] [SPA-ROUTING] - Unificación de Login en Ruta Raíz `/` y Reglas SPA Fallback para Servidores Web (web.config y .htaccess)
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"Funciono excelente pero tenemos un error sucede que cuando se coloca en el navegador www.parking-flow.com el de una pues ingresa al login osea la ruta queda www.parking-flow.com/login pero cuando le doy click al actualizar ahora el sistema manda a esa ruta y esa ruta no existe en el servidor, el deberia en la rutas no se como se maneja aca en react pero que el login lo redirija a la pantalla www.parking-flow.com si me hago entender se que eso es temas de enrutamiento de la pwa analiza eso y me explicas."*
+- **🤖 Resumen Técnico para la IA**:
+  1. **Enrutamiento Raíz Limpio (`App.tsx`)**:
+     - Se configuró `<RootAuthHandler />` en la ruta `/`: Si no hay sesión, renderiza directamente `<Login />` en `https://www.parking-flow.com/` sin alterar la URL. Si ya existe sesión, redirige fluidamente a `/dashboard`.
+     - La ruta virtual `/login` ahora redirige con `replace` a `/` para mantener siempre la URL limpia.
+     - `ProtectedRoute` protege las subrutas del `/dashboard`, enviando usuarios no autenticados a `/`.
+     - En `DashboardLayout.tsx`, `handleLogout` redirige a `/`.
+  2. **Actualización Segura (`UpdatePromptModal.tsx`)**:
+     - `handleUpdate` verifica la URL actual y, si se encontraba en `/login`, fuerza la navegación y recarga limpia sobre la raíz `https://www.parking-flow.com/`.
+  3. **Reglas de Reescritura del Servidor Web (SPA Fallback)**:
+     - [`public/web.config`](file:///c:/Users/miguelagutierrezg/source/pwa/ParkingPwa/public/web.config): Regla de reescritura para servidores Windows / IIS (SmarterASP.NET, Plesk, Azure) que redirige rutas virtuales no físicas hacia `index.html`.
+     - [`public/.htaccess`](file:///c:/Users/miguelagutierrezg/source/pwa/ParkingPwa/public/.htaccess): Regla de reescritura para servidores Apache/Linux.
+- **📦 Componentes Modificados**:
+  - `src/App.tsx`
+  - `src/shared/ui/DashboardLayout.tsx`
+  - `src/shared/ui/UpdatePromptModal.tsx`
+  - `public/web.config` *(NUEVO)*
+  - `public/.htaccess` *(NUEVO)*
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript). Precache y bundle generados exitosamente.
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
   > *"No me esta lanzando el pop de actualización para que yo como cliente le pueda dar click y actualizar que sucede se quedo pegado hay no llego nada pense que no habia actualizado pero ingrese en otro telefono y si de una quedo bien hiciste lo del movil bien y lo de usuario y contraseña tambien pero lo de que salga el mensaje de actualización requerida nada no sale por que ? si en angular si sucede yo dejo quieta la pagina y si hago cambios el automaticamente en cuestion de segundos como 5 segundos despues de desplegado sale el mensaje. analiza eso."*

@@ -46,7 +46,7 @@ export const DashboardLayout: React.FC = () => {
 
   const handleLogout = () => {
     authService.logout();
-    navigate('/login');
+    navigate('/');
   };
 
   const formattedDate = currentTime.toLocaleDateString('es-ES', {
