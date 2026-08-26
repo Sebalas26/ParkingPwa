@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, X, Car, Bike, Truck, ShieldAlert } from 'lucide-react';
+import { Plus, Edit2, X, Car, Bike, Truck } from 'lucide-react';
 import type { VehiculoConfigDto, SaveVehiculoConfigDto } from '../model/VehiculosConfigContracts';
 import { vehiculosConfigService } from '../data/vehiculosConfigService';
 import { authService } from '../../auth/data/authService';
@@ -124,9 +124,9 @@ export const VehiculosConfigTab: React.FC = () => {
                   </div>
                 </td>
                 <td>{c.gracePeriodMinutes || 0} min</td>
-                <td><strong>${(c.hourRate || 0).toLocaleString()} COP</strong></td>
-                <td>${(c.minuteRate || 0).toLocaleString()} COP</td>
-                <td>${(c.fullDayRate || 0).toLocaleString()} COP</td>
+                <td><strong>${(c.hourRate || 0).toLocaleString()}</strong></td>
+                <td>${(c.minuteRate || 0).toLocaleString()}</td>
+                <td>${(c.fullDayRate || 0).toLocaleString()}</td>
                 <td>
                   <span className={`badge ${c.isActive ? 'badge-success' : 'badge-danger'}`}>
                     {c.isActive ? 'Activo' : 'Inactivo'}
@@ -178,7 +178,7 @@ export const VehiculosConfigTab: React.FC = () => {
 
                 <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div className="form-group">
-                    <label>Valor Hora (COP) *</label>
+                    <label>Valor Hora ($) *</label>
                     <input
                       type="number"
                       className="input-field"
@@ -190,7 +190,7 @@ export const VehiculosConfigTab: React.FC = () => {
                     />
                   </div>
                   <div className="form-group">
-                    <label>Valor Minuto (COP) *</label>
+                    <label>Valor Minuto ($) *</label>
                     <input
                       type="number"
                       className="input-field"
@@ -205,7 +205,7 @@ export const VehiculosConfigTab: React.FC = () => {
 
                 <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div className="form-group">
-                    <label>Máximo Día (Full Day COP) *</label>
+                    <label>Máximo Día (Full Day $) *</label>
                     <input
                       type="number"
                       className="input-field"

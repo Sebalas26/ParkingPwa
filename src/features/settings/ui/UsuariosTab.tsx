@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, X, Shield, Trash2, IdCard, Building2, CheckCircle2, Search, Loader2, AlertTriangle } from 'lucide-react';
+import { Plus, Edit2, X, Shield, Trash2, IdCard, Search, Loader2, AlertTriangle } from 'lucide-react';
 import type { UserDto, SaveUserDto, GetIdentificationTypeDto, GetUserRoleDto } from '../model/UsuariosContracts';
 import type { BranchDto } from '../model/BranchesContracts';
 import { usuariosService } from '../data/usuariosService';
@@ -442,15 +442,19 @@ export const UsuariosTab: React.FC = () => {
                       required
                       disabled={isSavingUser}
                     >
-                      {allUserRoles.map((r) => {
-                        const roleId = r.idUserRol ?? r.id ?? 2;
-                        const roleTitle = r.roleName || r.role || r.name || 'Operador';
-                        return (
-                          <option key={roleId} value={roleId}>
-                            {roleTitle}
-                          </option>
-                        );
-                      })}
+                      {(() => {
+                        const isEditingAdmin = editingUsuario.userRoleId === 1;
+                        const roleOptions = isEditingAdmin ? allUserRoles : assignableRoles;
+                        return roleOptions.map((r) => {
+                          const roleId = r.idUserRol ?? r.id ?? 2;
+                          const roleTitle = r.roleName || r.role || r.name || 'Operador';
+                          return (
+                            <option key={roleId} value={roleId}>
+                              {roleTitle}
+                            </option>
+                          );
+                        });
+                      })()}
                     </select>
                   </div>
                 </div>

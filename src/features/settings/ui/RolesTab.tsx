@@ -1,8 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, X, Shield, Key, CheckSquare, Square, Search, ChevronDown, ChevronRight, Check } from 'lucide-react';
+import {
+  Plus,
+  Edit2,
+  X,
+  Shield,
+  Key,
+  CheckSquare,
+  Square,
+  Search,
+  ChevronDown,
+  ChevronRight,
+  Check,
+  Monitor,
+  Globe,
+  ShieldCheck,
+  Lock,
+} from 'lucide-react';
 import type { RoleDto, SaveRoleDto, ActionDto, ModuleDto } from '../model/RolesContracts';
 import { rolesService } from '../data/rolesService';
 import { authService } from '../../auth/data/authService';
+
+type PlatformTab = 'wpf' | 'pwa';
 
 export const RolesTab: React.FC = () => {
   const [roles, setRoles] = useState<RoleDto[]>([]);
@@ -20,12 +38,9 @@ export const RolesTab: React.FC = () => {
   const [targetRole, setTargetRole] = useState<RoleDto | null>(null);
   const [selectedActionIds, setSelectedActionIds] = useState<number[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [expandedModules, setExpandedModules] = useState<Record<number, boolean>>({});
+  const [activePlatform, setActivePlatform] = useState<PlatformTab>('wpf');
+  const [expandedModuleId, setExpandedModuleId] = useState<number | null>(null);
   const [isSavingPermissions, setIsSavingPermissions] = useState(false);
-
-  useEffect(() => {
-    loadData();
-  }, []);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -57,11 +72,30 @@ export const RolesTab: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    loadData();
+  }, []);
+
   const isAdminRole = (role?: RoleDto | null): boolean => {
     if (!role) return false;
     const roleId = role.idUserRol ?? role.id;
     const name = (role.roleName || role.role || role.name || '').trim().toLowerCase();
     return roleId === 1 || name === 'administrador' || name === 'admin';
+  };
+
+  // Clasificador de módulos por plataforma
+  const isDesktopModule = (mod: ModuleDto): boolean => {
+    if ([1, 2, 4, 5, 13].includes(mod.id)) return true;
+    const n = (mod.name || '').toLowerCase();
+    return (
+      n.includes('checkin') ||
+      n.includes('checkout') ||
+      n.includes('ingreso') ||
+      n.includes('salida') ||
+      n.includes('patio') ||
+      n.includes('turnos') ||
+      (n.includes('sistema') && !n.includes('web'))
+    );
   };
 
   const handleOpenCreateRole = () => {
@@ -110,21 +144,28 @@ export const RolesTab: React.FC = () => {
 
   const handleOpenPermissionsModal = (role: RoleDto) => {
     if (isAdminRole(role)) {
-      alert('Los permisos del Administrador están protegidos y no se pueden modificar.');
+      alert('El rol Administrador cuenta automáticamente con el 100% de los permisos de Escritorio y Web protegidos.');
       return;
     }
     const roleId = role.idUserRol ?? role.id ?? 1;
     setTargetRole(role);
     setSelectedActionIds(rolePermissionsMap[roleId] || []);
     setSearchTerm('');
+    setActivePlatform('wpf');
 
-    // Abrir todos los módulos con acciones por defecto
-    const initialExpanded: Record<number, boolean> = {};
-    allModules.forEach((m) => {
-      initialExpanded[m.id] = true;
-    });
-    setExpandedModules(initialExpanded);
+    // Identificar y abrir el primer módulo de escritorio
+    const desktopMods = allModules.filter(isDesktopModule);
+    const firstDesktopId = desktopMods.length > 0 ? desktopMods[0].id : allModules[0]?.id ?? null;
+    setExpandedModuleId(firstDesktopId);
     setIsPermissionsModalOpen(true);
+  };
+
+  const handleSwitchPlatform = (platform: PlatformTab) => {
+    setActivePlatform(platform);
+    const targetMods = allModules.filter((m) =>
+      platform === 'wpf' ? isDesktopModule(m) : !isDesktopModule(m)
+    );
+    setExpandedModuleId(targetMods.length > 0 ? targetMods[0].id : null);
   };
 
   const handleToggleAction = (actionId: number) => {
@@ -142,6 +183,20 @@ export const RolesTab: React.FC = () => {
     }
   };
 
+  const handlePlatformSelectAll = (platform: PlatformTab, selectAll: boolean) => {
+    const platformActions = allActions.filter((a) => {
+      const mod = allModules.find((m) => m.id === (a.moduleId ?? a.module?.id));
+      return mod ? (platform === 'wpf' ? isDesktopModule(mod) : !isDesktopModule(mod)) : false;
+    });
+    const platformActionIds = platformActions.map((a) => a.id);
+
+    if (selectAll) {
+      setSelectedActionIds((prev) => Array.from(new Set([...prev, ...platformActionIds])));
+    } else {
+      setSelectedActionIds((prev) => prev.filter((id) => !platformActionIds.includes(id)));
+    }
+  };
+
   const handleGlobalSelectAll = (selectAll: boolean) => {
     if (selectAll) {
       setSelectedActionIds(allActions.map((a) => a.id));
@@ -151,7 +206,7 @@ export const RolesTab: React.FC = () => {
   };
 
   const toggleModuleAccordion = (moduleId: number) => {
-    setExpandedModules((prev) => ({ ...prev, [moduleId]: !prev[moduleId] }));
+    setExpandedModuleId((prev) => (prev === moduleId ? null : moduleId));
   };
 
   const handleSavePermissions = async () => {
@@ -176,7 +231,7 @@ export const RolesTab: React.FC = () => {
     }
   };
 
-  // Agrupación de acciones por módulo
+  // Filtrado por término de búsqueda
   const filteredActions = allActions.filter((a) => {
     if (!searchTerm.trim()) return true;
     const term = searchTerm.toLowerCase();
@@ -198,12 +253,30 @@ export const RolesTab: React.FC = () => {
     })
     .filter((g) => g.actions.length > 0);
 
+  // Separación por plataforma
+  const desktopGrouped = groupedModules.filter((g) => isDesktopModule(g.module));
+  const webGrouped = groupedModules.filter((g) => !isDesktopModule(g.module));
+
+  const desktopTotalActions = allActions.filter((a) => {
+    const mod = allModules.find((m) => m.id === (a.moduleId ?? a.module?.id));
+    return mod ? isDesktopModule(mod) : false;
+  });
+  const webTotalActions = allActions.filter((a) => {
+    const mod = allModules.find((m) => m.id === (a.moduleId ?? a.module?.id));
+    return mod ? !isDesktopModule(mod) : true;
+  });
+
+  const desktopSelectedCount = desktopTotalActions.filter((a) => selectedActionIds.includes(a.id)).length;
+  const webSelectedCount = webTotalActions.filter((a) => selectedActionIds.includes(a.id)).length;
+
+  const currentGroupedModules = activePlatform === 'wpf' ? desktopGrouped : webGrouped;
+
   return (
     <div className="settings-section-card">
       <div className="section-header">
         <div className="section-header-titles">
           <h2>Roles y Matriz de Permisos</h2>
-          <p>Administra los roles del sistema y configura detalladamente los permisos operativos y de acceso a cada módulo.</p>
+          <p>Administra los roles del sistema y configura detalladamente los permisos operativos para la aplicación de Escritorio (WPF) y Web (PWA).</p>
         </div>
         {(authService.hasPermission('settings.roles.manage') || authService.hasPermission('roles.manage') || authService.hasPermission('settings.usuarios.manage')) && (
           <button className="btn-primary" style={{ width: 'auto' }} onClick={handleOpenCreateRole}>
@@ -240,30 +313,52 @@ export const RolesTab: React.FC = () => {
                           width: '32px',
                           height: '32px',
                           borderRadius: '8px',
-                          background: 'rgba(7, 102, 94, 0.08)',
+                          background: isSystemAdmin ? 'rgba(217, 119, 6, 0.12)' : 'rgba(7, 102, 94, 0.08)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          color: 'var(--primary-color, #07665e)',
+                          color: isSystemAdmin ? '#d97706' : 'var(--primary-color, #07665e)',
                         }}
                       >
-                        <Shield size={16} />
+                        {isSystemAdmin ? <ShieldCheck size={16} /> : <Shield size={16} />}
                       </div>
-                      <span className="font-bold">{roleTitle}</span>
+                      <div>
+                        <span className="font-bold">{roleTitle}</span>
+                        {isSystemAdmin && (
+                          <div style={{ fontSize: '0.72rem', color: '#d97706', fontWeight: 600 }}>
+                            Rol Principal del Sistema
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td>
-                    <span
-                      className="badge"
-                      style={{
-                        background: assignedCount > 0 ? 'rgba(7, 102, 94, 0.1)' : 'rgba(100, 116, 139, 0.1)',
-                        color: assignedCount > 0 ? '#07665e' : '#64748b',
-                        fontWeight: 600,
-                      }}
-                    >
-                      <Key size={12} style={{ marginRight: 4 }} />
-                      {assignedCount} / {allActions.length} Permisos Asignados
-                    </span>
+                    {isSystemAdmin ? (
+                      <span
+                        className="badge"
+                        style={{
+                          background: 'rgba(217, 119, 6, 0.12)',
+                          color: '#d97706',
+                          fontWeight: 700,
+                          border: '1px solid rgba(217, 119, 6, 0.3)',
+                        }}
+                      >
+                        <ShieldCheck size={12} style={{ marginRight: 4 }} />
+                        100% Acceso Total
+                      </span>
+                    ) : (
+                      <span
+                        className="badge"
+                        style={{
+                          background: assignedCount > 0 ? 'rgba(7, 102, 94, 0.1)' : 'rgba(100, 116, 139, 0.1)',
+                          color: assignedCount > 0 ? '#07665e' : '#64748b',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <Key size={12} style={{ marginRight: 4 }} />
+                        {assignedCount} / {allActions.length} Permisos Asignados
+                      </span>
+                    )}
                   </td>
                   <td>
                     <span className={`badge ${r.isActive ? 'badge-success' : 'badge-danger'}`}>
@@ -271,11 +366,24 @@ export const RolesTab: React.FC = () => {
                     </span>
                   </td>
                   <td className="text-right">
-                    {!isSystemAdmin && (
+                    {isSystemAdmin ? (
+                      <span style={{ fontSize: '0.78rem', color: '#64748b', fontStyle: 'italic', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <Lock size={12} />
+                      </span>
+                    ) : (
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
                         <button
                           className="btn-action primary"
-                          style={{ background: 'var(--primary-color, #07665e)', color: '#ffffff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem' }}
+                          style={{
+                            background: 'var(--primary-color, #07665e)',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '6px 12px',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontWeight: 600,
+                            fontSize: '0.8rem',
+                          }}
                           onClick={() => handleOpenPermissionsModal(r)}
                         >
                           <Key size={13} style={{ marginRight: 4 }} /> Configurar Permisos
@@ -338,11 +446,11 @@ export const RolesTab: React.FC = () => {
               </div>
 
               <div className="modal-footer">
-                <button type="button" className="btn-cancel" onClick={() => setIsRoleModalOpen(false)}>
+                <button type="button" className="btn-secondary" onClick={() => setIsRoleModalOpen(false)}>
                   Cancelar
                 </button>
                 <button type="submit" className="btn-primary" style={{ width: 'auto' }}>
-                  Crear Rol
+                  {editingRole.idUserRol ? 'Guardar Cambios' : 'Crear Rol'}
                 </button>
               </div>
             </form>
@@ -350,14 +458,21 @@ export const RolesTab: React.FC = () => {
         </div>
       )}
 
-      {/* Modal Matriz de Permisos por Rol */}
+      {/* Modal Matriz de Permisos por Rol con Separación de Plataformas */}
       {isPermissionsModalOpen && targetRole && (
         <div className="modal-overlay" style={{ zIndex: 10000 }}>
-          <div className="modal-card" style={{ maxWidth: '780px', maxHeight: '90vh' }}>
+          <div className="modal-card" style={{ maxWidth: '840px', maxHeight: '92vh' }}>
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Key size={18} style={{ color: 'var(--primary-color, #07665e)' }} />
-                <h3>Configurar Permisos: {targetRole.roleName || targetRole.role}</h3>
+                <Key size={20} style={{ color: 'var(--primary-color, #07665e)' }} />
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem' }}>
+                    Configurar Permisos: {targetRole.roleName || targetRole.role}
+                  </h3>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                    Administra selectivamente los módulos operativos de Escritorio y Web
+                  </span>
+                </div>
               </div>
               <button className="btn-close-modal" onClick={() => setIsPermissionsModalOpen(false)}>
                 <X size={18} />
@@ -365,14 +480,103 @@ export const RolesTab: React.FC = () => {
             </div>
 
             <div className="modal-body" style={{ overflowY: 'auto', gap: '1rem', paddingBottom: '1.5rem' }}>
-              {/* Barra de Búsqueda y Filtro */}
+              {/* Pestañas de Plataforma */}
+              <div
+                style={{
+                  display: 'flex',
+                  background: 'var(--bg-secondary, #f1f5f9)',
+                  padding: '4px',
+                  borderRadius: '10px',
+                  gap: '6px',
+                  border: '1px solid var(--border-color, #cbd5e1)',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => handleSwitchPlatform('wpf')}
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    padding: '9px 16px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: activePlatform === 'wpf' ? '#ffffff' : 'transparent',
+                    color: activePlatform === 'wpf' ? 'var(--primary-color, #07665e)' : '#64748b',
+                    fontWeight: activePlatform === 'wpf' ? 700 : 500,
+                    boxShadow: activePlatform === 'wpf' ? '0 2px 4px rgba(0,0,0,0.06)' : 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <Monitor size={17} />
+                  <span>🖥️ Módulos Escritorio</span>
+                  <span
+                    className="badge"
+                    style={{
+                      fontSize: '0.72rem',
+                      background: activePlatform === 'wpf' ? 'rgba(7, 102, 94, 0.12)' : 'rgba(100, 116, 139, 0.1)',
+                      color: activePlatform === 'wpf' ? '#07665e' : '#64748b',
+                    }}
+                  >
+                    {desktopSelectedCount} / {desktopTotalActions.length}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSwitchPlatform('pwa')}
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    padding: '9px 16px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: activePlatform === 'pwa' ? '#ffffff' : 'transparent',
+                    color: activePlatform === 'pwa' ? 'var(--primary-color, #07665e)' : '#64748b',
+                    fontWeight: activePlatform === 'pwa' ? 700 : 500,
+                    boxShadow: activePlatform === 'pwa' ? '0 2px 4px rgba(0,0,0,0.06)' : 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <Globe size={17} />
+                  <span>🌐 Módulos Web</span>
+                  <span
+                    className="badge"
+                    style={{
+                      fontSize: '0.72rem',
+                      background: activePlatform === 'pwa' ? 'rgba(7, 102, 94, 0.12)' : 'rgba(100, 116, 139, 0.1)',
+                      color: activePlatform === 'pwa' ? '#07665e' : '#64748b',
+                    }}
+                  >
+                    {webSelectedCount} / {webTotalActions.length}
+                  </span>
+                </button>
+              </div>
+
+              {/* Barra de Búsqueda y Acciones Rápidas */}
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
-                  <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                  <Search
+                    size={16}
+                    style={{
+                      position: 'absolute',
+                      left: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: '#94a3b8',
+                    }}
+                  />
                   <input
                     type="text"
                     className="input-field"
-                    placeholder="Buscar permiso, acción o slug (ej: checkin, shift, print)..."
+                    placeholder={`Buscar permiso en ${activePlatform === 'wpf' ? 'Escritorio (WPF)' : 'Web (PWA)'}...`}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     style={{ paddingLeft: '32px' }}
@@ -382,7 +586,7 @@ export const RolesTab: React.FC = () => {
                 <div style={{ display: 'flex', gap: '6px' }}>
                   <button
                     type="button"
-                    onClick={() => handleGlobalSelectAll(true)}
+                    onClick={() => handlePlatformSelectAll(activePlatform, true)}
                     style={{
                       background: '#07665e',
                       color: '#ffffff',
@@ -397,11 +601,11 @@ export const RolesTab: React.FC = () => {
                       gap: '4px',
                     }}
                   >
-                    <CheckSquare size={13} /> Marcar Todos
+                    <CheckSquare size={13} /> Marcar Plataforma
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleGlobalSelectAll(false)}
+                    onClick={() => handlePlatformSelectAll(activePlatform, false)}
                     style={{
                       background: 'transparent',
                       border: '1px solid #ef4444',
@@ -416,29 +620,75 @@ export const RolesTab: React.FC = () => {
                       gap: '4px',
                     }}
                   >
-                    <Square size={13} /> Desmarcar Todos
+                    <Square size={13} /> Desmarcar Plataforma
                   </button>
                 </div>
               </div>
 
-              {/* Contador de Permisos Seleccionados */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary, #f8fafc)', padding: '8px 14px', borderRadius: '8px', border: '1px solid var(--border-color, #cbd5e1)' }}>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                  Total de permisos activos para este rol:
-                </span>
-                <span className="badge badge-success" style={{ fontSize: '0.85rem', fontWeight: 700 }}>
-                  {selectedActionIds.length} / {allActions.length} Permisos Seleccionados
-                </span>
+              {/* Resumen Global de Asignación */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  background: 'var(--bg-secondary, #f8fafc)',
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-color, #cbd5e1)',
+                }}
+              >
+                <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                    Plataforma activa: <strong>{activePlatform === 'wpf' ? '🖥️ Terminal WPF' : '🌐 Portal Web PWA'}</strong>
+                  </span>
+                  <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                    Total Global: <strong>{selectedActionIds.length} / {allActions.length}</strong> permisos
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button
+                    type="button"
+                    onClick={() => handleGlobalSelectAll(true)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#07665e',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                    }}
+                  >
+                    Marcar Todo Global
+                  </button>
+                  <span style={{ color: '#cbd5e1' }}>|</span>
+                  <button
+                    type="button"
+                    onClick={() => handleGlobalSelectAll(false)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#ef4444',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                    }}
+                  >
+                    Limpiar Todo
+                  </button>
+                </div>
               </div>
 
-              {/* Lista de Módulos y Acciones */}
+              {/* Lista de Módulos y Acciones de la Plataforma Activa */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {groupedModules.length > 0 ? (
-                  groupedModules.map(({ module: mod, actions }) => {
+                {currentGroupedModules.length > 0 ? (
+                  currentGroupedModules.map(({ module: mod, actions }) => {
                     const moduleActionIds = actions.map((a) => a.id);
                     const selectedInModuleCount = actions.filter((a) => selectedActionIds.includes(a.id)).length;
                     const isAllModuleSelected = actions.length > 0 && selectedInModuleCount === actions.length;
-                    const isExpanded = expandedModules[mod.id] ?? true;
+                    const isExpanded = searchTerm.trim() !== '' || expandedModuleId === mod.id;
 
                     return (
                       <div
@@ -468,7 +718,7 @@ export const RolesTab: React.FC = () => {
                           >
                             {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                             <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
-                              📁 {mod.name}
+                              {activePlatform === 'wpf' ? '🖥️' : '🌐'} {mod.name}
                             </span>
                             <span
                               className="badge badge-success"
@@ -505,7 +755,15 @@ export const RolesTab: React.FC = () => {
 
                         {/* Lista de Acciones del Módulo */}
                         {isExpanded && (
-                          <div style={{ padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: '6px', background: 'var(--bg-card, #ffffff)' }}>
+                          <div
+                            style={{
+                              padding: '8px 12px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '6px',
+                              background: 'var(--bg-card, #ffffff)',
+                            }}
+                          >
                             {actions.map((action) => {
                               const isChecked = selectedActionIds.includes(action.id);
 
@@ -516,7 +774,7 @@ export const RolesTab: React.FC = () => {
                                   style={{
                                     display: 'flex',
                                     alignItems: 'center',
-                                    padding: '10px 14px',
+                                    padding: '9px 14px',
                                     borderRadius: '6px',
                                     cursor: 'pointer',
                                     background: isChecked ? 'rgba(7, 102, 94, 0.06)' : 'transparent',
@@ -531,9 +789,14 @@ export const RolesTab: React.FC = () => {
                                       onChange={() => { }}
                                       style={{ width: '16px', height: '16px', pointerEvents: 'none' }}
                                     />
-                                    <span style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text-primary)' }}>
-                                      {action.name}
-                                    </span>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                      <span style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text-primary)' }}>
+                                        {action.name}
+                                      </span>
+                                      <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontFamily: 'monospace' }}>
+                                        {action.slug}
+                                      </span>
+                                    </div>
                                   </div>
                                 </div>
                               );
@@ -545,14 +808,14 @@ export const RolesTab: React.FC = () => {
                   })
                 ) : (
                   <div style={{ textAlign: 'center', padding: '24px', color: '#64748b' }}>
-                    No se encontraron acciones que coincidan con la búsqueda.
+                    No se encontraron acciones en esta plataforma que coincidan con la búsqueda.
                   </div>
                 )}
               </div>
             </div>
 
             <div className="modal-footer">
-              <button type="button" className="btn-cancel" onClick={() => setIsPermissionsModalOpen(false)}>
+              <button type="button" className="btn-secondary" onClick={() => setIsPermissionsModalOpen(false)}>
                 Cancelar
               </button>
               <button

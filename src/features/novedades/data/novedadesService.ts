@@ -1,28 +1,83 @@
 import { apiClient } from '../../../shared/api/apiClient';
-import type { NovedadDto } from '../model/NovedadesContracts';
-import type { TicketDto } from '../../vehicles/model/VehicleContracts';
+import type {
+  VehicleIncidentDto,
+  SaveVehicleIncidentDto,
+  PlateCheckResultDto,
+  ResolveIncidentDto,
+} from '../model/NovedadesContracts';
 
 export const novedadesService = {
-  getNovedades: async (): Promise<NovedadDto[]> => {
+  getAllIncidents: async (params?: {
+    branchId?: number;
+    status?: string;
+    isBlocked?: boolean;
+    search?: string;
+  }): Promise<VehicleIncidentDto[]> => {
     try {
-      const activeTickets = await apiClient.get<TicketDto[]>('/Tickets/active');
-      // Filtramos o mapeamos aquellos tickets que contengan notas o incidentes
-      const ticketsWithNotes = (activeTickets || []).filter((t) => t.notes && t.notes.trim().length > 0);
+      const queryParts: string[] = [];
+      if (params?.branchId) queryParts.push(`branchId=${params.branchId}`);
+      if (params?.status) queryParts.push(`status=${encodeURIComponent(params.status)}`);
+      if (params?.isBlocked !== undefined) queryParts.push(`isBlocked=${params.isBlocked}`);
+      if (params?.search) queryParts.push(`search=${encodeURIComponent(params.search)}`);
 
-      return ticketsWithNotes.map((t, idx) => ({
-        id: `NOV-${String(idx + 1).padStart(3, '0')}`,
-        placa: t.plateNumber,
-        tipoVehiculo: typeof t.vehicleType === 'number' ? (t.vehicleType === 1 ? 'Motocicleta' : 'Auto') : String(t.vehicleType),
-        tipoNovedad: 'Vehículo con Observación / Alerta',
-        fecha: t.entryTimeUtc ? t.entryTimeUtc.slice(0, 10) : new Date().toISOString().slice(0, 10),
-        hora: t.entryTimeUtc ? new Date(t.entryTimeUtc).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--',
-        propietario: t.operatorName ? `Operador: ${t.operatorName}` : 'Cliente General',
-        celular: t.customerPhone || 'No registrado',
-        observacion: t.notes || '',
-        estado: 'Activa',
-      }));
-    } catch {
+      const queryStr = queryParts.length > 0 ? `?${queryParts.join('&')}` : '';
+      const data = await apiClient.get<VehicleIncidentDto[]>(`/VehicleIncidents${queryStr}`);
+      return data || [];
+    } catch (err) {
+      console.error('Error al consultar novedades:', err);
       return [];
+    }
+  },
+
+  getIncidentById: async (id: string): Promise<VehicleIncidentDto | null> => {
+    return await apiClient.get<VehicleIncidentDto>(`/VehicleIncidents/${id}`);
+  },
+
+  checkPlate: async (plate: string, branchId?: number): Promise<PlateCheckResultDto> => {
+    try {
+      const url = branchId
+        ? `/VehicleIncidents/check-plate/${encodeURIComponent(plate)}?branchId=${branchId}`
+        : `/VehicleIncidents/check-plate/${encodeURIComponent(plate)}`;
+      const result = await apiClient.get<PlateCheckResultDto>(url);
+      return (
+        result || {
+          plateNumber: plate,
+          hasIncidents: false,
+          isBlocked: false,
+        }
+      );
+    } catch {
+      return {
+        plateNumber: plate,
+        hasIncidents: false,
+        isBlocked: false,
+      };
+    }
+  },
+
+  createIncident: async (dto: SaveVehicleIncidentDto): Promise<VehicleIncidentDto> => {
+    return await apiClient.post<VehicleIncidentDto>('/VehicleIncidents', dto);
+  },
+
+  updateIncident: async (id: string, dto: SaveVehicleIncidentDto): Promise<VehicleIncidentDto> => {
+    return await apiClient.put<VehicleIncidentDto>(`/VehicleIncidents/${id}`, dto);
+  },
+
+  resolveIncident: async (id: string, dto: ResolveIncidentDto): Promise<boolean> => {
+    try {
+      await apiClient.post(`/VehicleIncidents/${id}/resolve`, dto);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  deleteIncident: async (id: string): Promise<boolean> => {
+    try {
+      await apiClient.delete(`/VehicleIncidents/${id}`);
+      return true;
+    } catch {
+      return false;
     }
   },
 };

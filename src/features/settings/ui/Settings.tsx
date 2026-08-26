@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, FileText, Car, CreditCard, Building2, Shield } from 'lucide-react';
+import { Users, FileText, Car, CreditCard, Building2, Shield, FileCheck } from 'lucide-react';
 import { authService } from '../../auth/data/authService';
 import { UsuariosTab } from './UsuariosTab';
 import { RolesTab } from './RolesTab';
@@ -7,9 +7,10 @@ import { ConveniosTab } from './ConveniosTab';
 import { VehiculosConfigTab } from './VehiculosConfigTab';
 import { MediosPagoTab } from './MediosPagoTab';
 import { ParqueaderosTab } from './ParqueaderosTab';
+import { ResolucionesTab } from './ResolucionesTab';
 import './Settings.css';
 
-type ActiveTab = 'parqueaderos' | 'usuarios' | 'roles' | 'convenios' | 'vehiculos' | 'mediosPago';
+type ActiveTab = 'parqueaderos' | 'usuarios' | 'roles' | 'convenios' | 'vehiculos' | 'mediosPago' | 'resoluciones';
 
 export const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('parqueaderos');
@@ -20,6 +21,7 @@ export const Settings: React.FC = () => {
   const canViewAgreements = authService.hasPermission('agreements.view') || authService.hasPermission('settings.convenios.view');
   const canViewRates = authService.hasPermission('rates.view') || authService.hasPermission('settings.vehiculos.view') || authService.hasPermission('settings.tarifas.view');
   const canViewPaymentMethods = authService.hasPermission('payment_methods.view') || authService.hasPermission('settings.medios_pago.view');
+  const canViewResolutions = authService.hasPermission('resolutions.view') || authService.hasPermission('settings.resoluciones.view') || authService.hasPermission('settings.roles.view') || authService.hasPermission('security.view');
 
   return (
     <div className="settings-container">
@@ -72,6 +74,14 @@ export const Settings: React.FC = () => {
             <CreditCard size={16} /> Medios de Pago
           </button>
         )}
+        {canViewResolutions && (
+          <button 
+            className={`settings-tab-btn ${activeTab === 'resoluciones' ? 'active' : ''}`}
+            onClick={() => setActiveTab('resoluciones')}
+          >
+            <FileCheck size={16} /> Resoluciones
+          </button>
+        )}
       </div>
 
       <div className="settings-tab-content">
@@ -81,6 +91,7 @@ export const Settings: React.FC = () => {
         {activeTab === 'convenios' && canViewAgreements && <ConveniosTab />}
         {activeTab === 'vehiculos' && canViewRates && <VehiculosConfigTab />}
         {activeTab === 'mediosPago' && canViewPaymentMethods && <MediosPagoTab />}
+        {activeTab === 'resoluciones' && canViewResolutions && <ResolucionesTab />}
       </div>
     </div>
   );

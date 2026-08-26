@@ -7,14 +7,22 @@
 
 .novedades-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.35rem;
   margin-bottom: 0.5rem;
 }
 
 .novedades-header h1 {
-  font-size: 1.5rem;
+  font-size: 1.6rem;
+  font-weight: 800;
   color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.novedades-header p {
+  color: var(--text-secondary);
+  font-size: 0.92rem;
   margin: 0;
 }
 

@@ -3,12 +3,10 @@ import {
   Plus,
   Edit2,
   X,
-  Building2,
   CreditCard,
   Users,
   CheckSquare,
   Square,
-  Sparkles,
   MapPin,
   Phone,
   Car,
@@ -16,10 +14,6 @@ import {
   UserCheck,
   UserX,
   CheckCircle2,
-  AlertCircle,
-  Clock,
-  DollarSign,
-  Trash2,
 } from 'lucide-react';
 import type {
   BranchDto,
@@ -38,7 +32,7 @@ import { useBranchContext } from '../../../shared/context/ParqueaderoContext';
 import { authService } from '../../auth/data/authService';
 
 export const ParqueaderosTab: React.FC = () => {
-  const { refreshBranches, activeBranchId, setActiveBranchId } = useBranchContext();
+  const { refreshBranches, activeBranchId } = useBranchContext();
   const [branches, setBranches] = useState<BranchDto[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 

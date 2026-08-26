@@ -76,7 +76,7 @@ export const Reports: React.FC = () => {
         'Monto Bruto': t.grossAmount || 0,
         'Descuento': t.discountAmount || 0,
         'Monto Neto': t.netAmount || 0,
-        'Total Pagado (COP)': t.amountPaid || 0,
+        'Total Pagado': t.amountPaid || 0,
         'Operador': t.operatorName || 'Sistema',
       }));
 
@@ -86,8 +86,8 @@ export const Reports: React.FC = () => {
       // Hoja 2: Resumen Financiero
       const summaryExport = [
         { Concepto: 'Total Vehículos Atendidos', Valor: totalVehiculos },
-        { Concepto: 'Total Ingresos Recaudados (COP)', Valor: totalIngresos },
-        { Concepto: 'Total Descuentos Otorgados (COP)', Valor: totalDescuentos },
+        { Concepto: 'Total Ingresos Recaudados', Valor: totalIngresos },
+        { Concepto: 'Total Descuentos Otorgados', Valor: totalDescuentos },
         { Concepto: 'Tiempo Promedio Estancia (min)', Valor: tiempoPromedioMin },
       ];
       const wsSummary = XLSX.utils.json_to_sheet(summaryExport);
@@ -134,12 +134,12 @@ export const Reports: React.FC = () => {
           <p style={{ margin: '8px 0 0 0', fontSize: '1.6rem', fontWeight: 'bold' }}>{totalVehiculos}</p>
         </div>
         <div className="stat-card" style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-          <span className="text-muted" style={{ fontSize: '0.8rem', textTransform: 'uppercase' }}>Ingresos Totales (COP)</span>
-          <p style={{ margin: '8px 0 0 0', fontSize: '1.6rem', fontWeight: 'bold', color: 'var(--primary-color)' }}>${totalIngresos.toLocaleString()} COP</p>
+          <span className="text-muted" style={{ fontSize: '0.8rem', textTransform: 'uppercase' }}>Ingresos Totales</span>
+          <p style={{ margin: '8px 0 0 0', fontSize: '1.6rem', fontWeight: 'bold', color: 'var(--primary-color)' }}>${totalIngresos.toLocaleString()}</p>
         </div>
         <div className="stat-card" style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
           <span className="text-muted" style={{ fontSize: '0.8rem', textTransform: 'uppercase' }}>Descuentos / Convenios</span>
-          <p style={{ margin: '8px 0 0 0', fontSize: '1.6rem', fontWeight: 'bold', color: '#f59e0b' }}>${totalDescuentos.toLocaleString()} COP</p>
+          <p style={{ margin: '8px 0 0 0', fontSize: '1.6rem', fontWeight: 'bold', color: '#f59e0b' }}>${totalDescuentos.toLocaleString()}</p>
         </div>
         <div className="stat-card" style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
           <span className="text-muted" style={{ fontSize: '0.8rem', textTransform: 'uppercase' }}>Estancia Promedio</span>
@@ -238,7 +238,7 @@ export const Reports: React.FC = () => {
                   <td>{t.totalDurationMinutes ? `${t.totalDurationMinutes} min` : '--'}</td>
                   <td className="text-right text-muted">${(t.grossAmount || 0).toLocaleString()}</td>
                   <td className="text-right text-muted">${(t.discountAmount || 0).toLocaleString()}</td>
-                  <td className="text-right font-bold text-primary">${(t.amountPaid || 0).toLocaleString()} COP</td>
+                  <td className="text-right font-bold text-primary">${(t.amountPaid || 0).toLocaleString()}</td>
                 </tr>
               ))
             ) : (

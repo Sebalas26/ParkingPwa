@@ -108,9 +108,9 @@ export const TarifasTab: React.FC = () => {
             tarifas.map((t) => (
               <tr key={t.rateId}>
                 <td className="font-bold">{getVehicleTypeName(t.vehicleType)}</td>
-                <td>${(t.hourRate || 0).toLocaleString()} COP</td>
-                <td>${(t.minuteRate || 0).toLocaleString()} COP</td>
-                <td>${(t.fullDayRate || 0).toLocaleString()} COP</td>
+                <td>${(t.hourRate || 0).toLocaleString()}</td>
+                <td>${(t.minuteRate || 0).toLocaleString()}</td>
+                <td>${(t.fullDayRate || 0).toLocaleString()}</td>
                 <td>{t.gracePeriodMinutes} min</td>
                 <td>
                   <span className={`badge ${t.isActive ? 'badge-success' : 'badge-danger'}`}>
@@ -153,7 +153,7 @@ export const TarifasTab: React.FC = () => {
               <div className="modal-body">
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Valor Hora ($ COP)</label>
+                    <label>Valor Hora ($)</label>
                     <input
                       type="number"
                       min="0"
@@ -165,7 +165,7 @@ export const TarifasTab: React.FC = () => {
                     />
                   </div>
                   <div className="form-group">
-                    <label>Valor Minuto Fracción ($ COP)</label>
+                    <label>Valor Minuto Fracción ($)</label>
                     <input
                       type="number"
                       min="0"
@@ -179,7 +179,7 @@ export const TarifasTab: React.FC = () => {
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Máximo Día Completo ($ COP)</label>
+                    <label>Máximo Día Completo ($)</label>
                     <input
                       type="number"
                       min="0"

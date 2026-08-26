@@ -310,7 +310,8 @@
   user-select: none;
 }
 
-.btn-secondary {
+.btn-secondary,
+.btn-cancel {
   background: #f1f5f9;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
@@ -327,7 +328,8 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.btn-secondary:hover:not(:disabled) {
+.btn-secondary:hover:not(:disabled),
+.btn-cancel:hover:not(:disabled) {
   background: #e2e8f0;
   border-color: #cbd5e1;
   color: #0f172a;
@@ -335,12 +337,14 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 
-.btn-secondary:active:not(:disabled) {
+.btn-secondary:active:not(:disabled),
+.btn-cancel:active:not(:disabled) {
   transform: translateY(0);
   background: #cbd5e1;
 }
 
-.btn-secondary:disabled {
+.btn-secondary:disabled,
+.btn-cancel:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }

@@ -1,18 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, X, CreditCard, Banknote, QrCode, Wallet, Smartphone } from 'lucide-react';
+import { Plus, Edit2, X, CreditCard } from 'lucide-react';
 import type { PaymentMethodDto, SavePaymentMethodDto } from '../model/MediosPagoContracts';
 import { mediosPagoService } from '../data/mediosPagoService';
 import { authService } from '../../auth/data/authService';
+
+const PAYMENT_EMOJIS = [
+  { emoji: '💵', label: 'Efectivo' },
+  { emoji: '💳', label: 'Tarjeta' },
+  { emoji: '📱', label: 'Móvil / Nequi' },
+  { emoji: '📲', label: 'QR / Pasarela' },
+  { emoji: '🏦', label: 'Transferencia' },
+  { emoji: '💰', label: 'Monedero' },
+  { emoji: '🪙', label: 'Monedas' },
+  { emoji: '👛', label: 'Billetera' },
+  { emoji: '🧾', label: 'Recibo' },
+  { emoji: '💸', label: 'Remesa' },
+  { emoji: '🏧', label: 'Datáfono' },
+  { emoji: '🎟️', label: 'Bono / Vale' },
+  { emoji: '🏷️', label: 'Descuento' },
+  { emoji: '⚡', label: 'Rápido' },
+  { emoji: '💎', label: 'Puntos' },
+  { emoji: '💼', label: 'Empresarial' },
+];
 
 export const MediosPagoTab: React.FC = () => {
   const [mediosPago, setMediosPago] = useState<PaymentMethodDto[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMedio, setEditingMedio] = useState<SavePaymentMethodDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    loadMediosPago();
-  }, []);
 
   const loadMediosPago = async () => {
     setIsLoading(true);
@@ -26,10 +41,14 @@ export const MediosPagoTab: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    loadMediosPago();
+  }, []);
+
   const handleOpenCreate = () => {
     setEditingMedio({
       name: '',
-      icon: 'CreditCard',
+      icon: '💵',
       isActive: true,
     });
     setIsModalOpen(true);
@@ -40,7 +59,7 @@ export const MediosPagoTab: React.FC = () => {
     setEditingMedio({
       id: mp.id,
       name: mp.name,
-      icon: mp.icon || 'CreditCard',
+      icon: mp.icon || '💳',
       isActive: isAct,
     });
     setIsModalOpen(true);
@@ -48,13 +67,13 @@ export const MediosPagoTab: React.FC = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingMedio) return;
+    if (!editingMedio || !editingMedio.name?.trim()) return;
 
     try {
       await mediosPagoService.createOrEditPaymentMethod({
         id: editingMedio.id,
         name: editingMedio.name.trim(),
-        icon: editingMedio.icon || 'CreditCard',
+        icon: editingMedio.icon || '💳',
         isActive: editingMedio.isActive,
       });
       setIsModalOpen(false);
@@ -66,23 +85,42 @@ export const MediosPagoTab: React.FC = () => {
   };
 
   const getIconComponent = (iconName?: string) => {
-    switch (iconName?.toLowerCase()) {
+    if (!iconName) return <CreditCard size={18} style={{ color: '#07665e' }} />;
+
+    // Si es un emoji o cadena directa de emoji
+    if (/\p{Extended_Pictographic}/u.test(iconName) || iconName.length <= 4) {
+      return (
+        <span
+          style={{
+            fontSize: '1.25rem',
+            lineHeight: 1,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {iconName}
+        </span>
+      );
+    }
+
+    switch (iconName.toLowerCase()) {
       case 'banknote':
       case 'cash':
       case 'efectivo':
-        return <Banknote size={16} style={{ color: '#16a34a' }} />;
+        return <span style={{ fontSize: '1.25rem' }}>💵</span>;
       case 'qrcode':
       case 'qr':
-        return <QrCode size={16} style={{ color: '#9333ea' }} />;
+        return <span style={{ fontSize: '1.25rem' }}>📲</span>;
       case 'smartphone':
       case 'transfer':
       case 'nequi':
       case 'daviplata':
-        return <Smartphone size={16} style={{ color: '#2563eb' }} />;
+        return <span style={{ fontSize: '1.25rem' }}>📱</span>;
       case 'wallet':
-        return <Wallet size={16} style={{ color: '#d97706' }} />;
+        return <span style={{ fontSize: '1.25rem' }}>👛</span>;
       default:
-        return <CreditCard size={16} style={{ color: '#07665e' }} />;
+        return <span style={{ fontSize: '1.25rem' }}>💳</span>;
     }
   };
 
@@ -105,7 +143,7 @@ export const MediosPagoTab: React.FC = () => {
           <tr>
             <th>ID</th>
             <th>MEDIO DE PAGO</th>
-            <th>TIPO / ÍCONO</th>
+            <th>ÍCONO</th>
             <th>ESTADO</th>
             <th className="text-right">ACCIONES</th>
           </tr>
@@ -119,12 +157,24 @@ export const MediosPagoTab: React.FC = () => {
                 <tr key={mp.id}>
                   <td className="font-bold text-muted">#{mp.id}</td>
                   <td className="font-bold">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>{mp.name}</span>
+                  </td>
+                  <td>
+                    <div
+                      style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '8px',
+                        background: 'rgba(7, 102, 94, 0.08)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.25rem',
+                      }}
+                    >
                       {getIconComponent(mp.icon || mp.name)}
-                      <span>{mp.name}</span>
                     </div>
                   </td>
-                  <td className="text-muted">{mp.icon || 'CreditCard'}</td>
                   <td>
                     <span className={`badge ${isAct ? 'badge-success' : 'badge-danger'}`}>
                       {isAct ? 'Activo' : 'Inactivo'}
@@ -155,10 +205,10 @@ export const MediosPagoTab: React.FC = () => {
       {/* Modal Crear / Editar Medio de Pago */}
       {isModalOpen && editingMedio && (
         <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '480px' }}>
+          <div className="modal-card" style={{ maxWidth: '500px' }}>
             <div className="modal-header">
               <h3>
-                {editingMedio.id ? `Editar Medio de Pago (#${editingMedio.id})` : 'Crear Medio de Pago en BD'}
+                {editingMedio.id ? `Editar Medio de Pago (#${editingMedio.id})` : 'Crear Medio de Pago'}
               </h3>
               <button className="btn-close-modal" onClick={() => setIsModalOpen(false)}>
                 <X size={18} />
@@ -172,7 +222,7 @@ export const MediosPagoTab: React.FC = () => {
                   <input
                     type="text"
                     className="input-field"
-                    placeholder="Ej. Efectivo, Tarjeta de Crédito, PSE / Transferencia"
+                    placeholder="Ej. Efectivo, Nequi, Daviplata, Tarjeta Crédito..."
                     value={editingMedio.name}
                     onChange={(e) => setEditingMedio({ ...editingMedio, name: e.target.value })}
                     required
@@ -180,18 +230,51 @@ export const MediosPagoTab: React.FC = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>Ícono / Categoría Visual</label>
-                  <select
-                    className="input-field"
-                    value={editingMedio.icon || 'CreditCard'}
-                    onChange={(e) => setEditingMedio({ ...editingMedio, icon: e.target.value })}
+                  <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>Selecciona un Ícono Representativo</span>
+                    <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                      Seleccionado: <strong style={{ fontSize: '1.2rem', marginLeft: '4px' }}>{editingMedio.icon || '💳'}</strong>
+                    </span>
+                  </label>
+
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(8, 1fr)',
+                      gap: '6px',
+                      background: 'var(--bg-secondary, #f8fafc)',
+                      padding: '10px',
+                      borderRadius: '10px',
+                      border: '1px solid var(--border-color, #e2e8f0)',
+                    }}
                   >
-                    <option value="CreditCard">💳 Tarjeta (Crédito / Débito)</option>
-                    <option value="Banknote">💵 Efectivo (Billetes / Monedas)</option>
-                    <option value="Smartphone">📱 Transferencia Móvil (Nequi / Daviplata)</option>
-                    <option value="QrCode">📲 Código QR / Pasarela Digital</option>
-                    <option value="Wallet">👛 Billetera Digital</option>
-                  </select>
+                    {PAYMENT_EMOJIS.map(({ emoji, label }) => {
+                      const isSelected = (editingMedio.icon || '💳') === emoji;
+                      return (
+                        <button
+                          key={emoji}
+                          type="button"
+                          title={label}
+                          onClick={() => setEditingMedio({ ...editingMedio, icon: emoji })}
+                          style={{
+                            fontSize: '1.35rem',
+                            padding: '8px 4px',
+                            borderRadius: '8px',
+                            border: isSelected ? '2px solid #07665e' : '1px solid #e2e8f0',
+                            background: isSelected ? 'rgba(7, 102, 94, 0.15)' : '#ffffff',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.15s ease',
+                            transform: isSelected ? 'scale(1.08)' : 'scale(1)',
+                          }}
+                        >
+                          {emoji}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <div className="form-group">
@@ -208,11 +291,11 @@ export const MediosPagoTab: React.FC = () => {
               </div>
 
               <div className="modal-footer">
-                <button type="button" className="btn-cancel" onClick={() => setIsModalOpen(false)}>
+                <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)}>
                   Cancelar
                 </button>
                 <button type="submit" className="btn-primary" style={{ width: 'auto' }}>
-                  Guardar en BD
+                  {editingMedio.id ? 'Guardar Cambios' : 'Crear Medio de Pago'}
                 </button>
               </div>
             </form>

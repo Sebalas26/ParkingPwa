@@ -107,9 +107,9 @@ export const Caja: React.FC = () => {
         'Usuario (Operador)': row.operatorName,
         'Fecha Apertura': start ? new Date(start).toLocaleString() : '--',
         'Fecha Cierre': end ? new Date(end).toLocaleString() : 'En curso',
-        'Base Inicial (COP)': base,
-        'Efectivo Recaudado (COP)': collected,
-        'Efectivo Contado (COP)': counted,
+        'Base Inicial': base,
+        'Efectivo Recaudado': collected,
+        'Efectivo Contado': counted,
         'Estado': isOpen ? 'Abierta' : 'Cerrada',
       };
     });
@@ -181,7 +181,7 @@ export const Caja: React.FC = () => {
           </div>
           <div className="caja-stat-info">
             <h3>Ingresos Recaudados (Turno)</h3>
-            <p className="value">$ {totalRecaudadoTurno.toLocaleString()} COP</p>
+            <p className="value">$ {totalRecaudadoTurno.toLocaleString()}</p>
           </div>
         </div>
 
@@ -191,7 +191,7 @@ export const Caja: React.FC = () => {
           </div>
           <div className="caja-stat-info">
             <h3>Total Esperado en Caja</h3>
-            <p className="value">$ {totalEnCajaTurno.toLocaleString()} COP</p>
+            <p className="value">$ {totalEnCajaTurno.toLocaleString()}</p>
           </div>
         </div>
       </div>
@@ -229,7 +229,7 @@ export const Caja: React.FC = () => {
                 <td className="text-right text-muted">$ {(activeShift.baseAmount ?? activeShift.initialCashAmount ?? 0).toLocaleString()}</td>
                 <td className="text-right text-muted">$ {(activeShift.totalCashCollected ?? activeShift.totalCollected ?? 0).toLocaleString()}</td>
                 <td className="text-right font-bold text-primary">
-                  $ {totalEnCajaTurno.toLocaleString()} COP
+                  $ {totalEnCajaTurno.toLocaleString()}
                 </td>
               </tr>
             ) : (
@@ -314,7 +314,7 @@ export const Caja: React.FC = () => {
                       {end ? new Date(end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Abierto'}
                     </td>
                     <td className="text-right text-muted">$ {base.toLocaleString()}</td>
-                    <td className="text-right font-bold text-primary">$ {collected.toLocaleString()} COP</td>
+                    <td className="text-right font-bold text-primary">$ {collected.toLocaleString()}</td>
                     <td>
                       <span className={`caja-status-badge ${isClosed ? 'status-closed' : 'status-open'}`} style={{ padding: '4px 8px', fontSize: '0.75rem' }}>
                         {isClosed ? <XCircle size={12} /> : <CheckCircle size={12} />} {isClosed ? 'Cerrado' : 'Abierto'}
@@ -347,7 +347,7 @@ export const Caja: React.FC = () => {
             <form onSubmit={handleOpenShift}>
               <div className="modal-body">
                 <div className="form-group">
-                  <label>Base Inicial en Efectivo ($ COP)</label>
+                  <label>Base Inicial en Efectivo ($)</label>
                   <input
                     type="number"
                     min="0"
@@ -395,13 +395,13 @@ export const Caja: React.FC = () => {
             <form onSubmit={handleCloseShift}>
               <div className="modal-body">
                 <div style={{ padding: '12px', background: 'var(--bg-body, var(--bg-main))', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.85rem' }}>
-                  <p style={{ margin: '0 0 4px 0' }}>Base Inicial: <strong>${baseInicialTurno.toLocaleString()} COP</strong></p>
-                  <p style={{ margin: '0 0 4px 0' }}>Total Recaudado: <strong>${totalRecaudadoTurno.toLocaleString()} COP</strong></p>
-                  <p style={{ margin: 0, color: 'var(--primary-color)', fontWeight: 'bold' }}>Esperado en Caja: ${totalEnCajaTurno.toLocaleString()} COP</p>
+                  <p style={{ margin: '0 0 4px 0' }}>Base Inicial: <strong>${baseInicialTurno.toLocaleString()}</strong></p>
+                  <p style={{ margin: '0 0 4px 0' }}>Total Recaudado: <strong>${totalRecaudadoTurno.toLocaleString()}</strong></p>
+                  <p style={{ margin: 0, color: 'var(--primary-color)', fontWeight: 'bold' }}>Esperado en Caja: ${totalEnCajaTurno.toLocaleString()}</p>
                 </div>
 
                 <div className="form-group" style={{ marginTop: '12px' }}>
-                  <label>Efectivo Físico Contado ($ COP)</label>
+                  <label>Efectivo Físico Contado ($)</label>
                   <input
                     type="number"
                     min="0"

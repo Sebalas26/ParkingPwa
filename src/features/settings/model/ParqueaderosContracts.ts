@@ -26,9 +26,12 @@ export interface ParqueaderoPermissionsDto {
 export interface ParqueaderoDto {
   id: number;
   name: string;
-  description: string;
-  imageUrl: string;
-  isMainImage: boolean;
+  description?: string;
+  address?: string;
+  city?: string;
+  totalCapacity?: number;
+  imageUrl?: string;
+  isMainImage?: boolean;
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -40,9 +43,12 @@ export interface ParqueaderoDto {
 export interface SaveParqueaderoDto {
   id?: number;
   name: string;
-  description: string;
-  imageUrl: string;
-  isMainImage: boolean;
+  description?: string;
+  address?: string;
+  city?: string;
+  totalCapacity?: number;
+  imageUrl?: string;
+  isMainImage?: boolean;
   isActive: boolean;
   enrolledUserIds?: number[];
   permissions?: ParqueaderoPermissionsDto;

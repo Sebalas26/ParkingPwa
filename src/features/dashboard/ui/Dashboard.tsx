@@ -7,6 +7,10 @@ import { cajaService } from '../../caja/data/cajaService';
 import type { WorkShiftDto } from '../../caja/model/CajaContracts';
 import { usuariosService } from '../../settings/data/usuariosService';
 import type { UserDto } from '../../settings/model/UsuariosContracts';
+import { mediosPagoService } from '../../settings/data/mediosPagoService';
+import type { PaymentMethodDto } from '../../settings/model/MediosPagoContracts';
+import { resolucionesService } from '../../settings/data/resolucionesService';
+import type { BillingResolutionDto } from '../../settings/model/ResolucionesContracts';
 import {
   Car,
   Bike,
@@ -17,9 +21,7 @@ import {
   Clock,
   ParkingCircle,
   TrendingUp,
-  CheckCircle2,
   ShieldCheck,
-  Zap,
   Eye,
   X,
   CreditCard,
@@ -122,6 +124,8 @@ export const Dashboard: React.FC = () => {
   const [activeTickets, setActiveTickets] = useState<RecentTicketDto[]>([]);
   const [realShifts, setRealShifts] = useState<WorkShiftDto[]>([]);
   const [realUsers, setRealUsers] = useState<UserDto[]>([]);
+  const [mediosPagoList, setMediosPagoList] = useState<PaymentMethodDto[]>([]);
+  const [resolutionsList, setResolutionsList] = useState<BillingResolutionDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<string>('');
   const [selectedTicket, setSelectedTicket] = useState<RecentTicketDto | null>(null);
@@ -133,18 +137,22 @@ export const Dashboard: React.FC = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [sum, occ, tickets, shifts, users] = await Promise.all([
+      const [sum, occ, tickets, shifts, users, paymentMethods, resolutions] = await Promise.all([
         dashboardService.getDailySummary(),
         dashboardService.getOccupancyStats(),
         dashboardService.getActiveTickets(),
         cajaService.getHistory(),
         usuariosService.getUsers(),
+        mediosPagoService.getPaymentMethods(),
+        resolucionesService.getAllResolutions(),
       ]);
       setSummary(sum);
       setOccupancy(occ);
       setActiveTickets(tickets || []);
       setRealShifts(shifts || []);
       setRealUsers(users || []);
+      setMediosPagoList(paymentMethods || []);
+      setResolutionsList(resolutions || []);
       setLastUpdated(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
     } catch (err) {
       console.error('Error al cargar datos del dashboard:', err);
@@ -179,55 +187,100 @@ export const Dashboard: React.FC = () => {
   const conveniosCount = summary?.conveniosCount || 0;
   const conveniosRevenue = summary?.conveniosRevenue || 0;
 
-  // Facturación Electrónica vs Estándar
-  const electronicInvoicesCount = summary?.electronicInvoicesCount || 0;
-  const standardInvoicesCount = summary?.standardInvoicesCount || Math.max(0, totalVehiclesEnteredToday - electronicInvoicesCount);
-
-  // Medios de Pago (Datos reales de la API)
+  // Medios de Pago Dinámicos de la BD y la API
   const paymentBreakdown = summary?.revenueByPaymentMethod || {};
   const cashAmount = paymentBreakdown['Cash'] ?? paymentBreakdown['0'] ?? paymentBreakdown['Efectivo'] ?? (totalRevenueToday > 0 ? totalRevenueToday : 0);
   const cardAmount = (paymentBreakdown['CreditCard'] || 0) + (paymentBreakdown['DebitCard'] || 0) + (paymentBreakdown['1'] || 0) + (paymentBreakdown['2'] || 0);
   const transferAmount = paymentBreakdown['Transfer'] || paymentBreakdown['3'] || 0;
 
-  const getPaymentMethodLabel = (method: string | number) => {
-    switch (String(method)) {
-      case '0':
-      case 'Cash':
-      case 'Efectivo':
-        return 'Efectivo';
-      case '1':
-      case 'CreditCard':
-        return 'Tarjeta Crédito';
-      case '2':
-      case 'DebitCard':
-        return 'Tarjeta Débito';
-      case '3':
-      case 'Transfer':
-        return 'Transferencia / PSE / Nequi';
+  const PAYMENT_COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ec4899', '#06b6d4', '#14b8a6', '#6366f1'];
+
+  const renderPaymentIcon = (iconName?: string, name?: string) => {
+    const icon = iconName || name || '💳';
+    const hasEmoji = /\p{Extended_Pictographic}/u.test(icon);
+    if (hasEmoji) {
+      return <span style={{ fontSize: '1.05rem', lineHeight: 1 }}>{icon}</span>;
+    }
+    switch (icon.toLowerCase()) {
+      case 'efectivo':
+      case 'cash':
+      case 'banknote':
+        return <Wallet size={15} style={{ color: '#10b981' }} />;
+      case 'tarjeta':
+      case 'tarjeta debito':
+      case 'tarjeta credito':
+      case 'creditcard':
+      case 'debitcard':
+        return <CreditCard size={15} style={{ color: '#3b82f6' }} />;
       default:
-        return String(method);
+        return <QrCode size={15} style={{ color: '#8b5cf6' }} />;
     }
   };
 
-  const getPaymentMethodIcon = (method: string | number) => {
-    const label = getPaymentMethodLabel(method);
-    if (label === 'Efectivo') return <Wallet size={14} style={{ color: '#10b981' }} />;
-    if (label.includes('Tarjeta')) return <CreditCard size={14} style={{ color: '#3b82f6' }} />;
-    return <QrCode size={14} style={{ color: '#8b5cf6' }} />;
-  };
+  const activeMediosPago = mediosPagoList.filter(pm => pm.isActive !== false && (pm.status === undefined || pm.status === true || pm.status === 'Activo' || pm.status === 'Active'));
 
-  // Datos para Gráfica de Torta 1: Métodos de Pago
-  const paymentDonutData = [
-    { label: 'Efectivo', value: cashAmount, color: '#10b981' },
-    { label: 'Tarjeta (Débito/Crédito)', value: cardAmount, color: '#3b82f6' },
-    { label: 'Transferencia / PSE', value: transferAmount, color: '#8b5cf6' },
-  ];
+  // Generación de datos reales para Gráfica de Torta 1: Métodos de Pago
+  const paymentDonutData = (activeMediosPago.length > 0 ? activeMediosPago : [
+    { id: 1, name: 'Efectivo', icon: '💵', isActive: true },
+    { id: 2, name: 'Tarjeta (Débito/Crédito)', icon: '💳', isActive: true },
+    { id: 3, name: 'Transferencia / PSE', icon: '📱', isActive: true },
+  ]).map((pm, index) => {
+    let val = 0;
+    const nameLower = (pm.name || '').toLowerCase();
 
-  // Datos para Gráfica de Torta 2: Facturación Electrónica
-  const invoiceDonutData = [
-    { label: 'Con Factura Electrónica', value: electronicInvoicesCount, color: '#07665e' },
-    { label: 'Sin Factura (Estándar)', value: standardInvoicesCount, color: '#f59e0b' },
-  ];
+    if (paymentBreakdown[pm.name] !== undefined) {
+      val = Number(paymentBreakdown[pm.name]);
+    } else if (paymentBreakdown[String(pm.id)] !== undefined) {
+      val = Number(paymentBreakdown[String(pm.id)]);
+    } else if (nameLower.includes('efectivo') || nameLower === 'cash') {
+      val = cashAmount;
+    } else if (nameLower.includes('tarjeta') || nameLower.includes('card') || nameLower.includes('debito') || nameLower.includes('credito')) {
+      val = cardAmount;
+    } else if (nameLower.includes('transfer') || nameLower.includes('nequi') || nameLower.includes('daviplata') || nameLower.includes('pse') || nameLower.includes('bancolombia')) {
+      val = transferAmount;
+    }
+
+    if (val === 0 && activeMediosPago.length === 1 && totalRevenueToday > 0) {
+      val = totalRevenueToday;
+    }
+
+    return {
+      label: pm.name,
+      icon: pm.icon,
+      value: val,
+      color: PAYMENT_COLORS[index % PAYMENT_COLORS.length],
+    };
+  });
+
+  // Datos para Gráfica de Torta 2: Resoluciones de Facturación Dinámicas de la BD
+  const RESOLUTION_COLORS = ['#07665e', '#3b82f6', '#8b5cf6', '#f59e0b', '#ec4899', '#10b981', '#06b6d4', '#6366f1'];
+  const activeResolutions = resolutionsList.filter((r) => r.isActive !== false);
+  const resolutionBreakdown = summary?.countByResolution || {};
+
+  const resolutionsDonutData = (activeResolutions.length > 0 ? activeResolutions : [
+    { resolutionId: 'pos', name: 'FACTURA POS', prefix: 'POS', isActive: true },
+    { resolutionId: 'fv', name: 'Factura de Venta Nacional', prefix: 'FV', isActive: true },
+  ]).map((res, index) => {
+    let docCount = 0;
+    const name = res.name || 'Resolución';
+    const prefix = res.prefix || '';
+
+    if (resolutionBreakdown[name] !== undefined) {
+      docCount = Number(resolutionBreakdown[name]);
+    } else if (resolutionBreakdown[String(res.resolutionId)] !== undefined) {
+      docCount = Number(resolutionBreakdown[String(res.resolutionId)]);
+    } else if (prefix && resolutionBreakdown[prefix] !== undefined) {
+      docCount = Number(resolutionBreakdown[prefix]);
+    }
+
+    return {
+      label: `${name}${prefix ? ` (${prefix})` : ''}`,
+      value: docCount,
+      color: RESOLUTION_COLORS[index % RESOLUTION_COLORS.length],
+    };
+  });
+
+  const totalDocumentsIssued = resolutionsDonutData.reduce((acc, curr) => acc + curr.value, 0);
 
   // Clasificación de vehículos activos
   const countByCategory = activeTickets.reduce<Record<string, number>>((acc, t) => {
@@ -286,7 +339,7 @@ export const Dashboard: React.FC = () => {
               SISTEMA EN LÍNEA
             </span>
           </div>
-          <p style={{ margin: 0, fontSize: '0.9rem', color: '#0b1329', fontWeight: 600 }}>
+          <p style={{ margin: 0, fontSize: '0.92rem', color: '#ffffff', fontWeight: 700 }}>
             Monitoreo en tiempo real de ventas, recaudación por medios de pago, convenios aplicados y facturación electrónica.
           </p>
         </div>
@@ -359,7 +412,6 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="kpi-value-row">
             <span className="kpi-value">$ {totalRevenueToday.toLocaleString()}</span>
-            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#10b981' }}>COP</span>
           </div>
           <div className="kpi-subtext">
             <TrendingUp size={13} style={{ color: '#10b981' }} />
@@ -397,7 +449,7 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="kpi-value-row">
             <span className="kpi-value">$ {averageTicketAmount.toLocaleString()}</span>
-            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#8b5cf6' }}>COP / Veh</span>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#8b5cf6' }}>/ Veh</span>
           </div>
           <div className="kpi-subtext">
             <Activity size={13} />
@@ -419,7 +471,7 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="kpi-subtext" style={{ gap: '6px' }}>
             <DollarSign size={13} style={{ color: '#6366f1' }} />
-            <span>Monto sumado: <strong>$ {conveniosRevenue.toLocaleString()} COP</strong></span>
+            <span>Monto sumado: <strong>$ {conveniosRevenue.toLocaleString()}</strong></span>
           </div>
         </div>
       </div>
@@ -446,11 +498,11 @@ export const Dashboard: React.FC = () => {
 
             <div className="pie-legend-list">
               {paymentDonutData.map((item, index) => {
-                const pct = totalRevenueToday > 0 ? Math.round((item.value / totalRevenueToday) * 100) : 0;
+                const pct = totalRevenueToday > 0 ? Math.round((item.value / totalRevenueToday) * 100) : (paymentDonutData.length === 1 && totalRevenueToday > 0 ? 100 : 0);
                 return (
                   <div key={index} className="pie-legend-item">
                     <div className="pie-legend-left">
-                      <div className="pie-legend-dot" style={{ background: item.color }} />
+                      {renderPaymentIcon(item.icon, item.label)}
                       <span className="pie-legend-label">{item.label}</span>
                     </div>
                     <div style={{ textAlign: 'right' }}>
@@ -466,12 +518,12 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Gráfica de Torta 2: Facturación Electrónica */}
+        {/* Gráfica de Torta 2: Resoluciones de Facturación Dinámicas */}
         <div className="pie-card-container">
           <div className="pie-card-header">
             <h3>
               <Receipt size={18} style={{ color: '#07665e' }} />
-              Facturación Electrónica vs Estándar
+              Distribución por Resoluciones de Facturación
             </h3>
             <span className="badge badge-success" style={{ background: 'rgba(7, 102, 94, 0.1)', color: '#07665e', fontSize: '0.75rem' }}>
               Documentación
@@ -480,15 +532,15 @@ export const Dashboard: React.FC = () => {
 
           <div className="pie-chart-body">
             <SvgDonutChart
-              data={invoiceDonutData}
-              centerLabel={`${totalVehiclesEnteredToday}`}
-              centerSublabel="Transacciones"
+              data={resolutionsDonutData}
+              centerLabel={`${totalDocumentsIssued > 0 ? totalDocumentsIssued : totalVehiclesEnteredToday}`}
+              centerSublabel="Total Emitidos"
               size={170}
             />
 
             <div className="pie-legend-list">
-              {invoiceDonutData.map((item, index) => {
-                const pct = totalVehiclesEnteredToday > 0 ? Math.round((item.value / totalVehiclesEnteredToday) * 100) : 0;
+              {resolutionsDonutData.map((item, index) => {
+                const pct = totalDocumentsIssued > 0 ? Math.round((item.value / totalDocumentsIssued) * 100) : (resolutionsDonutData.length === 1 && totalVehiclesEnteredToday > 0 ? 100 : 0);
                 return (
                   <div key={index} className="pie-legend-item">
                     <div className="pie-legend-left">
@@ -532,7 +584,7 @@ export const Dashboard: React.FC = () => {
             <div style={{ background: 'var(--bg-secondary, #f8fafc)', padding: '12px 16px', borderRadius: '10px', border: '1px solid var(--border-color, #e2e8f0)' }}>
               <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, display: 'block' }}>VENTA TOTAL GLOBAL</span>
               <strong style={{ fontSize: '1.15rem', color: '#07665e' }}>$ {totalRevenueToday.toLocaleString()}</strong>
-              <small style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>COP recaudados hoy</small>
+              <small style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Recaudados hoy</small>
             </div>
 
             <div style={{ background: 'var(--bg-secondary, #f8fafc)', padding: '12px 16px', borderRadius: '10px', border: '1px solid var(--border-color, #e2e8f0)' }}>
@@ -724,7 +776,7 @@ export const Dashboard: React.FC = () => {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '4px', borderTop: '1px dashed var(--border-color, #cbd5e1)' }}>
                       <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Total Generado en Turno</span>
                       <span style={{ fontSize: '1.05rem', fontWeight: 800, color: '#07665e' }}>
-                        $ {caja.totalCollected.toLocaleString()} COP
+                        $ {caja.totalCollected.toLocaleString()}
                       </span>
                     </div>
                   </div>
@@ -793,49 +845,29 @@ export const Dashboard: React.FC = () => {
               MEDIOS DE PAGO UTILIZADOS HOY
             </h4>
             <div className="revenue-breakdown-list">
-              {Object.keys(paymentBreakdown).length > 0 ? (
-                Object.entries(paymentBreakdown).map(([methodKey, amount]) => {
-                  const label = getPaymentMethodLabel(methodKey);
-                  const pct = totalRevenueToday > 0 ? Math.round((amount * 100) / totalRevenueToday) : 100;
-                  return (
-                    <div key={methodKey} className="revenue-item">
-                      <div className="revenue-item-header">
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          {getPaymentMethodIcon(methodKey)}
-                          {label}
-                        </span>
-                        <span style={{ fontWeight: 700 }}>$ {amount.toLocaleString()} COP ({pct}%)</span>
-                      </div>
-                      <div className="revenue-item-bar">
-                        <div
-                          className="revenue-item-fill"
-                          style={{
-                            width: `${Math.min(pct, 100)}%`,
-                            background:
-                              label === 'Efectivo'
-                                ? 'linear-gradient(90deg, #10b981, #059669)'
-                                : label.includes('Tarjeta')
-                                ? 'linear-gradient(90deg, #3b82f6, #1d4ed8)'
-                                : 'linear-gradient(90deg, #8b5cf6, #6d28d9)',
-                          }}
-                        />
-                      </div>
+              {paymentDonutData.map((item, index) => {
+                const pct = totalRevenueToday > 0 ? Math.round((item.value * 100) / totalRevenueToday) : (paymentDonutData.length === 1 && totalRevenueToday > 0 ? 100 : 0);
+                return (
+                  <div key={index} className="revenue-item">
+                    <div className="revenue-item-header">
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        {renderPaymentIcon(item.icon, item.label)}
+                        {item.label}
+                      </span>
+                      <span style={{ fontWeight: 700 }}>$ {item.value.toLocaleString()} ({pct}%)</span>
                     </div>
-                  );
-                })
-              ) : (
-                <div className="revenue-item">
-                  <div className="revenue-item-header">
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Wallet size={15} style={{ color: '#10b981' }} /> Efectivo
-                    </span>
-                    <span style={{ fontWeight: 700 }}>$ {totalRevenueToday.toLocaleString()} COP (100%)</span>
+                    <div className="revenue-item-bar">
+                      <div
+                        className="revenue-item-fill"
+                        style={{
+                          width: `${Math.min(pct, 100)}%`,
+                          background: item.color,
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div className="revenue-item-bar">
-                    <div className="revenue-item-fill" style={{ width: '100%', background: '#10b981' }} />
-                  </div>
-                </div>
-              )}
+                );
+              })}
             </div>
           </div>
 

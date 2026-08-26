@@ -190,7 +190,7 @@ export const DashboardLayout: React.FC = () => {
             )}
 
             <PwaInstallPrompt />
-            <button className="btn-action primary" style={{ height: '36px', padding: '0 16px', background: '#07665e' }} onClick={() => window.location.reload()}>
+            <button className="btn-action primary" style={{ height: '36px', padding: '0 16px', background: '#2b2c2cff' }} onClick={() => window.location.reload()}>
               <RefreshCw size={16} style={{ marginRight: '6px' }} /> Actualizar Datos
             </button>
             <div className="date-display">

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, X, Tag, Percent, DollarSign, Clock, Trash2, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Plus, Edit2, X, Tag, Percent, DollarSign, Trash2, Upload, Image as ImageIcon } from 'lucide-react';
 import type { CommercialAgreementDto, SaveCommercialAgreementDto } from '../model/ConveniosContracts';
 import { conveniosService } from '../data/conveniosService';
 import { authService } from '../../auth/data/authService';
@@ -10,10 +10,7 @@ export const ConveniosTab: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingConvenio, setEditingConvenio] = useState<SaveCommercialAgreementDto | null>(null);
   const [discountMode, setDiscountMode] = useState<'percentage' | 'fixed'>('percentage');
-
-  useEffect(() => {
-    loadData();
-  }, []);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -27,6 +24,10 @@ export const ConveniosTab: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    loadData();
+  }, []);
+
   const handleOpenCreate = () => {
     setEditingConvenio({
       storeId: '',
@@ -36,6 +37,7 @@ export const ConveniosTab: React.FC = () => {
       discountFixedAmount: undefined as any,
       maxHoursApplicable: undefined as any,
       isActive: true,
+      imageUrl: null,
     });
     setDiscountMode('percentage');
     setIsModalOpen(true);
@@ -53,8 +55,38 @@ export const ConveniosTab: React.FC = () => {
       discountFixedAmount: c.discountFixedAmount,
       maxHoursApplicable: c.maxHoursApplicable,
       isActive: c.isActive,
+      imageUrl: c.imageUrl || null,
     });
     setIsModalOpen(true);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor selecciona un archivo de imagen válido (PNG, JPG, JPEG, SVG, WebP).');
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert('La imagen seleccionada supera el límite máximo de 2 MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      setEditingConvenio((prev) => (prev ? { ...prev, imageUrl: base64 } : null));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    setEditingConvenio((prev) => (prev ? { ...prev, imageUrl: null } : null));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -73,6 +105,7 @@ export const ConveniosTab: React.FC = () => {
       minPurchaseAmount: Number(editingConvenio.minPurchaseAmount) || 0,
       maxHoursApplicable: editingConvenio.maxHoursApplicable ? Number(editingConvenio.maxHoursApplicable) : null,
       isActive: editingConvenio.isActive ?? true,
+      imageUrl: editingConvenio.imageUrl || null,
     };
 
     try {
@@ -101,7 +134,7 @@ export const ConveniosTab: React.FC = () => {
       <div className="section-header">
         <div className="section-header-titles">
           <h2>Convenios Comerciales</h2>
-          <p>Administra los convenios de descuento y tarifas preferenciales aplicables en caja.</p>
+          <p>Administra los convenios de descuento, logos aliados y tarifas preferenciales aplicables en caja.</p>
         </div>
 
         {(authService.hasPermission('settings.convenios.manage') || authService.hasPermission('agreements.manage')) && (
@@ -114,7 +147,7 @@ export const ConveniosTab: React.FC = () => {
       <table className="data-table">
         <thead>
           <tr>
-            <th>CONVENIO</th>
+            <th>CONVENIO / LOGO</th>
             <th>DESCUENTO / BENEFICIO</th>
             <th>COMPRA MÍNIMA</th>
             <th>MÁXIMO HORAS</th>
@@ -127,15 +160,50 @@ export const ConveniosTab: React.FC = () => {
             convenios.map((c) => {
               const isFixed = Boolean(c.discountFixedAmount && c.discountFixedAmount > 0);
               const discountText = isFixed
-                ? `$${(c.discountFixedAmount || 0).toLocaleString()} COP de descuento`
+                ? `$${(c.discountFixedAmount || 0).toLocaleString()} de descuento`
                 : `${c.discountPercentage || 0}% de descuento`;
 
               return (
                 <tr key={c.agreementId}>
                   <td className="font-bold">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Tag size={16} color="#07665e" />
-                      <span>{c.name}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      {c.imageUrl ? (
+                        <img
+                          src={c.imageUrl}
+                          alt={c.name}
+                          style={{
+                            width: '38px',
+                            height: '38px',
+                            borderRadius: '8px',
+                            objectFit: 'cover',
+                            border: '1px solid var(--border-color, #e2e8f0)',
+                            background: '#ffffff',
+                          }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            width: '38px',
+                            height: '38px',
+                            borderRadius: '8px',
+                            background: 'rgba(7, 102, 94, 0.08)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '1px solid rgba(7, 102, 94, 0.15)',
+                          }}
+                        >
+                          <Tag size={18} color="#07665e" />
+                        </div>
+                      )}
+                      <div>
+                        <div style={{ fontSize: '0.9rem', color: 'var(--text-primary, #1e293b)' }}>{c.name}</div>
+                        {c.storeName && (
+                          <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>
+                            {c.storeName}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td>
@@ -145,7 +213,7 @@ export const ConveniosTab: React.FC = () => {
                   </td>
                   <td>
                     {c.minPurchaseAmount && c.minPurchaseAmount > 0
-                      ? `$${c.minPurchaseAmount.toLocaleString()} COP`
+                      ? `$${c.minPurchaseAmount.toLocaleString()}`
                       : 'Sin mínimo'}
                   </td>
                   <td>{c.maxHoursApplicable ? `${c.maxHoursApplicable} horas` : 'Ilimitado'}</td>
@@ -173,7 +241,7 @@ export const ConveniosTab: React.FC = () => {
             })
           ) : (
             <tr>
-              <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
+              <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
                 {isLoading ? 'Cargando convenios...' : 'No hay convenios registrados. Crea el primero con el botón superior.'}
               </td>
             </tr>
@@ -183,7 +251,7 @@ export const ConveniosTab: React.FC = () => {
 
       {isModalOpen && editingConvenio && (
         <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '500px' }}>
+          <div className="modal-content" style={{ maxWidth: '520px' }}>
             <div className="modal-header">
               <h3>{editingConvenio.agreementId ? 'Editar Convenio Comercial' : 'Nuevo Convenio Comercial'}</h3>
               <button className="btn-close" onClick={() => setIsModalOpen(false)}>
@@ -193,6 +261,118 @@ export const ConveniosTab: React.FC = () => {
 
             <form onSubmit={handleSave}>
               <div className="modal-body">
+                {/* 1. IMAGEN / LOGO DEL CONVENIO */}
+                <div className="form-group">
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <ImageIcon size={16} color="#07665e" />
+                    <span>Logo / Imagen del Convenio o Comercio Aliado</span>
+                  </label>
+
+                  {editingConvenio.imageUrl ? (
+                    <div
+                      style={{
+                        position: 'relative',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '14px',
+                        padding: '12px',
+                        borderRadius: '12px',
+                        background: '#f8fafc',
+                        border: '1px solid #e2e8f0',
+                      }}
+                    >
+                      <img
+                        src={editingConvenio.imageUrl}
+                        alt="Vista previa del convenio"
+                        style={{
+                          width: '70px',
+                          height: '70px',
+                          borderRadius: '10px',
+                          objectFit: 'contain',
+                          background: '#ffffff',
+                          border: '1px solid #cbd5e1',
+                          padding: '2px',
+                        }}
+                      />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '0.86rem', fontWeight: 600, color: '#1e293b' }}>
+                          Imagen cargada correctamente
+                        </div>
+                        <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '2px' }}>
+                          Se mostrará en la lista de convenios y en caja.
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                          <button
+                            type="button"
+                            className="btn-secondary"
+                            style={{ padding: '4px 10px', fontSize: '0.78rem' }}
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            <Upload size={13} /> Cambiar
+                          </button>
+                          <button
+                            type="button"
+                            style={{
+                              padding: '4px 10px',
+                              fontSize: '0.78rem',
+                              background: '#fee2e2',
+                              color: '#dc2626',
+                              border: 'none',
+                              borderRadius: '8px',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              fontWeight: 600,
+                            }}
+                            onClick={handleRemoveImage}
+                          >
+                            <Trash2 size={13} /> Quitar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      style={{
+                        border: '2px dashed #cbd5e1',
+                        borderRadius: '12px',
+                        padding: '20px 16px',
+                        textAlign: 'center',
+                        background: '#f8fafc',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = '#07665e';
+                        e.currentTarget.style.background = '#f0fdfa';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = '#cbd5e1';
+                        e.currentTarget.style.background = '#f8fafc';
+                      }}
+                    >
+                      <Upload size={24} style={{ color: '#07665e', margin: '0 auto 6px auto' }} />
+                      <div style={{ fontSize: '0.86rem', fontWeight: 600, color: '#334155' }}>
+                        Haz clic aquí para seleccionar una imagen o logo
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
+                        Formatos soportados: PNG, JPG, WebP o SVG (máximo 2 MB)
+                      </div>
+                    </div>
+                  )}
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    style={{ display: 'none' }}
+                  />
+                </div>
+
+                {/* 2. NOMBRE DEL CONVENIO */}
                 <div className="form-group">
                   <label>Nombre del Convenio *</label>
                   <input
@@ -202,10 +382,10 @@ export const ConveniosTab: React.FC = () => {
                     value={editingConvenio.name || ''}
                     onChange={(e) => setEditingConvenio({ ...editingConvenio, name: e.target.value })}
                     required
-                    autoFocus
                   />
                 </div>
 
+                {/* 3. MODALIDAD DE DESCUENTO */}
                 <div className="form-group">
                   <label>Modalidad de Descuento</label>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '4px' }}>
@@ -268,7 +448,7 @@ export const ConveniosTab: React.FC = () => {
                   </div>
                 ) : (
                   <div className="form-group">
-                    <label>Valor de Descuento en Pesos (COP) *</label>
+                    <label>Valor de Descuento ($) *</label>
                     <input
                       type="number"
                       className="input-field"
@@ -283,7 +463,7 @@ export const ConveniosTab: React.FC = () => {
 
                 <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div className="form-group">
-                    <label>Compra Mínima ($ COP)</label>
+                    <label>Compra Mínima ($)</label>
                     <input
                       type="number"
                       className="input-field"

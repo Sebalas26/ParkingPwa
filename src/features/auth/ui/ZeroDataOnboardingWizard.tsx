@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Building2, Sparkles, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Building2, Sparkles, ArrowRight } from 'lucide-react';
 import { branchesService } from '../../settings/data/branchesService';
 import { useBranchContext } from '../../../shared/context/ParqueaderoContext';
 import type { CreateBranchDto } from '../../settings/model/BranchesContracts';
@@ -7,14 +7,22 @@ import './ZeroDataOnboardingWizard.css';
 
 export const ZeroDataOnboardingWizard: React.FC = () => {
   const { refreshBranches, setActiveBranchId } = useBranchContext();
-  const [formData, setFormData] = useState<CreateBranchDto>({
-    code: 'SEDE-01',
-    name: 'Sede Principal Centro',
-    address: 'Carrera 10 # 20-30',
-    phone: '3001234567',
-    city: 'Bogotá D.C.',
-    totalCapacity: 120,
-    notes: 'Sede matriz inicial',
+  const [formData, setFormData] = useState<{
+    code: string;
+    name: string;
+    address: string;
+    phone: string;
+    city: string;
+    totalCapacity: number | string;
+    notes: string;
+  }>({
+    code: '',
+    name: '',
+    address: '',
+    phone: '',
+    city: '',
+    totalCapacity: '',
+    notes: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -23,7 +31,7 @@ export const ZeroDataOnboardingWizard: React.FC = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === 'totalCapacity' ? Number(value) || 0 : value,
+      [name]: name === 'totalCapacity' ? (value === '' ? '' : Number(value)) : value,
     }));
   };
 
@@ -34,8 +42,9 @@ export const ZeroDataOnboardingWizard: React.FC = () => {
       return;
     }
 
-    if (formData.totalCapacity <= 0) {
-      setErrorMessage('La capacidad total de plazas debe ser mayor a 0.');
+    const capacity = Number(formData.totalCapacity);
+    if (!formData.totalCapacity || isNaN(capacity) || capacity <= 0) {
+      setErrorMessage('La capacidad total de plazas debe ser un número mayor a 0.');
       return;
     }
 
@@ -43,7 +52,16 @@ export const ZeroDataOnboardingWizard: React.FC = () => {
     setErrorMessage(null);
 
     try {
-      const created = await branchesService.create(formData);
+      const payload: CreateBranchDto = {
+        code: formData.code.trim(),
+        name: formData.name.trim(),
+        address: formData.address.trim() || undefined,
+        phone: formData.phone.trim() || undefined,
+        city: formData.city.trim() || undefined,
+        totalCapacity: capacity,
+        notes: formData.notes.trim() || undefined,
+      };
+      const created = await branchesService.create(payload);
       if (created && created.id) {
         await refreshBranches();
         setActiveBranchId(created.id);

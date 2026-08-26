@@ -29,17 +29,19 @@ export interface CommercialAgreementDto {
   maxHoursApplicable?: number | null;
   isActive: boolean;
   createdAtUtc?: string;
+  imageUrl?: string | null;
   store?: StoreDto;
   storeName?: string;
 }
 
 export interface SaveCommercialAgreementDto {
   agreementId?: string;
-  storeId: string;
+  storeId?: string;
   name: string;
-  minPurchaseAmount: number;
+  minPurchaseAmount?: number;
   discountPercentage?: number | null;
   discountFixedAmount?: number | null;
   maxHoursApplicable?: number | null;
-  isActive: boolean;
+  isActive?: boolean;
+  imageUrl?: string | null;
 }

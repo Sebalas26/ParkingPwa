@@ -109,7 +109,35 @@ export const authService = {
     if (user.isAdmin || user.userRoleId === 1 || user.roleName === 'Administrador' || user.username?.toLowerCase() === 'admin') {
       return true;
     }
-    return user.permissions ? user.permissions.includes(permissionSlug) : false;
+    if (!user.permissions || !Array.isArray(user.permissions)) return false;
+
+    if (user.permissions.includes(permissionSlug)) return true;
+
+    // Aliases bidireccionales de compatibilidad entre UI y base de datos
+    const aliases: Record<string, string[]> = {
+      'dashboard.view': ['analytics.view', 'analytics.metrics'],
+      'settings.parqueaderos.view': ['branches.view'],
+      'settings.parqueaderos.manage': ['branches.create', 'branches.edit', 'branches.delete', 'branches.assign_users'],
+      'settings.usuarios.view': ['users.view'],
+      'settings.usuarios.manage': ['users.create', 'users.edit', 'users.delete'],
+      'settings.roles.view': ['roles.view', 'permissions.view'],
+      'settings.roles.manage': ['roles.create', 'roles.edit', 'permissions.assign'],
+      'settings.tarifas.view': ['rates.view'],
+      'settings.tarifas.manage': ['rates.create', 'rates.edit', 'rates.delete'],
+      'settings.convenios.view': ['agreements.view'],
+      'settings.convenios.manage': ['agreements.create', 'agreements.edit', 'agreements.delete'],
+      'settings.medios_pago.view': ['payment_methods.view'],
+      'settings.medios_pago.manage': ['payment_methods.create', 'payment_methods.edit', 'payment_methods.delete'],
+      'reports.view': ['analytics.view', 'analytics.export', 'shift.export'],
+      'novedades.view': ['recent_entries.view'],
+    };
+
+    const targetAliases = aliases[permissionSlug];
+    if (targetAliases && targetAliases.some((alias) => user.permissions.includes(alias))) {
+      return true;
+    }
+
+    return false;
   },
 
   hasModule: (moduleSlug: string): boolean => {

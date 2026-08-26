@@ -11,6 +11,8 @@ export interface DailySummaryDto {
   revenueByVehicleType?: Record<string, number>;
   countByVehicleType?: Record<string, number>;
   revenueByPaymentMethod?: Record<string, number>;
+  countByResolution?: Record<string, number>;
+  revenueByResolution?: Record<string, number>;
   // Fallbacks legacy
   totalTickets?: number;
   activeTickets?: number;

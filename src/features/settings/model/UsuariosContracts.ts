@@ -37,7 +37,10 @@ export interface UserDto {
   createdAt?: string;
   updatedAt?: string;
   userRoleDto?: GetUserRoleDto;
+  userRole?: GetUserRoleDto;
   identificationTypeDto?: GetIdentificationTypeDto;
+  roleId?: number;
+  idUser?: number;
   roleName?: string;
   roleDescription?: string;
   name?: string;
