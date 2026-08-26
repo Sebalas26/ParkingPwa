@@ -13,30 +13,27 @@ export const UpdatePromptModal: React.FC = () => {
 
   const {
     needRefresh: [needRefresh],
-    updateServiceWorker,
   } = useRegisterSW({
     onRegistered(registration) {
       if (registration) {
-        // 1. Sondeo del Service Worker cada 10 segundos
+        // Sondeo proactivo de Service Worker cada 10 segundos
         const swInterval = setInterval(() => {
-          registration.update().catch((err) => {
-            console.warn('[PWA SW Update] Verificación de Service Worker:', err);
-          });
+          registration.update().catch(() => {});
         }, 10 * 1000);
 
         return () => clearInterval(swInterval);
       }
     },
     onRegisterError(error) {
-      console.error('[PWA Registration Error]:', error);
+      console.warn('[PWA Registration Warning]:', error);
     },
   });
 
-  // 2. Motor 2: Sondeo directo a /version.json (Estilo Angular SwUpdate)
+  // Motor 2: Sondeo ultrarrápido al manifiesto de versión (cada 8 segundos)
   const checkForVersionJson = useCallback(async () => {
-    // Si acaba de actualizarse en los últimos 8 segundos, evitar re-chequeo transitorio
+    // Si acaba de actualizarse en los últimos 6 segundos, evitar re-chequeo transitorio
     const lastUpdateTimestamp = Number(sessionStorage.getItem('pwa_just_updated') || '0');
-    if (Date.now() - lastUpdateTimestamp < 8000) {
+    if (Date.now() - lastUpdateTimestamp < 6000) {
       return;
     }
 
@@ -51,30 +48,26 @@ export const UpdatePromptModal: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        if (data && data.buildTime) {
-          // Detectar si el servidor tiene un build más reciente o versión diferente
-          const isNewerBuild = data.buildTime > localBuildTimeRef.current;
-          const isDifferentVersion = data.version && data.version !== currentAppVersion;
+        if (data) {
+          const isDifferentVersion = Boolean(data.version && data.version !== currentAppVersion);
+          const isNewerBuild = Boolean(data.buildTime && data.buildTime > localBuildTimeRef.current);
 
-          if (isNewerBuild || isDifferentVersion) {
-            console.log('[PWA Version Tracker] Nueva versión detectada en servidor:', data);
+          if (isDifferentVersion || isNewerBuild) {
+            console.log('[PWA Version Tracker] Nueva versión detectada:', data.version || data.buildTime);
             setHasNewVersion(true);
           }
         }
       }
     } catch {
-      // Sin conexión o fallo temporal
+      // Ignorar fallos de red temporales
     }
   }, [currentAppVersion]);
 
   useEffect(() => {
-    // Chequeo inicial
     checkForVersionJson();
 
-    // Chequeo periódico cada 10 segundos
-    const versionInterval = setInterval(checkForVersionJson, 10 * 1000);
+    const versionInterval = setInterval(checkForVersionJson, 8 * 1000);
 
-    // Chequeo al reenfocar
     const handleFocus = () => {
       checkForVersionJson();
     };
@@ -89,46 +82,35 @@ export const UpdatePromptModal: React.FC = () => {
     };
   }, [checkForVersionJson]);
 
-  // Si cualquiera de los dos motores detecta nueva versión, activar modal
   const isUpdateAvailable = needRefresh || hasNewVersion;
 
   const handleUpdate = async () => {
     if (isUpdating) return;
     setIsUpdating(true);
 
-    // Marcar marca de tiempo para prevenir bucle en la recarga
+    // Evita bucle en la recarga
     sessionStorage.setItem('pwa_just_updated', Date.now().toString());
 
     try {
-      // 1. Purgar todo el almacenamiento en caché del navegador (CacheStorage)
+      // 1. Purgar todo CacheStorage de forma limpia
       if ('caches' in window) {
         const cacheKeys = await caches.keys();
-        await Promise.all(
-          cacheKeys.map((key) => {
-            console.log('[PWA Cache Purge] Eliminando caché obsoleta:', key);
-            return caches.delete(key);
-          })
-        );
+        await Promise.all(cacheKeys.map((key) => caches.delete(key)));
       }
 
-      // 2. Desregistrar Service Workers activos viejos para liberar index.html
+      // 2. Desregistrar Service Workers activos
       if ('serviceWorker' in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations();
         for (const reg of registrations) {
           await reg.unregister();
         }
       }
-
-      // 3. Forzar activación con skipWaiting
-      await updateServiceWorker(true);
-    } catch (error) {
-      console.error('[PWA Update Execution Error]:', error);
-    } finally {
-      // 4. Redirección forzada sin caché hacia la raíz limpia
-      setTimeout(() => {
-        window.location.replace(`/?_v=${Date.now()}`);
-      }, 300);
+    } catch (err) {
+      console.warn('[PWA Purge Error]:', err);
     }
+
+    // 3. Recarga limpia e instantánea sin promesas colgadas
+    window.location.replace(`/?_v=${Date.now()}`);
   };
 
   if (!isUpdateAvailable) {

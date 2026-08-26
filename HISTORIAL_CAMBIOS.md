@@ -7,7 +7,25 @@
 
 ## 📋 Registro Cronológico de Cambios
 
-### [2026-08-26 16:13:00] - [FIX] [PWA] [UPDATE-LOOP] - Eliminación de Bucle Infinito de Actualización (skipWaiting, clientsClaim, Desregistro de SW y Cache Busting)
+### [2026-08-26 16:17:00] - [FIX] [PWA] [UNFREEZE-UPDATE] - Eliminación de Bloqueo Asíncrono en Modal de Actualización y Recarga Instantánea
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"ahora no es un bucle ahora le di y se quedo hay pensando ahora que será enserio necesito que quede ya funcionando completamente sin tantos cambios analiza"*
+- **🤖 Resumen Técnico para la IA**:
+  1. **Causa del Congelamiento**:
+     - Tras desregistrar los Service Workers con `reg.unregister()`, la invocación a `await updateServiceWorker(true)` quedaba esperando indefinidamente un mensaje de respuesta de un worker destruido, bloqueando el hilo y evitando que la recarga se ejecutara.
+  2. **Solución Implementada (`UpdatePromptModal.tsx`)**:
+     - Se eliminó la promesa bloqueante `updateServiceWorker(true)`.
+     - `handleUpdate` ahora ejecuta de forma inmediata:
+       1. Purga total de `window.caches` (`CacheStorage`).
+       2. Desregistro de los Service Workers viejos (`navigator.serviceWorker.getRegistrations() -> unregister()`).
+       3. Navegación forzada inmediata sin esperas asíncronas: `window.location.replace('/?_v=' + Date.now())`.
+     - Sondeo reactivo optimizado a 8 segundos para detección instantánea de cambios en `version.json` o `VITE_APP_VERSION`.
+- **📦 Componentes Modificados**:
+  - `src/shared/ui/UpdatePromptModal.tsx`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript). Precache y bundle generados exitosamente.
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
   > *"Ups ocurrio algo raro ya no me manda a un 404, pero le doy actualizar intenta quedar en el login y boom vuelve a salir el tema de actualización y así un bucle completo que sucede hay ? ya desde que le de actualizar yad eberia saltar eso no ?"*
