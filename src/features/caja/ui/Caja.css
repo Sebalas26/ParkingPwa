@@ -182,3 +182,28 @@
 .btn-secondary:hover {
   background: var(--border-color);
 }
+
+/* ==========================================================================
+   RESPONSIVE DESIGN FOR CAJA (TABLETS & SMARTPHONES)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .caja-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .caja-stat-card {
+    padding: 1.1rem;
+    gap: 1rem;
+  }
+
+  .caja-actions-bar {
+    flex-direction: column;
+  }
+
+  .caja-setup-card {
+    padding: 1.5rem;
+    margin: 1.5rem auto;
+  }
+}

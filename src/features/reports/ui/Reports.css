@@ -144,3 +144,41 @@
 @keyframes spin {
   100% { transform: rotate(360deg); }
 }
+
+/* ==========================================================================
+   RESPONSIVE DESIGN FOR REPORTS (TABLETS & SMARTPHONES)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .reports-header-card {
+    padding: 1.2rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .btn-export {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 0.95rem;
+  }
+
+  .consolidated-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .reports-filters {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .pill-group {
+    flex-wrap: wrap;
+  }
+
+  .custom-dates {
+    flex-direction: column;
+  }
+}
