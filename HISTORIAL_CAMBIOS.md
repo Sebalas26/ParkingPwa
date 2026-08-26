@@ -7,7 +7,27 @@
 
 ## 📋 Registro Cronológico de Cambios
 
-### [2026-08-26 15:48:00] - [FEAT] [PWA] [LOGIN-MOBILE] - Optimización Móvil de Login, Credenciales Limpias y Versión Dinámica del Sistema (.env)
+### [2026-08-26 15:55:00] - [FEAT] [PWA] [INSTANT-UPDATE] - Doble Motor de Detección Instantánea de Actualizaciones (5-10s Estilo Angular SwUpdate) y Generación de version.json
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"No me esta lanzando el pop de actualización para que yo como cliente le pueda dar click y actualizar que sucede se quedo pegado hay no llego nada pense que no habia actualizado pero ingrese en otro telefono y si de una quedo bien hiciste lo del movil bien y lo de usuario y contraseña tambien pero lo de que salga el mensaje de actualización requerida nada no sale por que ? si en angular si sucede yo dejo quieta la pagina y si hago cambios el automaticamente en cuestion de segundos como 5 segundos despues de desplegado sale el mensaje. analiza eso."*
+- **🤖 Resumen Técnico para la IA**:
+  1. **Generación Automática de `version.json` en Build (`vite.config.ts`)**:
+     - Plugin `versionTrackerPlugin()` que genera `public/version.json` con `version`, `buildTime` (timestamp numérico exacto) y `timestampIso`.
+     - Se definió la constante global `__APP_BUILD_TIME__` para que la app en memoria conozca su propio timestamp de compilación.
+     - Se configuró Workbox con `NetworkOnly` para `/version.json` para asegurar que nunca quede atrapado en el caché local del Service Worker.
+  2. **Doble Motor de Detección en `UpdatePromptModal.tsx`**:
+     - **Motor SW Proactivo**: `registration.update()` cada 10 segundos.
+     - **Motor Manifest HTTP (Estilo Angular SwUpdate)**: Consulta a `/version.json?_t={Date.now()}` sin caché (`cache: 'no-store'`) cada 10 segundos y en eventos de foco / visibilidad de pestaña.
+     - Si `serverBuildTime > localBuildTime` o cambia la versión, activa `setShowModal(true)` en ~5 a 10 segundos tras el despliegue.
+- **📦 Componentes Modificados**:
+  - `vite.config.ts`
+  - `src/vite-env.d.ts`
+  - `src/shared/ui/UpdatePromptModal.tsx`
+  - `public/version.json`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript). Precache con 22 recursos empaquetados.
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
   > *"quita el llenado automatico lo de usuario y contraseña eso deberia estar vacia, aparte modifica el login para que se vea bien en movil como deberia ser un login en movil por que cuando se instale la aplicacion en un dispositivo se vea perfectamente, aparte tambien agrega la version del sistema eso deberia estar en el .env donde yo le vaya cambiando la version para asi saber que si actualizo y en que version estamos trabajando inica con 0.0.1 Dev analiza esos cambios."*

@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { Sparkles, ArrowRight, ShieldCheck, RefreshCw } from 'lucide-react';
 import './UpdatePromptModal.css';
 
 export const UpdatePromptModal: React.FC = () => {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [hasNewVersion, setHasNewVersion] = useState(false);
+  const localBuildTimeRef = useRef<number>(
+    typeof __APP_BUILD_TIME__ !== 'undefined' ? __APP_BUILD_TIME__ : Date.now()
+  );
+  const currentAppVersion = import.meta.env.VITE_APP_VERSION || '0.0.1 Dev';
 
   const {
     needRefresh: [needRefresh],
@@ -12,32 +17,70 @@ export const UpdatePromptModal: React.FC = () => {
   } = useRegisterSW({
     onRegistered(registration) {
       if (registration) {
-        // 1. Chequeo proactivo cada 60 segundos
-        const intervalId = setInterval(() => {
+        // 1. Sondeo ultrarrápido del Service Worker cada 10 segundos
+        const swInterval = setInterval(() => {
           registration.update().catch((err) => {
-            console.warn('[PWA Update Check] Error al consultar nueva versión:', err);
+            console.warn('[PWA SW Update] Verificación de Service Worker:', err);
           });
-        }, 60 * 1000);
+        }, 10 * 1000);
 
-        // 2. Chequeo proactivo cuando el usuario vuelve a enfocar la pestaña
-        const handleFocus = () => {
-          registration.update().catch((err) => {
-            console.warn('[PWA Focus Check] Error al consultar nueva versión:', err);
-          });
-        };
-
-        window.addEventListener('focus', handleFocus);
-
-        return () => {
-          clearInterval(intervalId);
-          window.removeEventListener('focus', handleFocus);
-        };
+        return () => clearInterval(swInterval);
       }
     },
     onRegisterError(error) {
       console.error('[PWA Registration Error]:', error);
     },
   });
+
+  // 2. Motor 2: Sondeo directo a /version.json (Estilo Angular SwUpdate instantáneo)
+  const checkForVersionJson = useCallback(async () => {
+    try {
+      const response = await fetch(`/version.json?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          Pragma: 'no-cache',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.buildTime) {
+          if (data.buildTime > localBuildTimeRef.current || (data.version && data.version !== currentAppVersion)) {
+            console.log('[PWA Version Tracker] Nueva versión detectada en servidor:', data);
+            setHasNewVersion(true);
+          }
+        }
+      }
+    } catch {
+      // Sin conexión o fallo temporal
+    }
+  }, [currentAppVersion]);
+
+  useEffect(() => {
+    // Chequeo inicial inmediato tras montar
+    checkForVersionJson();
+
+    // Chequeo periódico cada 10 segundos
+    const versionInterval = setInterval(checkForVersionJson, 10 * 1000);
+
+    // Chequeo inmediato al reenfocar la ventana o volver a la app
+    const handleFocus = () => {
+      checkForVersionJson();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('visibilitychange', handleFocus);
+
+    return () => {
+      clearInterval(versionInterval);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('visibilitychange', handleFocus);
+    };
+  }, [checkForVersionJson]);
+
+  // Si cualquiera de los dos motores detecta nueva versión, activar modal
+  const isUpdateAvailable = needRefresh || hasNewVersion;
 
   const handleUpdate = async () => {
     if (isUpdating) return;
@@ -63,12 +106,11 @@ export const UpdatePromptModal: React.FC = () => {
       // 3. Forzar recarga total limpia de la aplicación
       setTimeout(() => {
         window.location.reload();
-      }, 300);
+      }, 250);
     }
   };
 
-  // Si no hay nueva versión en cola, no renderizar nada
-  if (!needRefresh) {
+  if (!isUpdateAvailable) {
     return null;
   }
 
@@ -82,7 +124,7 @@ export const UpdatePromptModal: React.FC = () => {
 
         <h2 className="update-modal-title">¡Nueva Versión Disponible!</h2>
         <p className="update-modal-description">
-          Se ha publicado una actualización importante en el servidor. Para continuar operando de forma segura y aplicar las últimas mejoras, es necesario actualizar la aplicación.
+          Se ha publicado una actualización en el servidor. Para continuar operando de forma segura y aplicar las últimas mejoras, es necesario actualizar la aplicación.
         </p>
 
         <div className="update-features-list">
@@ -122,7 +164,7 @@ export const UpdatePromptModal: React.FC = () => {
 
         <div className="update-version-tag">
           <ShieldCheck size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
-          ParkControl PWA • v{import.meta.env.VITE_APP_VERSION || '0.0.1 Dev'}
+          ParkControl PWA • v{currentAppVersion}
         </div>
       </div>
     </div>
