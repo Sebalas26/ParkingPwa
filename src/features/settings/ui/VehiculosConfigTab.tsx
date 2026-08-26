@@ -233,8 +233,8 @@ export const VehiculosConfigTab: React.FC = () => {
 
       {/* Modal de Confirmación para Eliminar Tipo de Vehículo */}
       {deletingConfig && (
-        <div className="modal-overlay" style={{ zIndex: 1100 }}>
-          <div className="modal-content" style={{ maxWidth: '420px', textAlign: 'center', padding: '24px' }}>
+        <div className="confirm-dialog-overlay" style={{ zIndex: 20000 }}>
+          <div className="confirm-dialog-card">
             <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#fee2e2', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}>
               <AlertTriangle size={24} />
             </div>
