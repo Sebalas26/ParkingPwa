@@ -3,6 +3,7 @@ name: Compilar y Enviar Frontend React a Produccion (FTP)
 on:
   push:
     branches:
+      - dev
       - main
 
 env:
