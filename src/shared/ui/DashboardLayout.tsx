@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { authService } from '../../features/auth/data/authService';
-import { Car, LayoutDashboard, BarChart, Settings, LogOut, User, Wallet, BellRing, RefreshCw, Building2 } from 'lucide-react';
+import { Car, LayoutDashboard, BarChart, Settings, LogOut, User, Wallet, BellRing, RefreshCw, Building2, Menu, X } from 'lucide-react';
 import { PwaInstallPrompt } from './PwaInstallPrompt';
 import { OfflineBanner } from './OfflineBanner';
 import { useBranchContext } from '../context/ParqueaderoContext';
@@ -38,15 +38,26 @@ export const DashboardLayout: React.FC = () => {
   } = useBranchContext();
 
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
+  // Cerrar menú móvil al cambiar de ruta
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
   const handleLogout = () => {
     authService.logout();
     navigate('/');
+  };
+
+  const handleNavigate = (path: string) => {
+    setIsMobileMenuOpen(false);
+    navigate(path);
   };
 
   const formattedDate = currentTime.toLocaleDateString('es-ES', {
@@ -69,7 +80,14 @@ export const DashboardLayout: React.FC = () => {
 
       <OfflineBanner />
 
-      <aside className="sidebar">
+      {/* Backdrop overlay para cerrar menú en mobile */}
+      <div
+        className={`sidebar-overlay ${isMobileMenuOpen ? 'open' : ''}`}
+        onClick={() => setIsMobileMenuOpen(false)}
+        aria-hidden="true"
+      />
+
+      <aside className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <div className="logo-container">
             <Car size={24} className="logo-icon" />
@@ -78,6 +96,14 @@ export const DashboardLayout: React.FC = () => {
             <span className="app-name">ParkFlow</span>
             <span className="app-subtitle">Gestión Multi-Sede</span>
           </div>
+          <button
+            type="button"
+            className="btn-close-sidebar"
+            onClick={() => setIsMobileMenuOpen(false)}
+            aria-label="Cerrar menú"
+          >
+            <X size={20} />
+          </button>
         </div>
 
         <WatermarkLogo />
@@ -85,8 +111,9 @@ export const DashboardLayout: React.FC = () => {
         <nav className="nav-menu">
           {authService.hasPermission('dashboard.view') && (
             <button
+              type="button"
               className={`nav-item ${location.pathname === '/dashboard' || location.pathname === '/' ? 'active' : ''}`}
-              onClick={() => navigate('/dashboard')}
+              onClick={() => handleNavigate('/dashboard')}
             >
               <LayoutDashboard size={20} />
               <span>Dashboard</span>
@@ -94,8 +121,9 @@ export const DashboardLayout: React.FC = () => {
           )}
           {authService.hasPermission('checkout.view') && (
             <button
+              type="button"
               className={`nav-item ${location.pathname.startsWith('/dashboard/caja') ? 'active' : ''}`}
-              onClick={() => navigate('/dashboard/caja')}
+              onClick={() => handleNavigate('/dashboard/caja')}
             >
               <Wallet size={20} />
               <span>Caja</span>
@@ -103,8 +131,9 @@ export const DashboardLayout: React.FC = () => {
           )}
           {authService.hasPermission('recent_entries.view') && (
             <button
+              type="button"
               className={`nav-item ${location.pathname.startsWith('/dashboard/vehicles') ? 'active' : ''}`}
-              onClick={() => navigate('/dashboard/vehicles')}
+              onClick={() => handleNavigate('/dashboard/vehicles')}
             >
               <Car size={20} />
               <span>Activos</span>
@@ -112,8 +141,9 @@ export const DashboardLayout: React.FC = () => {
           )}
           {authService.hasPermission('reports.view') && (
             <button
+              type="button"
               className={`nav-item ${location.pathname.startsWith('/dashboard/reports') ? 'active' : ''}`}
-              onClick={() => navigate('/dashboard/reports')}
+              onClick={() => handleNavigate('/dashboard/reports')}
             >
               <BarChart size={20} />
               <span>Reportes</span>
@@ -121,8 +151,9 @@ export const DashboardLayout: React.FC = () => {
           )}
           {authService.hasPermission('novedades.view') && (
             <button
+              type="button"
               className={`nav-item ${location.pathname.startsWith('/dashboard/novedades') ? 'active' : ''}`}
-              onClick={() => navigate('/dashboard/novedades')}
+              onClick={() => handleNavigate('/dashboard/novedades')}
             >
               <BellRing size={20} />
               <span>Novedades</span>
@@ -130,8 +161,9 @@ export const DashboardLayout: React.FC = () => {
           )}
           {(authService.hasPermission('settings.parqueaderos.view') || authService.hasPermission('branches.view') || authService.hasPermission('users.view') || authService.hasPermission('rates.view') || authService.hasPermission('payment_methods.view') || authService.hasPermission('agreements.view')) && (
             <button
+              type="button"
               className={`nav-item ${location.pathname.startsWith('/dashboard/settings') ? 'active' : ''}`}
-              onClick={() => navigate('/dashboard/settings')}
+              onClick={() => handleNavigate('/dashboard/settings')}
             >
               <Settings size={20} />
               <span>Configuración</span>
@@ -147,7 +179,7 @@ export const DashboardLayout: React.FC = () => {
             <div className="profile-role">{user?.roleName || 'Operador'}</div>
             <div style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 700, marginTop: '2px' }}>v{import.meta.env.VITE_APP_VERSION || '0.0.1 Dev'}</div>
           </div>
-          <button onClick={handleLogout} className="btn-logout-icon" title="Cerrar Sesión">
+          <button type="button" onClick={handleLogout} className="btn-logout-icon" title="Cerrar Sesión">
             <LogOut size={16} />
           </button>
         </div>
@@ -155,10 +187,25 @@ export const DashboardLayout: React.FC = () => {
 
       <main className="main-content">
         <header className="top-bar">
+          <div className="top-bar-left">
+            <button
+              type="button"
+              className="mobile-menu-toggle"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Abrir Menú"
+            >
+              <Menu size={22} />
+            </button>
+            <div className="mobile-brand">
+              <Car size={20} className="mobile-brand-icon" />
+              <span className="mobile-brand-name">ParkFlow</span>
+            </div>
+          </div>
+
           <div className="header-actions">
             {!location.pathname.startsWith('/dashboard/settings') && branchesList.length > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-card, rgba(255,255,255,0.9))', padding: '6px 14px', borderRadius: '10px', border: '1px solid var(--border-color, #cbd5e1)', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-                <Building2 size={16} style={{ color: '#07665e' }} />
+              <div className="branch-selector-pill">
+                <Building2 size={16} style={{ color: '#07665e', flexShrink: 0 }} />
                 {branchesList.length > 1 ? (
                   <select
                     value={activeBranchId ?? ''}
@@ -166,15 +213,7 @@ export const DashboardLayout: React.FC = () => {
                       const val = e.target.value;
                       setActiveBranchId(val ? Number(val) : null);
                     }}
-                    style={{
-                      border: 'none',
-                      background: 'transparent',
-                      fontWeight: 700,
-                      fontSize: '0.88rem',
-                      color: 'var(--text-primary, #0f172a)',
-                      outline: 'none',
-                      cursor: 'pointer',
-                    }}
+                    className="branch-select-native"
                   >
                     {branchesList.map((b) => (
                       <option key={b.id} value={b.id}>
@@ -183,7 +222,7 @@ export const DashboardLayout: React.FC = () => {
                     ))}
                   </select>
                 ) : (
-                  <span style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary, #0f172a)' }}>
+                  <span className="branch-name-single">
                     📍 {activeBranch?.code} — {activeBranch?.name}
                   </span>
                 )}
@@ -191,8 +230,14 @@ export const DashboardLayout: React.FC = () => {
             )}
 
             <PwaInstallPrompt />
-            <button className="btn-action primary" style={{ height: '36px', padding: '0 16px', background: '#2b2c2cff' }} onClick={() => window.location.reload()}>
-              <RefreshCw size={16} style={{ marginRight: '6px' }} /> Actualizar Datos
+            <button
+              type="button"
+              className="btn-action primary btn-refresh-compact"
+              onClick={() => window.location.reload()}
+              title="Actualizar Datos"
+            >
+              <RefreshCw size={15} />
+              <span className="btn-refresh-text">Actualizar</span>
             </button>
             <div className="date-display">
               <strong>{formattedDate}</strong><br />{formattedTime}
@@ -202,6 +247,58 @@ export const DashboardLayout: React.FC = () => {
 
         <Outlet />
       </main>
+
+      {/* Mobile Bottom Navigation Bar (PWA Experience) */}
+      <nav className="bottom-nav-bar" aria-label="Navegación Móvil">
+        {authService.hasPermission('dashboard.view') && (
+          <button
+            type="button"
+            className={`bottom-nav-item ${location.pathname === '/dashboard' || location.pathname === '/' ? 'active' : ''}`}
+            onClick={() => handleNavigate('/dashboard')}
+          >
+            <LayoutDashboard size={20} />
+            <span>Dashboard</span>
+          </button>
+        )}
+        {authService.hasPermission('checkout.view') && (
+          <button
+            type="button"
+            className={`bottom-nav-item ${location.pathname.startsWith('/dashboard/caja') ? 'active' : ''}`}
+            onClick={() => handleNavigate('/dashboard/caja')}
+          >
+            <Wallet size={20} />
+            <span>Caja</span>
+          </button>
+        )}
+        {authService.hasPermission('recent_entries.view') && (
+          <button
+            type="button"
+            className={`bottom-nav-item ${location.pathname.startsWith('/dashboard/vehicles') ? 'active' : ''}`}
+            onClick={() => handleNavigate('/dashboard/vehicles')}
+          >
+            <Car size={20} />
+            <span>Activos</span>
+          </button>
+        )}
+        {authService.hasPermission('reports.view') && (
+          <button
+            type="button"
+            className={`bottom-nav-item ${location.pathname.startsWith('/dashboard/reports') ? 'active' : ''}`}
+            onClick={() => handleNavigate('/dashboard/reports')}
+          >
+            <BarChart size={20} />
+            <span>Reportes</span>
+          </button>
+        )}
+        <button
+          type="button"
+          className={`bottom-nav-item ${isMobileMenuOpen || location.pathname.startsWith('/dashboard/settings') || location.pathname.startsWith('/dashboard/novedades') ? 'active' : ''}`}
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          <Menu size={20} />
+          <span>Menú</span>
+        </button>
+      </nav>
     </div>
   );
 };

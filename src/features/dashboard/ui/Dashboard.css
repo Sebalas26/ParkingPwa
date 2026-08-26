@@ -676,3 +676,113 @@
   font-weight: 700;
   color: var(--text-primary);
 }
+
+/* ==========================================================================
+   RESPONSIVE DESIGN (TABLETS & SMARTPHONES)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    gap: 1.2rem;
+  }
+
+  .dashboard-hero-header {
+    padding: 1.2rem 1.25rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .dashboard-hero-title h1 {
+    font-size: 1.3rem;
+  }
+
+  .dashboard-hero-title p {
+    font-size: 0.82rem;
+  }
+
+  .dashboard-hero-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .dashboard-kpi-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.85rem;
+  }
+
+  .kpi-card {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .kpi-value {
+    font-size: 1.35rem;
+  }
+
+  .slicers-bar-container {
+    padding: 10px 14px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .slicers-group {
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .slicers-group::-webkit-scrollbar {
+    display: none;
+  }
+
+  .slicer-pill {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .quick-search-box {
+    max-width: 100%;
+  }
+
+  .pie-charts-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .pie-chart-body {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .pie-legend-list {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-kpi-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.65rem;
+  }
+
+  .kpi-card {
+    padding: 0.85rem;
+  }
+
+  .kpi-title {
+    font-size: 0.68rem;
+  }
+
+  .kpi-value {
+    font-size: 1.15rem;
+  }
+
+  .kpi-icon-box {
+    width: 30px;
+    height: 30px;
+  }
+}
