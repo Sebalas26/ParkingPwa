@@ -15,6 +15,9 @@ import {
   Globe,
   ShieldCheck,
   Lock,
+  CheckCircle2,
+  AlertTriangle,
+  AlertCircle,
 } from 'lucide-react';
 import type { RoleDto, SaveRoleDto, ActionDto, ModuleDto } from '../model/RolesContracts';
 import { rolesService } from '../data/rolesService';
@@ -28,6 +31,16 @@ export const RolesTab: React.FC = () => {
   const [allActions, setAllActions] = useState<ActionDto[]>([]);
   const [rolePermissionsMap, setRolePermissionsMap] = useState<Record<number, number[]>>({});
   const [isLoading, setIsLoading] = useState(true);
+
+  // Toast Notification State
+  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'warning'; message: string } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => {
+      setToast((curr) => (curr?.message === message ? null : curr));
+    }, 4000);
+  };
 
   // Modal Crear / Editar Rol
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
@@ -108,7 +121,7 @@ export const RolesTab: React.FC = () => {
 
   const handleOpenEditRole = (role: RoleDto) => {
     if (isAdminRole(role)) {
-      alert('El rol Administrador es un rol del sistema y no se puede editar.');
+      showToast('El rol Administrador es un rol del sistema protegido y no se puede editar.', 'warning');
       return;
     }
     setEditingRole({
@@ -124,7 +137,7 @@ export const RolesTab: React.FC = () => {
     if (!editingRole || !editingRole.roleName?.trim()) return;
 
     if (editingRole.idUserRol === 1) {
-      alert('No está permitido modificar el rol Administrador.');
+      showToast('No está permitido modificar el rol Administrador.', 'warning');
       return;
     }
 
@@ -136,15 +149,16 @@ export const RolesTab: React.FC = () => {
       });
       setIsRoleModalOpen(false);
       setEditingRole(null);
+      showToast('Rol guardado exitosamente.', 'success');
       await loadData();
     } catch (err: any) {
-      alert(err?.message || 'Error al guardar el rol.');
+      showToast(err?.message || 'Error al guardar el rol.', 'error');
     }
   };
 
   const handleOpenPermissionsModal = (role: RoleDto) => {
     if (isAdminRole(role)) {
-      alert('El rol Administrador cuenta automáticamente con el 100% de los permisos de Escritorio y Web protegidos.');
+      showToast('El rol Administrador cuenta automáticamente con el 100% de los permisos del sistema.', 'warning');
       return;
     }
     const roleId = role.idUserRol ?? role.id ?? 1;
@@ -212,7 +226,7 @@ export const RolesTab: React.FC = () => {
   const handleSavePermissions = async () => {
     if (!targetRole) return;
     if (isAdminRole(targetRole)) {
-      alert('No está permitido modificar los permisos del Administrador.');
+      showToast('No está permitido modificar los permisos del Administrador.', 'warning');
       return;
     }
     const roleId = targetRole.idUserRol ?? targetRole.id ?? 1;
@@ -223,9 +237,9 @@ export const RolesTab: React.FC = () => {
       setRolePermissionsMap((prev) => ({ ...prev, [roleId]: selectedActionIds }));
       setIsPermissionsModalOpen(false);
       setTargetRole(null);
-      alert('Permisos del rol actualizados correctamente.');
+      showToast('¡Permisos del rol actualizados correctamente!', 'success');
     } catch (err: any) {
-      alert(err?.message || 'Error al guardar los permisos del rol.');
+      showToast(err?.message || 'Error al guardar los permisos del rol.', 'error');
     } finally {
       setIsSavingPermissions(false);
     }
@@ -829,6 +843,35 @@ export const RolesTab: React.FC = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Floating Toast Notification */}
+      {toast && (
+        <div className={`settings-toast ${toast.type}`}>
+          {toast.type === 'success' && <CheckCircle2 size={22} color="#16a34a" style={{ flexShrink: 0 }} />}
+          {toast.type === 'warning' && <AlertTriangle size={22} color="#ca8a04" style={{ flexShrink: 0 }} />}
+          {toast.type === 'error' && <AlertCircle size={22} color="#dc2626" style={{ flexShrink: 0 }} />}
+          <div style={{ flex: 1, fontSize: '0.9rem', fontWeight: 600, lineHeight: 1.4 }}>
+            {toast.message}
+          </div>
+          <button
+            type="button"
+            onClick={() => setToast(null)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'inherit',
+              opacity: 0.6,
+              padding: '2px',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+            title="Cerrar"
+          >
+            <X size={16} />
+          </button>
         </div>
       )}
     </div>

@@ -31,15 +31,42 @@ export const getCategoryName = (r: any): string => {
 };
 
 export const vehiculosConfigService = {
-  getConfigs: async (branchId?: number | null): Promise<VehiculoConfigDto[]> => {
+  /**
+   * Obtiene exclusivamente los tipos de vehículos del catálogo general (BranchId == null)
+   */
+  getGlobalTypes: async (): Promise<VehiculoConfigDto[]> => {
     try {
       const rates = await apiClient.get<any[]>('/VehicleRates');
       if (rates && rates.length > 0) {
-        let filtered = rates;
-        if (branchId !== undefined && branchId !== null) {
-          filtered = rates.filter((r) => r.branchId === branchId || r.branchId === null || r.branchId === undefined);
-        }
-        return filtered.map((r) => ({
+        const globalRates = rates.filter((r) => r.branchId === null || r.branchId === undefined);
+        return globalRates.map((r) => ({
+          rateId: r.rateId || r.id,
+          branchId: null,
+          vehicleType: r.vehicleType,
+          category: getCategoryName(r),
+          gracePeriodMinutes: r.gracePeriodMinutes ?? 15,
+          hourRate: r.hourRate ?? 0,
+          minuteRate: r.minuteRate ?? 0,
+          fullDayRate: r.fullDayRate ?? 0,
+          iconKey: r.iconKey || 'IconCar',
+          isActive: r.isActive ?? true,
+        }));
+      }
+    } catch (err) {
+      console.warn('Error al consultar tipos de vehículos globales:', err);
+    }
+    return [];
+  },
+
+  /**
+   * Obtiene estrictamente las tarifas asignadas a una sede específica (BranchId == branchId)
+   */
+  getBranchRates: async (branchId: number): Promise<VehiculoConfigDto[]> => {
+    try {
+      const rates = await apiClient.get<any[]>('/VehicleRates');
+      if (rates && rates.length > 0) {
+        const branchSpecific = rates.filter((r) => r.branchId === branchId);
+        return branchSpecific.map((r) => ({
           rateId: r.rateId || r.id,
           branchId: r.branchId,
           vehicleType: r.vehicleType,
@@ -53,9 +80,19 @@ export const vehiculosConfigService = {
         }));
       }
     } catch (err) {
-      console.warn('Error fetching vehicle rates for categories from API:', err);
+      console.warn(`Error al consultar tarifas para la sede ${branchId}:`, err);
     }
     return [];
+  },
+
+  /**
+   * Compatibilidad general
+   */
+  getConfigs: async (branchId?: number | null): Promise<VehiculoConfigDto[]> => {
+    if (branchId !== undefined && branchId !== null) {
+      return vehiculosConfigService.getBranchRates(branchId);
+    }
+    return vehiculosConfigService.getGlobalTypes();
   },
 
   saveConfig: async (cfg: SaveVehiculoConfigDto, branchId?: number | null): Promise<VehiculoConfigDto> => {
@@ -66,10 +103,10 @@ export const vehiculosConfigService = {
         branchId: targetBranchId,
         vehicleType: typeof cfg.vehicleType === 'string' ? Number(cfg.vehicleType) || 0 : (cfg.vehicleType || 0),
         displayName: cfg.category,
-        hourRate: cfg.hourRate,
-        minuteRate: cfg.minuteRate,
-        fullDayRate: cfg.fullDayRate,
-        gracePeriodMinutes: cfg.gracePeriodMinutes,
+        hourRate: cfg.hourRate ?? 0,
+        minuteRate: cfg.minuteRate ?? 0,
+        fullDayRate: cfg.fullDayRate ?? 0,
+        gracePeriodMinutes: cfg.gracePeriodMinutes ?? 15,
         iconKey: cfg.iconKey || 'IconCar',
         isActive: cfg.isActive ?? true,
       };
@@ -98,5 +135,14 @@ export const vehiculosConfigService = {
       isActive: cfg.isActive ?? true,
     };
   },
-};
 
+  deleteConfig: async (rateId: string): Promise<boolean> => {
+    try {
+      await apiClient.delete(`/VehicleRates/${rateId}`);
+      return true;
+    } catch (err) {
+      console.warn('Error deleting vehicle config via API:', err);
+      throw err;
+    }
+  },
+};

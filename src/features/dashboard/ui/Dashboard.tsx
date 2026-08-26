@@ -217,14 +217,12 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const activeMediosPago = mediosPagoList.filter(pm => pm.isActive !== false && (pm.status === undefined || pm.status === true || pm.status === 'Activo' || pm.status === 'Active'));
+  const activeMediosPago = (mediosPagoList || []).filter(
+    (pm) => pm.isActive !== false && (pm.status === undefined || pm.status === true || pm.status === 'Activo' || pm.status === 'Active')
+  );
 
   // Generación de datos reales para Gráfica de Torta 1: Métodos de Pago
-  const paymentDonutData = (activeMediosPago.length > 0 ? activeMediosPago : [
-    { id: 1, name: 'Efectivo', icon: '💵', isActive: true },
-    { id: 2, name: 'Tarjeta (Débito/Crédito)', icon: '💳', isActive: true },
-    { id: 3, name: 'Transferencia / PSE', icon: '📱', isActive: true },
-  ]).map((pm, index) => {
+  const paymentDonutData = activeMediosPago.map((pm, index) => {
     let val = 0;
     const nameLower = (pm.name || '').toLowerCase();
 
@@ -254,13 +252,10 @@ export const Dashboard: React.FC = () => {
 
   // Datos para Gráfica de Torta 2: Resoluciones de Facturación Dinámicas de la BD
   const RESOLUTION_COLORS = ['#07665e', '#3b82f6', '#8b5cf6', '#f59e0b', '#ec4899', '#10b981', '#06b6d4', '#6366f1'];
-  const activeResolutions = resolutionsList.filter((r) => r.isActive !== false);
+  const activeResolutions = (resolutionsList || []).filter((r) => r.isActive !== false);
   const resolutionBreakdown = summary?.countByResolution || {};
 
-  const resolutionsDonutData = (activeResolutions.length > 0 ? activeResolutions : [
-    { resolutionId: 'pos', name: 'FACTURA POS', prefix: 'POS', isActive: true },
-    { resolutionId: 'fv', name: 'Factura de Venta Nacional', prefix: 'FV', isActive: true },
-  ]).map((res, index) => {
+  const resolutionsDonutData = activeResolutions.map((res, index) => {
     let docCount = 0;
     const name = res.name || 'Resolución';
     const prefix = res.prefix || '';
@@ -489,32 +484,46 @@ export const Dashboard: React.FC = () => {
           </div>
 
           <div className="pie-chart-body">
-            <SvgDonutChart
-              data={paymentDonutData}
-              centerLabel={`$ ${(totalRevenueToday / 1000000).toFixed(1)}M`}
-              centerSublabel="Total Ventas"
-              size={170}
-            />
+            {paymentDonutData.length > 0 ? (
+              <>
+                <SvgDonutChart
+                  data={paymentDonutData}
+                  centerLabel={`$ ${(totalRevenueToday / 1000000).toFixed(1)}M`}
+                  centerSublabel="Total Ventas"
+                  size={170}
+                />
 
-            <div className="pie-legend-list">
-              {paymentDonutData.map((item, index) => {
-                const pct = totalRevenueToday > 0 ? Math.round((item.value / totalRevenueToday) * 100) : (paymentDonutData.length === 1 && totalRevenueToday > 0 ? 100 : 0);
-                return (
-                  <div key={index} className="pie-legend-item">
-                    <div className="pie-legend-left">
-                      {renderPaymentIcon(item.icon, item.label)}
-                      <span className="pie-legend-label">{item.label}</span>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <span className="pie-legend-val">$ {item.value.toLocaleString()}</span>
-                      <small style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                        {pct}% del total
-                      </small>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                <div className="pie-legend-list">
+                  {paymentDonutData.map((item, index) => {
+                    const pct = totalRevenueToday > 0 ? Math.round((item.value / totalRevenueToday) * 100) : 0;
+                    return (
+                      <div key={index} className="pie-legend-item">
+                        <div className="pie-legend-left">
+                          {renderPaymentIcon(item.icon, item.label)}
+                          <span className="pie-legend-label">{item.label}</span>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <span className="pie-legend-val">$ {item.value.toLocaleString()}</span>
+                          <small style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                            {pct}% del total
+                          </small>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <div style={{ width: '100%', textAlign: 'center', padding: '24px 16px', color: '#64748b' }}>
+                <CreditCard size={28} style={{ color: '#94a3b8', margin: '0 auto 8px auto', display: 'block' }} />
+                <p style={{ fontWeight: 600, fontSize: '0.88rem', margin: '0 0 4px 0', color: '#334155' }}>
+                  Sin medios de pago registrados
+                </p>
+                <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                  Crea los medios de pago en <strong>Configuración &gt; Medios de Pago</strong> para visualizar su recaudación aquí.
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -531,32 +540,46 @@ export const Dashboard: React.FC = () => {
           </div>
 
           <div className="pie-chart-body">
-            <SvgDonutChart
-              data={resolutionsDonutData}
-              centerLabel={`${totalDocumentsIssued > 0 ? totalDocumentsIssued : totalVehiclesEnteredToday}`}
-              centerSublabel="Total Emitidos"
-              size={170}
-            />
+            {resolutionsDonutData.length > 0 ? (
+              <>
+                <SvgDonutChart
+                  data={resolutionsDonutData}
+                  centerLabel={`${totalDocumentsIssued > 0 ? totalDocumentsIssued : totalVehiclesEnteredToday}`}
+                  centerSublabel="Total Emitidos"
+                  size={170}
+                />
 
-            <div className="pie-legend-list">
-              {resolutionsDonutData.map((item, index) => {
-                const pct = totalDocumentsIssued > 0 ? Math.round((item.value / totalDocumentsIssued) * 100) : (resolutionsDonutData.length === 1 && totalVehiclesEnteredToday > 0 ? 100 : 0);
-                return (
-                  <div key={index} className="pie-legend-item">
-                    <div className="pie-legend-left">
-                      <div className="pie-legend-dot" style={{ background: item.color }} />
-                      <span className="pie-legend-label">{item.label}</span>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <span className="pie-legend-val">{item.value.toLocaleString()} doc(s)</span>
-                      <small style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                        {pct}% de emisión
-                      </small>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                <div className="pie-legend-list">
+                  {resolutionsDonutData.map((item, index) => {
+                    const pct = totalDocumentsIssued > 0 ? Math.round((item.value / totalDocumentsIssued) * 100) : 0;
+                    return (
+                      <div key={index} className="pie-legend-item">
+                        <div className="pie-legend-left">
+                          <div className="pie-legend-dot" style={{ background: item.color }} />
+                          <span className="pie-legend-label">{item.label}</span>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <span className="pie-legend-val">{item.value.toLocaleString()} doc(s)</span>
+                          <small style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                            {pct}% de emisión
+                          </small>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <div style={{ width: '100%', textAlign: 'center', padding: '24px 16px', color: '#64748b' }}>
+                <Receipt size={28} style={{ color: '#94a3b8', margin: '0 auto 8px auto', display: 'block' }} />
+                <p style={{ fontWeight: 600, fontSize: '0.88rem', margin: '0 0 4px 0', color: '#334155' }}>
+                  Sin resoluciones registradas
+                </p>
+                <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                  Configura las resoluciones en <strong>Configuración &gt; Resoluciones</strong> para visualizar su emisión aquí.
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -844,31 +867,37 @@ export const Dashboard: React.FC = () => {
             <h4 style={{ margin: '0 0 10px 0', fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
               MEDIOS DE PAGO UTILIZADOS HOY
             </h4>
-            <div className="revenue-breakdown-list">
-              {paymentDonutData.map((item, index) => {
-                const pct = totalRevenueToday > 0 ? Math.round((item.value * 100) / totalRevenueToday) : (paymentDonutData.length === 1 && totalRevenueToday > 0 ? 100 : 0);
-                return (
-                  <div key={index} className="revenue-item">
-                    <div className="revenue-item-header">
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        {renderPaymentIcon(item.icon, item.label)}
-                        {item.label}
-                      </span>
-                      <span style={{ fontWeight: 700 }}>$ {item.value.toLocaleString()} ({pct}%)</span>
+            {paymentDonutData.length > 0 ? (
+              <div className="revenue-breakdown-list">
+                {paymentDonutData.map((item, index) => {
+                  const pct = totalRevenueToday > 0 ? Math.round((item.value * 100) / totalRevenueToday) : 0;
+                  return (
+                    <div key={index} className="revenue-item">
+                      <div className="revenue-item-header">
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          {renderPaymentIcon(item.icon, item.label)}
+                          {item.label}
+                        </span>
+                        <span style={{ fontWeight: 700 }}>$ {item.value.toLocaleString()} ({pct}%)</span>
+                      </div>
+                      <div className="revenue-item-bar">
+                        <div
+                          className="revenue-item-fill"
+                          style={{
+                            width: `${Math.min(pct, 100)}%`,
+                            background: item.color,
+                          }}
+                        />
+                      </div>
                     </div>
-                    <div className="revenue-item-bar">
-                      <div
-                        className="revenue-item-fill"
-                        style={{
-                          width: `${Math.min(pct, 100)}%`,
-                          background: item.color,
-                        }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div style={{ padding: '14px', background: '#f8fafc', borderRadius: '8px', fontSize: '0.82rem', color: '#64748b', textAlign: 'center' }}>
+                No hay medios de pago registrados en el sistema.
+              </div>
+            )}
           </div>
 
           {/* Distribución por Categoría de Vehículo */}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, X, Car, Bike, Truck } from 'lucide-react';
+import { Plus, Edit2, Trash2, AlertTriangle, Loader2, X, Car, Bike, Truck } from 'lucide-react';
 import type { VehiculoConfigDto, SaveVehiculoConfigDto } from '../model/VehiculosConfigContracts';
 import { vehiculosConfigService } from '../data/vehiculosConfigService';
 import { authService } from '../../auth/data/authService';
@@ -8,7 +8,10 @@ export const VehiculosConfigTab: React.FC = () => {
   const [configs, setConfigs] = useState<VehiculoConfigDto[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingConfig, setEditingConfig] = useState<Partial<SaveVehiculoConfigDto> | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [deletingConfig, setDeletingConfig] = useState<VehiculoConfigDto | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     loadConfigs();
@@ -17,10 +20,10 @@ export const VehiculosConfigTab: React.FC = () => {
   const loadConfigs = async () => {
     setIsLoading(true);
     try {
-      const data = await vehiculosConfigService.getConfigs();
+      const data = await vehiculosConfigService.getGlobalTypes();
       setConfigs(data || []);
     } catch (err) {
-      console.error('Error al cargar tipos de vehículos:', err);
+      console.error('Error al cargar catálogo de tipos de vehículos:', err);
     } finally {
       setIsLoading(false);
     }
@@ -31,10 +34,10 @@ export const VehiculosConfigTab: React.FC = () => {
       branchId: null,
       vehicleType: 0,
       category: '',
-      gracePeriodMinutes: undefined,
-      hourRate: undefined,
-      minuteRate: undefined,
-      fullDayRate: undefined,
+      gracePeriodMinutes: 15,
+      hourRate: 0,
+      minuteRate: 0,
+      fullDayRate: 0,
       iconKey: 'IconCar',
       isActive: true,
     });
@@ -44,6 +47,24 @@ export const VehiculosConfigTab: React.FC = () => {
   const handleOpenEdit = (v: VehiculoConfigDto) => {
     setEditingConfig({ ...v });
     setIsModalOpen(true);
+  };
+
+  const handleOpenDelete = (v: VehiculoConfigDto) => {
+    setDeletingConfig(v);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingConfig || !deletingConfig.rateId) return;
+    setIsDeleting(true);
+    try {
+      await vehiculosConfigService.deleteConfig(deletingConfig.rateId);
+      setConfigs((prev) => prev.filter((c) => c.rateId !== deletingConfig.rateId));
+      setDeletingConfig(null);
+    } catch (err: any) {
+      alert(err?.message || 'Error al eliminar el tipo de vehículo.');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const inferVehicleType = (name: string): { type: number; icon: string } => {
@@ -66,17 +87,18 @@ export const VehiculosConfigTab: React.FC = () => {
     const { type, icon } = inferVehicleType(editingConfig.category);
     const payload: SaveVehiculoConfigDto = {
       rateId: editingConfig.rateId,
-      branchId: editingConfig.branchId ?? null,
-      vehicleType: editingConfig.vehicleType ?? type,
+      branchId: null,
+      vehicleType: editingConfig.vehicleType !== undefined ? editingConfig.vehicleType : type,
       category: editingConfig.category.trim(),
-      hourRate: editingConfig.hourRate ?? 0,
-      minuteRate: editingConfig.minuteRate ?? 0,
-      fullDayRate: editingConfig.fullDayRate ?? 0,
-      gracePeriodMinutes: editingConfig.gracePeriodMinutes ?? 0,
+      hourRate: 0,
+      minuteRate: 0,
+      fullDayRate: 0,
+      gracePeriodMinutes: 15,
       iconKey: editingConfig.iconKey || icon,
       isActive: editingConfig.isActive ?? true,
     };
 
+    setIsSaving(true);
     try {
       await vehiculosConfigService.saveConfig(payload, null);
       setIsModalOpen(false);
@@ -84,6 +106,8 @@ export const VehiculosConfigTab: React.FC = () => {
       await loadConfigs();
     } catch (err: any) {
       alert(err?.message || 'Error al guardar tipo de vehículo.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -92,7 +116,7 @@ export const VehiculosConfigTab: React.FC = () => {
       <div className="section-header">
         <div className="section-header-titles">
           <h2>Tipos de Vehículos</h2>
-          <p>Parametriza el catálogo general de tipos de vehículos y tarifas base del sistema.</p>
+          <p>Catálogo general de tipos de vehículos disponibles para operar en los parqueaderos del sistema.</p>
         </div>
         {(authService.hasPermission('settings.vehiculos.manage') || authService.hasPermission('rates.create')) && (
           <button className="btn-primary" style={{ width: 'auto' }} onClick={handleOpenCreate}>
@@ -104,12 +128,8 @@ export const VehiculosConfigTab: React.FC = () => {
       <table className="data-table">
         <thead>
           <tr>
-            <th>CATEGORÍA / TIPO</th>
-            <th>TIEMPO GRACIA</th>
-            <th>VALOR HORA</th>
-            <th>VALOR MINUTO</th>
-            <th>MÁXIMO DÍA</th>
-            <th>ESTADO</th>
+            <th>TIPO / CATEGORÍA DE VEHÍCULO</th>
+            <th>ESTADO EN CATÁLOGO</th>
             <th className="text-right">ACCIONES</th>
           </tr>
         </thead>
@@ -123,19 +143,20 @@ export const VehiculosConfigTab: React.FC = () => {
                     <span>{c.category}</span>
                   </div>
                 </td>
-                <td>{c.gracePeriodMinutes || 0} min</td>
-                <td><strong>${(c.hourRate || 0).toLocaleString()}</strong></td>
-                <td>${(c.minuteRate || 0).toLocaleString()}</td>
-                <td>${(c.fullDayRate || 0).toLocaleString()}</td>
                 <td>
                   <span className={`badge ${c.isActive ? 'badge-success' : 'badge-danger'}`}>
                     {c.isActive ? 'Activo' : 'Inactivo'}
                   </span>
                 </td>
-                <td className="text-right">
+                <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
                   {(authService.hasPermission('settings.vehiculos.manage') || authService.hasPermission('rates.edit')) && (
-                    <button className="btn-icon" onClick={() => handleOpenEdit(c)} title="Editar Tipo de Vehículo">
+                    <button className="btn-icon" style={{ marginRight: '4px' }} onClick={() => handleOpenEdit(c)} title="Editar Tipo de Vehículo">
                       <Edit2 size={16} />
+                    </button>
+                  )}
+                  {(authService.hasPermission('settings.vehiculos.manage') || authService.hasPermission('rates.delete')) && (
+                    <button className="btn-icon" style={{ color: '#ef4444' }} onClick={() => handleOpenDelete(c)} title="Eliminar Tipo de Vehículo">
+                      <Trash2 size={16} />
                     </button>
                   )}
                 </td>
@@ -143,8 +164,8 @@ export const VehiculosConfigTab: React.FC = () => {
             ))
           ) : (
             <tr>
-              <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
-                {isLoading ? 'Cargando tipos de vehículos...' : 'No hay tipos de vehículos registrados en el catálogo general. Crea el primero con el botón superior.'}
+              <td colSpan={3} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
+                {isLoading ? 'Cargando tipos de vehículos...' : 'No hay tipos de vehículos registrados en el catálogo general. Crea los tipos de vehículos que tu negocio recibe (ej: Automóvil, Motocicleta, Camión).'}
               </td>
             </tr>
           )}
@@ -153,7 +174,7 @@ export const VehiculosConfigTab: React.FC = () => {
 
       {isModalOpen && editingConfig && (
         <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '520px' }}>
+          <div className="modal-content" style={{ maxWidth: '440px' }}>
             <div className="modal-header">
               <h3>{editingConfig.rateId ? 'Editar Tipo de Vehículo' : 'Nuevo Tipo de Vehículo'}</h3>
               <button className="btn-close" onClick={() => setIsModalOpen(false)}>
@@ -163,7 +184,7 @@ export const VehiculosConfigTab: React.FC = () => {
 
             <form onSubmit={handleSave}>
               <div className="modal-body">
-                <div className="form-group">
+                <div className="form-group" style={{ marginBottom: '16px' }}>
                   <label>Nombre / Tipo de Vehículo *</label>
                   <input
                     type="text"
@@ -174,60 +195,9 @@ export const VehiculosConfigTab: React.FC = () => {
                     required
                     autoFocus
                   />
-                </div>
-
-                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div className="form-group">
-                    <label>Valor Hora ($) *</label>
-                    <input
-                      type="number"
-                      className="input-field"
-                      placeholder="0"
-                      value={editingConfig.hourRate !== undefined && editingConfig.hourRate !== null ? editingConfig.hourRate : ''}
-                      onChange={(e) => setEditingConfig({ ...editingConfig, hourRate: e.target.value === '' ? undefined : Number(e.target.value) })}
-                      min={0}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Valor Minuto ($) *</label>
-                    <input
-                      type="number"
-                      className="input-field"
-                      placeholder="0"
-                      value={editingConfig.minuteRate !== undefined && editingConfig.minuteRate !== null ? editingConfig.minuteRate : ''}
-                      onChange={(e) => setEditingConfig({ ...editingConfig, minuteRate: e.target.value === '' ? undefined : Number(e.target.value) })}
-                      min={0}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div className="form-group">
-                    <label>Máximo Día (Full Day $) *</label>
-                    <input
-                      type="number"
-                      className="input-field"
-                      placeholder="0"
-                      value={editingConfig.fullDayRate !== undefined && editingConfig.fullDayRate !== null ? editingConfig.fullDayRate : ''}
-                      onChange={(e) => setEditingConfig({ ...editingConfig, fullDayRate: e.target.value === '' ? undefined : Number(e.target.value) })}
-                      min={0}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Tiempo Gracia (Minutos) *</label>
-                    <input
-                      type="number"
-                      className="input-field"
-                      placeholder="0"
-                      value={editingConfig.gracePeriodMinutes !== undefined && editingConfig.gracePeriodMinutes !== null ? editingConfig.gracePeriodMinutes : ''}
-                      onChange={(e) => setEditingConfig({ ...editingConfig, gracePeriodMinutes: e.target.value === '' ? undefined : Number(e.target.value) })}
-                      min={0}
-                      required
-                    />
-                  </div>
+                  <small style={{ color: 'var(--text-secondary)', fontSize: '0.78rem', marginTop: '6px', display: 'block' }}>
+                    Las tarifas de cobro por hora, minuto y día se parametrizan al asignar este tipo a cada parqueadero.
+                  </small>
                 </div>
 
                 <div className="form-group" style={{ marginTop: '8px' }}>
@@ -246,11 +216,60 @@ export const VehiculosConfigTab: React.FC = () => {
                 <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)}>
                   Cancelar
                 </button>
-                <button type="submit" className="btn-primary">
-                  Guardar Tipo de Vehículo
+                <button type="submit" className="btn-primary" disabled={isSaving}>
+                  {isSaving ? (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Loader2 size={14} className="spinner" /> Guardando...
+                    </span>
+                  ) : (
+                    'Guardar Tipo de Vehículo'
+                  )}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmación para Eliminar Tipo de Vehículo */}
+      {deletingConfig && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }}>
+          <div className="modal-content" style={{ maxWidth: '420px', textAlign: 'center', padding: '24px' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#fee2e2', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}>
+              <AlertTriangle size={24} />
+            </div>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>
+              ¿Eliminar Tipo de Vehículo?
+            </h3>
+            <p style={{ fontSize: '0.86rem', color: '#64748b', marginBottom: '20px', lineHeight: 1.5 }}>
+              ¿Estás seguro de que deseas eliminar el tipo de vehículo <strong>"{deletingConfig.category}"</strong> del catálogo general?
+            </p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{ flex: 1, padding: '10px' }}
+                onClick={() => setDeletingConfig(null)}
+                disabled={isDeleting}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn-danger-confirm"
+                style={{ flex: 1, padding: '10px' }}
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                    <Loader2 size={14} className="spinner" /> Eliminando...
+                  </span>
+                ) : (
+                  'Sí, Eliminar'
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

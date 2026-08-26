@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import {
   Plus,
   Edit2,
+  Trash2,
+  AlertTriangle,
+  Loader2,
   X,
   CreditCard,
   Users,
@@ -10,6 +13,8 @@ import {
   MapPin,
   Phone,
   Car,
+  Bike,
+  Truck,
   Settings2,
   UserCheck,
   UserX,
@@ -30,6 +35,16 @@ import type { UserDto } from '../model/UsuariosContracts';
 import type { VehiculoConfigDto, SaveVehiculoConfigDto } from '../model/VehiculosConfigContracts';
 import { useBranchContext } from '../../../shared/context/ParqueaderoContext';
 import { authService } from '../../auth/data/authService';
+import { formatCurrencyInput, parseCurrencyInput } from '../../../shared/utils/currencyUtils';
+
+const VEHICLE_TYPES = [
+  { type: 0, label: 'Automóvil / Sedán (🚗)', defaultName: 'Automóvil / Sedán', icon: 'IconCar' },
+  { type: 1, label: 'Motocicleta (🏍️)', defaultName: 'Motocicleta', icon: 'IconMotorcycle' },
+  { type: 2, label: 'Vehículo Pesado / Camión (🚚)', defaultName: 'Vehículo Pesado / Camión', icon: 'IconTruck' },
+  { type: 3, label: 'Furgón / Minibús / Van (🚐)', defaultName: 'Furgón / Minibús', icon: 'IconVan' },
+  { type: 4, label: 'Bicicleta (🚲)', defaultName: 'Bicicleta', icon: 'IconBike' },
+  { type: 5, label: 'Camioneta / SUV (🚙)', defaultName: 'Camioneta / SUV', icon: 'IconCar' },
+];
 
 export const ParqueaderosTab: React.FC = () => {
   const { refreshBranches, activeBranchId } = useBranchContext();
@@ -61,11 +76,14 @@ export const ParqueaderosTab: React.FC = () => {
 
   // Estado Tarifas Vehiculares de la Sede
   const [branchRates, setBranchRates] = useState<VehiculoConfigDto[]>([]);
+  const [globalTypes, setGlobalTypes] = useState<VehiculoConfigDto[]>([]);
   const [isLoadingRates, setIsLoadingRates] = useState(false);
   const [isEditingRateModal, setIsEditingRateModal] = useState(false);
   const [editingRate, setEditingRate] = useState<Partial<SaveVehiculoConfigDto> | null>(null);
   const [isSavingRate, setIsSavingRate] = useState(false);
   const [rateSuccessMsg, setRateSuccessMsg] = useState<string | null>(null);
+  const [deletingRate, setDeletingRate] = useState<VehiculoConfigDto | null>(null);
+  const [isDeletingRate, setIsDeletingRate] = useState(false);
 
   useEffect(() => {
     loadBranches();
@@ -192,8 +210,12 @@ export const ParqueaderosTab: React.FC = () => {
   const loadBranchRates = async (branchId: number) => {
     setIsLoadingRates(true);
     try {
-      const rates = await vehiculosConfigService.getConfigs(branchId);
+      const [rates, globals] = await Promise.all([
+        vehiculosConfigService.getBranchRates(branchId),
+        vehiculosConfigService.getGlobalTypes(),
+      ]);
       setBranchRates(rates || []);
+      setGlobalTypes(globals || []);
     } catch (err) {
       console.error('Error cargando tarifas de sede:', err);
     } finally {
@@ -246,15 +268,20 @@ export const ParqueaderosTab: React.FC = () => {
   // Manejadores de Tarifas Vehiculares por Sede
   const handleOpenCreateRate = () => {
     if (!selectedBranch) return;
+    const unassigned = globalTypes.filter(
+      (g) => !branchRates.some((r) => r.category.toLowerCase() === g.category.toLowerCase())
+    );
+    const defaultItem = unassigned.length > 0 ? unassigned[0] : (globalTypes.length > 0 ? globalTypes[0] : null);
+
     setEditingRate({
       branchId: selectedBranch.id,
-      vehicleType: 0,
-      category: '',
-      gracePeriodMinutes: undefined,
+      vehicleType: defaultItem ? defaultItem.vehicleType : 0,
+      category: defaultItem ? defaultItem.category : '',
+      gracePeriodMinutes: 15,
       hourRate: undefined,
       minuteRate: undefined,
       fullDayRate: undefined,
-      iconKey: 'IconCar',
+      iconKey: defaultItem ? defaultItem.iconKey : 'IconCar',
       isActive: true,
     });
     setIsEditingRateModal(true);
@@ -263,6 +290,28 @@ export const ParqueaderosTab: React.FC = () => {
   const handleOpenEditRate = (rate: VehiculoConfigDto) => {
     setEditingRate({ ...rate });
     setIsEditingRateModal(true);
+  };
+
+  const handleOpenDeleteRate = (rate: VehiculoConfigDto) => {
+    setDeletingRate(rate);
+  };
+
+  const handleConfirmDeleteRate = async () => {
+    if (!deletingRate || !selectedBranch) return;
+    setIsDeletingRate(true);
+    try {
+      if (deletingRate.rateId) {
+        await vehiculosConfigService.deleteConfig(deletingRate.rateId);
+      }
+      setBranchRates((prev) => prev.filter((r) => r.rateId !== deletingRate.rateId));
+      setRateSuccessMsg(`Tarifa para "${deletingRate.category}" eliminada correctamente.`);
+      setTimeout(() => setRateSuccessMsg(null), 3000);
+      setDeletingRate(null);
+    } catch (err: any) {
+      alert(err?.message || 'Error al eliminar la tarifa vehicular.');
+    } finally {
+      setIsDeletingRate(false);
+    }
   };
 
   const inferVehicleTypeForBranch = (name: string): { type: number; icon: string } => {
@@ -286,7 +335,7 @@ export const ParqueaderosTab: React.FC = () => {
     const payload: SaveVehiculoConfigDto = {
       rateId: editingRate.rateId,
       branchId: selectedBranch.id,
-      vehicleType: editingRate.vehicleType ?? type,
+      vehicleType: editingRate.vehicleType !== undefined ? editingRate.vehicleType : type,
       category: editingRate.category.trim(),
       hourRate: editingRate.hourRate ?? 0,
       minuteRate: editingRate.minuteRate ?? 0,
@@ -732,53 +781,75 @@ export const ParqueaderosTab: React.FC = () => {
                         </button>
                       </div>
 
-                      <div className="form-group" style={{ marginBottom: '10px' }}>
-                        <label>Nombre / Tipo de Vehículo *</label>
-                        <input
-                          type="text"
-                          className="input-field"
-                          value={editingRate.category || ''}
-                          onChange={(e) => setEditingRate({ ...editingRate, category: e.target.value })}
-                          placeholder="Ej: Automóvil, Motocicleta, Camión, Bicicleta"
-                          required
-                          autoFocus
-                        />
+                      <div className="form-group" style={{ marginBottom: '14px' }}>
+                        <label>Tipo de Vehículo a Asignar *</label>
+                        {globalTypes.length > 0 && !editingRate.rateId ? (
+                          <select
+                            className="input-field"
+                            value={editingRate.category || ''}
+                            onChange={(e) => {
+                              const cat = e.target.value;
+                              const match = globalTypes.find((g) => g.category === cat);
+                              setEditingRate({
+                                ...editingRate,
+                                category: cat,
+                                vehicleType: match ? match.vehicleType : editingRate.vehicleType,
+                                iconKey: match ? match.iconKey : editingRate.iconKey,
+                              });
+                            }}
+                            required
+                          >
+                            <option value="">-- Selecciona un tipo del catálogo general --</option>
+                            {globalTypes.map((g) => (
+                              <option key={g.rateId || g.category} value={g.category}>
+                                {g.category}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type="text"
+                            className="input-field"
+                            value={editingRate.category || ''}
+                            onChange={(e) => setEditingRate({ ...editingRate, category: e.target.value })}
+                            placeholder="Ej: Automóvil, Motocicleta, Camión, Bicicleta"
+                            required
+                            autoFocus
+                          />
+                        )}
                       </div>
 
                       <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '10px', marginBottom: '12px' }}>
                         <div className="form-group">
                           <label>Valor Hora ($) *</label>
                           <input
-                            type="number"
+                            type="text"
                             className="input-field"
                             placeholder="0"
-                            value={editingRate.hourRate !== undefined && editingRate.hourRate !== null ? editingRate.hourRate : ''}
-                            onChange={(e) => setEditingRate({ ...editingRate, hourRate: e.target.value === '' ? undefined : Number(e.target.value) })}
-                            min={0}
+                            value={formatCurrencyInput(editingRate.hourRate)}
+                            onChange={(e) => setEditingRate({ ...editingRate, hourRate: parseCurrencyInput(e.target.value) })}
                             required
                           />
                         </div>
                         <div className="form-group">
                           <label>Valor Minuto ($) *</label>
                           <input
-                            type="number"
+                            type="text"
                             className="input-field"
                             placeholder="0"
-                            value={editingRate.minuteRate !== undefined && editingRate.minuteRate !== null ? editingRate.minuteRate : ''}
-                            onChange={(e) => setEditingRate({ ...editingRate, minuteRate: e.target.value === '' ? undefined : Number(e.target.value) })}
-                            min={0}
+                            value={formatCurrencyInput(editingRate.minuteRate)}
+                            onChange={(e) => setEditingRate({ ...editingRate, minuteRate: parseCurrencyInput(e.target.value) })}
                             required
                           />
                         </div>
                         <div className="form-group">
                           <label>Máximo Día ($) *</label>
                           <input
-                            type="number"
+                            type="text"
                             className="input-field"
                             placeholder="0"
-                            value={editingRate.fullDayRate !== undefined && editingRate.fullDayRate !== null ? editingRate.fullDayRate : ''}
-                            onChange={(e) => setEditingRate({ ...editingRate, fullDayRate: e.target.value === '' ? undefined : Number(e.target.value) })}
-                            min={0}
+                            value={formatCurrencyInput(editingRate.fullDayRate)}
+                            onChange={(e) => setEditingRate({ ...editingRate, fullDayRate: parseCurrencyInput(e.target.value) })}
                             required
                           />
                         </div>
@@ -787,7 +858,7 @@ export const ParqueaderosTab: React.FC = () => {
                           <input
                             type="number"
                             className="input-field"
-                            placeholder="0"
+                            placeholder="15"
                             value={editingRate.gracePeriodMinutes !== undefined && editingRate.gracePeriodMinutes !== null ? editingRate.gracePeriodMinutes : ''}
                             onChange={(e) => setEditingRate({ ...editingRate, gracePeriodMinutes: e.target.value === '' ? undefined : Number(e.target.value) })}
                             min={0}
@@ -801,7 +872,13 @@ export const ParqueaderosTab: React.FC = () => {
                           Cancelar
                         </button>
                         <button type="submit" className="btn-primary" style={{ padding: '6px 14px', fontSize: '0.82rem' }} disabled={isSavingRate}>
-                          {isSavingRate ? 'Guardando...' : 'Guardar Tarifa'}
+                          {isSavingRate ? (
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <Loader2 size={13} className="spinner" /> Guardando...
+                            </span>
+                          ) : (
+                            'Guardar Tarifa'
+                          )}
                         </button>
                       </div>
                     </form>
@@ -822,7 +899,7 @@ export const ParqueaderosTab: React.FC = () => {
                             style={{ padding: '6px 14px', fontSize: '0.82rem' }}
                             onClick={handleOpenCreateRate}
                           >
-                            <Plus size={14} /> Agregar Tarifa a esta Sede
+                            <Plus size={14} /> Asignar Tarifa a esta Sede
                           </button>
                         )}
                       </div>
@@ -843,7 +920,7 @@ export const ParqueaderosTab: React.FC = () => {
                             <tr key={r.rateId}>
                               <td>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>
-                                  <Car size={16} color="#07665e" />
+                                  {Number(r.vehicleType) === 1 ? <Bike size={16} color="#2563eb" /> : Number(r.vehicleType) === 2 ? <Truck size={16} color="#d97706" /> : <Car size={16} color="#07665e" />}
                                   <span>{r.category}</span>
                                 </div>
                               </td>
@@ -851,15 +928,24 @@ export const ParqueaderosTab: React.FC = () => {
                               <td>${r.minuteRate?.toLocaleString('es-CO') || 0}</td>
                               <td>${r.fullDayRate?.toLocaleString('es-CO') || 0}</td>
                               <td>{r.gracePeriodMinutes || 0} min</td>
-                              <td style={{ textAlign: 'right' }}>
+                              <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                                 <button
                                   type="button"
                                   className="btn-icon"
-                                  style={{ padding: '6px' }}
+                                  style={{ padding: '6px', marginRight: '4px' }}
                                   onClick={() => handleOpenEditRate(r)}
                                   title="Editar Tarifa"
                                 >
                                   <Edit2 size={14} />
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn-icon"
+                                  style={{ padding: '6px', color: '#ef4444' }}
+                                  onClick={() => handleOpenDeleteRate(r)}
+                                  title="Eliminar Tarifa"
+                                >
+                                  <Trash2 size={14} />
                                 </button>
                               </td>
                             </tr>
@@ -875,15 +961,15 @@ export const ParqueaderosTab: React.FC = () => {
                           No hay tarifas vehiculares parametrizadas para esta sede
                         </p>
                         <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '0 0 14px 0', lineHeight: 1.4 }}>
-                          Crea las tarifas en la pestaña superior <strong>"Tarifas Vehiculares"</strong> o parametriza una tarifa directamente para esta sede:
+                          Asigna los tipos de vehículos que recibirá este parqueadero y define los precios de cobro para esta sede:
                         </p>
                         <button
                           type="button"
                           className="btn-primary"
-                          style={{ padding: '8px 18px', fontSize: '0.85rem' }}
+                          style={{ width: 'auto', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '9px 20px', fontSize: '0.85rem', margin: '0 auto' }}
                           onClick={handleOpenCreateRate}
                         >
-                          <Plus size={15} /> Parametrizar Tarifa para esta Sede
+                          <Plus size={15} /> Asignar Tarifa a esta Sede
                         </button>
                       </div>
                     )
@@ -906,6 +992,49 @@ export const ParqueaderosTab: React.FC = () => {
                   {isSavingPayments ? 'Guardando...' : 'Guardar Medios de Pago'}
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmación para Eliminar Tarifa Vehicular */}
+      {deletingRate && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }}>
+          <div className="modal-content" style={{ maxWidth: '420px', textAlign: 'center', padding: '24px' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#fee2e2', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}>
+              <AlertTriangle size={24} />
+            </div>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>
+              ¿Eliminar Tarifa Vehicular?
+            </h3>
+            <p style={{ fontSize: '0.86rem', color: '#64748b', marginBottom: '20px', lineHeight: 1.5 }}>
+              ¿Estás seguro de que deseas eliminar la parametrización de tarifa para <strong>{deletingRate.category}</strong> de esta sede? Esta acción no se puede deshacer.
+            </p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{ flex: 1, padding: '10px' }}
+                onClick={() => setDeletingRate(null)}
+                disabled={isDeletingRate}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn-danger-confirm"
+                style={{ flex: 1, padding: '10px' }}
+                onClick={handleConfirmDeleteRate}
+                disabled={isDeletingRate}
+              >
+                {isDeletingRate ? (
+                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                    <Loader2 size={14} className="spinner" /> Eliminando...
+                  </span>
+                ) : (
+                  'Sí, Eliminar'
+                )}
+              </button>
             </div>
           </div>
         </div>
