@@ -8,10 +8,12 @@ import { Settings } from './features/settings/ui/Settings';
 import { Caja } from './features/caja/ui/Caja';
 import { Novedades } from './features/novedades/ui/Novedades';
 import { ParqueaderoProvider } from './shared/context/ParqueaderoContext';
+import { UpdatePromptModal } from './shared/ui/UpdatePromptModal';
 
 function App() {
   return (
     <ParqueaderoProvider>
+      <UpdatePromptModal />
       <Router>
         <Routes>
           <Route path="/login" element={<Login />} />
