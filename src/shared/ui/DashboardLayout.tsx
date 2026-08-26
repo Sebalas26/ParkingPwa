@@ -145,6 +145,7 @@ export const DashboardLayout: React.FC = () => {
           <div className="profile-info">
             <div className="profile-name">{user?.fullName || user?.username || 'Usuario'}</div>
             <div className="profile-role">{user?.roleName || 'Operador'}</div>
+            <div style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 700, marginTop: '2px' }}>v{import.meta.env.VITE_APP_VERSION || '0.0.1 Dev'}</div>
           </div>
           <button onClick={handleLogout} className="btn-logout-icon" title="Cerrar Sesión">
             <LogOut size={16} />

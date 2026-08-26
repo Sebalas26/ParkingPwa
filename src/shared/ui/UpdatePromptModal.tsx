@@ -122,7 +122,7 @@ export const UpdatePromptModal: React.FC = () => {
 
         <div className="update-version-tag">
           <ShieldCheck size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
-          ParkControl PWA • Actualización de Sistema
+          ParkControl PWA • v{import.meta.env.VITE_APP_VERSION || '0.0.1 Dev'}
         </div>
       </div>
     </div>

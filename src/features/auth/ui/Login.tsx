@@ -1,18 +1,26 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../data/authService';
-import { Car, Check, Receipt, BarChart2 } from 'lucide-react';
+import { Car, Check, Receipt, BarChart2, Eye, EyeOff, Lock, User, ShieldCheck } from 'lucide-react';
 import './Login.css';
 
 export const Login: React.FC = () => {
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('Admin2026*');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
+  const appVersion = import.meta.env.VITE_APP_VERSION || '0.0.1 Dev';
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!username.trim() || !password) {
+      setError('Por favor ingrese su usuario y contraseña.');
+      return;
+    }
+
     setError('');
     setIsLoading(true);
 
@@ -20,7 +28,7 @@ export const Login: React.FC = () => {
       await authService.login({ username: username.trim(), password });
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err?.message || 'Usuario o contraseña incorrectos. Por favor verifique sus datos.');
+      setError(err?.message || 'Usuario o contraseña incorrectos. Por favor verifique sus credenciales.');
     } finally {
       setIsLoading(false);
     }
@@ -28,7 +36,7 @@ export const Login: React.FC = () => {
 
   return (
     <div className="login-split-page">
-      {/* Left Column: Dark Brand & Feature Presentation */}
+      {/* Columna Izquierda: Presentación Institucional Desktop */}
       <div className="login-hero-side">
         <div className="brand-header">
           <div className="brand-logo-icon">
@@ -45,7 +53,7 @@ export const Login: React.FC = () => {
             Sistema Integral de Control de Acceso y Recaudación de Parqueadero
           </h1>
           <p className="hero-description">
-            Agilice el registro de entradas, cálculo en caja, seguimiento de cupos en tiempo real, convenios comerciales y arqueo de turnos.
+            Agilice el registro de entradas, liquidación en caja, control de cupos en tiempo real, convenios comerciales y arqueos de turno.
           </p>
 
           <div className="hero-feature-pills">
@@ -73,15 +81,29 @@ export const Login: React.FC = () => {
         </div>
 
         <div className="hero-bottom-footer">
-          PARK CONTROL • Tu punto de llegada
+          <span>PARK CONTROL • Tu punto de llegada</span>
+          <span className="hero-version-pill">v{appVersion}</span>
         </div>
       </div>
 
-      {/* Right Column: Clean White Login Form */}
+      {/* Columna Derecha / Móvil: Formulario de Autenticación */}
       <div className="login-form-side">
+        {/* Cabecera Móvil Compacta */}
+        <div className="mobile-brand-header">
+          <div className="mobile-logo-icon">
+            <Car size={24} color="#ffffff" />
+          </div>
+          <div className="mobile-brand-texts">
+            <h2 className="mobile-brand-name">PARK CONTROL</h2>
+            <span className="mobile-brand-tagline">TU PUNTO DE LLEGADA</span>
+          </div>
+        </div>
+
         <div className="login-form-wrapper">
-          <h2 className="form-title">Iniciar Sesión</h2>
-          <p className="form-subtitle">Ingrese sus credenciales de operador para iniciar estación</p>
+          <div className="form-header-box">
+            <h2 className="form-title">Iniciar Sesión</h2>
+            <p className="form-subtitle">Ingrese sus credenciales de operador para acceder al sistema</p>
+          </div>
 
           {error && (
             <div className="login-error-alert">
@@ -89,42 +111,72 @@ export const Login: React.FC = () => {
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="login-input-form">
+          <form onSubmit={handleLogin} className="login-input-form" autoCapitalize="none" autoComplete="off">
             <div className="login-field-group">
-              <label htmlFor="username">Usuario / ID de Operador</label>
-              <input
-                id="username"
-                type="text"
-                className="login-input"
-                placeholder="admin"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                autoFocus
-              />
+              <label htmlFor="username">Usuario o Identificación</label>
+              <div className="input-with-icon-wrapper">
+                <User size={18} className="input-prefix-icon" />
+                <input
+                  id="username"
+                  type="text"
+                  className="login-input with-prefix"
+                  placeholder="Ingrese su usuario o correo"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  autoComplete="username"
+                  required
+                  autoFocus
+                />
+              </div>
             </div>
 
             <div className="login-field-group">
               <label htmlFor="password">Contraseña</label>
-              <input
-                id="password"
-                type="password"
-                className="login-input"
-                placeholder="••••••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <div className="input-with-icon-wrapper">
+                <Lock size={18} className="input-prefix-icon" />
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  className="login-input with-prefix with-suffix"
+                  placeholder="Ingrese su contraseña"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="input-suffix-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             <button type="submit" className="login-submit-btn" disabled={isLoading}>
-              {isLoading ? 'Accediendo...' : 'Acceder a Estación de Trabajo'}
+              {isLoading ? (
+                <>
+                  <div className="btn-spinner" />
+                  <span>Accediendo a la estación...</span>
+                </>
+              ) : (
+                'Acceder a Estación de Trabajo'
+              )}
             </button>
           </form>
         </div>
 
         <div className="login-form-footer">
-          Protegido por Control de Acceso • PARK CONTROL
+          <div className="footer-security-text">
+            <ShieldCheck size={14} />
+            <span>Control de Acceso Seguro • PARK CONTROL</span>
+          </div>
+          <div className="footer-version-tag">
+            Versión del Sistema: <strong>v{appVersion}</strong>
+          </div>
         </div>
       </div>
     </div>

@@ -1,25 +1,27 @@
-/* Split-Screen Login Page */
+/* Split-Screen & Mobile-First Login Page */
 
 .login-split-page {
   display: flex;
   min-height: 100vh;
+  min-height: 100dvh;
   width: 100vw;
-  background: #ffffff;
+  background: #0b0f19;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
 }
 
-/* Left Hero Banner Side (Dark Navy / Slate) */
+/* Columna Izquierda: Hero Institucional (Desktop) */
 .login-hero-side {
   flex: 1.15;
-  background: #14212c;
+  background: linear-gradient(145deg, #131c2a, #0b111e);
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
   padding: 48px 56px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   color: #ffffff;
   position: relative;
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 4px 0 30px rgba(0, 0, 0, 0.3);
 }
 
 .brand-header {
@@ -29,14 +31,14 @@
 }
 
 .brand-logo-icon {
-  width: 46px;
-  height: 46px;
-  background: #07665e;
-  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #07665e, #10b981);
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(7, 102, 94, 0.35);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
   flex-shrink: 0;
 }
 
@@ -47,19 +49,19 @@
 }
 
 .brand-name {
-  font-size: 1.25rem;
+  font-size: 1.3rem;
   font-weight: 900;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   color: #ffffff;
   margin: 0;
   line-height: 1.1;
 }
 
 .brand-tagline {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  color: #94a3b8;
+  letter-spacing: 0.1em;
+  color: #10b981;
   text-transform: uppercase;
 }
 
@@ -69,18 +71,18 @@
 }
 
 .hero-main-title {
-  font-size: 2.1rem;
+  font-size: 2.2rem;
   font-weight: 800;
   line-height: 1.25;
-  color: #ffffff;
+  color: #f8fafc;
   margin: 0 0 16px 0;
   letter-spacing: -0.02em;
 }
 
 .hero-description {
-  font-size: 0.95rem;
+  font-size: 0.96rem;
   color: #94a3b8;
-  line-height: 1.55;
+  line-height: 1.6;
   margin: 0 0 32px 0;
 }
 
@@ -91,9 +93,9 @@
 }
 
 .feature-pill {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
   padding: 13px 18px;
   display: flex;
   align-items: center;
@@ -102,12 +104,13 @@
 }
 
 .feature-pill:hover {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(16, 185, 129, 0.3);
+  transform: translateX(4px);
 }
 
 .pill-icon-teal {
-  color: #0d9488;
+  color: #10b981;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -130,13 +133,27 @@
 }
 
 .hero-bottom-footer {
-  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
   font-weight: 500;
   color: #64748b;
   letter-spacing: 0.02em;
 }
 
-/* Right Column (Clean White Form Side) */
+.hero-version-pill {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* Columna Derecha / Móvil: Formulario */
 .login-form-side {
   flex: 1;
   background: #ffffff;
@@ -148,45 +165,64 @@
   position: relative;
 }
 
-.form-window-decorations {
-  align-self: flex-end;
-  display: flex;
+/* Cabecera Móvil (Oculta en Desktop) */
+.mobile-brand-header {
+  display: none;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  margin-bottom: 24px;
+  width: 100%;
+  max-width: 420px;
 }
 
-.decor-btn {
-  width: 32px;
-  height: 32px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: #ffffff;
-  color: #64748b;
+.mobile-logo-icon {
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(135deg, #07665e, #10b981);
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  user-select: none;
-  transition: all 0.15s ease;
+  box-shadow: 0 4px 12px rgba(7, 102, 94, 0.3);
+  flex-shrink: 0;
 }
 
-.decor-btn:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
+.mobile-brand-texts {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.mobile-brand-name {
+  font-size: 1.15rem;
+  font-weight: 900;
   color: #0f172a;
+  margin: 0;
+  line-height: 1.1;
+  letter-spacing: 0.03em;
+}
+
+.mobile-brand-tagline {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #07665e;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .login-form-wrapper {
   width: 100%;
   max-width: 420px;
   margin: auto 0;
-  padding: 20px 0;
+  padding: 10px 0;
+}
+
+.form-header-box {
+  margin-bottom: 24px;
 }
 
 .form-title {
-  font-size: 1.9rem;
+  font-size: 1.95rem;
   font-weight: 800;
   color: #0f172a;
   margin: 0 0 6px 0;
@@ -194,34 +230,36 @@
 }
 
 .form-subtitle {
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   color: #64748b;
-  margin: 0 0 24px 0;
-  line-height: 1.4;
+  margin: 0;
+  line-height: 1.45;
 }
 
 .login-error-alert {
   background: #fef2f2;
   border: 1px solid #fecaca;
   color: #dc2626;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 12px 16px;
-  font-size: 0.86rem;
+  font-size: 0.88rem;
   font-weight: 600;
-  line-height: 1.4;
+  line-height: 1.45;
   margin-bottom: 20px;
+  animation: loginShake 0.3s ease;
 }
 
 .login-input-form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
 }
 
 .login-field-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
+  text-align: left;
 }
 
 .login-field-group label {
@@ -230,80 +268,225 @@
   color: #1e293b;
 }
 
+.input-with-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input-prefix-icon {
+  position: absolute;
+  left: 14px;
+  color: #94a3b8;
+  pointer-events: none;
+  transition: color 0.2s ease;
+}
+
 .login-input {
   width: 100%;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
+  min-height: 48px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
   padding: 12px 16px;
-  font-size: 0.95rem;
+  font-size: 0.96rem;
   font-family: inherit;
   color: #0f172a;
   outline: none;
   transition: all 0.2s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.login-input.with-prefix {
+  padding-left: 42px;
+}
+
+.login-input.with-suffix {
+  padding-right: 44px;
 }
 
 .login-input:focus {
+  background: #ffffff;
   border-color: #07665e;
-  box-shadow: 0 0 0 3px rgba(7, 102, 94, 0.15);
+  box-shadow: 0 0 0 3.5px rgba(7, 102, 94, 0.14);
+}
+
+.login-input:focus + .input-prefix-icon,
+.input-with-icon-wrapper:focus-within .input-prefix-icon {
+  color: #07665e;
 }
 
 .login-input::placeholder {
   color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.input-suffix-btn {
+  position: absolute;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color 0.2s ease;
+}
+
+.input-suffix-btn:hover {
+  color: #0f172a;
 }
 
 .login-submit-btn {
   width: 100%;
-  height: 50px;
-  background: #07665e;
+  min-height: 52px;
+  background: linear-gradient(135deg, #07665e, #0d9488);
   color: #ffffff;
-  font-size: 0.98rem;
+  font-size: 1.02rem;
   font-weight: 700;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin-top: 10px;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(7, 102, 94, 0.3);
+  gap: 10px;
+  margin-top: 8px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 6px 18px rgba(7, 102, 94, 0.3);
+  -webkit-tap-highlight-color: transparent;
 }
 
-.login-submit-btn:hover {
-  background: #054e48;
-  box-shadow: 0 6px 18px rgba(7, 102, 94, 0.4);
-  transform: translateY(-1px);
+.login-submit-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #054e48, #07665e);
+  box-shadow: 0 8px 24px rgba(7, 102, 94, 0.45);
+  transform: translateY(-1.5px);
+}
+
+.login-submit-btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .login-submit-btn:disabled {
-  opacity: 0.7;
+  opacity: 0.75;
   cursor: not-allowed;
-  transform: none;
+}
+
+.btn-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: btnSpin 0.7s linear infinite;
 }
 
 .login-form-footer {
-  font-size: 0.78rem;
-  font-weight: 500;
-  color: #94a3b8;
-  text-align: center;
-  margin-top: 20px;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 24px;
+  padding-top: 14px;
+  border-top: 1px solid #f1f5f9;
 }
 
-/* Responsiveness */
+.footer-security-text {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.footer-version-tag {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  letter-spacing: 0.02em;
+}
+
+.footer-version-tag strong {
+  color: #07665e;
+  font-weight: 700;
+}
+
+@keyframes btnSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes loginShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* =========================================================
+   ADAPTACIÓN RESPONSIVA AVANZADA PARA MÓVILES Y PWA
+   ========================================================= */
 @media (max-width: 960px) {
   .login-split-page {
     flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #0f172a;
+    padding: 16px;
   }
+
+  /* Ocultar el hero pesado en móvil */
   .login-hero-side {
-    padding: 32px 24px;
+    display: none;
   }
+
+  /* Mostrar la cabecera compacta móvil */
+  .mobile-brand-header {
+    display: flex;
+  }
+
   .login-form-side {
-    padding: 32px 24px;
+    width: 100%;
+    max-width: 440px;
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 32px 24px calc(24px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.4);
+    margin: auto 0;
   }
-  .hero-main-title {
-    font-size: 1.6rem;
+
+  .form-title {
+    font-size: 1.7rem;
+  }
+
+  .login-input {
+    font-size: 16px; /* Evita zoom automático en Safari iOS */
+  }
+}
+
+@media (max-width: 480px) {
+  .login-split-page {
+    padding: 0;
+    background: #ffffff;
+  }
+
+  .login-form-side {
+    border-radius: 0;
+    box-shadow: none;
+    padding: 24px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+    min-height: 100vh;
+    min-height: 100dvh;
+    justify-content: space-between;
+  }
+
+  .form-title {
+    font-size: 1.55rem;
+  }
+
+  .form-subtitle {
+    font-size: 0.86rem;
   }
 }

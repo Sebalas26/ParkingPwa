@@ -7,7 +7,32 @@
 
 ## 📋 Registro Cronológico de Cambios
 
-### [2026-08-26 15:39:00] - [FEAT] [PWA] [LIFECYCLE] - Modal Bloqueante de Actualización Obligatoria con Detección Activa y Purga Total de Caché
+### [2026-08-26 15:48:00] - [FEAT] [PWA] [LOGIN-MOBILE] - Optimización Móvil de Login, Credenciales Limpias y Versión Dinámica del Sistema (.env)
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"quita el llenado automatico lo de usuario y contraseña eso deberia estar vacia, aparte modifica el login para que se vea bien en movil como deberia ser un login en movil por que cuando se instale la aplicacion en un dispositivo se vea perfectamente, aparte tambien agrega la version del sistema eso deberia estar en el .env donde yo le vaya cambiando la version para asi saber que si actualizo y en que version estamos trabajando inica con 0.0.1 Dev analiza esos cambios."*
+- **🤖 Resumen Técnico para la IA**:
+  1. **Credenciales Vacías por Defecto (`Login.tsx`)**:
+     - Se eliminaron los valores hardcodeados de usuario (`admin`) y contraseña (`Admin2026*`). Los estados ahora inicializan en blanco `""` con placeholders limpios.
+     - Se incorporó alternancia de visibilidad de contraseña (`Eye` / `EyeOff` de `lucide-react`) para mejorar la ergonomía táctil en smartphones.
+  2. **Diseño Mobile-First para PWA Instalada (`Login.css`)**:
+     - Contenedor con `min-height: 100dvh` y soporte de safe areas (`safe-area-inset-bottom`) para evitar saltos o elementos cortados por la barra del navegador o teclado virtual.
+     - En pantallas móviles (`<= 960px` y `<= 480px`), el hero institucional se condensa en un encabezado de marca compacto ("PARK CONTROL • TU PUNTO DE LLEGADA") y el formulario se adapta como tarjeta centrada con inputs táctiles de 48px+.
+  3. **Versión Dinámica del Sistema (`.env` -> `VITE_APP_VERSION`)**:
+     - Variable de entorno `VITE_APP_VERSION="0.0.1 Dev"` configurada en `.env`.
+     - Integrada dinámicamente con fallback (`import.meta.env.VITE_APP_VERSION || '0.0.1 Dev'`) en:
+       - Pie de página del Login (`v0.0.1 Dev`).
+       - Barra lateral del Dashboard (`sidebar-footer`).
+       - Modal bloqueante de actualización (`UpdatePromptModal.tsx`).
+- **📦 Componentes Modificados**:
+  - `.env`
+  - `src/features/auth/ui/Login.tsx`
+  - `src/features/auth/ui/Login.css`
+  - `src/shared/ui/DashboardLayout.tsx`
+  - `src/shared/ui/UpdatePromptModal.tsx`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript). Generación correcta de bundle y Service Worker precache.
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
   > *"Necesito hacer un cambio en la pwa de react, sucede que se realiza el despliegue completo bien pero en el navegador se queda pegado el cache entonces necesito que el sistema como es una pwa detecte cuando existe otro cambio en el servidor aparezca una modal que bloquee al usuario o mejor dicho obligue si o si a que actualice eso haga que si o si refrersque todo y elimine cache del navegador o si la tienen instalada si me explico ? dime que tan dificil sería hacer eso ? analiza eso ."*
