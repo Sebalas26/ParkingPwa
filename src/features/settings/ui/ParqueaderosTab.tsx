@@ -37,15 +37,6 @@ import { useBranchContext } from '../../../shared/context/ParqueaderoContext';
 import { authService } from '../../auth/data/authService';
 import { formatCurrencyInput, parseCurrencyInput } from '../../../shared/utils/currencyUtils';
 
-const VEHICLE_TYPES = [
-  { type: 0, label: 'Automóvil / Sedán (🚗)', defaultName: 'Automóvil / Sedán', icon: 'IconCar' },
-  { type: 1, label: 'Motocicleta (🏍️)', defaultName: 'Motocicleta', icon: 'IconMotorcycle' },
-  { type: 2, label: 'Vehículo Pesado / Camión (🚚)', defaultName: 'Vehículo Pesado / Camión', icon: 'IconTruck' },
-  { type: 3, label: 'Furgón / Minibús / Van (🚐)', defaultName: 'Furgón / Minibús', icon: 'IconVan' },
-  { type: 4, label: 'Bicicleta (🚲)', defaultName: 'Bicicleta', icon: 'IconBike' },
-  { type: 5, label: 'Camioneta / SUV (🚙)', defaultName: 'Camioneta / SUV', icon: 'IconCar' },
-];
-
 export const ParqueaderosTab: React.FC = () => {
   const { refreshBranches, activeBranchId } = useBranchContext();
   const [branches, setBranches] = useState<BranchDto[]>([]);
