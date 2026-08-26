@@ -17,7 +17,7 @@ export const UpdatePromptModal: React.FC = () => {
   } = useRegisterSW({
     onRegistered(registration) {
       if (registration) {
-        // 1. Sondeo ultrarrápido del Service Worker cada 10 segundos
+        // 1. Sondeo del Service Worker cada 10 segundos
         const swInterval = setInterval(() => {
           registration.update().catch((err) => {
             console.warn('[PWA SW Update] Verificación de Service Worker:', err);
@@ -32,8 +32,14 @@ export const UpdatePromptModal: React.FC = () => {
     },
   });
 
-  // 2. Motor 2: Sondeo directo a /version.json (Estilo Angular SwUpdate instantáneo)
+  // 2. Motor 2: Sondeo directo a /version.json (Estilo Angular SwUpdate)
   const checkForVersionJson = useCallback(async () => {
+    // Si acaba de actualizarse en los últimos 8 segundos, evitar re-chequeo transitorio
+    const lastUpdateTimestamp = Number(sessionStorage.getItem('pwa_just_updated') || '0');
+    if (Date.now() - lastUpdateTimestamp < 8000) {
+      return;
+    }
+
     try {
       const response = await fetch(`/version.json?_t=${Date.now()}`, {
         cache: 'no-store',
@@ -46,7 +52,11 @@ export const UpdatePromptModal: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         if (data && data.buildTime) {
-          if (data.buildTime > localBuildTimeRef.current || (data.version && data.version !== currentAppVersion)) {
+          // Detectar si el servidor tiene un build más reciente o versión diferente
+          const isNewerBuild = data.buildTime > localBuildTimeRef.current;
+          const isDifferentVersion = data.version && data.version !== currentAppVersion;
+
+          if (isNewerBuild || isDifferentVersion) {
             console.log('[PWA Version Tracker] Nueva versión detectada en servidor:', data);
             setHasNewVersion(true);
           }
@@ -58,13 +68,13 @@ export const UpdatePromptModal: React.FC = () => {
   }, [currentAppVersion]);
 
   useEffect(() => {
-    // Chequeo inicial inmediato tras montar
+    // Chequeo inicial
     checkForVersionJson();
 
     // Chequeo periódico cada 10 segundos
     const versionInterval = setInterval(checkForVersionJson, 10 * 1000);
 
-    // Chequeo inmediato al reenfocar la ventana o volver a la app
+    // Chequeo al reenfocar
     const handleFocus = () => {
       checkForVersionJson();
     };
@@ -86,6 +96,9 @@ export const UpdatePromptModal: React.FC = () => {
     if (isUpdating) return;
     setIsUpdating(true);
 
+    // Marcar marca de tiempo para prevenir bucle en la recarga
+    sessionStorage.setItem('pwa_just_updated', Date.now().toString());
+
     try {
       // 1. Purgar todo el almacenamiento en caché del navegador (CacheStorage)
       if ('caches' in window) {
@@ -98,19 +111,23 @@ export const UpdatePromptModal: React.FC = () => {
         );
       }
 
-      // 2. Notificar al Service Worker para activar la nueva versión (skipWaiting)
+      // 2. Desregistrar Service Workers activos viejos para liberar index.html
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const reg of registrations) {
+          await reg.unregister();
+        }
+      }
+
+      // 3. Forzar activación con skipWaiting
       await updateServiceWorker(true);
     } catch (error) {
       console.error('[PWA Update Execution Error]:', error);
     } finally {
-      // 3. Forzar recarga total limpia de la aplicación en la raíz o ruta actual
+      // 4. Redirección forzada sin caché hacia la raíz limpia
       setTimeout(() => {
-        if (window.location.pathname === '/login') {
-          window.location.href = '/';
-        } else {
-          window.location.reload();
-        }
-      }, 250);
+        window.location.replace(`/?_v=${Date.now()}`);
+      }, 300);
     }
   };
 

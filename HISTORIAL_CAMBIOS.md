@@ -7,7 +7,26 @@
 
 ## 📋 Registro Cronológico de Cambios
 
-### [2026-08-26 16:07:00] - [FIX] [PWA] [SPA-ROUTING] - Unificación de Login en Ruta Raíz `/` y Reglas SPA Fallback para Servidores Web (web.config y .htaccess)
+### [2026-08-26 16:13:00] - [FIX] [PWA] [UPDATE-LOOP] - Eliminación de Bucle Infinito de Actualización (skipWaiting, clientsClaim, Desregistro de SW y Cache Busting)
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"Ups ocurrio algo raro ya no me manda a un 404, pero le doy actualizar intenta quedar en el login y boom vuelve a salir el tema de actualización y así un bucle completo que sucede hay ? ya desde que le de actualizar yad eberia saltar eso no ?"*
+- **🤖 Resumen Técnico para la IA**:
+  1. **Activación Inmediata de Service Worker (`vite.config.ts`)**:
+     - Se añadieron `skipWaiting: true` y `clientsClaim: true` en la configuración `workbox` de `VitePWA` para que el nuevo SW reclame los clientes inmediatamente sin retenciones de hilos ni estados *waiting* residuales.
+  2. **Purga, Desregistro y Recarga Limpia (`UpdatePromptModal.tsx`)**:
+     - Al presionar *"Actualizar Ahora"*:
+       1. Guarda marca de tiempo en `sessionStorage` (`pwa_just_updated`) para evitar re-disparos accidentales transitorios durante los primeros 8 segundos de carga.
+       2. Purgar todas las claves de `CacheStorage` (`window.caches.delete`).
+       3. Desregistrar explícitamente todos los Service Workers existentes (`navigator.serviceWorker.getRegistrations() -> unregister()`) para asegurar que liberen el `index.html` anterior.
+       4. Invocar `updateServiceWorker(true)`.
+       5. Reemplazar la URL forzando una petición HTTP limpia sin caché: `window.location.replace('/?_v=' + Date.now())`.
+- **📦 Componentes Modificados**:
+  - `vite.config.ts`
+  - `src/shared/ui/UpdatePromptModal.tsx`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript). Precache y bundle generados exitosamente.
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
   > *"Funciono excelente pero tenemos un error sucede que cuando se coloca en el navegador www.parking-flow.com el de una pues ingresa al login osea la ruta queda www.parking-flow.com/login pero cuando le doy click al actualizar ahora el sistema manda a esa ruta y esa ruta no existe en el servidor, el deberia en la rutas no se como se maneja aca en react pero que el login lo redirija a la pantalla www.parking-flow.com si me hago entender se que eso es temas de enrutamiento de la pwa analiza eso y me explicas."*
