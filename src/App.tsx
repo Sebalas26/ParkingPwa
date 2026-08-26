@@ -9,7 +9,6 @@ import { Settings } from './features/settings/ui/Settings';
 import { Caja } from './features/caja/ui/Caja';
 import { Novedades } from './features/novedades/ui/Novedades';
 import { ParqueaderoProvider } from './shared/context/ParqueaderoContext';
-import { UpdatePromptModal } from './shared/ui/UpdatePromptModal';
 import { authService } from './features/auth/data/authService';
 
 const RootAuthHandler: React.FC = () => {
@@ -29,7 +28,6 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 function App() {
   return (
     <ParqueaderoProvider>
-      <UpdatePromptModal />
       <Router>
         <Routes>
           {/* Ruta raíz limpia: Muestra el Login directamente o Dashboard si ya inició sesión */}

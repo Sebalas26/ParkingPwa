@@ -1,38 +1,12 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
-import fs from 'node:fs';
-import path from 'node:path';
-
-const buildTimestamp = Date.now();
-
-function versionTrackerPlugin() {
-  return {
-    name: 'version-tracker-plugin',
-    buildStart() {
-      const publicDir = path.resolve(__dirname, 'public');
-      if (!fs.existsSync(publicDir)) {
-        fs.mkdirSync(publicDir, { recursive: true });
-      }
-      const versionData = {
-        version: process.env.VITE_APP_VERSION || '0.0.1 Dev',
-        buildTime: buildTimestamp,
-        timestampIso: new Date(buildTimestamp).toISOString(),
-      };
-      fs.writeFileSync(path.join(publicDir, 'version.json'), JSON.stringify(versionData, null, 2));
-    },
-  };
-}
 
 export default defineConfig({
-  define: {
-    __APP_BUILD_TIME__: buildTimestamp,
-  },
   plugins: [
     react(),
-    versionTrackerPlugin(),
     VitePWA({
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       injectRegister: 'auto',
       includeAssets: [
         'favicon.svg',
@@ -74,15 +48,9 @@ export default defineConfig({
         ],
       },
       workbox: {
-        skipWaiting: true,
-        clientsClaim: true,
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest,json}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
         cleanupOutdatedCaches: true,
         runtimeCaching: [
-          {
-            urlPattern: /\/version\.json/i,
-            handler: 'NetworkOnly',
-          },
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: 'CacheFirst',
