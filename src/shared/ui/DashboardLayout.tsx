@@ -89,7 +89,7 @@ export const DashboardLayout: React.FC = () => {
 
   return (
     <div className="dashboard-layout">
-      {hasZeroBranches && (user?.isAdmin || user?.userRoleId === 1) && (
+      {hasZeroBranches && (user?.isAdmin || user?.userRoleId === 1) && !user?.isSuperAdmin && (
         <ZeroDataOnboardingWizard />
       )}
 
@@ -109,7 +109,7 @@ export const DashboardLayout: React.FC = () => {
           </div>
           <div className="app-title-group">
             <span className="app-name">Parking Flow</span>
-            <span className="app-subtitle">Gestión Multi-Sede</span>
+            <span className="app-subtitle">{user?.isSuperAdmin ? 'Plataforma SaaS Global' : 'Gestión Multi-Sede'}</span>
           </div>
           <button
             type="button"
@@ -133,10 +133,22 @@ export const DashboardLayout: React.FC = () => {
         <WatermarkLogo />
 
         <nav className="nav-menu">
+          {user?.isSuperAdmin && (
+            <button
+              type="button"
+              className={`nav-item ${location.pathname.startsWith('/dashboard/companies') ? 'active' : ''}`}
+              onClick={() => handleNavigate('/dashboard/companies')}
+              style={{ background: location.pathname.startsWith('/dashboard/companies') ? 'rgba(16, 185, 129, 0.2)' : undefined }}
+            >
+              <Building2 size={20} color="#10b981" />
+              <span style={{ fontWeight: 600 }}>Parqueaderos SaaS</span>
+            </button>
+          )}
+
           {authService.hasPermission('dashboard.view') && (
             <button
               type="button"
-              className={`nav-item ${location.pathname === '/dashboard' || location.pathname === '/' ? 'active' : ''}`}
+              className={`nav-item ${location.pathname === '/dashboard' || (!user?.isSuperAdmin && location.pathname === '/') ? 'active' : ''}`}
               onClick={() => handleNavigate('/dashboard')}
             >
               <LayoutDashboard size={20} />
@@ -193,16 +205,6 @@ export const DashboardLayout: React.FC = () => {
               <span>Configuración</span>
             </button>
           )}
-          {(user?.isSuperAdmin || authService.hasPermission('companies.view')) && (
-            <button
-              type="button"
-              className={`nav-item ${location.pathname.startsWith('/dashboard/companies') ? 'active' : ''}`}
-              onClick={() => handleNavigate('/dashboard/companies')}
-            >
-              <Building2 size={20} />
-              <span>Empresas SaaS</span>
-            </button>
-          )}
         </nav>
         <div className="sidebar-footer">
           <div className="profile-avatar">
@@ -210,7 +212,9 @@ export const DashboardLayout: React.FC = () => {
           </div>
           <div className="profile-info">
             <div className="profile-name">{user?.fullName || user?.username || 'Usuario'}</div>
-            <div className="profile-role">{user?.roleName || 'Operador'}</div>
+            <div className="profile-role" style={{ color: user?.isSuperAdmin ? '#10b981' : undefined, fontWeight: user?.isSuperAdmin ? 700 : undefined }}>
+              {user?.isSuperAdmin ? '👑 Super Administrador' : user?.roleName || 'Operador'}
+            </div>
             <div style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 700, marginTop: '2px' }}>v{import.meta.env.VITE_APP_VERSION || '0.0.1 Dev'}</div>
           </div>
           <button type="button" onClick={handleLogout} className="btn-logout-icon" title="Cerrar Sesión">

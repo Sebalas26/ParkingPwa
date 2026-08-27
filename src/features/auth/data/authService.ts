@@ -21,7 +21,12 @@ export const authService = {
       response.roleName === 'Administrador' ||
       Boolean(response.isAdmin);
 
-    const roleName = response.roleName || (isAdminUser ? 'Administrador' : roleId === 2 ? 'Operador' : 'Usuario');
+    const isSuperAdmin = Boolean(
+      response.isSuperAdmin ??
+      (response.roleName === 'Super Administrador' || !response.companyId || username.toLowerCase() === 'admin')
+    );
+
+    const roleName = response.roleName || (isSuperAdmin ? 'Super Administrador' : isAdminUser ? 'Administrador' : roleId === 2 ? 'Operador' : 'Usuario');
 
     // Guardar temporalmente el token para poder llamar a RoleActions
     localStorage.setItem('auth_token', response.token);
@@ -48,14 +53,12 @@ export const authService = {
       ? ALL_PWA_MODULES_LIST
       : (response.modules || []);
 
-    const isSuperAdmin = response.isSuperAdmin ?? (!response.companyId || username.toLowerCase() === 'admin');
-
     const session: UserSession = {
       userId,
       userRoleId: roleId,
       username,
       fullName,
-      roleName,
+      roleName: isSuperAdmin ? 'Super Administrador' : roleName,
       isAdmin: isAdminUser,
       isSuperAdmin,
       companyId: response.companyId,
@@ -88,14 +91,27 @@ export const authService = {
     if (!userJson) return null;
     try {
       const user = JSON.parse(userJson) as UserSession;
-      const isAdmin = user.isAdmin ||
+      const isSuperAdmin = Boolean(
+        user.isSuperAdmin ||
+        user.roleName === 'Super Administrador' ||
+        (!user.companyId && (user.username?.toLowerCase() === 'admin' || user.userRoleId === 1))
+      );
+
+      const isAdmin = isSuperAdmin ||
+        user.isAdmin ||
         user.userRoleId === 1 ||
         user.roleName === 'Administrador' ||
         user.username?.toLowerCase() === 'admin';
 
-      if (isAdmin) {
+      if (isSuperAdmin) {
+        user.isSuperAdmin = true;
         user.isAdmin = true;
-        user.roleName = 'Administrador';
+        user.roleName = 'Super Administrador';
+        user.permissions = ALL_PWA_PERMISSIONS_LIST;
+        user.modules = ALL_PWA_MODULES_LIST;
+      } else if (isAdmin) {
+        user.isAdmin = true;
+        user.roleName = user.roleName || 'Administrador';
         user.permissions = ALL_PWA_PERMISSIONS_LIST;
         user.modules = ALL_PWA_MODULES_LIST;
       }

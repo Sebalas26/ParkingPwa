@@ -49,6 +49,10 @@ const RootAuthHandler: React.FC = () => {
   }
 
   if (authService.isAuthenticated()) {
+    const user = authService.getCurrentUser();
+    if (user?.isSuperAdmin) {
+      return <Navigate to="/dashboard/companies" replace />;
+    }
     return <Navigate to="/dashboard" replace />;
   }
   return <Login />;

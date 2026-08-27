@@ -7,6 +7,31 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-27 14:55:00] - [FEAT] [UI/UX] [SUPERADMIN] - Experiencia Super Administrador, Desactivación de Onboarding de Sedes, Redirección Automática y Visor de Sedes por Parqueadero
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > _"Pero bueno no veo ningun cambio, apenas me loguee si me pidio crear sede pero eso esta mal por que esta así si deberia el usuario superadministrador no crear sedes ni nada por que sucede eso el deberia es crear parqueaderos nada mas. y ya entrar a configurar con el usuario administrador de cada parqueadero o el superadmin capas de entrar al parqueadero y ver todas las sedes de ese parqueadero como deberia funcionar un super admin si me explico,. si cambiaste el tema en la pwa ? por que veo que no se hizo... y creo que deberiamos modificar el rol, el rol de creación deberia ser el superadmin no administrador el administrador es para el que le creamos el parqueadero si me explico"_
+- **🤖 Resumen Técnico para la IA**:
+  1. **Desactivación de `ZeroDataOnboardingWizard` para SuperAdmin (`DashboardLayout.tsx`)**:
+     - Se añadió la condición `!user?.isSuperAdmin` al asistente inicial de creación de sedes, garantizando que el Super Administrador jamás sea bloqueado al ingresar.
+  2. **Redirección Automática al Catálogo SaaS (`Login.tsx`, `App.tsx`)**:
+     - Al autenticar un Super Administrador, la PWA navega automáticamente al módulo de gestión de empresas/parqueaderos (`/dashboard/companies`).
+  3. **Identificación Canónica del Rol (`authService.ts`, `DashboardLayout.tsx`)**:
+     - Se garantiza el display `"👑 Super Administrador"` en el perfil inferior del sidebar y títulos de plataforma SaaS global.
+  4. **Visor de Sedes por Parqueadero (`CompaniesPage.tsx`)**:
+     - Se añadió el botón interactivo de acción **"🏢 Ver Sedes"** en cada fila de la tabla de empresas.
+     - Al pulsarlo, se consulta `GET /api/Branches/company/{companyId}` y se despliega una modal dark glassmorphism con el listado completo de sedes creadas por el cliente (código, nombre, dirección, ciudad, capacidad y estado).
+- **📦 Componentes Modificados**:
+  - `src/features/auth/data/authService.ts`
+  - `src/features/auth/ui/Login.tsx`
+  - `src/features/companies/ui/CompaniesPage.tsx`
+  - `src/shared/ui/DashboardLayout.tsx`
+  - `src/App.tsx`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript).
+
+
 ### [2026-08-27 13:10:00] - [FEAT] [SAAS] [MULTI-TENANT] - Módulo Central de Gestión de Empresas SaaS y Soporte Multi-Tenant
 
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
