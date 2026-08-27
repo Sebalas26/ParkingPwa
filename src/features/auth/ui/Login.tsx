@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../data/authService';
-import { Car, Check, Receipt, BarChart2, Eye, EyeOff, Lock, User, ShieldCheck } from 'lucide-react';
+import { Car, Check, Receipt, BarChart2, Eye, EyeOff, Lock, User, ShieldCheck, ShieldAlert } from 'lucide-react';
 import './Login.css';
 
 export const Login: React.FC = () => {
@@ -9,10 +9,24 @@ export const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [warningMessage, setWarningMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const appVersion = import.meta.env.VITE_APP_VERSION || '0.0.1 Dev';
+
+  useEffect(() => {
+    const reason = sessionStorage.getItem('session_terminated_reason');
+    if (reason) {
+      setWarningMessage(reason);
+      sessionStorage.removeItem('session_terminated_reason');
+    } else {
+      const searchParams = new URLSearchParams(window.location.search);
+      if (searchParams.get('expired') === 'concurrent') {
+        setWarningMessage('Tu sesión fue cerrada porque se inició sesión con esta cuenta desde otro dispositivo o estación de trabajo.');
+      }
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,6 +36,7 @@ export const Login: React.FC = () => {
     }
 
     setError('');
+    setWarningMessage('');
     setIsLoading(true);
 
     try {
@@ -104,6 +119,25 @@ export const Login: React.FC = () => {
             <h2 className="form-title">Iniciar Sesión</h2>
             <p className="form-subtitle">Ingrese sus credenciales de operador para acceder al sistema</p>
           </div>
+
+          {warningMessage && (
+            <div className="login-warning-alert" style={{
+              background: 'rgba(245, 158, 11, 0.14)',
+              border: '1px solid rgba(245, 158, 11, 0.45)',
+              borderRadius: '10px',
+              padding: '12px 14px',
+              marginBottom: '16px',
+              color: '#fbbf24',
+              fontSize: '0.85rem',
+              lineHeight: '1.4',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              <ShieldAlert size={20} style={{ flexShrink: 0 }} />
+              <span>{warningMessage}</span>
+            </div>
+          )}
 
           {error && (
             <div className="login-error-alert">

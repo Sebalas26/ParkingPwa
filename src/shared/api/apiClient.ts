@@ -27,11 +27,13 @@ const getAuthHeaders = (): HeadersInit => {
 
 const handleResponse = async <T>(response: Response): Promise<T> => {
   if (response.status === 401) {
-    // Si recibimos un 401 y no estamos en login, limpiamos la sesión y redirigimos
-    if (!window.location.pathname.includes('/login')) {
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('auth_user');
-      window.location.href = '/login';
+    // Si recibimos un 401, limpiamos la sesión y redirigimos al login con aviso
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_user');
+    sessionStorage.setItem('session_terminated_reason', 'Tu sesión fue cerrada automáticamente porque se inició sesión con esta cuenta desde otro dispositivo o estación de trabajo.');
+    
+    if (window.location.pathname !== '/' || !window.location.search.includes('expired=concurrent')) {
+      window.location.href = '/?expired=concurrent';
     }
   }
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Login } from './features/auth/ui/Login';
 import { DashboardLayout } from './shared/ui/DashboardLayout';
@@ -10,8 +10,43 @@ import { Caja } from './features/caja/ui/Caja';
 import { Novedades } from './features/novedades/ui/Novedades';
 import { ParqueaderoProvider } from './shared/context/ParqueaderoContext';
 import { authService } from './features/auth/data/authService';
+import { apiClient } from './shared/api/apiClient';
+
+const SessionHeartbeat: React.FC = () => {
+  useEffect(() => {
+    if (!authService.isAuthenticated()) return;
+
+    const checkSession = async () => {
+      if (!authService.isAuthenticated()) return;
+      try {
+        await apiClient.get('/Auth/validate-session');
+      } catch {
+        // apiClient handleResponse captura 401 y expulsa al usuario
+      }
+    };
+
+    const handleFocus = () => {
+      checkSession();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    const intervalId = setInterval(checkSession, 30000);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      clearInterval(intervalId);
+    };
+  }, []);
+
+  return null;
+};
 
 const RootAuthHandler: React.FC = () => {
+  const isExpiredParam = window.location.search.includes('expired=');
+  if (isExpiredParam) {
+    return <Login />;
+  }
+
   if (authService.isAuthenticated()) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -22,7 +57,12 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   if (!authService.isAuthenticated()) {
     return <Navigate to="/" replace />;
   }
-  return <>{children}</>;
+  return (
+    <>
+      <SessionHeartbeat />
+      {children}
+    </>
+  );
 };
 
 function App() {
