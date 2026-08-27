@@ -810,7 +810,7 @@ export const ParqueaderosTab: React.FC = () => {
                         )}
                       </div>
 
-                      <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                      <div className="form-row form-grid-rates">
                         <div className="form-group">
                           <label>Valor Hora ($) *</label>
                           <input
@@ -895,54 +895,56 @@ export const ParqueaderosTab: React.FC = () => {
                         )}
                       </div>
 
-                      <table className="data-table" style={{ width: '100%', marginTop: '8px' }}>
-                        <thead>
-                          <tr>
-                            <th>Categoría / Tipo</th>
-                            <th>Valor Hora</th>
-                            <th>Valor Minuto</th>
-                            <th>Máximo Día</th>
-                            <th>Gracia</th>
-                            <th style={{ textAlign: 'right' }}>Acciones</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {branchRates.map((r) => (
-                            <tr key={r.rateId}>
-                              <td>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>
-                                  {Number(r.vehicleType) === 1 ? <Bike size={16} color="#2563eb" /> : Number(r.vehicleType) === 2 ? <Truck size={16} color="#d97706" /> : <Car size={16} color="#07665e" />}
-                                  <span>{r.category}</span>
-                                </div>
-                              </td>
-                              <td><strong>${r.hourRate?.toLocaleString('es-CO') || 0}</strong></td>
-                              <td>${r.minuteRate?.toLocaleString('es-CO') || 0}</td>
-                              <td>${r.fullDayRate?.toLocaleString('es-CO') || 0}</td>
-                              <td>{r.gracePeriodMinutes || 0} min</td>
-                              <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                                <button
-                                  type="button"
-                                  className="btn-icon"
-                                  style={{ padding: '6px', marginRight: '4px' }}
-                                  onClick={() => handleOpenEditRate(r)}
-                                  title="Editar Tarifa"
-                                >
-                                  <Edit2 size={14} />
-                                </button>
-                                <button
-                                  type="button"
-                                  className="btn-icon"
-                                  style={{ padding: '6px', color: '#ef4444' }}
-                                  onClick={() => handleOpenDeleteRate(r)}
-                                  title="Eliminar Tarifa"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </td>
+                      <div className="table-responsive" style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch', marginTop: '8px' }}>
+                        <table className="data-table" style={{ width: '100%', minWidth: '540px' }}>
+                          <thead>
+                            <tr>
+                              <th>Categoría / Tipo</th>
+                              <th>Valor Hora</th>
+                              <th>Valor Minuto</th>
+                              <th>Máximo Día</th>
+                              <th>Gracia</th>
+                              <th style={{ textAlign: 'right' }}>Acciones</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {branchRates.map((r) => (
+                              <tr key={r.rateId}>
+                                <td>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                                    {Number(r.vehicleType) === 1 ? <Bike size={16} color="#2563eb" /> : Number(r.vehicleType) === 2 ? <Truck size={16} color="#d97706" /> : <Car size={16} color="#07665e" />}
+                                    <span>{r.category}</span>
+                                  </div>
+                                </td>
+                                <td style={{ whiteSpace: 'nowrap' }}><strong>${r.hourRate?.toLocaleString('es-CO') || 0}</strong></td>
+                                <td style={{ whiteSpace: 'nowrap' }}>${r.minuteRate?.toLocaleString('es-CO') || 0}</td>
+                                <td style={{ whiteSpace: 'nowrap' }}>${r.fullDayRate?.toLocaleString('es-CO') || 0}</td>
+                                <td style={{ whiteSpace: 'nowrap' }}>{r.gracePeriodMinutes || 0} min</td>
+                                <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                                  <button
+                                    type="button"
+                                    className="btn-icon"
+                                    style={{ padding: '6px', marginRight: '4px' }}
+                                    onClick={() => handleOpenEditRate(r)}
+                                    title="Editar Tarifa"
+                                  >
+                                    <Edit2 size={14} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="btn-icon"
+                                    style={{ padding: '6px', color: '#ef4444' }}
+                                    onClick={() => handleOpenDeleteRate(r)}
+                                    title="Eliminar Tarifa"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   ) : (
                     !isEditingRateModal && (

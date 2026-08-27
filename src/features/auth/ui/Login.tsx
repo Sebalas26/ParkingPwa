@@ -5,8 +5,9 @@ import { Car, Check, Receipt, BarChart2, Eye, EyeOff, Lock, User, ShieldCheck, S
 import './Login.css';
 
 export const Login: React.FC = () => {
-  const [username, setUsername] = useState('');
+  const [username, setUsername] = useState(() => localStorage.getItem('remembered_username') || '');
   const [password, setPassword] = useState('');
+  const [rememberUser, setRememberUser] = useState(() => Boolean(localStorage.getItem('remembered_username')));
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [warningMessage, setWarningMessage] = useState('');
@@ -41,6 +42,13 @@ export const Login: React.FC = () => {
 
     try {
       await authService.login({ username: username.trim(), password });
+
+      if (rememberUser) {
+        localStorage.setItem('remembered_username', username.trim());
+      } else {
+        localStorage.removeItem('remembered_username');
+      }
+
       navigate('/dashboard');
     } catch (err: any) {
       setError(err?.message || 'Usuario o contraseña incorrectos. Por favor verifique sus credenciales.');
@@ -190,14 +198,26 @@ export const Login: React.FC = () => {
               </div>
             </div>
 
+            <div className="login-options-row">
+              <label className="remember-user-label">
+                <input
+                  type="checkbox"
+                  checked={rememberUser}
+                  onChange={(e) => setRememberUser(e.target.checked)}
+                  className="remember-user-checkbox"
+                />
+                <span>Recordar usuario</span>
+              </label>
+            </div>
+
             <button type="submit" className="login-submit-btn" disabled={isLoading}>
               {isLoading ? (
                 <>
                   <div className="btn-spinner" />
-                  <span>Accediendo a la estación...</span>
+                  <span>Ingresando...</span>
                 </>
               ) : (
-                'Acceder a Estación de Trabajo'
+                'Ingresar'
               )}
             </button>
           </form>

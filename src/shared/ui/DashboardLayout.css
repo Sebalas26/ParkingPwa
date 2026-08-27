@@ -304,9 +304,11 @@ a.nav-item.active {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   margin-left: auto;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  min-width: 0;
 }
 
 .branch-selector-pill {
@@ -314,11 +316,13 @@ a.nav-item.active {
   align-items: center;
   gap: 8px;
   background: var(--bg-card, rgba(255, 255, 255, 0.95));
-  padding: 6px 14px;
+  padding: 6px 12px;
   border-radius: 10px;
   border: 1px solid var(--border-color, #cbd5e1);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  max-width: 100%;
+  max-width: 280px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .branch-select-native {
@@ -337,6 +341,9 @@ a.nav-item.active {
   font-size: 0.88rem;
   color: var(--text-primary, #0f172a);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
 }
 
 .btn-action,
@@ -445,28 +452,44 @@ button.btn-action:hover {
   .top-bar {
     margin-bottom: 14px;
     gap: 8px;
+    flex-wrap: nowrap;
+    align-items: center;
   }
 
   .top-bar-left {
     display: flex;
+    flex-shrink: 0;
   }
 
   .header-actions {
-    gap: 8px;
+    gap: 6px;
     margin-left: auto;
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+    min-width: 0;
   }
 
   .branch-selector-pill {
-    padding: 5px 10px;
+    padding: 4px 8px;
+    max-width: 170px;
+    min-width: 0;
+    overflow: hidden;
   }
 
   .branch-select-native {
-    font-size: 0.8rem;
-    max-width: 140px;
+    font-size: 0.78rem;
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .branch-name-single {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .btn-refresh-text {
@@ -474,10 +497,12 @@ button.btn-action:hover {
   }
 
   .btn-refresh-compact {
-    padding: 0 10px !important;
+    padding: 0 !important;
     width: 36px;
     height: 36px;
+    min-width: 36px;
     border-radius: 10px;
+    flex-shrink: 0;
   }
 
   /* Main Content Spacing on Mobile (allows space for bottom nav bar) */
@@ -540,12 +565,28 @@ button.btn-action:hover {
     padding: 10px 10px 85px 10px;
   }
 
+  .branch-selector-pill {
+    max-width: 140px;
+    padding: 4px 6px;
+  }
+
   .branch-select-native {
-    max-width: 110px;
-    font-size: 0.75rem;
+    max-width: 95px;
+    font-size: 0.72rem;
+  }
+
+  .branch-name-single {
+    max-width: 95px;
+    font-size: 0.72rem;
+  }
+
+  .btn-refresh-compact {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
   }
 
   .mobile-brand-name {
-    font-size: 1rem;
+    font-size: 0.95rem;
   }
 }

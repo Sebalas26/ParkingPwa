@@ -340,6 +340,38 @@
   color: #0f172a;
 }
 
+/* Opción Recordar Usuario */
+.login-options-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin: 14px 0 18px 0;
+  user-select: none;
+}
+
+.remember-user-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #475569;
+  transition: color 0.15s ease;
+}
+
+.remember-user-label:hover {
+  color: #0f172a;
+}
+
+.remember-user-checkbox {
+  width: 17px;
+  height: 17px;
+  border-radius: 4px;
+  accent-color: #07665e;
+  cursor: pointer;
+}
+
 .login-submit-btn {
   width: 100%;
   min-height: 52px;

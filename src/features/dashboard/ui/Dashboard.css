@@ -683,27 +683,60 @@
 
 @media (max-width: 768px) {
   .dashboard-container {
-    gap: 1.2rem;
-  }
-
-  .dashboard-hero-header {
-    padding: 1.2rem 1.25rem;
-    flex-direction: column;
-    align-items: flex-start;
     gap: 1rem;
   }
 
+  .dashboard-hero-header {
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.6rem;
+  }
+
+  .dashboard-hero-title {
+    gap: 0.2rem;
+  }
+
+  .dashboard-hero-title > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+
   .dashboard-hero-title h1 {
-    font-size: 1.3rem;
+    font-size: 1.05rem;
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .dashboard-hero-title p {
-    font-size: 0.82rem;
+    display: none;
+  }
+
+  .dashboard-status-badge {
+    padding: 3px 10px;
+    font-size: 0.7rem;
+    flex-shrink: 0;
   }
 
   .dashboard-hero-actions {
     width: 100%;
-    justify-content: space-between;
+    display: flex;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .btn-glass {
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    border-radius: 8px;
+    width: auto;
   }
 
   .dashboard-kpi-grid {
@@ -721,27 +754,41 @@
   }
 
   .slicers-bar-container {
-    padding: 10px 14px;
+    padding: 8px 10px;
+    border-radius: 12px;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+    align-items: stretch;
+    gap: 8px;
   }
 
   .slicers-group {
     width: 100%;
+    display: flex;
+    align-items: center;
     overflow-x: auto;
     flex-wrap: nowrap;
-    padding-bottom: 4px;
+    padding-bottom: 2px;
+    gap: 6px;
     scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
   }
 
   .slicers-group::-webkit-scrollbar {
     display: none;
   }
 
+  .slicer-label {
+    font-size: 0.72rem;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
   .slicer-pill {
     flex-shrink: 0;
     white-space: nowrap;
+    font-size: 0.75rem;
+    padding: 5px 10px;
+    border-radius: 8px;
   }
 
   .quick-search-box {

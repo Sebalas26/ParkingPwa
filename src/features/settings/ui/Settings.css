@@ -125,7 +125,7 @@
   border-radius: 20px;
   width: 100%;
   max-width: 560px;
-  max-height: 90vh;
+  max-height: calc(100dvh - 32px);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
   overflow: hidden;
   display: flex;
@@ -134,6 +134,13 @@
   color: var(--text-primary, #0f172a);
   user-select: none;
   cursor: default;
+}
+
+.form-grid-rates {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
 .modal-header {
@@ -601,14 +608,49 @@
   }
 
   .modal-overlay {
-    padding: 0.75rem;
+    padding: 0.5rem;
   }
 
-  .modal-card {
-    max-width: 95vw;
+  .modal-card,
+  .modal-content {
+    max-width: 96vw;
     width: 100%;
-    padding: 1.25rem;
-    max-height: 90vh;
+    padding: 0;
+    max-height: calc(100dvh - 20px);
+    border-radius: 16px;
+  }
+
+  .form-grid-rates {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px;
+  }
+
+  .modal-subtabs-nav {
+    margin: 0.5rem 0.25rem;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding: 3px;
+    gap: 3px;
+  }
+
+  .modal-subtabs-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .modal-subtab-btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-size: 0.76rem;
+    padding: 6px 10px;
+    gap: 5px;
+  }
+
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .settings-toast {
@@ -625,8 +667,14 @@
     padding: 0.9rem;
   }
 
-  .modal-card {
-    padding: 1rem;
+  .modal-card,
+  .modal-content {
+    max-height: calc(100dvh - 16px);
     border-radius: 14px;
+  }
+
+  .modal-subtab-btn {
+    font-size: 0.72rem;
+    padding: 5px 8px;
   }
 }

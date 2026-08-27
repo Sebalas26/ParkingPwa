@@ -211,80 +211,82 @@ export const UsuariosTab: React.FC = () => {
         )}
       </div>
 
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>NOMBRE COMPLETO</th>
-            <th>DOCUMENTO</th>
-            <th>USUARIO / CORREO</th>
-            <th>ROL</th>
-            <th>ESTADO</th>
-            <th className="text-right">ACCIONES</th>
-          </tr>
-        </thead>
-        <tbody>
-          {usuarios.length > 0 ? (
-            usuarios.map((u) => {
-              const docTypeName = u.identificationTypeDto?.name || u.identificationTypeDto?.identification || 'CC';
-              const roleTitle = u.userRoleDto?.roleName || u.roleName || u.role || (u.userRoleId === 1 ? 'Administrador' : 'Operador');
-              const isActive = u.isActive ?? (u.status === true || u.status === 'Activo' || u.status === 'Active');
-
-              return (
-                <tr key={u.id}>
-                  <td className="font-bold">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <IdCard size={16} color="#07665e" />
-                      <span>{u.fullName || `${u.firstName || ''} ${u.firstSurname || ''}`.trim() || u.username}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <span style={{ fontSize: '0.85rem', color: '#475569' }}>
-                      <strong>{docTypeName}:</strong> {u.identificationNumber || 'N/A'}
-                    </span>
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontWeight: 600, color: '#1e293b' }}>@{u.username}</span>
-                      <span style={{ fontSize: '0.78rem', color: '#64748b' }}>{u.email}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <span className={`badge ${u.userRoleId === 1 || roleTitle.toLowerCase().includes('admin') ? 'badge-primary' : 'badge-info'}`}>
-                      <Shield size={12} style={{ marginRight: '4px' }} />
-                      {roleTitle}
-                    </span>
-                  </td>
-                  <td>
-                    <span className={`badge ${isActive ? 'badge-success' : 'badge-danger'}`}>
-                      {isActive ? 'Activo' : 'Inactivo'}
-                    </span>
-                  </td>
-                  <td className="text-right">
-                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                      {authService.hasPermission('users.edit') && (
-                        <button className="btn-icon" onClick={() => handleOpenEdit(u)} title="Editar Usuario">
-                          <Edit2 size={16} />
-                        </button>
-                      )}
-                      {authService.hasPermission('users.edit') && (
-                        <button className="btn-icon danger" onClick={() => setUserToDelete(u)} title="Eliminar Usuario de la BD">
-                          <Trash2 size={16} />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })
-          ) : (
+      <div className="table-responsive" style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <table className="data-table" style={{ minWidth: '600px' }}>
+          <thead>
             <tr>
-              <td colSpan={6} className="text-center py-6 text-muted">
-                {isLoading ? 'Cargando usuarios...' : 'No hay usuarios registrados.'}
-              </td>
+              <th>NOMBRE COMPLETO</th>
+              <th>DOCUMENTO</th>
+              <th>USUARIO / CORREO</th>
+              <th>ROL</th>
+              <th>ESTADO</th>
+              <th className="text-right">ACCIONES</th>
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {usuarios.length > 0 ? (
+              usuarios.map((u) => {
+                const docTypeName = u.identificationTypeDto?.name || u.identificationTypeDto?.identification || 'CC';
+                const roleTitle = u.userRoleDto?.roleName || u.roleName || u.role || (u.userRoleId === 1 ? 'Administrador' : 'Operador');
+                const isActive = u.isActive ?? (u.status === true || u.status === 'Activo' || u.status === 'Active');
+
+                return (
+                  <tr key={u.id}>
+                    <td className="font-bold">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+                        <IdCard size={16} color="#07665e" />
+                        <span>{u.fullName || `${u.firstName || ''} ${u.firstSurname || ''}`.trim() || u.username}</span>
+                      </div>
+                    </td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: '0.85rem', color: '#475569' }}>
+                        <strong>{docTypeName}:</strong> {u.identificationNumber || 'N/A'}
+                      </span>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', flexDirection: 'column', minWidth: '140px' }}>
+                        <span style={{ fontWeight: 600, color: '#1e293b' }}>@{u.username}</span>
+                        <span style={{ fontSize: '0.78rem', color: '#64748b' }}>{u.email}</span>
+                      </div>
+                    </td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      <span className={`badge ${u.userRoleId === 1 || roleTitle.toLowerCase().includes('admin') ? 'badge-primary' : 'badge-info'}`}>
+                        <Shield size={12} style={{ marginRight: '4px' }} />
+                        {roleTitle}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`badge ${isActive ? 'badge-success' : 'badge-danger'}`}>
+                        {isActive ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </td>
+                    <td className="text-right">
+                      <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                        {authService.hasPermission('users.edit') && (
+                          <button className="btn-icon" onClick={() => handleOpenEdit(u)} title="Editar Usuario">
+                            <Edit2 size={16} />
+                          </button>
+                        )}
+                        {authService.hasPermission('users.edit') && (
+                          <button className="btn-icon danger" onClick={() => setUserToDelete(u)} title="Eliminar Usuario de la BD">
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan={6} className="text-center py-6 text-muted">
+                  {isLoading ? 'Cargando usuarios...' : 'No hay usuarios registrados.'}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {/* Modal Crear/Editar Usuario */}
       {isModalOpen && editingUsuario && (
@@ -297,10 +299,10 @@ export const UsuariosTab: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              <div className="modal-body">
+            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', flex: 1, minHeight: 0 }}>
+              <div className="modal-body" style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '1.25rem' }}>
                 {/* 1. DOCUMENTO DE IDENTIDAD */}
-                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '12px' }}>
+                <div className="form-row form-grid-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
                   <div className="form-group">
                     <label>Tipo Doc.</label>
                     <select
@@ -605,7 +607,7 @@ export const UsuariosTab: React.FC = () => {
                 )}
               </div>
 
-              <div className="modal-footer">
+              <div className="modal-footer" style={{ borderTop: '1px solid var(--border-color, #e2e8f0)', background: '#ffffff', flexShrink: 0, padding: '0.85rem 1.25rem', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                 <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)} disabled={isSavingUser}>
                   Cancelar
                 </button>
