@@ -191,7 +191,7 @@ export const DashboardLayout: React.FC = () => {
         </div>
       </aside>
 
-      <main ref={mainContentRef} className="main-content">
+      <div className="content-wrapper">
         <header className="top-bar">
           <div className="top-bar-left">
             <button
@@ -251,8 +251,10 @@ export const DashboardLayout: React.FC = () => {
           </div>
         </header>
 
-        <Outlet />
-      </main>
+        <main ref={mainContentRef} className="main-content">
+          <Outlet />
+        </main>
+      </div>
 
       {/* Mobile Bottom Navigation Bar (PWA Experience) */}
       <nav className="bottom-nav-bar" aria-label="Navegación Móvil">
