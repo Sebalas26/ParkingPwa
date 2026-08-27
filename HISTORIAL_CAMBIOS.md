@@ -14,11 +14,13 @@
 - **🤖 Resumen Técnico para la IA**:
   1. **Desactivación de `ZeroDataOnboardingWizard` para SuperAdmin (`DashboardLayout.tsx`)**:
      - Se añadió la condición `!user?.isSuperAdmin` al asistente inicial de creación de sedes, garantizando que el Super Administrador jamás sea bloqueado al ingresar.
-  2. **Redirección Automática al Catálogo SaaS (`Login.tsx`, `App.tsx`)**:
+  2. **Consumo de Endpoint Completo `/Auth/login` (`authService.ts`)**:
+     - Se corrigió el servicio de autenticación para invocar `/Auth/login` (`LoginStandardAsync`), el cual devuelve la carga útil completa `AuthResponseDto` (`isSuperAdmin: true`, `roleName: "Super Administrador"`, `companyId: null`), evitando que la PWA caiga en el rol genérico sin flag de SuperAdmin.
+  3. **Redirección Automática al Catálogo SaaS (`Login.tsx`, `App.tsx`)**:
      - Al autenticar un Super Administrador, la PWA navega automáticamente al módulo de gestión de empresas/parqueaderos (`/dashboard/companies`).
-  3. **Identificación Canónica del Rol (`authService.ts`, `DashboardLayout.tsx`)**:
+  4. **Identificación Canónica del Rol (`authService.ts`, `DashboardLayout.tsx`)**:
      - Se garantiza el display `"👑 Super Administrador"` en el perfil inferior del sidebar y títulos de plataforma SaaS global.
-  4. **Visor de Sedes por Parqueadero (`CompaniesPage.tsx`)**:
+  5. **Visor de Sedes por Parqueadero (`CompaniesPage.tsx`)**:
      - Se añadió el botón interactivo de acción **"🏢 Ver Sedes"** en cada fila de la tabla de empresas.
      - Al pulsarlo, se consulta `GET /api/Branches/company/{companyId}` y se despliega una modal dark glassmorphism con el listado completo de sedes creadas por el cliente (código, nombre, dirección, ciudad, capacidad y estado).
 - **📦 Componentes Modificados**:

@@ -4,7 +4,7 @@ import { ALL_PWA_PERMISSIONS_LIST, ALL_PWA_MODULES_LIST } from '../../../shared/
 
 export const authService = {
   login: async (credentials: AuthRequestDto): Promise<UserSession> => {
-    const response = await apiClient.post<AuthResponseDto>('/Auth/authenticate', credentials);
+    const response = await apiClient.post<AuthResponseDto>('/Auth/login', credentials);
 
     if (!response || !response.token) {
       throw new Error(response?.errorMessage || response?.message || 'No se pudo obtener el token de autenticación.');
