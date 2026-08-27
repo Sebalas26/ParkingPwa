@@ -7,6 +7,38 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-27 11:03:00] - [BUGFIX] [UI/UX] [DESKTOP] [PWA] - Corrección de Sidebar Colapsable y Filtros Cortados en Dashboard Web
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"Noto que ahora en la web se daño en la dashboard lo que te encerre en rojo  , tambien cuando en el menu desplegable de lz izquierda, cuando ledoy para ocultarlo, se pierde dejandolo como enla image "*
+- **🤖 Resumen Técnico para la IA**:
+  1. **Análisis de Sidebar Colapsable**: La clase `.sidebar.collapsed` en Desktop tenía `width: 0 !important;` y además `margin-left: -250px !important;`. En un contenedor Flexbox (`.dashboard-layout`), asignar margen negativo a un elemento de ancho cero provocaba que éste tirara del contenedor adyacente (`.content-wrapper`) hacia la izquierda por -250px, desplazándolo completamente fuera de la pantalla (lo que ocultaba el botón de menú hamburguesa y descuadraba la vista).
+  2. **Solución Sidebar**: Se eliminó `margin-left: -250px !important;` de `.sidebar.collapsed`. Al conservar `width: 0`, el menú simplemente se retrae de forma nativa en Flexbox sin romper la geometría del contenedor principal.
+  3. **Análisis de Filtros Cortados (Slicers Bar)**: El contenedor `.dashboard-container` en `Dashboard.css` contaba con `min-height: 100%`, pero al ser un elemento Flex (`flex-shrink: 1` por defecto) anidado en una columna de altura determinada (`.main-content`), el motor de renderizado forzaba su reducción (shrink) para ajustarse, lo que ocasionaba que sus hijos (como `.slicers-bar-container` que posee `overflow: hidden`) colapsaran su altura, cortando los botones de filtros horizontalmente por la mitad.
+  4. **Solución Slicers**: Se añadió `flex-shrink: 0;` explícitamente tanto a `.dashboard-container` como a `.slicers-bar-container` para prohibir la deformación vertical, garantizando que respeten siempre la altura de su contenido (min-content) obligando al contenedor padre a habilitar el scroll si es necesario.
+- **📦 Componentes Modificados**:
+  - `src/shared/ui/DashboardLayout.css`
+  - `src/features/dashboard/ui/Dashboard.css`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript).
+
+### [2026-08-27 10:45:00] - [BUGFIX] [UI/UX] [MOBILE] [PWA] - Corrección de Z-Index en Modal de Usuarios Oculto por Bottom Navigation
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"Quisiera que me mejoraras esto porque al abrir mi pwa en mobile se desajusta cuando quiero crear o editar un usuario , pues no se ven los botones, recuerda que esto no debe afectar la web"*
+- **🤖 Resumen Técnico para la IA**:
+  1. **Análisis del Problema**: En la vista móvil, el contenedor `.content-wrapper` tenía asignado `z-index: 1; position: relative;`. Esto generaba un *Stacking Context* que atrapaba al modal (`.modal-overlay` con `z-index: 9000`) dentro de él. Como el *bottom navigation bar* (`.bottom-nav-bar`) tenía `z-index: 40` y estaba fuera del `.content-wrapper`, este se renderizaba obligatoriamente por encima de cualquier elemento dentro del `.content-wrapper`, ocultando así la parte inferior del modal (los botones de Guardar y Cancelar).
+  2. **Solución Implementada (`DashboardLayout.css`)**: 
+     - Se eliminó la regla `z-index: 1;` del `.content-wrapper` exclusivamente en el `@media (max-width: 768px)`.
+     - Esto destruye el *Stacking Context* innecesario, permitiendo que el modal (`z-index: 9000`) ahora flote correctamente sobre la barra inferior (`z-index: 40`) en dispositivos móviles.
+     - **Nota**: El cambio se realizó estrictamente en las directivas de responsividad móvil, asegurando al 100% que la versión web (Desktop) se mantenga completamente inalterada tal como fue requerido.
+- **📦 Componentes Modificados**:
+  - `src/shared/ui/DashboardLayout.css`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript).
+
 ### [2026-08-27 10:20:00] - [FEATURE] [UI/UX] [NOVEDADES] [SIDEBAR] - Puesta en Marcha de Módulo de Novedades (Bloqueo Centralizado de Placas) y Sidebar Colapsable en Desktop Web
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:

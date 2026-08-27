@@ -33,7 +33,6 @@
 .sidebar.collapsed {
   width: 0 !important;
   min-width: 0 !important;
-  margin-left: -250px !important;
   opacity: 0 !important;
   pointer-events: none !important;
   box-shadow: none !important;
@@ -528,7 +527,6 @@ button.btn-action:hover {
     min-height: 0;
     overflow: hidden;
     position: relative;
-    z-index: 1;
   }
 
   /* Top Bar Mobile (Solid Opaque Header) */
