@@ -193,6 +193,16 @@ export const DashboardLayout: React.FC = () => {
               <span>Configuración</span>
             </button>
           )}
+          {(user?.isSuperAdmin || authService.hasPermission('companies.view')) && (
+            <button
+              type="button"
+              className={`nav-item ${location.pathname.startsWith('/dashboard/companies') ? 'active' : ''}`}
+              onClick={() => handleNavigate('/dashboard/companies')}
+            >
+              <Building2 size={20} />
+              <span>Empresas SaaS</span>
+            </button>
+          )}
         </nav>
         <div className="sidebar-footer">
           <div className="profile-avatar">

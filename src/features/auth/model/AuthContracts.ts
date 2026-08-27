@@ -24,6 +24,9 @@ export interface AuthResponseDto {
   username?: string;
   roleName?: string;
   isAdmin?: boolean;
+  isSuperAdmin?: boolean;
+  companyId?: number;
+  companyName?: string;
   errorMessage?: string;
   message?: string;
   permissions?: string[];
@@ -38,6 +41,9 @@ export interface UserSession {
   fullName: string;
   roleName: string;
   isAdmin: boolean;
+  isSuperAdmin?: boolean;
+  companyId?: number;
+  companyName?: string;
   token: string;
   permissions: string[];
   modules: string[];

@@ -48,6 +48,8 @@ export const authService = {
       ? ALL_PWA_MODULES_LIST
       : (response.modules || []);
 
+    const isSuperAdmin = response.isSuperAdmin ?? (!response.companyId || username.toLowerCase() === 'admin');
+
     const session: UserSession = {
       userId,
       userRoleId: roleId,
@@ -55,6 +57,9 @@ export const authService = {
       fullName,
       roleName,
       isAdmin: isAdminUser,
+      isSuperAdmin,
+      companyId: response.companyId,
+      companyName: response.companyName,
       token: response.token,
       permissions: userPermissions,
       modules: userModules,

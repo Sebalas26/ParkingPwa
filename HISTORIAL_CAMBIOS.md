@@ -7,58 +7,47 @@
 
 ## 📋 Registro Cronológico de Cambios
 
-### [2026-08-27 12:49:00] - [FEAT/BUGFIX] [UI/UX] [PWA] - Actualización de Logo, Fuente y Ajustes de Checkbox
-- **Autor**: Antigravity AI Assistant & Frontend Software Architect
-- **💬 Prompt Original del Usuario**:
-  > *"Bien pero se muestra pegado el checkbox co n el texto , adicional veo que en la version mobile se ve el logo y texto en la parte superior de iniciar sesion, podrias dejrme en vez de esto este logo que te pasare, esto si quiero que se vea en la web y en la mobile, adicional ponle la fuente de inter"*
-- **🤖 Resumen Técnico para la IA**:
-  1. **Espaciado Checkbox**: Se aplicó `margin-right: 8px` directo al `.remember-user-checkbox` para forzar la separación con el texto que lo acompaña, solucionando el problema de colapso de margen flex.
-  2. **Reemplazo de Logo Global**: Se copió el nuevo logo aportado por el usuario (`media_1787852748682.png`) como `logo-new.png` en `public/`. En `Login.tsx`, se retiraron los bloques de texto redundantes (tanto en `.hero-brand-text-container` Desktop como en `.mobile-brand-texts` Móvil) para dejar únicamente la nueva imagen (`<img src="/logo-new.png" ... />`).
-  3. **Tipografía Inter**: Se reforzó la declaración explícita de `font-family: 'Inter', system-ui, -apple-system, sans-serif;` en `.login-input` y `.login-submit-btn` para asegurar la renderización de la fuente en controles de formulario, ya que a veces los navegadores no la heredan automáticamente del `body` o `.login-split-page`.
-- **📦 Componentes Modificados**:
-  - `src/features/auth/ui/Login.tsx`
-  - `src/features/auth/ui/Login.css`
-  - `public/logo-new.png` (Archivo nuevo)
-  - `HISTORIAL_CAMBIOS.md`
-- **✅ Verificación y Compilación**:
-  - `npm run build`: **0 Errores** (Vite + TypeScript).
+### [2026-08-27 13:10:00] - [FEAT] [SAAS] [MULTI-TENANT] - Módulo Central de Gestión de Empresas SaaS y Soporte Multi-Tenant
 
-### [2026-08-27 12:20:00] - [FEAT] [UI/UX] [PWA] - Mostrar Versión del Sistema en Login
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
-  > *"Muestra la version en el login"*
+  > _"Tengo una consulta, se penso que el sistema es para venderlo pero es un saas completo entonces necesitamos un super admin que nosotros creemos entremos creemos un administrador y le demos ese usuario al man y que le ingrese cree su parqueadero y sus sedes y si le vendemos el producto a otras personas e igual se les cree su usuario administrador y que ingrese registre su parqueadero y sus sedes si me explico como se quiere manejar antes eso si lo entiendes encesito que revises toda la BD si la logica que tenemos si nos da para eso o que tanto se deberia cambiar ? necesito que revises eso y has un analisis completo y el plan completo que se deberia tomar."_
 - **🤖 Resumen Técnico para la IA**:
-  1. Se reintrodujo la lectura de la variable de entorno `VITE_APP_VERSION` en `Login.tsx`.
-  2. Se agregó el bloque JSX `<div className="footer-version-tag">` debajo del texto de seguridad en el formulario derecho.
-  3. Se añadieron los estilos CSS correspondientes en `Login.css` (alineación centrada en `.login-form-footer`, y resaltado en verde institucional para la versión).
+  1. **Contratos y Servicio de Empresas (`CompanyContracts.ts`, `companyService.ts`)**:
+     - Definición de tipos `CompanyDto`, `CreateCompanyDto`, `UpdateCompanyDto`.
+     - Creación de servicio con operaciones `getAll`, `getActive`, `getById`, `create`, `update`, `toggleStatus`.
+  2. **Interfaz de Gestión de Empresas SaaS (`CompaniesPage.tsx`, `CompaniesPage.css`)**:
+     - Panel SaaS Dark Glassmorphism con 4 KPI Cards: Empresas Registradas, Suscripciones Activas, Sedes en Red y Usuarios Globales.
+     - Tabla interactiva con badges de plan (`Basic`, `Pro`, `Enterprise`), indicadores de estado activo/suspendido, y acciones de edición y alternancia de estado.
+     - Modal de Aprovisionamiento: Permite al SuperAdmin registrar una nueva empresa junto con las credenciales del Administrador inicial.
+     - Modal de Edición: Ajuste de límites de sedes, plan contratado y datos de contacto.
+  3. **Control de Sesión y Navegación (`authService.ts`, `AuthContracts.ts`, `DashboardLayout.tsx`, `App.tsx`)**:
+     - Soporte para `companyId`, `companyName` e `isSuperAdmin` en el estado de autenticación.
+     - Botón de navegación dinámico "🏢 Empresas SaaS" en el sidebar visible para SuperAdmins o usuarios con permiso `companies.view`.
+     - Registro de ruta protegida `/dashboard/companies`.
+  4. **Método `patch` en `apiClient.ts`**:
+     - Agregado soporte para peticiones HTTP PATCH.
 - **📦 Componentes Modificados**:
-  - `src/features/auth/ui/Login.tsx`
-  - `src/features/auth/ui/Login.css`
-  - `HISTORIAL_CAMBIOS.md`
-- **✅ Verificación y Compilación**:
-  - `npm run build`: **0 Errores** (Vite + TypeScript).
-
-### [2026-08-27 12:10:00] - [BUGFIX] [UI/UX] [PWA] - Restauración de funcionalidad "Recordar Usuario"
-- **Autor**: Antigravity AI Assistant & Frontend Software Architect
-- **💬 Prompt Original del Usuario**:
-  > *"pero quitaste el recordar usuario"*
-- **🤖 Resumen Técnico para la IA**:
-  1. Se reintrodujo el estado `rememberUser` en `Login.tsx` leyendo desde `localStorage`.
-  2. Se añadió nuevamente la lógica condicional en `handleLogin` para gestionar la persistencia de sesión (`setItem` / `removeItem`).
-  3. Se incorporó el componente visual (Checkbox) justo encima del botón de acceso, incluyendo sus respectivos estilos CSS `.login-options-row` y `.remember-user-checkbox` con `accent-color: #0d9488` para mantener el tono verde turquesa institucional.
-- **📦 Componentes Modificados**:
-  - `src/features/auth/ui/Login.tsx`
-  - `src/features/auth/ui/Login.css`
+  - `src/features/companies/model/CompanyContracts.ts` (Nuevo)
+  - `src/features/companies/data/companyService.ts` (Nuevo)
+  - `src/features/companies/ui/CompaniesPage.tsx` (Nuevo)
+  - `src/features/companies/ui/CompaniesPage.css` (Nuevo)
+  - `src/features/auth/model/AuthContracts.ts`
+  - `src/features/auth/data/authService.ts`
+  - `src/shared/api/apiClient.ts`
+  - `src/shared/ui/DashboardLayout.tsx`
+  - `src/App.tsx`
   - `HISTORIAL_CAMBIOS.md`
 - **✅ Verificación y Compilación**:
   - `npm run build`: **0 Errores** (Vite + TypeScript).
 
 ### [2026-08-27 11:55:00] - [FEAT] [UI/UX] [PWA] - Rediseño de Vista Login al estilo WPF
+
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
-  > *"perfecto, asi vamos bien , quiero unos ajustes pequeño como en login, dejamelo asi com mi wpf  , ahi te comparto como deberiade quedar y el logo (2da imagen)"*
+  > _"perfecto, asi vamos bien , quiero unos ajustes pequeño como en login, dejamelo asi com mi wpf , ahi te comparto como deberiade quedar y el logo (2da imagen)"_
 - **🤖 Resumen Técnico para la IA**:
-  1. **Reestructuración Desktop (`Login.tsx`)**: Se limpió la columna izquierda eliminando textos comerciales excesivos para imitar el diseño limpio del WPF. Ahora consta de un fondo oscuro puro, logo centrado ampliado, y títulos con un divisor (`.subtitle-line`). En la parte inferior, se añadió el *pill* estilo POS.
+  1. **Reestructuración Desktop (`Login.tsx`)**: Se limpió la columna izquierda eliminando textos comerciales excesivos para imitar el diseño limpio del WPF. Ahora consta de un fondo oscuro puro, logo centrado ampliado, y títulos con un divisor (`.subtitle-line`). En la parte inferior, se añadió el _pill_ estilo POS.
   2. **Columna Derecha y Botones de Ventana**: Se emuló el control de ventanas (Minimizar, Cerrar) en la barra superior derecha, junto al indicador verde "API Central Online".
   3. **Estilos y Componentes (`Login.css`)**: Se ajustaron los colores del fondo derecho a `#f8fafc`, las entradas de texto sin iconos internos pero con bordes definidos, alineadas con la imagen de referencia. Se reordenó Flexbox y `gap` para coincidir perfectamente con la estructura y los paddings originales.
   4. **Responsividad Móvil**: Se mantuvo intacto el diseño para móvil bajo el Media Query `(max-width: 960px)` para asegurar que las funcionalidades base de la PWA no se afecten.
@@ -70,9 +59,10 @@
   - `npm run build`: **0 Errores** (Vite + TypeScript).
 
 ### [2026-08-27 11:03:00] - [BUGFIX] [UI/UX] [DESKTOP] [PWA] - Corrección de Sidebar Colapsable y Filtros Cortados en Dashboard Web
+
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
-  > *"Noto que ahora en la web se daño en la dashboard lo que te encerre en rojo  , tambien cuando en el menu desplegable de lz izquierda, cuando ledoy para ocultarlo, se pierde dejandolo como enla image "*
+  > _"Noto que ahora en la web se daño en la dashboard lo que te encerre en rojo , tambien cuando en el menu desplegable de lz izquierda, cuando ledoy para ocultarlo, se pierde dejandolo como enla image "_
 - **🤖 Resumen Técnico para la IA**:
   1. **Análisis de Sidebar Colapsable**: La clase `.sidebar.collapsed` en Desktop tenía `width: 0 !important;` y además `margin-left: -250px !important;`. En un contenedor Flexbox (`.dashboard-layout`), asignar margen negativo a un elemento de ancho cero provocaba que éste tirara del contenedor adyacente (`.content-wrapper`) hacia la izquierda por -250px, desplazándolo completamente fuera de la pantalla (lo que ocultaba el botón de menú hamburguesa y descuadraba la vista).
   2. **Solución Sidebar**: Se eliminó `margin-left: -250px !important;` de `.sidebar.collapsed`. Al conservar `width: 0`, el menú simplemente se retrae de forma nativa en Flexbox sin romper la geometría del contenedor principal.
@@ -86,14 +76,15 @@
   - `npm run build`: **0 Errores** (Vite + TypeScript).
 
 ### [2026-08-27 10:45:00] - [BUGFIX] [UI/UX] [MOBILE] [PWA] - Corrección de Z-Index en Modal de Usuarios Oculto por Bottom Navigation
+
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
-  > *"Quisiera que me mejoraras esto porque al abrir mi pwa en mobile se desajusta cuando quiero crear o editar un usuario , pues no se ven los botones, recuerda que esto no debe afectar la web"*
+  > _"Quisiera que me mejoraras esto porque al abrir mi pwa en mobile se desajusta cuando quiero crear o editar un usuario , pues no se ven los botones, recuerda que esto no debe afectar la web"_
 - **🤖 Resumen Técnico para la IA**:
-  1. **Análisis del Problema**: En la vista móvil, el contenedor `.content-wrapper` tenía asignado `z-index: 1; position: relative;`. Esto generaba un *Stacking Context* que atrapaba al modal (`.modal-overlay` con `z-index: 9000`) dentro de él. Como el *bottom navigation bar* (`.bottom-nav-bar`) tenía `z-index: 40` y estaba fuera del `.content-wrapper`, este se renderizaba obligatoriamente por encima de cualquier elemento dentro del `.content-wrapper`, ocultando así la parte inferior del modal (los botones de Guardar y Cancelar).
-  2. **Solución Implementada (`DashboardLayout.css`)**: 
+  1. **Análisis del Problema**: En la vista móvil, el contenedor `.content-wrapper` tenía asignado `z-index: 1; position: relative;`. Esto generaba un _Stacking Context_ que atrapaba al modal (`.modal-overlay` con `z-index: 9000`) dentro de él. Como el _bottom navigation bar_ (`.bottom-nav-bar`) tenía `z-index: 40` y estaba fuera del `.content-wrapper`, este se renderizaba obligatoriamente por encima de cualquier elemento dentro del `.content-wrapper`, ocultando así la parte inferior del modal (los botones de Guardar y Cancelar).
+  2. **Solución Implementada (`DashboardLayout.css`)**:
      - Se eliminó la regla `z-index: 1;` del `.content-wrapper` exclusivamente en el `@media (max-width: 768px)`.
-     - Esto destruye el *Stacking Context* innecesario, permitiendo que el modal (`z-index: 9000`) ahora flote correctamente sobre la barra inferior (`z-index: 40`) en dispositivos móviles.
+     - Esto destruye el _Stacking Context_ innecesario, permitiendo que el modal (`z-index: 9000`) ahora flote correctamente sobre la barra inferior (`z-index: 40`) en dispositivos móviles.
      - **Nota**: El cambio se realizó estrictamente en las directivas de responsividad móvil, asegurando al 100% que la versión web (Desktop) se mantenga completamente inalterada tal como fue requerido.
 - **📦 Componentes Modificados**:
   - `src/shared/ui/DashboardLayout.css`
@@ -102,9 +93,10 @@
   - `npm run build`: **0 Errores** (Vite + TypeScript).
 
 ### [2026-08-27 10:20:00] - [FEATURE] [UI/UX] [NOVEDADES] [SIDEBAR] - Puesta en Marcha de Módulo de Novedades (Bloqueo Centralizado de Placas) y Sidebar Colapsable en Desktop Web
+
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
-  > *"Ahora ayudame en poner en ejecucion el modulo de novedades, ayudame a conectarla creacion de la novedad, la cual debe de ir por api hacia a BD, para que luego el wpf pueda identificar que existe una placa con novedad y no permita registarle entrada (no toques el wpf), adicional quiero que el menu desplegable de a izquierda en la web permita ocultarse asi como se hace en la version mobile"*
+  > _"Ahora ayudame en poner en ejecucion el modulo de novedades, ayudame a conectarla creacion de la novedad, la cual debe de ir por api hacia a BD, para que luego el wpf pueda identificar que existe una placa con novedad y no permita registarle entrada (no toques el wpf), adicional quiero que el menu desplegable de a izquierda en la web permita ocultarse asi como se hace en la version mobile"_
 - **🤖 Resumen Técnico para la IA**:
   1. **Menú Lateral Izquierdo Colapsable en Web Desktop (`DashboardLayout.tsx` & `DashboardLayout.css`)**:
      - Se implementó el estado `isDesktopSidebarCollapsed` junto con el botón toggle unificado en `.top-bar-left` (`menu-toggle-btn`).
@@ -125,9 +117,10 @@
   - `npm run build`: **0 Errores** (Vite + TypeScript). Precache con 24 recursos empaquetados.
 
 ### [2026-08-27 09:48:00] - [FEATURE] [UI/UX] [MOBILE] [PWA] - Corrección Integral de Layout Mobile y Botones Sticky en Modales (Usuarios, Dashboard y Navegación)
+
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
-  > *"Quisiera que me mejoraras esto porque al abrir mi pwa en mobile se desajusta , adicional veo que no me alcanza a mostrar los botones de cancelar y guardar al editar un usuario"*
+  > _"Quisiera que me mejoraras esto porque al abrir mi pwa en mobile se desajusta , adicional veo que no me alcanza a mostrar los botones de cancelar y guardar al editar un usuario"_
 - **🤖 Resumen Técnico para la IA**:
   1. **Ajuste de Capas y Jerarquía Z-Index (`DashboardLayout.css`)**:
      - Se ajustó el `z-index` de `.bottom-nav-bar` a `40` (estaba en `999`), evitando que se sobreponga a los diálogos modales y permitiendo que cualquier modal (`z-index: 9000`) se superponga limpiamente sobre la barra de navegación inferior.
@@ -139,7 +132,7 @@
      - `.modal-body` con `flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch`.
      - `.modal-footer` fijado con `position: sticky; bottom: 0; z-index: 10; background: #ffffff; padding-bottom: max(12px, env(safe-area-inset-bottom)); box-shadow: 0 -4px 12px rgba(0,0,0,0.05)`, garantizando que los botones **Cancelar** y **Guardar Cambios** permanezcan siempre 100% visibles, anclados y accesibles.
   3. **Corrección de Encabezado Hero en Mobile (`Dashboard.css`)**:
-     - Se optimizó `.dashboard-hero-header` con padding ergonómico (`1.1rem 1.25rem`), `line-height: 1.3`, y `overflow: visible`, eliminando el recorte superior del título *"Dashboard General"* y alineando la insignia *● EN LÍNEA* y el botón de actualización.
+     - Se optimizó `.dashboard-hero-header` con padding ergonómico (`1.1rem 1.25rem`), `line-height: 1.3`, y `overflow: visible`, eliminando el recorte superior del título _"Dashboard General"_ y alineando la insignia _● EN LÍNEA_ y el botón de actualización.
   4. **Formularios Responsivos en Gestión de Usuarios (`UsuariosTab.tsx`)**:
      - Se removieron los estilos rígidos `gridTemplateColumns: '1fr 1fr'` en favor de `.form-row` responsivo (1 columna en smartphones, 2 columnas en tablets/desktop).
 - **📦 Componentes Modificados**:
@@ -153,9 +146,10 @@
   - `npm run build`: **0 Errores** (Vite + TypeScript). Precache con 24 recursos empaquetados exitosamente.
 
 ### [2026-08-26 16:24:00] - [CLEANUP] [PWA] [LIFECYCLE] - Remoción Completa de Modal de Actualización y Restauración de PWA Estándar (autoUpdate)
+
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
-  > *"quita el tema de la modal aun sigue sin funcionar despues lo trabajamos con mas tiempo pro que no esta funcionando como deberia funcionar por que listo ya actualiza y bien pero cada 5 segundo vuelve a salir no tiene ningun sentido ni nada eso no deberia funcionar así no se que le sucede pero debo avanzar y ya hemos realizado demasiados ajustes."*
+  > _"quita el tema de la modal aun sigue sin funcionar despues lo trabajamos con mas tiempo pro que no esta funcionando como deberia funcionar por que listo ya actualiza y bien pero cada 5 segundo vuelve a salir no tiene ningun sentido ni nada eso no deberia funcionar así no se que le sucede pero debo avanzar y ya hemos realizado demasiados ajustes."_
 - **🤖 Resumen Técnico para la IA**:
   1. **Remoción de Modal (`App.tsx` y `UpdatePromptModal.tsx`)**:
      - Se eliminó `<UpdatePromptModal />` del árbol de componentes en `App.tsx`.
@@ -177,7 +171,7 @@
   - `npm run build`: **0 Errores** (Vite + TypeScript). Precache con 21 recursos empaquetados.
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
-  > *"ahora no es un bucle ahora le di y se quedo hay pensando ahora que será enserio necesito que quede ya funcionando completamente sin tantos cambios analiza"*
+  > _"ahora no es un bucle ahora le di y se quedo hay pensando ahora que será enserio necesito que quede ya funcionando completamente sin tantos cambios analiza"_
 - **🤖 Resumen Técnico para la IA**:
   1. **Causa del Congelamiento**:
      - Tras desregistrar los Service Workers con `reg.unregister()`, la invocación a `await updateServiceWorker(true)` quedaba esperando indefinidamente un mensaje de respuesta de un worker destruido, bloqueando el hilo y evitando que la recarga se ejecutara.
@@ -195,12 +189,12 @@
   - `npm run build`: **0 Errores** (Vite + TypeScript). Precache y bundle generados exitosamente.
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
-  > *"Ups ocurrio algo raro ya no me manda a un 404, pero le doy actualizar intenta quedar en el login y boom vuelve a salir el tema de actualización y así un bucle completo que sucede hay ? ya desde que le de actualizar yad eberia saltar eso no ?"*
+  > _"Ups ocurrio algo raro ya no me manda a un 404, pero le doy actualizar intenta quedar en el login y boom vuelve a salir el tema de actualización y así un bucle completo que sucede hay ? ya desde que le de actualizar yad eberia saltar eso no ?"_
 - **🤖 Resumen Técnico para la IA**:
   1. **Activación Inmediata de Service Worker (`vite.config.ts`)**:
-     - Se añadieron `skipWaiting: true` y `clientsClaim: true` en la configuración `workbox` de `VitePWA` para que el nuevo SW reclame los clientes inmediatamente sin retenciones de hilos ni estados *waiting* residuales.
+     - Se añadieron `skipWaiting: true` y `clientsClaim: true` en la configuración `workbox` de `VitePWA` para que el nuevo SW reclame los clientes inmediatamente sin retenciones de hilos ni estados _waiting_ residuales.
   2. **Purga, Desregistro y Recarga Limpia (`UpdatePromptModal.tsx`)**:
-     - Al presionar *"Actualizar Ahora"*:
+     - Al presionar _"Actualizar Ahora"_:
        1. Guarda marca de tiempo en `sessionStorage` (`pwa_just_updated`) para evitar re-disparos accidentales transitorios durante los primeros 8 segundos de carga.
        2. Purgar todas las claves de `CacheStorage` (`window.caches.delete`).
        3. Desregistrar explícitamente todos los Service Workers existentes (`navigator.serviceWorker.getRegistrations() -> unregister()`) para asegurar que liberen el `index.html` anterior.
@@ -214,7 +208,7 @@
   - `npm run build`: **0 Errores** (Vite + TypeScript). Precache y bundle generados exitosamente.
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
-  > *"Funciono excelente pero tenemos un error sucede que cuando se coloca en el navegador www.parking-flow.com el de una pues ingresa al login osea la ruta queda www.parking-flow.com/login pero cuando le doy click al actualizar ahora el sistema manda a esa ruta y esa ruta no existe en el servidor, el deberia en la rutas no se como se maneja aca en react pero que el login lo redirija a la pantalla www.parking-flow.com si me hago entender se que eso es temas de enrutamiento de la pwa analiza eso y me explicas."*
+  > _"Funciono excelente pero tenemos un error sucede que cuando se coloca en el navegador www.parking-flow.com el de una pues ingresa al login osea la ruta queda www.parking-flow.com/login pero cuando le doy click al actualizar ahora el sistema manda a esa ruta y esa ruta no existe en el servidor, el deberia en la rutas no se como se maneja aca en react pero que el login lo redirija a la pantalla www.parking-flow.com si me hago entender se que eso es temas de enrutamiento de la pwa analiza eso y me explicas."_
 - **🤖 Resumen Técnico para la IA**:
   1. **Enrutamiento Raíz Limpio (`App.tsx`)**:
      - Se configuró `<RootAuthHandler />` en la ruta `/`: Si no hay sesión, renderiza directamente `<Login />` en `https://www.parking-flow.com/` sin alterar la URL. Si ya existe sesión, redirige fluidamente a `/dashboard`.
@@ -230,14 +224,14 @@
   - `src/App.tsx`
   - `src/shared/ui/DashboardLayout.tsx`
   - `src/shared/ui/UpdatePromptModal.tsx`
-  - `public/web.config` *(NUEVO)*
-  - `public/.htaccess` *(NUEVO)*
+  - `public/web.config` _(NUEVO)_
+  - `public/.htaccess` _(NUEVO)_
   - `HISTORIAL_CAMBIOS.md`
 - **✅ Verificación y Compilación**:
   - `npm run build`: **0 Errores** (Vite + TypeScript). Precache y bundle generados exitosamente.
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
-  > *"No me esta lanzando el pop de actualización para que yo como cliente le pueda dar click y actualizar que sucede se quedo pegado hay no llego nada pense que no habia actualizado pero ingrese en otro telefono y si de una quedo bien hiciste lo del movil bien y lo de usuario y contraseña tambien pero lo de que salga el mensaje de actualización requerida nada no sale por que ? si en angular si sucede yo dejo quieta la pagina y si hago cambios el automaticamente en cuestion de segundos como 5 segundos despues de desplegado sale el mensaje. analiza eso."*
+  > _"No me esta lanzando el pop de actualización para que yo como cliente le pueda dar click y actualizar que sucede se quedo pegado hay no llego nada pense que no habia actualizado pero ingrese en otro telefono y si de una quedo bien hiciste lo del movil bien y lo de usuario y contraseña tambien pero lo de que salga el mensaje de actualización requerida nada no sale por que ? si en angular si sucede yo dejo quieta la pagina y si hago cambios el automaticamente en cuestion de segundos como 5 segundos despues de desplegado sale el mensaje. analiza eso."_
 - **🤖 Resumen Técnico para la IA**:
   1. **Generación Automática de `version.json` en Build (`vite.config.ts`)**:
      - Plugin `versionTrackerPlugin()` que genera `public/version.json` con `version`, `buildTime` (timestamp numérico exacto) y `timestampIso`.
@@ -257,7 +251,7 @@
   - `npm run build`: **0 Errores** (Vite + TypeScript). Precache con 22 recursos empaquetados.
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
-  > *"quita el llenado automatico lo de usuario y contraseña eso deberia estar vacia, aparte modifica el login para que se vea bien en movil como deberia ser un login en movil por que cuando se instale la aplicacion en un dispositivo se vea perfectamente, aparte tambien agrega la version del sistema eso deberia estar en el .env donde yo le vaya cambiando la version para asi saber que si actualizo y en que version estamos trabajando inica con 0.0.1 Dev analiza esos cambios."*
+  > _"quita el llenado automatico lo de usuario y contraseña eso deberia estar vacia, aparte modifica el login para que se vea bien en movil como deberia ser un login en movil por que cuando se instale la aplicacion en un dispositivo se vea perfectamente, aparte tambien agrega la version del sistema eso deberia estar en el .env donde yo le vaya cambiando la version para asi saber que si actualizo y en que version estamos trabajando inica con 0.0.1 Dev analiza esos cambios."_
 - **🤖 Resumen Técnico para la IA**:
   1. **Credenciales Vacías por Defecto (`Login.tsx`)**:
      - Se eliminaron los valores hardcodeados de usuario (`admin`) y contraseña (`Admin2026*`). Los estados ahora inicializan en blanco `""` con placeholders limpios.
@@ -282,7 +276,7 @@
   - `npm run build`: **0 Errores** (Vite + TypeScript). Generación correcta de bundle y Service Worker precache.
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
-  > *"Necesito hacer un cambio en la pwa de react, sucede que se realiza el despliegue completo bien pero en el navegador se queda pegado el cache entonces necesito que el sistema como es una pwa detecte cuando existe otro cambio en el servidor aparezca una modal que bloquee al usuario o mejor dicho obligue si o si a que actualice eso haga que si o si refrersque todo y elimine cache del navegador o si la tienen instalada si me explico ? dime que tan dificil sería hacer eso ? analiza eso ."*
+  > _"Necesito hacer un cambio en la pwa de react, sucede que se realiza el despliegue completo bien pero en el navegador se queda pegado el cache entonces necesito que el sistema como es una pwa detecte cuando existe otro cambio en el servidor aparezca una modal que bloquee al usuario o mejor dicho obligue si o si a que actualice eso haga que si o si refrersque todo y elimine cache del navegador o si la tienen instalada si me explico ? dime que tan dificil sería hacer eso ? analiza eso ."_
 - **🤖 Resumen Técnico para la IA**:
   1. **Control Reactivo del Ciclo de Vida PWA (`vite.config.ts`)**:
      - Se ajustó `registerType: 'prompt'` en el plugin `VitePWA` para delegar el control de activación al hook interactivo de React.
@@ -292,7 +286,7 @@
      - **Sondeo por Foco / Reapertura**: Al recuperar el foco de la ventana o abrir la PWA instalada (`window.addEventListener('focus')`), verifica si existe una nueva versión en el servidor.
   3. **Comportamiento Bloqueante y Purga Total de Caché**:
      - Al detectar `needRefresh === true`, se despliega una modal en pantalla completa (`backdrop-filter: blur(14px)`, `z-index: 9999999`) que impide que el usuario continúe operando con assets obsoletos.
-     - Al pulsar *"Actualizar Ahora"*:
+     - Al pulsar _"Actualizar Ahora"_:
        1. Elimina todo el almacenamiento en `window.caches` (`caches.delete(...)`).
        2. Envía orden de activación forzada al nuevo Service Worker (`updateServiceWorker(true)` / `skipWaiting()`).
        3. Ejecuta `window.location.reload()`.
@@ -301,8 +295,8 @@
 - **📦 Componentes Modificados**:
   - `vite.config.ts`
   - `src/vite-env.d.ts`
-  - `src/shared/ui/UpdatePromptModal.tsx` *(NUEVO)*
-  - `src/shared/ui/UpdatePromptModal.css` *(NUEVO)*
+  - `src/shared/ui/UpdatePromptModal.tsx` _(NUEVO)_
+  - `src/shared/ui/UpdatePromptModal.css` _(NUEVO)_
   - `src/App.tsx`
   - `src/main.tsx`
   - `HISTORIAL_CAMBIOS.md`
@@ -310,7 +304,7 @@
   - `npm run build`: **0 Errores** (Vite + TypeScript). Service worker `dist/sw.js` y 21 precache entries generadas exitosamente.
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
-  > *"no veo que este registrando en el log de cambios o el historial de cambios como regla que se habia creado en agent.md"*
+  > _"no veo que este registrando en el log de cambios o el historial de cambios como regla que se habia creado en agent.md"_
 - **🤖 Resumen Técnico para la IA**:
   1. **Estandarización Multi-PC**:
      - Se crea formalmente [`AGENTS.md`](file:///c:/Users/miguelagutierrezg/source/pwa/ParkingPwa/AGENTS.md) y [`HISTORIAL_CAMBIOS.md`](file:///c:/Users/miguelagutierrezg/source/pwa/ParkingPwa/HISTORIAL_CAMBIOS.md) en el repositorio raíz de la PWA (`ParkingPwa`), alineándose con los estándares de `ParkingWpf` y `ParkingApi`.

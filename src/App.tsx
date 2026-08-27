@@ -8,6 +8,7 @@ import { Reports } from './features/reports/ui/Reports';
 import { Settings } from './features/settings/ui/Settings';
 import { Caja } from './features/caja/ui/Caja';
 import { Novedades } from './features/novedades/ui/Novedades';
+import { CompaniesPage } from './features/companies/ui/CompaniesPage';
 import { ParqueaderoProvider } from './shared/context/ParqueaderoContext';
 import { authService } from './features/auth/data/authService';
 import { apiClient } from './shared/api/apiClient';
@@ -91,6 +92,7 @@ function App() {
             <Route path="reports" element={<Reports />} />
             <Route path="novedades" element={<Novedades />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="companies" element={<CompaniesPage />} />
           </Route>
 
           {/* Fallback general de rutas desconocidas hacia la raíz */}
