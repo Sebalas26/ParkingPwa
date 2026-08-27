@@ -168,8 +168,8 @@ export const ResolucionesTab: React.FC = () => {
       </div>
 
       {/* Tabla de Resoluciones */}
-      <div className="table-responsive">
-        <table className="data-table">
+      <div className="table-responsive" style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <table className="data-table" style={{ minWidth: '720px' }}>
           <thead>
             <tr>
               <th>NOMBRE RESOLUCIÓN</th>

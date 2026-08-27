@@ -21,6 +21,7 @@ export const Caja: React.FC = () => {
   // Modales
   const [isOpenShiftModalOpen, setIsOpenShiftModalOpen] = useState(false);
   const [isCloseShiftModalOpen, setIsCloseShiftModalOpen] = useState(false);
+  const [shiftToClose, setShiftToClose] = useState<WorkShiftDto | null>(null);
   const [baseAmount, setBaseAmount] = useState(50000);
   const [actualCashCounted, setActualCashCounted] = useState(0);
   const [notes, setNotes] = useState('');
@@ -59,17 +60,32 @@ export const Caja: React.FC = () => {
     }
   };
 
+  const handleOpenCloseShift = (shift: WorkShiftDto) => {
+    const base = shift.baseAmount ?? shift.initialCashAmount ?? 0;
+    const collected = shift.totalCashCollected ?? shift.totalCollected ?? 0;
+    const expected = shift.expectedCash ?? (base + collected);
+
+    setShiftToClose(shift);
+    setActualCashCounted(expected);
+    setNotes('');
+    setIsCloseShiftModalOpen(true);
+  };
+
   const handleCloseShift = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeShift) return;
+    const target = shiftToClose || activeShift;
+    if (!target) return;
     try {
       await cajaService.closeShift({
-        shiftId: activeShift.shiftId,
+        shiftId: target.shiftId,
         actualCashCounted: Number(actualCashCounted),
         notes,
       });
-      setActiveShift(null);
+      if (activeShift?.shiftId === target.shiftId) {
+        setActiveShift(null);
+      }
       setIsCloseShiftModalOpen(false);
+      setShiftToClose(null);
       setNotes('');
       await loadData();
     } catch (err: any) {
@@ -201,23 +217,24 @@ export const Caja: React.FC = () => {
         <div className="section-header" style={{ padding: '24px 24px 0 24px' }}>
           <h2>Turno de Caja Activo</h2>
         </div>
-        <table className="data-table">
+        <table className="data-table" style={{ minWidth: '650px' }}>
           <thead>
             <tr>
               <th>USUARIO (OPERADOR)</th>
-              <th>ESTADO</th>
+              <th className="text-center">ESTADO</th>
               <th>HORA APERTURA</th>
               <th className="text-right">BASE INICIAL</th>
               <th className="text-right">INGRESOS POS</th>
               <th className="text-right">TOTAL EN CAJA</th>
+              <th className="text-right">ACCIONES</th>
             </tr>
           </thead>
           <tbody>
             {activeShift ? (
               <tr>
                 <td className="font-bold">{activeShift.operatorName}</td>
-                <td>
-                  <span className="caja-status-badge status-open" style={{ padding: '4px 8px', fontSize: '0.75rem' }}>
+                <td className="text-center">
+                  <span className="caja-status-badge status-open" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', fontSize: '0.75rem' }}>
                     <CheckCircle size={12} /> Abierta
                   </span>
                 </td>
@@ -231,10 +248,35 @@ export const Caja: React.FC = () => {
                 <td className="text-right font-bold text-primary">
                   $ {totalEnCajaTurno.toLocaleString()}
                 </td>
+                <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
+                  {(authService.hasPermission('shift.close') || authService.hasPermission('shifts.close')) && (
+                    <button
+                      type="button"
+                      className="btn-action"
+                      style={{
+                        background: '#ef4444',
+                        color: '#ffffff',
+                        border: 'none',
+                        padding: '5px 12px',
+                        borderRadius: '6px',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                      }}
+                      onClick={() => handleOpenCloseShift(activeShift)}
+                      title="Cerrar este turno"
+                    >
+                      <LogOut size={13} /> Cerrar Caja
+                    </button>
+                  )}
+                </td>
               </tr>
             ) : (
               <tr>
-                <td colSpan={6} style={{ textAlign: 'center', padding: '24px', color: 'var(--text-secondary)' }}>
+                <td colSpan={7} style={{ textAlign: 'center', padding: '24px', color: 'var(--text-secondary)' }}>
                   No tienes un turno de caja abierto en este momento. Haz clic en "Abrir Turno de Caja" para comenzar a operar.
                 </td>
               </tr>
@@ -283,7 +325,7 @@ export const Caja: React.FC = () => {
           </div>
         </div>
 
-        <table className="data-table">
+        <table className="data-table" style={{ minWidth: '700px' }}>
           <thead>
             <tr>
               <th>FECHA APERTURA</th>
@@ -291,7 +333,8 @@ export const Caja: React.FC = () => {
               <th>HORARIO</th>
               <th className="text-right">BASE INICIAL</th>
               <th className="text-right">TOTAL RECAUDADO</th>
-              <th className="text-right">ESTADO</th>
+              <th className="text-center">ESTADO</th>
+              <th className="text-right">ACCIONES</th>
             </tr>
           </thead>
           <tbody>
@@ -305,27 +348,52 @@ export const Caja: React.FC = () => {
 
                 return (
                   <tr key={h.shiftId}>
-                    <td className="font-bold text-muted">
+                    <td className="font-bold text-muted" style={{ whiteSpace: 'nowrap' }}>
                       {start ? new Date(start).toLocaleDateString() : '--'}
                     </td>
-                    <td className="font-bold">{h.operatorName}</td>
-                    <td className="text-muted">
+                    <td className="font-bold" style={{ whiteSpace: 'nowrap' }}>{h.operatorName}</td>
+                    <td className="text-muted" style={{ whiteSpace: 'nowrap' }}>
                       {start ? new Date(start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'} -{' '}
                       {end ? new Date(end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Abierto'}
                     </td>
-                    <td className="text-right text-muted">$ {base.toLocaleString()}</td>
-                    <td className="text-right font-bold text-primary">$ {collected.toLocaleString()}</td>
-                    <td>
-                      <span className={`caja-status-badge ${isClosed ? 'status-closed' : 'status-open'}`} style={{ padding: '4px 8px', fontSize: '0.75rem' }}>
+                    <td className="text-right text-muted" style={{ whiteSpace: 'nowrap' }}>$ {base.toLocaleString()}</td>
+                    <td className="text-right font-bold text-primary" style={{ whiteSpace: 'nowrap' }}>$ {collected.toLocaleString()}</td>
+                    <td className="text-center" style={{ whiteSpace: 'nowrap' }}>
+                      <span className={`caja-status-badge ${isClosed ? 'status-closed' : 'status-open'}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', fontSize: '0.75rem' }}>
                         {isClosed ? <XCircle size={12} /> : <CheckCircle size={12} />} {isClosed ? 'Cerrado' : 'Abierto'}
                       </span>
+                    </td>
+                    <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
+                      {!isClosed && (authService.hasPermission('shift.close') || authService.hasPermission('shifts.close')) && (
+                        <button
+                          type="button"
+                          className="btn-action"
+                          style={{
+                            background: '#ef4444',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '5px 10px',
+                            borderRadius: '6px',
+                            fontSize: '0.78rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                          onClick={() => handleOpenCloseShift(h)}
+                          title="Cerrar esta caja"
+                        >
+                          <LogOut size={13} /> Cerrar Caja
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );
               })
             ) : (
               <tr>
-                <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
+                <td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
                   {isLoading ? 'Cargando historial...' : 'No hay registros históricos para los filtros seleccionados.'}
                 </td>
               </tr>
@@ -383,57 +451,66 @@ export const Caja: React.FC = () => {
       )}
 
       {/* Modal Cerrar Turno */}
-      {isCloseShiftModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '440px' }}>
-            <div className="modal-header">
-              <h3>Cierre y Liquidación de Turno</h3>
-              <button className="btn-close-modal" onClick={() => setIsCloseShiftModalOpen(false)}>
-                <X size={18} />
-              </button>
-            </div>
-            <form onSubmit={handleCloseShift}>
-              <div className="modal-body">
-                <div style={{ padding: '12px', background: 'var(--bg-body, var(--bg-main))', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.85rem' }}>
-                  <p style={{ margin: '0 0 4px 0' }}>Base Inicial: <strong>${baseInicialTurno.toLocaleString()}</strong></p>
-                  <p style={{ margin: '0 0 4px 0' }}>Total Recaudado: <strong>${totalRecaudadoTurno.toLocaleString()}</strong></p>
-                  <p style={{ margin: 0, color: 'var(--primary-color)', fontWeight: 'bold' }}>Esperado en Caja: ${totalEnCajaTurno.toLocaleString()}</p>
-                </div>
+      {isCloseShiftModalOpen && (() => {
+        const target = shiftToClose || activeShift;
+        const targetBase = target ? (target.baseAmount ?? target.initialCashAmount ?? 0) : baseInicialTurno;
+        const targetCollected = target ? (target.totalCashCollected ?? target.totalCollected ?? 0) : totalRecaudadoTurno;
+        const targetExpected = target ? (target.expectedCash ?? (targetBase + targetCollected)) : totalEnCajaTurno;
+        const targetOperator = target?.operatorName || 'Operador';
 
-                <div className="form-group" style={{ marginTop: '12px' }}>
-                  <label>Efectivo Físico Contado ($)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    className="input-field"
-                    value={actualCashCounted}
-                    onChange={(e) => setActualCashCounted(Number(e.target.value))}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Notas de Cierre / Novedades</label>
-                  <input
-                    type="text"
-                    className="input-field"
-                    placeholder="Ej. Cuadre exacto"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button type="button" className="btn-cancel" onClick={() => setIsCloseShiftModalOpen(false)}>
-                  Cancelar
-                </button>
-                <button type="submit" className="btn-primary" style={{ width: 'auto', background: 'var(--danger-color)' }}>
-                  Cerrar y Liquidar Turno
+        return (
+          <div className="modal-overlay">
+            <div className="modal-card" style={{ maxWidth: '440px' }}>
+              <div className="modal-header">
+                <h3>Cierre y Liquidación de Turno</h3>
+                <button className="btn-close-modal" onClick={() => { setIsCloseShiftModalOpen(false); setShiftToClose(null); }}>
+                  <X size={18} />
                 </button>
               </div>
-            </form>
+              <form onSubmit={handleCloseShift}>
+                <div className="modal-body">
+                  <div style={{ padding: '12px', background: 'var(--bg-body, var(--bg-main))', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.85rem' }}>
+                    <p style={{ margin: '0 0 4px 0' }}>Operador: <strong>{targetOperator}</strong></p>
+                    <p style={{ margin: '0 0 4px 0' }}>Base Inicial: <strong>${targetBase.toLocaleString()}</strong></p>
+                    <p style={{ margin: '0 0 4px 0' }}>Total Recaudado: <strong>${targetCollected.toLocaleString()}</strong></p>
+                    <p style={{ margin: 0, color: 'var(--primary-color)', fontWeight: 'bold' }}>Esperado en Caja: ${targetExpected.toLocaleString()}</p>
+                  </div>
+
+                  <div className="form-group" style={{ marginTop: '12px' }}>
+                    <label>Efectivo Físico Contado ($)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      className="input-field"
+                      value={actualCashCounted}
+                      onChange={(e) => setActualCashCounted(Number(e.target.value))}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Notas de Cierre / Novedades</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      placeholder="Ej. Cuadre exacto"
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn-cancel" onClick={() => { setIsCloseShiftModalOpen(false); setShiftToClose(null); }}>
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn-primary" style={{ width: 'auto', background: 'var(--danger-color)' }}>
+                    Cerrar y Liquidar Turno
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 };

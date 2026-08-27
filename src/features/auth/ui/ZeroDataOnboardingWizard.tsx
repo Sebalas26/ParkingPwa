@@ -85,7 +85,7 @@ export const ZeroDataOnboardingWizard: React.FC = () => {
           <div className="onboarding-wizard-icon-wrapper">
             <Building2 size={32} />
           </div>
-          <h2>Bienvenido a ParkFlow</h2>
+          <h2>Bienvenido a Parking Flow</h2>
           <p>
             Aún no tienes ningún parqueadero registrado. Por favor crea tu primera sede para comenzar a configurar el sistema.
           </p>

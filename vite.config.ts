@@ -16,8 +16,8 @@ export default defineConfig({
         'maskable-icon-512x512.png',
       ],
       manifest: {
-        name: 'ParkControl - Sistema de Gestión de Estacionamiento',
-        short_name: 'ParkControl',
+        name: 'Parking Flow - Sistema de Gestión de Estacionamiento',
+        short_name: 'Parking Flow',
         description: 'Plataforma PWA empresarial de administración y monitoreo de parqueaderos en tiempo real',
         theme_color: '#0b0f19',
         background_color: '#0b0f19',

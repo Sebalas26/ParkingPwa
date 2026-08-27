@@ -91,52 +91,54 @@ export const TarifasTab: React.FC = () => {
         </div>
       </div>
 
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>TIPO DE VEHÍCULO</th>
-            <th>VALOR HORA</th>
-            <th>VALOR MINUTO</th>
-            <th>MÁXIMO DÍA</th>
-            <th>TIEMPO DE GRACIA</th>
-            <th>ESTADO</th>
-            <th className="text-right">ACCIONES</th>
-          </tr>
-        </thead>
-        <tbody>
-          {tarifas.length > 0 ? (
-            tarifas.map((t) => (
-              <tr key={t.rateId}>
-                <td className="font-bold">{getVehicleTypeName(t.vehicleType)}</td>
-                <td>${(t.hourRate || 0).toLocaleString()}</td>
-                <td>${(t.minuteRate || 0).toLocaleString()}</td>
-                <td>${(t.fullDayRate || 0).toLocaleString()}</td>
-                <td>{t.gracePeriodMinutes} min</td>
-                <td>
-                  <span className={`badge ${t.isActive ? 'badge-success' : 'badge-danger'}`}>
-                    {t.isActive ? 'Activa' : 'Inactiva'}
-                  </span>
-                </td>
-                <td className="text-right">
-                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                    {(authService.hasPermission('settings.tarifas.manage') || authService.hasPermission('rates.manage')) && (
-                      <button className="btn-action primary" onClick={() => handleOpenEdit(t)}>
-                        <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
-                      </button>
-                    )}
-                  </div>
+      <div className="table-responsive" style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <table className="data-table" style={{ minWidth: '600px' }}>
+          <thead>
+            <tr>
+              <th>TIPO DE VEHÍCULO</th>
+              <th>VALOR HORA</th>
+              <th>VALOR MINUTO</th>
+              <th>MÁXIMO DÍA</th>
+              <th>TIEMPO DE GRACIA</th>
+              <th>ESTADO</th>
+              <th className="text-right">ACCIONES</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tarifas.length > 0 ? (
+              tarifas.map((t) => (
+                <tr key={t.rateId}>
+                  <td className="font-bold" style={{ whiteSpace: 'nowrap' }}>{getVehicleTypeName(t.vehicleType)}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>${(t.hourRate || 0).toLocaleString()}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>${(t.minuteRate || 0).toLocaleString()}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>${(t.fullDayRate || 0).toLocaleString()}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>{t.gracePeriodMinutes} min</td>
+                  <td>
+                    <span className={`badge ${t.isActive ? 'badge-success' : 'badge-danger'}`}>
+                      {t.isActive ? 'Activa' : 'Inactiva'}
+                    </span>
+                  </td>
+                  <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                      {(authService.hasPermission('settings.tarifas.manage') || authService.hasPermission('rates.manage')) && (
+                        <button className="btn-action primary" onClick={() => handleOpenEdit(t)}>
+                          <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
+                  {isLoading ? 'Cargando tarifas...' : 'No se encontraron tarifas configuradas.'}
                 </td>
               </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
-                {isLoading ? 'Cargando tarifas...' : 'No se encontraron tarifas configuradas.'}
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {/* Modal Editar Tarifa */}
       {isModalOpen && editingTarifa && (

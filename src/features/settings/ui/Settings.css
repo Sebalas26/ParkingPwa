@@ -57,6 +57,13 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-top: 8px;
+}
+
 .section-header {
   display: flex;
   justify-content: space-between;

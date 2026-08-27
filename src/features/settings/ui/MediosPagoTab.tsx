@@ -138,69 +138,71 @@ export const MediosPagoTab: React.FC = () => {
         )}
       </div>
 
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>MEDIO DE PAGO</th>
-            <th>ÍCONO</th>
-            <th>ESTADO</th>
-            <th className="text-right">ACCIONES</th>
-          </tr>
-        </thead>
-        <tbody>
-          {mediosPago.length > 0 ? (
-            mediosPago.map((mp) => {
-              const isAct = mp.isActive ?? (mp.status === 'Activo' || mp.status === true || mp.status === 'Active');
-
-              return (
-                <tr key={mp.id}>
-                  <td className="font-bold text-muted">#{mp.id}</td>
-                  <td className="font-bold">
-                    <span>{mp.name}</span>
-                  </td>
-                  <td>
-                    <div
-                      style={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '8px',
-                        background: 'rgba(7, 102, 94, 0.08)',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '1.25rem',
-                      }}
-                    >
-                      {getIconComponent(mp.icon || mp.name)}
-                    </div>
-                  </td>
-                  <td>
-                    <span className={`badge ${isAct ? 'badge-success' : 'badge-danger'}`}>
-                      {isAct ? 'Activo' : 'Inactivo'}
-                    </span>
-                  </td>
-                  <td className="text-right">
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                      {authService.hasPermission('settings.medios_pago.manage') && (
-                        <button className="btn-action primary" onClick={() => handleOpenEdit(mp)}>
-                          <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })
-          ) : (
+      <div className="table-responsive" style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <table className="data-table" style={{ minWidth: '520px' }}>
+          <thead>
             <tr>
-              <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
-                {isLoading ? 'Cargando medios de pago desde la API...' : 'No se encontraron medios de pago registrados en la base de datos.'}
-              </td>
+              <th>ID</th>
+              <th>MEDIO DE PAGO</th>
+              <th>ÍCONO</th>
+              <th>ESTADO</th>
+              <th className="text-right">ACCIONES</th>
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {mediosPago.length > 0 ? (
+              mediosPago.map((mp) => {
+                const isAct = mp.isActive ?? (mp.status === 'Activo' || mp.status === true || mp.status === 'Active');
+
+                return (
+                  <tr key={mp.id}>
+                    <td className="font-bold text-muted">#{mp.id}</td>
+                    <td className="font-bold">
+                      <span style={{ whiteSpace: 'nowrap' }}>{mp.name}</span>
+                    </td>
+                    <td>
+                      <div
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '8px',
+                          background: 'rgba(7, 102, 94, 0.08)',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '1.25rem',
+                        }}
+                      >
+                        {getIconComponent(mp.icon || mp.name)}
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`badge ${isAct ? 'badge-success' : 'badge-danger'}`}>
+                        {isAct ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </td>
+                    <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                        {authService.hasPermission('settings.medios_pago.manage') && (
+                          <button className="btn-action primary" onClick={() => handleOpenEdit(mp)}>
+                            <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
+                  {isLoading ? 'Cargando medios de pago desde la API...' : 'No se encontraron medios de pago registrados en la base de datos.'}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {/* Modal Crear / Editar Medio de Pago */}
       {isModalOpen && editingMedio && (

@@ -93,7 +93,7 @@ export const DashboardLayout: React.FC = () => {
             <Car size={24} className="logo-icon" />
           </div>
           <div className="app-title-group">
-            <span className="app-name">ParkFlow</span>
+            <span className="app-name">Parking Flow</span>
             <span className="app-subtitle">Gestión Multi-Sede</span>
           </div>
           <button
@@ -198,7 +198,7 @@ export const DashboardLayout: React.FC = () => {
             </button>
             <div className="mobile-brand">
               <Car size={20} className="mobile-brand-icon" />
-              <span className="mobile-brand-name">ParkFlow</span>
+              <span className="mobile-brand-name">Parking Flow</span>
             </div>
           </div>
 

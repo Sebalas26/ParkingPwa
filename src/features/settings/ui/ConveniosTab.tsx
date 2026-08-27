@@ -144,110 +144,112 @@ export const ConveniosTab: React.FC = () => {
         )}
       </div>
 
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>CONVENIO / LOGO</th>
-            <th>DESCUENTO / BENEFICIO</th>
-            <th>COMPRA MÍNIMA</th>
-            <th>MÁXIMO HORAS</th>
-            <th>ESTADO</th>
-            <th className="text-right">ACCIONES</th>
-          </tr>
-        </thead>
-        <tbody>
-          {convenios.length > 0 ? (
-            convenios.map((c) => {
-              const isFixed = Boolean(c.discountFixedAmount && c.discountFixedAmount > 0);
-              const discountText = isFixed
-                ? `$${(c.discountFixedAmount || 0).toLocaleString()} de descuento`
-                : `${c.discountPercentage || 0}% de descuento`;
+      <div className="table-responsive" style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <table className="data-table" style={{ minWidth: '600px' }}>
+          <thead>
+            <tr>
+              <th>CONVENIO / LOGO</th>
+              <th>DESCUENTO / BENEFICIO</th>
+              <th>COMPRA MÍNIMA</th>
+              <th>MÁXIMO HORAS</th>
+              <th>ESTADO</th>
+              <th className="text-right">ACCIONES</th>
+            </tr>
+          </thead>
+          <tbody>
+            {convenios.length > 0 ? (
+              convenios.map((c) => {
+                const isFixed = Boolean(c.discountFixedAmount && c.discountFixedAmount > 0);
+                const discountText = isFixed
+                  ? `$${(c.discountFixedAmount || 0).toLocaleString()} de descuento`
+                  : `${c.discountPercentage || 0}% de descuento`;
 
-              return (
-                <tr key={c.agreementId}>
-                  <td className="font-bold">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      {c.imageUrl ? (
-                        <img
-                          src={c.imageUrl}
-                          alt={c.name}
-                          style={{
-                            width: '38px',
-                            height: '38px',
-                            borderRadius: '8px',
-                            objectFit: 'cover',
-                            border: '1px solid var(--border-color, #e2e8f0)',
-                            background: '#ffffff',
-                          }}
-                        />
-                      ) : (
-                        <div
-                          style={{
-                            width: '38px',
-                            height: '38px',
-                            borderRadius: '8px',
-                            background: 'rgba(7, 102, 94, 0.08)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            border: '1px solid rgba(7, 102, 94, 0.15)',
-                          }}
-                        >
-                          <Tag size={18} color="#07665e" />
-                        </div>
-                      )}
-                      <div>
-                        <div style={{ fontSize: '0.9rem', color: 'var(--text-primary, #1e293b)' }}>{c.name}</div>
-                        {c.storeName && (
-                          <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>
-                            {c.storeName}
+                return (
+                  <tr key={c.agreementId}>
+                    <td className="font-bold">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', whiteSpace: 'nowrap' }}>
+                        {c.imageUrl ? (
+                          <img
+                            src={c.imageUrl}
+                            alt={c.name}
+                            style={{
+                              width: '38px',
+                              height: '38px',
+                              borderRadius: '8px',
+                              objectFit: 'cover',
+                              border: '1px solid var(--border-color, #e2e8f0)',
+                              background: '#ffffff',
+                            }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              width: '38px',
+                              height: '38px',
+                              borderRadius: '8px',
+                              background: 'rgba(7, 102, 94, 0.08)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              border: '1px solid rgba(7, 102, 94, 0.15)',
+                            }}
+                          >
+                            <Tag size={18} color="#07665e" />
                           </div>
                         )}
+                        <div>
+                          <div style={{ fontSize: '0.9rem', color: 'var(--text-primary, #1e293b)' }}>{c.name}</div>
+                          {c.storeName && (
+                            <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>
+                              {c.storeName}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td>
-                    <span className="badge badge-info" style={{ background: '#e0f2fe', color: '#0369a1', fontWeight: 600 }}>
-                      {discountText}
-                    </span>
-                  </td>
-                  <td>
-                    {c.minPurchaseAmount && c.minPurchaseAmount > 0
-                      ? `$${c.minPurchaseAmount.toLocaleString()}`
-                      : 'Sin mínimo'}
-                  </td>
-                  <td>{c.maxHoursApplicable ? `${c.maxHoursApplicable} horas` : 'Ilimitado'}</td>
-                  <td>
-                    <span className={`badge ${c.isActive ? 'badge-success' : 'badge-danger'}`}>
-                      {c.isActive ? 'Activo' : 'Inactivo'}
-                    </span>
-                  </td>
-                  <td className="text-right">
-                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                      {(authService.hasPermission('settings.convenios.manage') || authService.hasPermission('agreements.manage')) && (
-                        <button className="btn-icon" onClick={() => handleOpenEdit(c)} title="Editar Convenio">
-                          <Edit2 size={16} />
-                        </button>
-                      )}
-                      {c.isActive && (authService.hasPermission('settings.convenios.manage') || authService.hasPermission('agreements.manage')) && (
-                        <button className="btn-icon danger" onClick={() => handleDeactivate(c.agreementId)} title="Inactivar Convenio">
-                          <Trash2 size={16} />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })
-          ) : (
-            <tr>
-              <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
-                {isLoading ? 'Cargando convenios...' : 'No hay convenios registrados. Crea el primero con el botón superior.'}
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+                    </td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      <span className="badge badge-info" style={{ background: '#e0f2fe', color: '#0369a1', fontWeight: 600 }}>
+                        {discountText}
+                      </span>
+                    </td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      {c.minPurchaseAmount && c.minPurchaseAmount > 0
+                        ? `$${c.minPurchaseAmount.toLocaleString()}`
+                        : 'Sin mínimo'}
+                    </td>
+                    <td style={{ whiteSpace: 'nowrap' }}>{c.maxHoursApplicable ? `${c.maxHoursApplicable} horas` : 'Ilimitado'}</td>
+                    <td>
+                      <span className={`badge ${c.isActive ? 'badge-success' : 'badge-danger'}`}>
+                        {c.isActive ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </td>
+                    <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                        {(authService.hasPermission('settings.convenios.manage') || authService.hasPermission('agreements.manage')) && (
+                          <button className="btn-icon" onClick={() => handleOpenEdit(c)} title="Editar Convenio">
+                            <Edit2 size={16} />
+                          </button>
+                        )}
+                        {c.isActive && (authService.hasPermission('settings.convenios.manage') || authService.hasPermission('agreements.manage')) && (
+                          <button className="btn-icon danger" onClick={() => handleDeactivate(c.agreementId)} title="Inactivar Convenio">
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
+                  {isLoading ? 'Cargando convenios...' : 'No hay convenios registrados. Crea el primero con el botón superior.'}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {isModalOpen && editingConvenio && (
         <div className="modal-overlay">

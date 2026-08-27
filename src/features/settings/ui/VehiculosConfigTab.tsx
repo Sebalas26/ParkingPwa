@@ -125,52 +125,54 @@ export const VehiculosConfigTab: React.FC = () => {
         )}
       </div>
 
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>TIPO / CATEGORÍA DE VEHÍCULO</th>
-            <th>ESTADO EN CATÁLOGO</th>
-            <th className="text-right">ACCIONES</th>
-          </tr>
-        </thead>
-        <tbody>
-          {configs.length > 0 ? (
-            configs.map((c) => (
-              <tr key={c.rateId || c.category}>
-                <td className="font-bold">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {Number(c.vehicleType) === 1 ? <Bike size={18} color="#2563eb" /> : Number(c.vehicleType) === 2 ? <Truck size={18} color="#d97706" /> : <Car size={18} color="#07665e" />}
-                    <span>{c.category}</span>
-                  </div>
-                </td>
-                <td>
-                  <span className={`badge ${c.isActive ? 'badge-success' : 'badge-danger'}`}>
-                    {c.isActive ? 'Activo' : 'Inactivo'}
-                  </span>
-                </td>
-                <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
-                  {(authService.hasPermission('settings.vehiculos.manage') || authService.hasPermission('rates.edit')) && (
-                    <button className="btn-icon" style={{ marginRight: '4px' }} onClick={() => handleOpenEdit(c)} title="Editar Tipo de Vehículo">
-                      <Edit2 size={16} />
-                    </button>
-                  )}
-                  {(authService.hasPermission('settings.vehiculos.manage') || authService.hasPermission('rates.delete')) && (
-                    <button className="btn-icon" style={{ color: '#ef4444' }} onClick={() => handleOpenDelete(c)} title="Eliminar Tipo de Vehículo">
-                      <Trash2 size={16} />
-                    </button>
-                  )}
+      <div className="table-responsive" style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <table className="data-table" style={{ minWidth: '480px' }}>
+          <thead>
+            <tr>
+              <th>TIPO / CATEGORÍA DE VEHÍCULO</th>
+              <th>ESTADO EN CATÁLOGO</th>
+              <th className="text-right">ACCIONES</th>
+            </tr>
+          </thead>
+          <tbody>
+            {configs.length > 0 ? (
+              configs.map((c) => (
+                <tr key={c.rateId || c.category}>
+                  <td className="font-bold">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+                      {Number(c.vehicleType) === 1 ? <Bike size={18} color="#2563eb" /> : Number(c.vehicleType) === 2 ? <Truck size={18} color="#d97706" /> : <Car size={18} color="#07665e" />}
+                      <span>{c.category}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span className={`badge ${c.isActive ? 'badge-success' : 'badge-danger'}`}>
+                      {c.isActive ? 'Activo' : 'Inactivo'}
+                    </span>
+                  </td>
+                  <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
+                    {(authService.hasPermission('settings.vehiculos.manage') || authService.hasPermission('rates.edit')) && (
+                      <button className="btn-icon" style={{ marginRight: '4px' }} onClick={() => handleOpenEdit(c)} title="Editar Tipo de Vehículo">
+                        <Edit2 size={16} />
+                      </button>
+                    )}
+                    {(authService.hasPermission('settings.vehiculos.manage') || authService.hasPermission('rates.delete')) && (
+                      <button className="btn-icon" style={{ color: '#ef4444' }} onClick={() => handleOpenDelete(c)} title="Eliminar Tipo de Vehículo">
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={3} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
+                  {isLoading ? 'Cargando tipos de vehículos...' : 'No hay tipos de vehículos registrados en el catálogo general. Crea los tipos de vehículos que tu negocio recibe (ej: Automóvil, Motocicleta, Camión).'}
                 </td>
               </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan={3} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
-                {isLoading ? 'Cargando tipos de vehículos...' : 'No hay tipos de vehículos registrados en el catálogo general. Crea los tipos de vehículos que tu negocio recibe (ej: Automóvil, Motocicleta, Camión).'}
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {isModalOpen && editingConfig && (
         <div className="modal-overlay">
