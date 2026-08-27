@@ -7,6 +7,57 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-27 10:20:00] - [FEATURE] [UI/UX] [NOVEDADES] [SIDEBAR] - Puesta en Marcha de Módulo de Novedades (Bloqueo Centralizado de Placas) y Sidebar Colapsable en Desktop Web
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"Ahora ayudame en poner en ejecucion el modulo de novedades, ayudame a conectarla creacion de la novedad, la cual debe de ir por api hacia a BD, para que luego el wpf pueda identificar que existe una placa con novedad y no permita registarle entrada (no toques el wpf), adicional quiero que el menu desplegable de a izquierda en la web permita ocultarse asi como se hace en la version mobile"*
+- **🤖 Resumen Técnico para la IA**:
+  1. **Menú Lateral Izquierdo Colapsable en Web Desktop (`DashboardLayout.tsx` & `DashboardLayout.css`)**:
+     - Se implementó el estado `isDesktopSidebarCollapsed` junto con el botón toggle unificado en `.top-bar-left` (`menu-toggle-btn`).
+     - Al hacer clic en el botón de hamburguesa / panel en pantallas grandes (>768px), el sidebar se contrae suavemente hacia la izquierda (`margin-left: -250px; opacity: 0; width: 0`) permitiendo que el área de contenido (`.content-wrapper`) se expanda al 100% de la pantalla para máxima visibilidad de tablas, dashboards y reportes.
+     - Se añadió el botón de colapso rápido `.btn-collapse-sidebar-desktop` en el encabezado del menú lateral.
+     - En dispositivos móviles (<768px), el botón conmuta limpiamente el menú lateral desplegable tipo drawer sin interferir con la experiencia táctil.
+  2. **Módulo de Novedades e Incidencias Conectado a API y BD (`Novedades.tsx` & `novedadesService.ts`)**:
+     - Conectividad completa con los endpoints del backend (`/api/VehicleIncidents`): listar, crear, editar, resolver (desbloquear) y eliminar novedades.
+     - Formulario modal optimizado con switch destacado de bloqueo de ingreso (`isBlocked`), selector dinámico de sedes, tipos de incidencia predefinidos y personalizados, y estados asíncronos con spinner (`isSaving`, `isResolving`, `isDeleting`).
+     - Diálogo de confirmación para eliminar incidencias (`incidentToDelete`).
+     - Sistema de modales responsivo con pie sticky (`.modal-footer`) y soporte de safe areas.
+- **📦 Componentes Modificados**:
+  - `src/shared/ui/DashboardLayout.tsx`
+  - `src/shared/ui/DashboardLayout.css`
+  - `src/features/novedades/ui/Novedades.tsx`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript). Precache con 24 recursos empaquetados.
+
+### [2026-08-27 09:48:00] - [FEATURE] [UI/UX] [MOBILE] [PWA] - Corrección Integral de Layout Mobile y Botones Sticky en Modales (Usuarios, Dashboard y Navegación)
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"Quisiera que me mejoraras esto porque al abrir mi pwa en mobile se desajusta , adicional veo que no me alcanza a mostrar los botones de cancelar y guardar al editar un usuario"*
+- **🤖 Resumen Técnico para la IA**:
+  1. **Ajuste de Capas y Jerarquía Z-Index (`DashboardLayout.css`)**:
+     - Se ajustó el `z-index` de `.bottom-nav-bar` a `40` (estaba en `999`), evitando que se sobreponga a los diálogos modales y permitiendo que cualquier modal (`z-index: 9000`) se superponga limpiamente sobre la barra de navegación inferior.
+     - Se fijó `.top-bar` con `z-index: 30` y safe-area superior, asegurando proporciones táctiles y truncado dinámico para selectores de sedes y botones en pantallas de menos de 400px.
+     - Se eliminó el bloqueo de altura rígida anidada en `.content-wrapper` permitiendo scroll inercial táctil fluido en `.main-content` con `padding-bottom: calc(76px + env(safe-area-inset-bottom))`.
+  2. **Sistema Global de Modales con Pie Sticky (`index.css` & `Settings.css`)**:
+     - `.modal-overlay` configurado globalmente con `position: fixed; inset: 0; z-index: 9000; backdrop-filter: blur(6px)`.
+     - `.modal-content` / `.modal-card` con `max-height: calc(100dvh - 16px)` y `display: flex; flex-direction: column`.
+     - `.modal-body` con `flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch`.
+     - `.modal-footer` fijado con `position: sticky; bottom: 0; z-index: 10; background: #ffffff; padding-bottom: max(12px, env(safe-area-inset-bottom)); box-shadow: 0 -4px 12px rgba(0,0,0,0.05)`, garantizando que los botones **Cancelar** y **Guardar Cambios** permanezcan siempre 100% visibles, anclados y accesibles.
+  3. **Corrección de Encabezado Hero en Mobile (`Dashboard.css`)**:
+     - Se optimizó `.dashboard-hero-header` con padding ergonómico (`1.1rem 1.25rem`), `line-height: 1.3`, y `overflow: visible`, eliminando el recorte superior del título *"Dashboard General"* y alineando la insignia *● EN LÍNEA* y el botón de actualización.
+  4. **Formularios Responsivos en Gestión de Usuarios (`UsuariosTab.tsx`)**:
+     - Se removieron los estilos rígidos `gridTemplateColumns: '1fr 1fr'` en favor de `.form-row` responsivo (1 columna en smartphones, 2 columnas en tablets/desktop).
+- **📦 Componentes Modificados**:
+  - `src/shared/ui/DashboardLayout.css`
+  - `src/features/dashboard/ui/Dashboard.css`
+  - `src/features/settings/ui/Settings.css`
+  - `src/features/settings/ui/UsuariosTab.tsx`
+  - `src/index.css`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript). Precache con 24 recursos empaquetados exitosamente.
+
 ### [2026-08-26 16:24:00] - [CLEANUP] [PWA] [LIFECYCLE] - Remoción Completa de Modal de Actualización y Restauración de PWA Estándar (autoUpdate)
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:

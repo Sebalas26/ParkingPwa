@@ -300,9 +300,9 @@ export const UsuariosTab: React.FC = () => {
             </div>
 
             <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', flex: 1, minHeight: 0 }}>
-              <div className="modal-body" style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '1.25rem' }}>
+              <div className="modal-body">
                 {/* 1. DOCUMENTO DE IDENTIDAD */}
-                <div className="form-row form-grid-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
+                <div className="form-row">
                   <div className="form-group">
                     <label>Tipo Doc.</label>
                     <select
@@ -338,7 +338,7 @@ export const UsuariosTab: React.FC = () => {
                   2. Datos Personales
                 </h4>
 
-                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="form-row">
                   <div className="form-group">
                     <label>Primer Nombre *</label>
                     <input
@@ -364,7 +364,7 @@ export const UsuariosTab: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="form-row">
                   <div className="form-group">
                     <label>Primer Apellido *</label>
                     <input
@@ -395,7 +395,7 @@ export const UsuariosTab: React.FC = () => {
                   3. Credenciales y Permisos
                 </h4>
 
-                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="form-row">
                   <div className="form-group">
                     <label>Nombre de Usuario *</label>
                     <input
@@ -422,7 +422,7 @@ export const UsuariosTab: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="form-row">
                   <div className="form-group">
                     <label>{editingUsuario.id ? 'Nueva Contraseña (Opcional)' : 'Contraseña Inicial *'}</label>
                     <input
@@ -607,7 +607,7 @@ export const UsuariosTab: React.FC = () => {
                 )}
               </div>
 
-              <div className="modal-footer" style={{ borderTop: '1px solid var(--border-color, #e2e8f0)', background: '#ffffff', flexShrink: 0, padding: '0.85rem 1.25rem', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <div className="modal-footer">
                 <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)} disabled={isSavingUser}>
                   Cancelar
                 </button>

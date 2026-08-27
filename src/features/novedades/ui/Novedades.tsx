@@ -15,7 +15,9 @@ import {
   Building,
   User,
   Phone,
-  FileText
+  FileText,
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 import { novedadesService } from '../data/novedadesService';
 import type { VehicleIncidentDto, SaveVehicleIncidentDto } from '../model/NovedadesContracts';
@@ -40,15 +42,19 @@ export const Novedades: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'blocked' | 'active' | 'resolved'>('all');
 
-  // Modales
+  // Modales y estados de guardado
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingIncident, setEditingIncident] = useState<SaveVehicleIncidentDto | null>(null);
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [isCustomType, setIsCustomType] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [selectedIncident, setSelectedIncident] = useState<VehicleIncidentDto | null>(null);
   const [resolvingIncident, setResolvingIncident] = useState<VehicleIncidentDto | null>(null);
   const [resolveNotes, setResolveNotes] = useState('');
+  const [isResolving, setIsResolving] = useState(false);
+  const [incidentToDelete, setIncidentToDelete] = useState<{ id: string; plate: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const currentUser = authService.getCurrentUser();
@@ -75,7 +81,7 @@ export const Novedades: React.FC = () => {
       plateNumber: '',
       branchId: selectedParqueaderoId ? Number(selectedParqueaderoId) : null,
       incidentType: COMMON_INCIDENT_TYPES[0],
-      isBlocked: true, // Por defecto al agregar novedad grave se sugiere bloqueo
+      isBlocked: true, // Por defecto se sugiere bloqueo
       description: '',
       reportedBy: operatorName,
       contactPhone: '',
@@ -115,6 +121,9 @@ export const Novedades: React.FC = () => {
       return;
     }
 
+    setIsSaving(true);
+    setErrorMsg(null);
+
     try {
       if (currentId) {
         await novedadesService.updateIncident(currentId, editingIncident);
@@ -124,10 +133,12 @@ export const Novedades: React.FC = () => {
       setIsModalOpen(false);
       setEditingIncident(null);
       setCurrentId(null);
-      loadIncidents();
+      await loadIncidents();
     } catch (err: any) {
       console.error('Error al guardar novedad:', err);
-      setErrorMsg(err.message || 'Error al guardar los datos de la novedad.');
+      setErrorMsg(err.message || 'Error al guardar los datos de la novedad en el servidor.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -140,39 +151,42 @@ export const Novedades: React.FC = () => {
     e.preventDefault();
     if (!resolvingIncident) return;
 
+    setIsResolving(true);
     try {
       await novedadesService.resolveIncident(resolvingIncident.incidentId, {
         resolvedNotes: resolveNotes.trim() || 'Novedad resuelta y bloqueo levantado.',
       });
       setResolvingIncident(null);
       setResolveNotes('');
-      loadIncidents();
+      await loadIncidents();
     } catch (err) {
       console.error('Error al resolver novedad:', err);
+    } finally {
+      setIsResolving(false);
     }
   };
 
-  const handleDelete = async (id: string, plate: string) => {
-    if (!window.confirm(`¿Estás seguro de eliminar el registro de novedad para la placa "${plate}"?`)) {
-      return;
-    }
+  const handleConfirmDelete = async () => {
+    if (!incidentToDelete) return;
 
+    setIsDeleting(true);
     try {
-      await novedadesService.deleteIncident(id);
-      loadIncidents();
+      await novedadesService.deleteIncident(incidentToDelete.id);
+      setIncidentToDelete(null);
+      await loadIncidents();
     } catch (err) {
       console.error('Error al eliminar novedad:', err);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   // Filtrado de datos
   const filteredData = incidents.filter((n) => {
-    // Filtro rápido de tabs
-    if (filterType === 'blocked' && !n.isBlocked) return false;
+    if (filterType === 'blocked' && (!n.isBlocked || n.status !== 'Activa')) return false;
     if (filterType === 'active' && n.status !== 'Activa') return false;
     if (filterType === 'resolved' && n.status !== 'Resuelta') return false;
 
-    // Filtro por sede seleccionada (si aplica)
     if (selectedParqueaderoId && n.branchId && n.branchId !== Number(selectedParqueaderoId)) {
       return false;
     }
@@ -190,17 +204,22 @@ export const Novedades: React.FC = () => {
   const blockedCount = incidents.filter((i) => i.isBlocked && i.status === 'Activa').length;
 
   return (
-    <div className="novedades-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', height: '100%', overflowY: 'auto', paddingBottom: '2rem' }}>
-      {/* Encabezado limpio y organizado */}
+    <div className="novedades-container">
+      {/* Encabezado */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
         <div className="novedades-header">
           <h1>Novedades e Incidencias en Sitio</h1>
           <p>Monitoreo de observaciones, cartera pendiente y bloqueo de placas en el parqueadero.</p>
         </div>
 
-        <button className="btn-primary" style={{ width: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }} onClick={handleOpenCreate}>
-          <Plus size={18} /> Agregar Novedad
-        </button>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <button className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={loadIncidents} disabled={isLoading}>
+            <RefreshCw size={15} className={isLoading ? 'spinner' : ''} /> Actualizar
+          </button>
+          <button className="btn-primary" style={{ width: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }} onClick={handleOpenCreate}>
+            <Plus size={18} /> Agregar Novedad
+          </button>
+        </div>
       </div>
 
       {/* Barra de Herramientas y Filtros */}
@@ -233,135 +252,140 @@ export const Novedades: React.FC = () => {
           </button>
         </div>
 
-        <div className="search-box" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-card)', padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100%', maxWidth: '360px' }}>
-          <Search size={16} className="text-muted" />
+        <div className="search-box">
+          <Search size={16} />
           <input
             type="text"
             placeholder="Buscar por placa, tipo, observador..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ border: 'none', background: 'transparent', outline: 'none', color: 'var(--text-primary)', fontSize: '0.85rem', width: '100%' }}
           />
         </div>
       </div>
 
       {/* Tabla de Novedades */}
       <div className="table-card" style={{ flex: 1 }}>
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>PLACA</th>
-              <th>TIPO NOVEDAD</th>
-              <th>SEDE</th>
-              <th>FECHA Y HORA</th>
-              <th>REPORTADO POR</th>
-              <th>OBSERVACIÓN</th>
-              <th>ESTADO</th>
-              <th className="text-right">ACCIONES</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredData.length > 0 ? (
-              filteredData.map((n) => (
-                <tr key={n.incidentId} style={n.isBlocked && n.status === 'Activa' ? { background: 'rgba(239, 68, 68, 0.03)' } : {}}>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                      <div className="novedades-plate-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 'bold' }}>
-                        <Car size={14} style={{ color: 'var(--text-secondary)' }} />
-                        {n.plateNumber}
+        <div className="table-responsive">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>PLACA</th>
+                <th>TIPO NOVEDAD</th>
+                <th>SEDE</th>
+                <th>FECHA Y HORA</th>
+                <th>REPORTADO POR</th>
+                <th>OBSERVACIÓN</th>
+                <th>ESTADO</th>
+                <th className="text-right">ACCIONES</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredData.length > 0 ? (
+                filteredData.map((n) => (
+                  <tr key={n.incidentId} style={n.isBlocked && n.status === 'Activa' ? { background: 'rgba(239, 68, 68, 0.03)' } : {}}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <div className="novedades-plate-badge">
+                          <Car size={14} style={{ color: 'var(--text-secondary)' }} />
+                          {n.plateNumber}
+                        </div>
+                        {n.isBlocked && n.status === 'Activa' && (
+                          <span
+                            style={{
+                              background: '#fee2e2',
+                              color: '#b91c1c',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              border: '1px solid #fca5a5',
+                            }}
+                          >
+                            <Lock size={10} /> BLOQUEADO
+                          </span>
+                        )}
                       </div>
-                      {n.isBlocked && n.status === 'Activa' && (
-                        <span
-                          style={{
-                            background: '#fee2e2',
-                            color: '#b91c1c',
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            fontSize: '0.72rem',
-                            fontWeight: 800,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            border: '1px solid #fca5a5',
-                          }}
-                        >
-                          <Lock size={10} /> BLOQUEADO
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td>
-                    <span
-                      className={`badge ${
-                        n.incidentType.includes('No Pago') || n.incidentType.includes('Bloqueo') || n.incidentType.includes('Hurto')
-                          ? 'badge-danger'
-                          : n.incidentType.includes('Daño') || n.incidentType.includes('Conflicto')
-                          ? 'badge-warning'
-                          : 'badge-info'
-                      }`}
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}
-                    >
-                      <AlertTriangle size={13} /> {n.incidentType}
-                    </span>
-                  </td>
-                  <td style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                    {n.branchName || '🌐 Todas las Sedes'}
-                  </td>
-                  <td className="text-muted" style={{ fontSize: '0.82rem' }}>
-                    {n.createdAtUtc ? n.createdAtUtc.slice(0, 10) : '--'} <br />
-                    <small>{n.createdAtUtc ? new Date(n.createdAtUtc).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</small>
-                  </td>
-                  <td style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                    {n.reportedBy}
-                  </td>
-                  <td style={{ maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.82rem' }} title={n.description}>
-                    {n.description}
-                  </td>
-                  <td>
-                    <span className={`badge ${n.status === 'Activa' ? (n.isBlocked ? 'badge-danger' : 'badge-warning') : 'badge-success'}`}>
-                      {n.status}
-                    </span>
-                  </td>
-                  <td className="text-right">
-                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                      <button className="btn-action primary" onClick={() => setSelectedIncident(n)} title="Ver Detalle">
-                        <Eye size={15} />
-                      </button>
-                      <button className="btn-action primary" onClick={() => handleOpenEdit(n)} title="Editar Novedad">
-                        <Edit2 size={15} />
-                      </button>
-                      {n.status === 'Activa' && (
-                        <button
-                          className="btn-action success"
-                          style={{ color: '#10b981' }}
-                          onClick={() => handleOpenResolve(n)}
-                          title="Resolver Novedad y Desbloquear"
-                        >
-                          <Unlock size={15} />
+                    </td>
+                    <td>
+                      <span
+                        className={`badge ${
+                          n.incidentType.includes('No Pago') || n.incidentType.includes('Bloqueo') || n.incidentType.includes('Hurto')
+                            ? 'badge-danger'
+                            : n.incidentType.includes('Daño') || n.incidentType.includes('Conflicto')
+                            ? 'badge-warning'
+                            : 'badge-info'
+                        }`}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                      >
+                        <AlertTriangle size={13} /> {n.incidentType}
+                      </span>
+                    </td>
+                    <td style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                      {n.branchName || '🌐 Todas las Sedes'}
+                    </td>
+                    <td className="text-muted" style={{ fontSize: '0.82rem' }}>
+                      {n.createdAtUtc ? n.createdAtUtc.slice(0, 10) : '--'} <br />
+                      <small>{n.createdAtUtc ? new Date(n.createdAtUtc).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</small>
+                    </td>
+                    <td style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                      {n.reportedBy}
+                    </td>
+                    <td style={{ maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.82rem' }} title={n.description}>
+                      {n.description}
+                    </td>
+                    <td>
+                      <span className={`badge ${n.status === 'Activa' ? (n.isBlocked ? 'badge-danger' : 'badge-warning') : 'badge-success'}`}>
+                        {n.status}
+                      </span>
+                    </td>
+                    <td className="text-right">
+                      <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                        <button className="btn-action primary" onClick={() => setSelectedIncident(n)} title="Ver Detalle">
+                          <Eye size={15} />
                         </button>
-                      )}
-                      <button className="btn-action danger" onClick={() => handleDelete(n.incidentId, n.plateNumber)} title="Eliminar Registro">
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
+                        <button className="btn-action primary" onClick={() => handleOpenEdit(n)} title="Editar Novedad">
+                          <Edit2 size={15} />
+                        </button>
+                        {n.status === 'Activa' && (
+                          <button
+                            className="btn-action success"
+                            style={{ color: '#10b981' }}
+                            onClick={() => handleOpenResolve(n)}
+                            title="Resolver Novedad y Desbloquear Placa"
+                          >
+                            <Unlock size={15} />
+                          </button>
+                        )}
+                        <button
+                          className="btn-action danger"
+                          onClick={() => setIncidentToDelete({ id: n.incidentId, plate: n.plateNumber })}
+                          title="Eliminar Registro"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={8} className="text-center text-muted" style={{ padding: '3rem' }}>
+                    {isLoading ? 'Consultando novedades activas...' : 'No hay novedades u observaciones registradas.'}
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={8} className="text-center text-muted" style={{ padding: '3rem' }}>
-                  {isLoading ? 'Consultando novedades activas...' : 'No hay novedades u observaciones registradas.'}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Modal Registrar / Editar Novedad */}
       {isModalOpen && editingIncident && (
         <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '580px' }}>
+          <div className="modal-card">
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -369,13 +393,13 @@ export const Novedades: React.FC = () => {
                 </div>
                 <h3>{currentId ? `Editar Novedad - ${editingIncident.plateNumber}` : 'Registrar Nueva Novedad / Bloqueo'}</h3>
               </div>
-              <button className="btn-close-modal" onClick={() => setIsModalOpen(false)}>
+              <button className="btn-close-modal" onClick={() => setIsModalOpen(false)} disabled={isSaving}>
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleSave}>
-              <div className="modal-body" style={{ maxHeight: '72vh', overflowY: 'auto' }}>
+            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+              <div className="modal-body">
                 {errorMsg && (
                   <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '10px 14px', borderRadius: '8px', fontSize: '0.85rem', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <AlertTriangle size={16} />
@@ -383,7 +407,7 @@ export const Novedades: React.FC = () => {
                   </div>
                 )}
 
-                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="form-row">
                   <div className="form-group">
                     <label>Placa del Vehículo *</label>
                     <input
@@ -394,6 +418,7 @@ export const Novedades: React.FC = () => {
                       onChange={(e) => setEditingIncident({ ...editingIncident, plateNumber: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })}
                       required
                       maxLength={10}
+                      disabled={isSaving}
                       style={{ fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase' }}
                     />
                   </div>
@@ -403,6 +428,7 @@ export const Novedades: React.FC = () => {
                       className="input-field"
                       value={editingIncident.branchId || ''}
                       onChange={(e) => setEditingIncident({ ...editingIncident, branchId: e.target.value ? Number(e.target.value) : null })}
+                      disabled={isSaving}
                     >
                       <option value="">🌐 Todas las Sedes (Global)</option>
                       {parqueaderosList.map((b) => (
@@ -421,6 +447,7 @@ export const Novedades: React.FC = () => {
                       type="button"
                       style={{ background: 'none', border: 'none', color: 'var(--primary-color)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}
                       onClick={() => setIsCustomType(!isCustomType)}
+                      disabled={isSaving}
                     >
                       {isCustomType ? '← Seleccionar de la lista' : '✎ Escribir personalizado'}
                     </button>
@@ -433,6 +460,7 @@ export const Novedades: React.FC = () => {
                       value={editingIncident.incidentType}
                       onChange={(e) => setEditingIncident({ ...editingIncident, incidentType: e.target.value })}
                       required
+                      disabled={isSaving}
                     />
                   ) : (
                     <select
@@ -440,6 +468,7 @@ export const Novedades: React.FC = () => {
                       value={editingIncident.incidentType}
                       onChange={(e) => setEditingIncident({ ...editingIncident, incidentType: e.target.value })}
                       required
+                      disabled={isSaving}
                     >
                       {COMMON_INCIDENT_TYPES.map((type) => (
                         <option key={type} value={type}>
@@ -457,7 +486,6 @@ export const Novedades: React.FC = () => {
                     border: `1.5px solid ${editingIncident.isBlocked ? '#f87171' : 'var(--border-color)'}`,
                     borderRadius: '10px',
                     padding: '12px 14px',
-                    marginBottom: '14px',
                     transition: 'all 0.2s ease',
                   }}
                 >
@@ -466,6 +494,7 @@ export const Novedades: React.FC = () => {
                       type="checkbox"
                       checked={editingIncident.isBlocked}
                       onChange={(e) => setEditingIncident({ ...editingIncident, isBlocked: e.target.checked })}
+                      disabled={isSaving}
                       style={{ width: '18px', height: '18px', accentColor: '#dc2626' }}
                     />
                     <div>
@@ -473,13 +502,13 @@ export const Novedades: React.FC = () => {
                         <Lock size={15} /> Bloquear ingreso en Parqueaderos (WPF y PWA)
                       </span>
                       <small style={{ display: 'block', color: 'var(--text-secondary)', marginTop: '2px', fontSize: '0.78rem' }}>
-                        Si está marcado, el sistema WPF impedirá registrar el ingreso de esta placa y emitirá una alerta sonora.
+                        Si está marcado, el sistema central impedirá registrar el ingreso de esta placa y emitirá una alerta.
                       </small>
                     </div>
                   </label>
                 </div>
 
-                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="form-row">
                   <div className="form-group">
                     <label>Reportado Por</label>
                     <input
@@ -488,6 +517,7 @@ export const Novedades: React.FC = () => {
                       placeholder="Nombre del operador"
                       value={editingIncident.reportedBy}
                       onChange={(e) => setEditingIncident({ ...editingIncident, reportedBy: e.target.value })}
+                      disabled={isSaving}
                     />
                   </div>
                   <div className="form-group">
@@ -498,6 +528,7 @@ export const Novedades: React.FC = () => {
                       placeholder="Ej. 3001234567"
                       value={editingIncident.contactPhone || ''}
                       onChange={(e) => setEditingIncident({ ...editingIncident, contactPhone: e.target.value })}
+                      disabled={isSaving}
                     />
                   </div>
                 </div>
@@ -511,16 +542,27 @@ export const Novedades: React.FC = () => {
                     value={editingIncident.description}
                     onChange={(e) => setEditingIncident({ ...editingIncident, description: e.target.value })}
                     required
+                    disabled={isSaving}
                   />
                 </div>
               </div>
 
-              <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)}>
+              <div className="modal-footer">
+                <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)} disabled={isSaving}>
                   Cancelar
                 </button>
-                <button type="submit" className="btn-primary" style={{ width: 'auto' }}>
-                  <CheckCircle size={16} /> {currentId ? 'Actualizar Novedad' : 'Guardar Novedad'}
+                <button type="submit" className="btn-primary" style={{ width: 'auto' }} disabled={isSaving}>
+                  {isSaving ? (
+                    <>
+                      <Loader2 size={16} className="spinner" />
+                      {currentId ? 'Actualizando...' : 'Guardando...'}
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle size={16} />
+                      {currentId ? 'Actualizar Novedad' : 'Guardar Novedad'}
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -539,12 +581,12 @@ export const Novedades: React.FC = () => {
                 </div>
                 <h3>Resolver Novedad ({resolvingIncident.plateNumber})</h3>
               </div>
-              <button className="btn-close-modal" onClick={() => setResolvingIncident(null)}>
+              <button className="btn-close-modal" onClick={() => setResolvingIncident(null)} disabled={isResolving}>
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleConfirmResolve}>
+            <form onSubmit={handleConfirmResolve} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
               <div className="modal-body">
                 <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: '14px' }}>
                   Al resolver esta novedad, <strong>el bloqueo de la placa será levantado de inmediato</strong> y el vehículo podrá volver a ingresar normalmente en todas las sedes.
@@ -559,16 +601,26 @@ export const Novedades: React.FC = () => {
                     value={resolveNotes}
                     onChange={(e) => setResolveNotes(e.target.value)}
                     required
+                    disabled={isResolving}
                   />
                 </div>
               </div>
 
-              <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                <button type="button" className="btn-secondary" onClick={() => setResolvingIncident(null)}>
+              <div className="modal-footer">
+                <button type="button" className="btn-secondary" onClick={() => setResolvingIncident(null)} disabled={isResolving}>
                   Cancelar
                 </button>
-                <button type="submit" className="btn-primary" style={{ width: 'auto', background: '#10b981', borderColor: '#059669' }}>
-                  <CheckCircle size={16} /> Confirmar Desbloqueo
+                <button type="submit" className="btn-primary" style={{ width: 'auto', background: '#10b981', borderColor: '#059669' }} disabled={isResolving}>
+                  {isResolving ? (
+                    <>
+                      <Loader2 size={16} className="spinner" />
+                      Desbloqueando...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle size={16} /> Confirmar Desbloqueo
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -648,6 +700,41 @@ export const Novedades: React.FC = () => {
 
             <div className="modal-footer">
               <button className="btn-secondary" onClick={() => setSelectedIncident(null)}>Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Diálogo de Confirmación de Eliminación */}
+      {incidentToDelete && (
+        <div className="modal-overlay">
+          <div className="modal-card" style={{ maxWidth: '440px' }}>
+            <div className="modal-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <AlertTriangle size={20} />
+                </div>
+                <h3>Confirmar Eliminación</h3>
+              </div>
+              <button className="btn-close-modal" onClick={() => setIncidentToDelete(null)} disabled={isDeleting}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-primary)', margin: 0 }}>
+                ¿Estás seguro de eliminar el registro de novedad para la placa <strong>{incidentToDelete.plate}</strong>? Esta acción no se puede deshacer.
+              </p>
+            </div>
+
+            <div className="modal-footer">
+              <button type="button" className="btn-secondary" onClick={() => setIncidentToDelete(null)} disabled={isDeleting}>
+                Cancelar
+              </button>
+              <button type="button" className="btn-danger" onClick={handleConfirmDelete} disabled={isDeleting} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                {isDeleting ? <Loader2 size={16} className="spinner" /> : <Trash2 size={16} />}
+                {isDeleting ? 'Eliminando...' : 'Eliminar Novedad'}
+              </button>
             </div>
           </div>
         </div>

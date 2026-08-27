@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { authService } from '../../features/auth/data/authService';
-import { Car, LayoutDashboard, BarChart, Settings, LogOut, User, Wallet, BellRing, RefreshCw, Building2, Menu, X } from 'lucide-react';
+import { Car, LayoutDashboard, BarChart, Settings, LogOut, User, Wallet, BellRing, RefreshCw, Building2, Menu, X, PanelLeftClose, PanelLeft } from 'lucide-react';
 import { PwaInstallPrompt } from './PwaInstallPrompt';
 import { OfflineBanner } from './OfflineBanner';
 import { useBranchContext } from '../context/ParqueaderoContext';
@@ -39,6 +39,7 @@ export const DashboardLayout: React.FC = () => {
 
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -64,6 +65,14 @@ export const DashboardLayout: React.FC = () => {
   const handleNavigate = (path: string) => {
     setIsMobileMenuOpen(false);
     navigate(path);
+  };
+
+  const toggleSidebar = () => {
+    if (window.innerWidth <= 768) {
+      setIsMobileMenuOpen((prev) => !prev);
+    } else {
+      setIsDesktopSidebarCollapsed((prev) => !prev);
+    }
   };
 
   const formattedDate = currentTime.toLocaleDateString('es-ES', {
@@ -93,7 +102,7 @@ export const DashboardLayout: React.FC = () => {
         aria-hidden="true"
       />
 
-      <aside className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
+      <aside className={`sidebar ${isMobileMenuOpen ? 'open' : ''} ${isDesktopSidebarCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-header">
           <div className="logo-container">
             <img src="/logo.png" alt="Parking Flow" className="sidebar-logo-img" />
@@ -102,6 +111,15 @@ export const DashboardLayout: React.FC = () => {
             <span className="app-name">Parking Flow</span>
             <span className="app-subtitle">Gestión Multi-Sede</span>
           </div>
+          <button
+            type="button"
+            className="btn-collapse-sidebar-desktop"
+            onClick={() => setIsDesktopSidebarCollapsed(true)}
+            title="Ocultar menú lateral"
+            aria-label="Ocultar menú lateral"
+          >
+            <PanelLeftClose size={18} />
+          </button>
           <button
             type="button"
             className="btn-close-sidebar"
@@ -196,15 +214,16 @@ export const DashboardLayout: React.FC = () => {
           <div className="top-bar-left">
             <button
               type="button"
-              className="mobile-menu-toggle"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-label="Abrir Menú"
+              className="menu-toggle-btn"
+              onClick={toggleSidebar}
+              aria-label={isDesktopSidebarCollapsed ? "Mostrar Menú" : "Ocultar Menú"}
+              title={isDesktopSidebarCollapsed ? "Mostrar Menú Lateral" : "Ocultar Menú Lateral"}
             >
-              <Menu size={22} />
+              {isDesktopSidebarCollapsed ? <PanelLeft size={20} /> : <Menu size={20} />}
             </button>
-            <div className="mobile-brand">
-              <img src="/logo.png" alt="Parking Flow" className="mobile-header-logo-img" />
-              <span className="mobile-brand-name">Parking Flow</span>
+            <div className="header-brand-info">
+              <img src="/logo.png" alt="Parking Flow" className="header-brand-logo-img" />
+              <span className="header-brand-title">Parking Flow</span>
             </div>
           </div>
 
