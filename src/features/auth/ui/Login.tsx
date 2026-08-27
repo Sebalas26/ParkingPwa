@@ -7,11 +7,14 @@ import './Login.css';
 export const Login: React.FC = () => {
   const [username, setUsername] = useState(() => localStorage.getItem('remembered_username') || '');
   const [password, setPassword] = useState('');
+  const [rememberUser, setRememberUser] = useState(() => Boolean(localStorage.getItem('remembered_username')));
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [warningMessage, setWarningMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  const appVersion = import.meta.env.VITE_APP_VERSION || '0.0.1 Dev';
 
   useEffect(() => {
     const reason = sessionStorage.getItem('session_terminated_reason');
@@ -40,7 +43,11 @@ export const Login: React.FC = () => {
     try {
       await authService.login({ username: username.trim(), password });
 
-      localStorage.setItem('remembered_username', username.trim());
+      if (rememberUser) {
+        localStorage.setItem('remembered_username', username.trim());
+      } else {
+        localStorage.removeItem('remembered_username');
+      }
 
       navigate('/dashboard');
     } catch (err: any) {
@@ -66,9 +73,9 @@ export const Login: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="hero-pos-pill">
-            <span className="pos-pill-dot"></span> Terminal POS • Control de Acceso y Recaudación
+            <span className="pos-pill-dot"></span> Terminal WEB • Control de Acceso y Recaudación
           </div>
         </div>
 
@@ -86,10 +93,10 @@ export const Login: React.FC = () => {
           </div>
           <div className="window-controls">
             <button type="button" className="win-btn win-min" tabIndex={-1} aria-label="Minimizar" onClick={() => window.blur()}>
-              <svg viewBox="0 0 10 1" width="10" height="1"><rect width="10" height="1" fill="currentColor"/></svg>
+              <svg viewBox="0 0 10 1" width="10" height="1"><rect width="10" height="1" fill="currentColor" /></svg>
             </button>
             <button type="button" className="win-btn win-close" tabIndex={-1} aria-label="Cerrar" onClick={() => window.close()}>
-              <svg viewBox="0 0 10 10" width="10" height="10"><path d="M1 1l8 8m0-8L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+              <svg viewBox="0 0 10 10" width="10" height="10"><path d="M1 1l8 8m0-8L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
             </button>
           </div>
         </div>
@@ -126,7 +133,7 @@ export const Login: React.FC = () => {
 
           <form onSubmit={handleLogin} className="login-input-form" autoCapitalize="none" autoComplete="off">
             <div className="login-field-group">
-              <label htmlFor="username">Usuario / ID de Operador</label>
+              <label htmlFor="username">Usuario / ID</label>
               <div className="input-with-icon-wrapper">
                 <input
                   id="username"
@@ -165,6 +172,18 @@ export const Login: React.FC = () => {
               </div>
             </div>
 
+            <div className="login-options-row">
+              <label className="remember-user-label">
+                <input
+                  type="checkbox"
+                  checked={rememberUser}
+                  onChange={(e) => setRememberUser(e.target.checked)}
+                  className="remember-user-checkbox"
+                />
+                <span>Recordar usuario</span>
+              </label>
+            </div>
+
             <button type="submit" className="login-submit-btn" disabled={isLoading}>
               {isLoading ? (
                 <>
@@ -172,7 +191,7 @@ export const Login: React.FC = () => {
                   <span>Ingresando...</span>
                 </>
               ) : (
-                'Acceder a Estación de Trabajo'
+                'Ingresar'
               )}
             </button>
           </form>
@@ -181,6 +200,9 @@ export const Login: React.FC = () => {
         <div className="login-form-footer">
           <div className="footer-security-text">
             <span>Protegido por Control de Acceso • PARKING FLOW</span>
+          </div>
+          <div className="footer-version-tag">
+            Versión del Sistema: <strong>v{appVersion}</strong>
           </div>
         </div>
       </div>

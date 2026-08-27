@@ -7,6 +7,36 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-27 12:20:00] - [FEAT] [UI/UX] [PWA] - Mostrar Versión del Sistema en Login
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"Muestra la version en el login"*
+- **🤖 Resumen Técnico para la IA**:
+  1. Se reintrodujo la lectura de la variable de entorno `VITE_APP_VERSION` en `Login.tsx`.
+  2. Se agregó el bloque JSX `<div className="footer-version-tag">` debajo del texto de seguridad en el formulario derecho.
+  3. Se añadieron los estilos CSS correspondientes en `Login.css` (alineación centrada en `.login-form-footer`, y resaltado en verde institucional para la versión).
+- **📦 Componentes Modificados**:
+  - `src/features/auth/ui/Login.tsx`
+  - `src/features/auth/ui/Login.css`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript).
+
+### [2026-08-27 12:10:00] - [BUGFIX] [UI/UX] [PWA] - Restauración de funcionalidad "Recordar Usuario"
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"pero quitaste el recordar usuario"*
+- **🤖 Resumen Técnico para la IA**:
+  1. Se reintrodujo el estado `rememberUser` en `Login.tsx` leyendo desde `localStorage`.
+  2. Se añadió nuevamente la lógica condicional en `handleLogin` para gestionar la persistencia de sesión (`setItem` / `removeItem`).
+  3. Se incorporó el componente visual (Checkbox) justo encima del botón de acceso, incluyendo sus respectivos estilos CSS `.login-options-row` y `.remember-user-checkbox` con `accent-color: #0d9488` para mantener el tono verde turquesa institucional.
+- **📦 Componentes Modificados**:
+  - `src/features/auth/ui/Login.tsx`
+  - `src/features/auth/ui/Login.css`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript).
+
 ### [2026-08-27 11:55:00] - [FEAT] [UI/UX] [PWA] - Rediseño de Vista Login al estilo WPF
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
