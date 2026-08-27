@@ -7,6 +7,22 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-27 16:38:00] - [BUGFIX] [UI/UX] [PWA] - Reubicación de Logos en Layout Móvil y Desktop
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"Quedo mal y me entendiste diferente, requiero en esta pantalla que te puse de primeras que es la version mobile, el logo quede mas pequeño y bien responsive... en la web te señale en rojo que el logo que quiero alli es el logo que te anexe y en amarillo el logo que esta en e circulo rojo"*
+- **🤖 Resumen Técnico para la IA**:
+  1. **Rediseño de Cabecera Móvil y Formulario**: Se eliminó completamente la sección antigua `.mobile-brand-header` que estaba causando que el logo en móviles se cortara y se viera enorme. En su lugar, se inyectó la imagen del icono de Parking Flow (`logo.png`) directamente dentro de `.form-header-box` encima de "Iniciar Sesión" (asignado con la clase `.form-top-logo`).
+  2. **Dimensionado Responsive**: A `.form-top-logo` se le asignó un tamaño fijo de `width: 70px` (y `60px` en móviles) para que encaje a la perfección sin deformarse ni ocupar toda la pantalla.
+  3. **Corrección de Logo Completo en Desktop (Hero)**: En el panel izquierdo de la versión web (Hero Desktop), se ubicó el nuevo archivo con texto incluido (`logo-full.png`) según las instrucciones marcadas con el círculo rojo por el usuario, completando la disposición solicitada.
+- **📦 Componentes Modificados**:
+  - `src/features/auth/ui/Login.tsx`
+  - `src/features/auth/ui/Login.css`
+  - `public/logo-full.png` (Copiado de adjunto)
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript).
+
 ### [2026-08-27 15:40:00] - [FEAT] [SAAS] [UX] - Menú Exclusivo SuperAdmin, Impersonación con Persistencia F5, Route Guards y Rediseño Visual
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:

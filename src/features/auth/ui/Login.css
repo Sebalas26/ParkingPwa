@@ -182,57 +182,9 @@
   color: #0f172a;
 }
 
-/* Cabecera Móvil (Oculta en Desktop) */
-.mobile-brand-header {
-  display: none;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
-  width: 100%;
-}
-
-.mobile-logo-icon {
-  width: 42px;
-  height: 42px;
-  background: linear-gradient(135deg, #07665e, #10b981);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(7, 102, 94, 0.3);
-  flex-shrink: 0;
-  margin-bottom: 0px;
-}
-
-.mobile-logo-img {
-  max-width: 180px;
-  height: auto;
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.15));
-}
-
-.mobile-brand-texts {
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-}
-
-.mobile-brand-name {
-  font-size: 1.15rem;
-  font-weight: 900;
-  color: #0f172a;
-  margin: 0;
-  line-height: 1.1;
-  letter-spacing: 0.03em;
-}
-
-.mobile-brand-tagline {
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: #07665e;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
+/* =========================================================
+   FORMULARIO DERECHO / MÓVIL
+   ========================================================= */
 .login-form-wrapper {
   width: 100%;
   max-width: 440px;
@@ -243,7 +195,15 @@
 }
 
 .form-header-box {
-  margin-bottom: 32px;
+  margin-bottom: 30px;
+  text-align: left;
+}
+
+.form-top-logo {
+  width: 70px;
+  height: auto;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.15));
 }
 
 .form-title {
@@ -431,12 +391,11 @@
     display: none;
   }
 
-  /* Mostrar la cabecera compacta móvil */
-  .mobile-brand-header {
-    display: flex;
-    justify-content: center;
+  .form-top-logo {
+    width: 60px;
+    margin-bottom: 12px;
   }
-
+  
   .login-form-side {
     width: 100%;
     max-width: 440px;

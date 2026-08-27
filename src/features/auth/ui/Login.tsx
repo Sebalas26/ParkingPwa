@@ -67,7 +67,7 @@ export const Login: React.FC = () => {
       <div className="login-hero-side">
         <div className="hero-center-content">
           <div className="hero-logo-wrapper">
-            <img src="/logo-new.png" alt="Parking Flow" className="hero-main-logo" />
+            <img src="/logo-full.png" alt="Parking Flow" className="hero-main-logo" />
           </div>
 
           <div className="hero-pos-pill">
@@ -97,15 +97,9 @@ export const Login: React.FC = () => {
           </div>
         </div>
 
-        {/* Cabecera Móvil Compacta */}
-        <div className="mobile-brand-header">
-          <div className="mobile-logo-icon">
-            <img src="/logo-new.png" alt="Parking Flow" className="mobile-logo-img" />
-          </div>
-        </div>
-
         <div className="login-form-wrapper">
           <div className="form-header-box">
+            <img src="/logo.png" alt="Parking Flow Icon" className="form-top-logo" />
             <h2 className="form-title">Iniciar Sesión</h2>
             <p className="form-subtitle">Ingrese sus credenciales de operador para iniciar estación</p>
           </div>
