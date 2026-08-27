@@ -67,7 +67,7 @@ export const Login: React.FC = () => {
       <div className="login-hero-side">
         <div className="hero-center-content">
           <div className="hero-logo-wrapper">
-            <img src="/logo-full.png" alt="Parking Flow" className="hero-main-logo" />
+            <img src="/logocompleto.jpg" alt="Parking Flow" className="hero-main-logo" />
           </div>
 
           <div className="hero-pos-pill">

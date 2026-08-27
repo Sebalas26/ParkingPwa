@@ -7,6 +7,20 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-27 17:46:00] - [FEAT] [UI/UX] - Reemplazo de Logo en Login por logocompleto.jpg
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"Quiero que me cargues esta foto como logocompleto.jpg y esta me la pongas en login.tsx aca    <img src="/logo-full.png" alt="Parking Flow" className="hero-main-logo" />"*
+- **🤖 Resumen Técnico para la IA**:
+  1. Se copió la imagen provista por el usuario bajo el nombre `logocompleto.jpg` en la carpeta `public/` de la PWA.
+  2. Se editó `src/features/auth/ui/Login.tsx` para usar `/logocompleto.jpg` en el tag `img` con clase `hero-main-logo`.
+- **📦 Componentes Modificados**:
+  - `src/features/auth/ui/Login.tsx`
+  - `public/logocompleto.jpg` (Imagen nueva)
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript).
+
 ### [2026-08-27 16:38:00] - [BUGFIX] [UI/UX] [PWA] - Reubicación de Logos en Layout Móvil y Desktop
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
