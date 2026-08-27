@@ -3,6 +3,7 @@
 .dashboard-container {
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
   gap: 1.75rem;
   min-height: 100%;
   padding-bottom: 2.5rem;
@@ -551,6 +552,7 @@
   width: 100%;
   max-width: 100%;
   min-width: 0;
+  flex-shrink: 0;
   overflow: hidden;
 }
 
