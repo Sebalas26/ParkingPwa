@@ -7,6 +7,22 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-27 12:49:00] - [FEAT/BUGFIX] [UI/UX] [PWA] - Actualización de Logo, Fuente y Ajustes de Checkbox
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"Bien pero se muestra pegado el checkbox co n el texto , adicional veo que en la version mobile se ve el logo y texto en la parte superior de iniciar sesion, podrias dejrme en vez de esto este logo que te pasare, esto si quiero que se vea en la web y en la mobile, adicional ponle la fuente de inter"*
+- **🤖 Resumen Técnico para la IA**:
+  1. **Espaciado Checkbox**: Se aplicó `margin-right: 8px` directo al `.remember-user-checkbox` para forzar la separación con el texto que lo acompaña, solucionando el problema de colapso de margen flex.
+  2. **Reemplazo de Logo Global**: Se copió el nuevo logo aportado por el usuario (`media_1787852748682.png`) como `logo-new.png` en `public/`. En `Login.tsx`, se retiraron los bloques de texto redundantes (tanto en `.hero-brand-text-container` Desktop como en `.mobile-brand-texts` Móvil) para dejar únicamente la nueva imagen (`<img src="/logo-new.png" ... />`).
+  3. **Tipografía Inter**: Se reforzó la declaración explícita de `font-family: 'Inter', system-ui, -apple-system, sans-serif;` en `.login-input` y `.login-submit-btn` para asegurar la renderización de la fuente en controles de formulario, ya que a veces los navegadores no la heredan automáticamente del `body` o `.login-split-page`.
+- **📦 Componentes Modificados**:
+  - `src/features/auth/ui/Login.tsx`
+  - `src/features/auth/ui/Login.css`
+  - `public/logo-new.png` (Archivo nuevo)
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript).
+
 ### [2026-08-27 12:20:00] - [FEAT] [UI/UX] [PWA] - Mostrar Versión del Sistema en Login
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:

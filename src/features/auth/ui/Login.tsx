@@ -63,15 +63,7 @@ export const Login: React.FC = () => {
       <div className="login-hero-side">
         <div className="hero-center-content">
           <div className="hero-logo-wrapper">
-            <img src="/logo.png" alt="Parking Flow" className="hero-main-logo" />
-            <div className="hero-brand-text-container">
-              <h1 className="hero-brand-title">PARKING FLOW</h1>
-              <div className="hero-brand-subtitle">
-                <span className="subtitle-line"></span>
-                <span>TU PUNTO DE LLEGADA</span>
-                <span className="subtitle-line"></span>
-              </div>
-            </div>
+            <img src="/logo-new.png" alt="Parking Flow" className="hero-main-logo" />
           </div>
 
           <div className="hero-pos-pill">
@@ -101,14 +93,10 @@ export const Login: React.FC = () => {
           </div>
         </div>
 
-        {/* Cabecera Móvil Compacta (Oculta en Desktop) */}
+        {/* Cabecera Móvil Compacta */}
         <div className="mobile-brand-header">
           <div className="mobile-logo-icon">
-            <img src="/logo.png" alt="Parking Flow" className="mobile-logo-img" />
-          </div>
-          <div className="mobile-brand-texts">
-            <h2 className="mobile-brand-name">PARKING FLOW</h2>
-            <span className="mobile-brand-tagline">GESTIÓN INTELIGENTE DE PARQUEADEROS</span>
+            <img src="/logo-new.png" alt="Parking Flow" className="mobile-logo-img" />
           </div>
         </div>
 

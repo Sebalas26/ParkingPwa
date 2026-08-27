@@ -37,9 +37,10 @@
 }
 
 .hero-main-logo {
-  width: 160px;
+  max-width: 320px;
+  width: 100%;
   height: auto;
-  object-fit: contain;
+  filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.4));
 }
 
 .hero-brand-text-container {
@@ -167,6 +168,15 @@
   transition: all 0.2s ease;
 }
 
+.remember-user-checkbox {
+  width: 17px;
+  height: 17px;
+  margin-right: 8px;
+  border-radius: 4px;
+  accent-color: #0d9488;
+  cursor: pointer;
+}
+
 .win-btn:hover {
   background: #f1f5f9;
   color: #0f172a;
@@ -191,12 +201,13 @@
   justify-content: center;
   box-shadow: 0 4px 12px rgba(7, 102, 94, 0.3);
   flex-shrink: 0;
+  margin-bottom: 0px;
 }
 
 .mobile-logo-img {
-  width: 30px;
-  height: 30px;
-  object-fit: contain;
+  max-width: 180px;
+  height: auto;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.15));
 }
 
 .mobile-brand-texts {
@@ -300,15 +311,14 @@
 
 .login-input {
   width: 100%;
-  min-height: 48px;
+  height: 48px;
   background: #ffffff;
-  border: 1.5px solid #cbd5e1;
+  border: 1px solid #cbd5e1;
   border-radius: 8px;
-  padding: 12px 16px;
+  padding: 0 16px;
   font-size: 1rem;
-  font-family: inherit;
-  color: #0f172a;
-  outline: none;
+  color: #1e293b;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   transition: all 0.2s ease;
 }
 
@@ -334,20 +344,21 @@
 
 .login-submit-btn {
   width: 100%;
-  min-height: 52px;
+  height: 52px;
   background: #0d9488;
-  color: #ffffff;
-  font-size: 1rem;
-  font-weight: 700;
+  color: white;
   border: none;
   border-radius: 8px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   cursor: pointer;
-  margin-top: 12px;
-  transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-top: 10px;
 }
 
 .login-submit-btn:hover:not(:disabled) {
