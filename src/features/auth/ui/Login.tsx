@@ -99,7 +99,7 @@ export const Login: React.FC = () => {
 
         <div className="login-form-wrapper">
           <div className="form-header-box">
-            <img src="/logo.png" alt="Parking Flow Icon" className="form-top-logo" />
+            <img src="/logo-new.png" alt="Parking Flow Icon" className="form-top-logo" />
             <h2 className="form-title">Iniciar Sesión</h2>
             <p className="form-subtitle">Ingrese sus credenciales de operador para iniciar estación</p>
           </div>
