@@ -15,6 +15,7 @@ import {
   Building
 } from 'lucide-react';
 import { companyService } from '../data/companyService';
+import { apiClient } from '../../../shared/api/apiClient';
 import type { CompanyDto, CreateCompanyDto, UpdateCompanyDto } from '../model/CompanyContracts';
 import './CompaniesPage.css';
 
@@ -24,7 +25,10 @@ export const CompaniesPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [isBranchesModalOpen, setIsBranchesModalOpen] = useState<boolean>(false);
   const [selectedCompany, setSelectedCompany] = useState<CompanyDto | null>(null);
+  const [companyBranches, setCompanyBranches] = useState<any[]>([]);
+  const [loadingBranches, setLoadingBranches] = useState<boolean>(false);
   const [actionLoading, setActionLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
 
@@ -160,6 +164,21 @@ export const CompaniesPage: React.FC = () => {
       await loadCompanies();
     } catch (err: any) {
       alert(err?.message || 'Error al alternar estado de la empresa.');
+    }
+  };
+
+  const handleViewBranches = async (company: CompanyDto) => {
+    setSelectedCompany(company);
+    setIsBranchesModalOpen(true);
+    setLoadingBranches(true);
+    try {
+      const branches = await apiClient.get<any[]>(`/Branches/company/${company.id}`);
+      setCompanyBranches(Array.isArray(branches) ? branches : []);
+    } catch (err) {
+      console.error('Error al cargar sedes de la empresa:', err);
+      setCompanyBranches([]);
+    } finally {
+      setLoadingBranches(false);
     }
   };
 
@@ -328,6 +347,14 @@ export const CompaniesPage: React.FC = () => {
                     </td>
                     <td>
                       <div className="table-actions" style={{ justifyContent: 'flex-end' }}>
+                        <button
+                          type="button"
+                          className="btn-icon-action"
+                          title="Ver Sedes de este Parqueadero"
+                          onClick={() => handleViewBranches(c)}
+                        >
+                          <Layers size={16} color="#06b6d4" />
+                        </button>
                         <button
                           type="button"
                           className="btn-icon-action"
@@ -679,6 +706,87 @@ export const CompaniesPage: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* VIEW BRANCHES MODAL */}
+      {isBranchesModalOpen && selectedCompany && (
+        <div className="modal-overlay" onClick={() => setIsBranchesModalOpen(false)}>
+          <div className="modal-container" style={{ width: '760px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Sedes del Parqueadero: {selectedCompany.name}</h2>
+              <button
+                type="button"
+                className="btn-icon-action"
+                onClick={() => setIsBranchesModalOpen(false)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(31, 41, 55, 0.5)', padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.875rem' }}>
+                <span>NIT: <strong>{selectedCompany.nit}</strong></span>
+                <span>Plan: <strong>{selectedCompany.planType}</strong></span>
+                <span>Sedes Registradas: <strong>{companyBranches.length} / {selectedCompany.maxBranches}</strong></span>
+              </div>
+
+              {loadingBranches ? (
+                <div style={{ padding: '2rem', textAlign: 'center', color: '#9ca3af' }}>
+                  <Loader2 size={28} className="animate-spin" style={{ margin: '0 auto 0.5rem' }} />
+                  <p>Cargando sedes...</p>
+                </div>
+              ) : companyBranches.length === 0 ? (
+                <div style={{ padding: '2.5rem', textAlign: 'center', color: '#9ca3af' }}>
+                  <Building size={40} style={{ opacity: 0.4, margin: '0 auto 0.75rem' }} />
+                  <p style={{ fontWeight: 600, color: '#e5e7eb' }}>Este parqueadero aún no tiene sedes creadas.</p>
+                  <p style={{ fontSize: '0.813rem', color: '#9ca3af', marginTop: '0.25rem' }}>
+                    El administrador del cliente registrará sus sedes al acceder a la plataforma con su usuario.
+                  </p>
+                </div>
+              ) : (
+                <div className="companies-table-responsive">
+                  <table className="companies-table">
+                    <thead>
+                      <tr>
+                        <th>Código</th>
+                        <th>Nombre Sede</th>
+                        <th>Dirección / Ciudad</th>
+                        <th>Capacidad</th>
+                        <th>Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {companyBranches.map((b) => (
+                        <tr key={b.id}>
+                          <td><span style={{ fontFamily: 'monospace', fontWeight: 600, color: '#10b981' }}>{b.code}</span></td>
+                          <td><strong>{b.name}</strong></td>
+                          <td>{b.address || '—'} {b.city ? `(${b.city})` : ''}</td>
+                          <td>{b.totalCapacity} plazas</td>
+                          <td>
+                            <span className={`status-pill ${b.isActive ? 'active' : 'inactive'}`}>
+                              <span className="status-dot" />
+                              {b.isActive ? 'Activo' : 'Inactivo'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setIsBranchesModalOpen(false)}
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -4,7 +4,7 @@ import { ALL_PWA_PERMISSIONS_LIST, ALL_PWA_MODULES_LIST } from '../../../shared/
 
 export const authService = {
   login: async (credentials: AuthRequestDto): Promise<UserSession> => {
-    const response = await apiClient.post<AuthResponseDto>('/Auth/authenticate', credentials);
+    const response = await apiClient.post<AuthResponseDto>('/Auth/login', credentials);
 
     if (!response || !response.token) {
       throw new Error(response?.errorMessage || response?.message || 'No se pudo obtener el token de autenticación.');
@@ -15,13 +15,19 @@ export const authService = {
     const fullName = response.fullname || response.fullName || credentials.username;
     const username = response.username || credentials.username;
 
-    const isAdminUser = roleId === 1 ||
+    const isSuperAdmin = Boolean(
+      response.isSuperAdmin ??
+      (response.roleName === 'Super Administrador' || !response.companyId || username.toLowerCase() === 'admin')
+    );
+
+    const isAdminUser = isSuperAdmin ||
+      roleId === 1 ||
       username.toLowerCase() === 'admin' ||
       credentials.username.toLowerCase() === 'admin' ||
       response.roleName === 'Administrador' ||
       Boolean(response.isAdmin);
 
-    const roleName = response.roleName || (isAdminUser ? 'Administrador' : roleId === 2 ? 'Operador' : 'Usuario');
+    const roleName = response.roleName || (isSuperAdmin ? 'Super Administrador' : isAdminUser ? 'Administrador' : roleId === 2 ? 'Operador' : 'Usuario');
 
     // Guardar temporalmente el token para poder llamar a RoleActions
     localStorage.setItem('auth_token', response.token);
@@ -48,14 +54,12 @@ export const authService = {
       ? ALL_PWA_MODULES_LIST
       : (response.modules || []);
 
-    const isSuperAdmin = response.isSuperAdmin ?? (!response.companyId || username.toLowerCase() === 'admin');
-
     const session: UserSession = {
       userId,
       userRoleId: roleId,
       username,
       fullName,
-      roleName,
+      roleName: isSuperAdmin ? 'Super Administrador' : roleName,
       isAdmin: isAdminUser,
       isSuperAdmin,
       companyId: response.companyId,
@@ -88,14 +92,27 @@ export const authService = {
     if (!userJson) return null;
     try {
       const user = JSON.parse(userJson) as UserSession;
-      const isAdmin = user.isAdmin ||
+      const isSuperAdmin = Boolean(
+        user.isSuperAdmin ||
+        user.roleName === 'Super Administrador' ||
+        (!user.companyId && (user.username?.toLowerCase() === 'admin' || user.userRoleId === 1))
+      );
+
+      const isAdmin = isSuperAdmin ||
+        user.isAdmin ||
         user.userRoleId === 1 ||
         user.roleName === 'Administrador' ||
         user.username?.toLowerCase() === 'admin';
 
-      if (isAdmin) {
+      if (isSuperAdmin) {
+        user.isSuperAdmin = true;
         user.isAdmin = true;
-        user.roleName = 'Administrador';
+        user.roleName = 'Super Administrador';
+        user.permissions = ALL_PWA_PERMISSIONS_LIST;
+        user.modules = ALL_PWA_MODULES_LIST;
+      } else if (isAdmin) {
+        user.isAdmin = true;
+        user.roleName = user.roleName || 'Administrador';
         user.permissions = ALL_PWA_PERMISSIONS_LIST;
         user.modules = ALL_PWA_MODULES_LIST;
       }

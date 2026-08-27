@@ -41,7 +41,7 @@ export const Login: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await authService.login({ username: username.trim(), password });
+      const session = await authService.login({ username: username.trim(), password });
 
       if (rememberUser) {
         localStorage.setItem('remembered_username', username.trim());
@@ -49,7 +49,11 @@ export const Login: React.FC = () => {
         localStorage.removeItem('remembered_username');
       }
 
-      navigate('/dashboard');
+      if (session.isSuperAdmin) {
+        navigate('/dashboard/companies');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err: any) {
       setError(err?.message || 'Usuario o contraseña incorrectos. Por favor verifique sus credenciales.');
     } finally {

@@ -7,6 +7,36 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-27 15:20:00] - [FEAT] [UI/UX] [SUPERADMIN] - Integración /Auth/login, Supresión de Onboarding y Visor de Sedes SaaS
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > _"estoy en estas ramas mira que todo lo que fueras hecho esta en las ramas por que ya se publicto todo y nada es nada me loguee y sigue estando las cosas mal, ya revise la data y todo y esta bien. pero se publico pero no cambia enserio no cambia revisa analiza que todo este en estas ramas."_
+- **🤖 Resumen Técnico para la IA**:
+  1. **Consumo de Endpoint `/Auth/login` (`authService.ts`)**:
+     - Se reemplazó la llamada al endpoint heredado `/Auth/authenticate` por `/Auth/login` (`LoginStandardAsync`), el cual devuelve la carga útil completa `AuthResponseDto` (`isSuperAdmin: true`, `roleName: "Super Administrador"`, `companyId: null`), resolviendo la causa por la cual la PWA trataba al SuperAdmin como un usuario estándar con 0 sedes.
+  2. **Desactivación de `ZeroDataOnboardingWizard` para SuperAdmin (`DashboardLayout.tsx`)**:
+     - Se añadió la condición `!user?.isSuperAdmin` al asistente inicial de creación de sedes, garantizando que el Super Administrador jamás sea bloqueado al ingresar.
+  3. **Redirección Automática al Catálogo SaaS (`Login.tsx`, `App.tsx`)**:
+     - Al autenticar un Super Administrador, la PWA navega automáticamente al módulo de gestión de empresas/parqueaderos (`/dashboard/companies`).
+  4. **Identificación Canónica del Rol (`authService.ts`, `DashboardLayout.tsx`)**:
+     - Se garantiza el display `"👑 Super Administrador"` en el perfil inferior del sidebar y subtítulo de plataforma SaaS global.
+  5. **Visor de Sedes por Parqueadero (`CompaniesPage.tsx`)**:
+     - Se añadió el botón interactivo de acción **"🏢 Ver Sedes"** en cada fila de la tabla de empresas para consultar `GET /api/Branches/company/{companyId}` con modal dark glassmorphism.
+  6. **Incremento de Versión de App (`.env`)**:
+     - Versión actualizada a `0.0.15 Dev` para forzar invalidación de caché PWA en navegadores.
+- **📦 Componentes Modificados**:
+  - `.env`
+  - `src/features/auth/data/authService.ts`
+  - `src/features/auth/ui/Login.tsx`
+  - `src/features/companies/ui/CompaniesPage.tsx`
+  - `src/shared/ui/DashboardLayout.tsx`
+  - `src/App.tsx`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript).
+
+
+
 ### [2026-08-27 13:10:00] - [FEAT] [SAAS] [MULTI-TENANT] - Módulo Central de Gestión de Empresas SaaS y Soporte Multi-Tenant
 
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
