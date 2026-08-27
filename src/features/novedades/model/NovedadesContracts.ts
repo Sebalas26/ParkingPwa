@@ -3,6 +3,9 @@ export interface VehicleIncidentDto {
   plateNumber: string;
   branchId?: number | null;
   branchName?: string | null;
+  isGlobal?: boolean;
+  branchIds?: number[];
+  branchNames?: string[];
   incidentType: string;
   isBlocked: boolean;
   description: string;
@@ -19,6 +22,8 @@ export interface SaveVehicleIncidentDto {
   incidentId?: string;
   plateNumber: string;
   branchId?: number | null;
+  isGlobal?: boolean;
+  branchIds?: number[];
   incidentType: string;
   isBlocked: boolean;
   description: string;

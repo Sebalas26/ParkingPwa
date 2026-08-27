@@ -77,9 +77,12 @@ export const Novedades: React.FC = () => {
   }, [selectedParqueaderoId]);
 
   const handleOpenCreate = () => {
+    const defaultBranchIds = selectedParqueaderoId ? [Number(selectedParqueaderoId)] : [];
     setEditingIncident({
       plateNumber: '',
       branchId: selectedParqueaderoId ? Number(selectedParqueaderoId) : null,
+      isGlobal: !selectedParqueaderoId,
+      branchIds: defaultBranchIds,
       incidentType: COMMON_INCIDENT_TYPES[0],
       isBlocked: true, // Por defecto se sugiere bloqueo
       description: '',
@@ -96,10 +99,17 @@ export const Novedades: React.FC = () => {
   const handleOpenEdit = (inc: VehicleIncidentDto) => {
     const isCustom = !COMMON_INCIDENT_TYPES.includes(inc.incidentType);
     setIsCustomType(isCustom);
+    const branchIds = inc.branchIds && inc.branchIds.length > 0
+      ? inc.branchIds
+      : (inc.branchId ? [inc.branchId] : []);
+    const isGlobal = inc.isGlobal !== undefined ? inc.isGlobal : (!inc.branchId && branchIds.length === 0);
+
     setEditingIncident({
       incidentId: inc.incidentId,
       plateNumber: inc.plateNumber,
       branchId: inc.branchId,
+      isGlobal: isGlobal,
+      branchIds: branchIds,
       incidentType: inc.incidentType,
       isBlocked: inc.isBlocked,
       description: inc.description,
@@ -324,7 +334,21 @@ export const Novedades: React.FC = () => {
                       </span>
                     </td>
                     <td style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                      {n.branchName || '🌐 Todas las Sedes'}
+                      {n.isGlobal || (!n.branchId && (!n.branchIds || n.branchIds.length === 0)) ? (
+                        <span style={{ color: '#06b6d4', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          🌐 Todas las Sedes
+                        </span>
+                      ) : n.branchNames && n.branchNames.length > 0 ? (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                          {n.branchNames.map((bn, idx) => (
+                            <span key={idx} style={{ background: '#1e293b', border: '1px solid #334155', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600, color: '#93c5fd' }}>
+                              {bn}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span>{n.branchName || 'Sede asignada'}</span>
+                      )}
                     </td>
                     <td className="text-muted" style={{ fontSize: '0.82rem' }}>
                       {n.createdAtUtc ? n.createdAtUtc.slice(0, 10) : '--'} <br />
@@ -422,22 +446,88 @@ export const Novedades: React.FC = () => {
                       style={{ fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase' }}
                     />
                   </div>
-                  <div className="form-group">
-                    <label>Sede Asociada</label>
-                    <select
-                      className="input-field"
-                      value={editingIncident.branchId || ''}
-                      onChange={(e) => setEditingIncident({ ...editingIncident, branchId: e.target.value ? Number(e.target.value) : null })}
-                      disabled={isSaving}
-                    >
-                      <option value="">🌐 Todas las Sedes (Global)</option>
-                      {parqueaderosList.map((b) => (
-                        <option key={b.id} value={b.id}>
-                          {b.name}
-                        </option>
-                      ))}
-                    </select>
+                </div>
+
+                <div className="form-group" style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '12px', marginBottom: '16px' }}>
+                  <label style={{ fontWeight: 700, color: '#38bdf8', marginBottom: '8px', display: 'block' }}>
+                    Alcance de la Novedad / Bloqueo *
+                  </label>
+                  <div style={{ display: 'flex', gap: '20px', marginBottom: '10px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 600, color: '#f8fafc' }}>
+                      <input
+                        type="radio"
+                        name="scopeType"
+                        checked={editingIncident.isGlobal ?? true}
+                        onChange={() => setEditingIncident({ ...editingIncident, isGlobal: true, branchIds: [], branchId: null })}
+                        disabled={isSaving}
+                      />
+                      🌐 Todas las Sedes (Global)
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 600, color: '#f8fafc' }}>
+                      <input
+                        type="radio"
+                        name="scopeType"
+                        checked={!(editingIncident.isGlobal ?? true)}
+                        onChange={() => {
+                          const defaultIds = editingIncident.branchIds && editingIncident.branchIds.length > 0
+                            ? editingIncident.branchIds
+                            : (selectedParqueaderoId ? [Number(selectedParqueaderoId)] : (parqueaderosList.length > 0 ? [parqueaderosList[0].id] : []));
+                          setEditingIncident({ ...editingIncident, isGlobal: false, branchIds: defaultIds, branchId: defaultIds[0] || null });
+                        }}
+                        disabled={isSaving}
+                      />
+                      🏢 Sedes Específicas
+                    </label>
                   </div>
+
+                  {!(editingIncident.isGlobal ?? true) && (
+                    <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed #334155' }}>
+                      <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginBottom: '8px' }}>
+                        Seleccione las sedes donde tendrá efecto el bloqueo/novedad:
+                      </p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        {parqueaderosList.map((b) => {
+                          const isChecked = editingIncident.branchIds?.includes(b.id) || false;
+                          return (
+                            <label
+                              key={b.id}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                background: isChecked ? '#1e293b' : '#090d16',
+                                border: isChecked ? '1px solid #10b981' : '1px solid #334155',
+                                padding: '6px 10px',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontSize: '0.82rem',
+                                fontWeight: isChecked ? 700 : 500,
+                                color: isChecked ? '#10b981' : '#cbd5e1',
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={(e) => {
+                                  const currentIds = editingIncident.branchIds || [];
+                                  const updatedIds = e.target.checked
+                                    ? [...currentIds, b.id]
+                                    : currentIds.filter((id) => id !== b.id);
+                                  setEditingIncident({
+                                    ...editingIncident,
+                                    branchIds: updatedIds,
+                                    branchId: updatedIds[0] || null,
+                                  });
+                                }}
+                                disabled={isSaving}
+                              />
+                              {b.name}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-group">
@@ -667,8 +757,14 @@ export const Novedades: React.FC = () => {
                   <p>{selectedIncident.contactPhone || 'No registrado'}</p>
                 </div>
                 <div className="detail-group">
-                  <label><Building size={13} style={{ display: 'inline', marginRight: 4 }} /> Sede</label>
-                  <p>{selectedIncident.branchName || '🌐 Todas las Sedes'}</p>
+                  <label><Building size={13} style={{ display: 'inline', marginRight: 4 }} /> Sede(s) donde aplica</label>
+                  <p>
+                    {selectedIncident.isGlobal || (!selectedIncident.branchId && (!selectedIncident.branchIds || selectedIncident.branchIds.length === 0))
+                      ? '🌐 Todas las Sedes (Global)'
+                      : selectedIncident.branchNames && selectedIncident.branchNames.length > 0
+                      ? selectedIncident.branchNames.join(', ')
+                      : (selectedIncident.branchName || 'Sede asignada')}
+                  </p>
                 </div>
                 <div className="detail-group">
                   <label>Fecha de Registro</label>
