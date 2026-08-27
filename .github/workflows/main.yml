@@ -41,8 +41,9 @@ jobs:
                     <conditions logicalGrouping="MatchAll">
                       <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
                       <add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
+                      <add input="{REQUEST_URI}" pattern="^/api" negate="true" />
                     </conditions>
-                    <action type="Rewrite" url="/Parking/index.html" />
+                    <action type="Rewrite" url="/" />
                   </rule>
                 </rules>
               </rewrite>
@@ -56,6 +57,11 @@ jobs:
                 <remove fileExtension=".woff2" />
                 <mimeMap fileExtension=".woff2" mimeType="font/woff2" />
               </staticContent>
+              <httpProtocol>
+                <customHeaders>
+                  <add name="X-Content-Type-Options" value="nosniff" />
+                </customHeaders>
+              </httpProtocol>
             </system.webServer>
           </configuration>
           EOF
