@@ -1,20 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../data/authService';
-import { Check, Receipt, BarChart2, Eye, EyeOff, Lock, User, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { Eye, EyeOff, ShieldAlert } from 'lucide-react';
 import './Login.css';
 
 export const Login: React.FC = () => {
   const [username, setUsername] = useState(() => localStorage.getItem('remembered_username') || '');
   const [password, setPassword] = useState('');
-  const [rememberUser, setRememberUser] = useState(() => Boolean(localStorage.getItem('remembered_username')));
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [warningMessage, setWarningMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-
-  const appVersion = import.meta.env.VITE_APP_VERSION || '0.0.1 Dev';
 
   useEffect(() => {
     const reason = sessionStorage.getItem('session_terminated_reason');
@@ -43,11 +40,7 @@ export const Login: React.FC = () => {
     try {
       await authService.login({ username: username.trim(), password });
 
-      if (rememberUser) {
-        localStorage.setItem('remembered_username', username.trim());
-      } else {
-        localStorage.removeItem('remembered_username');
-      }
+      localStorage.setItem('remembered_username', username.trim());
 
       navigate('/dashboard');
     } catch (err: any) {
@@ -59,59 +52,49 @@ export const Login: React.FC = () => {
 
   return (
     <div className="login-split-page">
-      {/* Columna Izquierda: Presentación Institucional Desktop */}
+      {/* Columna Izquierda: Presentación Institucional Desktop (Estilo WPF) */}
       <div className="login-hero-side">
-        <div className="brand-header">
-          <div className="brand-logo-icon">
-            <img src="/logo.png" alt="Parking Flow" className="brand-logo-img" />
-          </div>
-          <div className="brand-title-group">
-            <h2 className="brand-name">PARKING FLOW</h2>
-            <span className="brand-tagline">GESTIÓN INTELIGENTE DE PARQUEADEROS</span>
-          </div>
-        </div>
-
         <div className="hero-center-content">
-          <h1 className="hero-main-title">
-            Sistema Integral de Control de Acceso y Recaudación de Parqueadero
-          </h1>
-          <p className="hero-description">
-            Agilice el registro de entradas, liquidación en caja, control de cupos en tiempo real, convenios comerciales y arqueos de turno.
-          </p>
-
-          <div className="hero-feature-pills">
-            <div className="feature-pill">
-              <div className="pill-icon-teal">
-                <Check size={18} />
+          <div className="hero-logo-wrapper">
+            <img src="/logo.png" alt="Parking Flow" className="hero-main-logo" />
+            <div className="hero-brand-text-container">
+              <h1 className="hero-brand-title">PARKING FLOW</h1>
+              <div className="hero-brand-subtitle">
+                <span className="subtitle-line"></span>
+                <span>TU PUNTO DE LLEGADA</span>
+                <span className="subtitle-line"></span>
               </div>
-              <span className="pill-text">Control de Ocupación y Bahías en Tiempo Real</span>
             </div>
-
-            <div className="feature-pill">
-              <div className="pill-icon-teal">
-                <Receipt size={18} />
-              </div>
-              <span className="pill-text">Liquidación Automática y Convenios Comerciales</span>
-            </div>
-
-            <div className="feature-pill">
-              <div className="pill-icon-amber">
-                <BarChart2 size={18} />
-              </div>
-              <span className="pill-text">Control de Turnos Operativos y Arqueo de Caja</span>
-            </div>
+          </div>
+          
+          <div className="hero-pos-pill">
+            <span className="pos-pill-dot"></span> Terminal POS • Control de Acceso y Recaudación
           </div>
         </div>
 
         <div className="hero-bottom-footer">
-          <span>PARKING FLOW • Gestión Integral Multi-Sede</span>
-          <span className="hero-version-pill">v{appVersion}</span>
+          <span>© Parking Flow • Tu punto de llegada</span>
         </div>
       </div>
 
       {/* Columna Derecha / Móvil: Formulario de Autenticación */}
       <div className="login-form-side">
-        {/* Cabecera Móvil Compacta */}
+        {/* Barra superior estilo ventana WPF (Desktop) */}
+        <div className="form-side-top-bar">
+          <div className="api-online-pill">
+            <span className="api-dot"></span> API Central Online
+          </div>
+          <div className="window-controls">
+            <button type="button" className="win-btn win-min" tabIndex={-1} aria-label="Minimizar" onClick={() => window.blur()}>
+              <svg viewBox="0 0 10 1" width="10" height="1"><rect width="10" height="1" fill="currentColor"/></svg>
+            </button>
+            <button type="button" className="win-btn win-close" tabIndex={-1} aria-label="Cerrar" onClick={() => window.close()}>
+              <svg viewBox="0 0 10 10" width="10" height="10"><path d="M1 1l8 8m0-8L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Cabecera Móvil Compacta (Oculta en Desktop) */}
         <div className="mobile-brand-header">
           <div className="mobile-logo-icon">
             <img src="/logo.png" alt="Parking Flow" className="mobile-logo-img" />
@@ -125,23 +108,11 @@ export const Login: React.FC = () => {
         <div className="login-form-wrapper">
           <div className="form-header-box">
             <h2 className="form-title">Iniciar Sesión</h2>
-            <p className="form-subtitle">Ingrese sus credenciales de operador para acceder al sistema</p>
+            <p className="form-subtitle">Ingrese sus credenciales de operador para iniciar estación</p>
           </div>
 
           {warningMessage && (
-            <div className="login-warning-alert" style={{
-              background: 'rgba(245, 158, 11, 0.14)',
-              border: '1px solid rgba(245, 158, 11, 0.45)',
-              borderRadius: '10px',
-              padding: '12px 14px',
-              marginBottom: '16px',
-              color: '#fbbf24',
-              fontSize: '0.85rem',
-              lineHeight: '1.4',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px'
-            }}>
+            <div className="login-warning-alert">
               <ShieldAlert size={20} style={{ flexShrink: 0 }} />
               <span>{warningMessage}</span>
             </div>
@@ -155,14 +126,12 @@ export const Login: React.FC = () => {
 
           <form onSubmit={handleLogin} className="login-input-form" autoCapitalize="none" autoComplete="off">
             <div className="login-field-group">
-              <label htmlFor="username">Usuario o Identificación</label>
+              <label htmlFor="username">Usuario / ID de Operador</label>
               <div className="input-with-icon-wrapper">
-                <User size={18} className="input-prefix-icon" />
                 <input
                   id="username"
                   type="text"
-                  className="login-input with-prefix"
-                  placeholder="Ingrese su usuario o correo"
+                  className="login-input"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   autoComplete="username"
@@ -175,12 +144,10 @@ export const Login: React.FC = () => {
             <div className="login-field-group">
               <label htmlFor="password">Contraseña</label>
               <div className="input-with-icon-wrapper">
-                <Lock size={18} className="input-prefix-icon" />
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  className="login-input with-prefix with-suffix"
-                  placeholder="Ingrese su contraseña"
+                  className="login-input with-suffix"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="current-password"
@@ -198,18 +165,6 @@ export const Login: React.FC = () => {
               </div>
             </div>
 
-            <div className="login-options-row">
-              <label className="remember-user-label">
-                <input
-                  type="checkbox"
-                  checked={rememberUser}
-                  onChange={(e) => setRememberUser(e.target.checked)}
-                  className="remember-user-checkbox"
-                />
-                <span>Recordar usuario</span>
-              </label>
-            </div>
-
             <button type="submit" className="login-submit-btn" disabled={isLoading}>
               {isLoading ? (
                 <>
@@ -217,7 +172,7 @@ export const Login: React.FC = () => {
                   <span>Ingresando...</span>
                 </>
               ) : (
-                'Ingresar'
+                'Acceder a Estación de Trabajo'
               )}
             </button>
           </form>
@@ -225,11 +180,7 @@ export const Login: React.FC = () => {
 
         <div className="login-form-footer">
           <div className="footer-security-text">
-            <ShieldCheck size={14} />
-            <span>Control de Acceso Seguro • PARK CONTROL</span>
-          </div>
-          <div className="footer-version-tag">
-            Versión del Sistema: <strong>v{appVersion}</strong>
+            <span>Protegido por Control de Acceso • PARKING FLOW</span>
           </div>
         </div>
       </div>
