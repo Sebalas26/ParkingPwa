@@ -175,7 +175,7 @@ export const Dashboard: React.FC = () => {
 
   const activeVehiclesCount = summary?.activeVehiclesCount ?? activeTickets.length;
   const completedCount = summary?.completedTransactionsToday ?? 0;
-  
+
   // Venta del Día y N° Autos (Strict API/DB Data)
   const totalRevenueToday = summary?.totalRevenueToday || summary?.totalRevenue || 0;
   const totalVehiclesEnteredToday = summary?.totalTickets || (activeVehiclesCount + completedCount);
@@ -328,10 +328,10 @@ export const Dashboard: React.FC = () => {
       <div className="dashboard-hero-header">
         <div className="dashboard-hero-title">
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <h1>ON PARKING — Dashboard Ejecutivo</h1>
+            <h1>Dashboard General</h1>
             <span className="dashboard-status-badge">
               <span className="status-dot-pulse" />
-              SISTEMA EN LÍNEA
+              EN LÍNEA
             </span>
           </div>
           <p style={{ margin: 0, fontSize: '0.92rem', color: '#ffffff', fontWeight: 700 }}>
@@ -637,47 +637,47 @@ export const Dashboard: React.FC = () => {
 
         const realOperatorShifts = nonAdminUsers.length > 0
           ? nonAdminUsers.map((u) => {
-              const uId = u.id ?? u.idUser;
-              const uName = u.fullName || u.name || u.username || `Operador ${uId}`;
-              const shift = realShifts.find((s) => s.userId === uId || (s.operatorName && s.operatorName.toLowerCase().includes((u.username || u.name || '').toLowerCase())));
+            const uId = u.id ?? u.idUser;
+            const uName = u.fullName || u.name || u.username || `Operador ${uId}`;
+            const shift = realShifts.find((s) => s.userId === uId || (s.operatorName && s.operatorName.toLowerCase().includes((u.username || u.name || '').toLowerCase())));
 
-              const isOpen = shift && (shift.status === 'Open' || shift.status === 1 || String(shift.status).toLowerCase() === 'open');
-              const cashCol = shift?.totalCashCollected || 0;
-              const cardCol = (shift?.totalCardCollected || 0) + (shift?.totalTransferCollected || 0);
-              const totalCol = shift?.totalCollected || (cashCol + cardCol);
-              const ticketsProc = shift?.totalTicketsProcessed || 0;
+            const isOpen = shift && (shift.status === 'Open' || shift.status === 1 || String(shift.status).toLowerCase() === 'open');
+            const cashCol = shift?.totalCashCollected || 0;
+            const cardCol = (shift?.totalCardCollected || 0) + (shift?.totalTransferCollected || 0);
+            const totalCol = shift?.totalCollected || (cashCol + cardCol);
+            const ticketsProc = shift?.totalTicketsProcessed || 0;
 
-              return {
-                id: String(uId),
-                operatorName: uName,
-                role: u.userRole?.roleName || u.roleName || 'Operador / Cajero',
-                parqueaderoName: 'Punto de Operación',
-                status: isOpen ? 'Abierta' : 'Cerrada',
-                startTime: shift?.startTimeUtc || shift?.openedAtUtc ? formatTime(shift.startTimeUtc || shift.openedAtUtc!) : 'Sin turno activo',
-                endTime: shift?.endTimeUtc || shift?.closedAtUtc ? formatTime(shift.endTimeUtc || shift.closedAtUtc!) : undefined,
-                baseAmount: shift?.baseAmount || shift?.initialCashAmount || 0,
-                cashCollected: cashCol,
-                digitalCollected: cardCol,
-                totalCollected: totalCol,
-                ticketsProcessed: ticketsProc,
-              };
-            })
+            return {
+              id: String(uId),
+              operatorName: uName,
+              role: u.userRole?.roleName || u.roleName || 'Operador / Cajero',
+              parqueaderoName: 'Punto de Operación',
+              status: isOpen ? 'Abierta' : 'Cerrada',
+              startTime: shift?.startTimeUtc || shift?.openedAtUtc ? formatTime(shift.startTimeUtc || shift.openedAtUtc!) : 'Sin turno activo',
+              endTime: shift?.endTimeUtc || shift?.closedAtUtc ? formatTime(shift.endTimeUtc || shift.closedAtUtc!) : undefined,
+              baseAmount: shift?.baseAmount || shift?.initialCashAmount || 0,
+              cashCollected: cashCol,
+              digitalCollected: cardCol,
+              totalCollected: totalCol,
+              ticketsProcessed: ticketsProc,
+            };
+          })
           : realShifts
-              .filter((s) => !String(s.operatorName || '').toLowerCase().includes('admin'))
-              .map((s, idx) => ({
-                id: s.shiftId || String(idx + 1),
-                operatorName: s.operatorName || `Operador ${idx + 1}`,
-                role: 'Operador / Cajero',
-                parqueaderoName: 'Punto de Operación',
-                status: (s.status === 'Open' || s.status === 1 || String(s.status).toLowerCase() === 'open') ? 'Abierta' : 'Cerrada',
-                startTime: s.startTimeUtc || s.openedAtUtc ? formatTime(s.startTimeUtc || s.openedAtUtc!) : 'Sin turno activo',
-                endTime: s.endTimeUtc || s.closedAtUtc ? formatTime(s.endTimeUtc || s.closedAtUtc!) : undefined,
-                baseAmount: s.baseAmount || s.initialCashAmount || 0,
-                cashCollected: s.totalCashCollected || 0,
-                digitalCollected: (s.totalCardCollected || 0) + (s.totalTransferCollected || 0),
-                totalCollected: s.totalCollected || ((s.totalCashCollected || 0) + (s.totalCardCollected || 0) + (s.totalTransferCollected || 0)),
-                ticketsProcessed: s.totalTicketsProcessed || 0,
-              }));
+            .filter((s) => !String(s.operatorName || '').toLowerCase().includes('admin'))
+            .map((s, idx) => ({
+              id: s.shiftId || String(idx + 1),
+              operatorName: s.operatorName || `Operador ${idx + 1}`,
+              role: 'Operador / Cajero',
+              parqueaderoName: 'Punto de Operación',
+              status: (s.status === 'Open' || s.status === 1 || String(s.status).toLowerCase() === 'open') ? 'Abierta' : 'Cerrada',
+              startTime: s.startTimeUtc || s.openedAtUtc ? formatTime(s.startTimeUtc || s.openedAtUtc!) : 'Sin turno activo',
+              endTime: s.endTimeUtc || s.closedAtUtc ? formatTime(s.endTimeUtc || s.closedAtUtc!) : undefined,
+              baseAmount: s.baseAmount || s.initialCashAmount || 0,
+              cashCollected: s.totalCashCollected || 0,
+              digitalCollected: (s.totalCardCollected || 0) + (s.totalTransferCollected || 0),
+              totalCollected: s.totalCollected || ((s.totalCashCollected || 0) + (s.totalCardCollected || 0) + (s.totalTransferCollected || 0)),
+              ticketsProcessed: s.totalTicketsProcessed || 0,
+            }));
 
         const filteredShifts = selectedOperatorId
           ? realOperatorShifts.filter((op) => op.id === selectedOperatorId)

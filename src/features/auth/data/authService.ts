@@ -67,13 +67,14 @@ export const authService = {
   },
 
   logout: async (): Promise<void> => {
+    // Purgar credenciales y sesión inmediatamente para evitar rebotes de navegación
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_user');
+
     try {
       await apiClient.post('/Auth/logout');
     } catch {
       // Ignoramos errores de red en logout
-    } finally {
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('auth_user');
     }
   },
 

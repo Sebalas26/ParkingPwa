@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../data/authService';
-import { Car, Check, Receipt, BarChart2, Eye, EyeOff, Lock, User, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { Check, Receipt, BarChart2, Eye, EyeOff, Lock, User, ShieldCheck, ShieldAlert } from 'lucide-react';
 import './Login.css';
 
 export const Login: React.FC = () => {
@@ -63,11 +63,11 @@ export const Login: React.FC = () => {
       <div className="login-hero-side">
         <div className="brand-header">
           <div className="brand-logo-icon">
-            <Car size={26} color="#ffffff" />
+            <img src="/logo.png" alt="Parking Flow" className="brand-logo-img" />
           </div>
           <div className="brand-title-group">
-            <h2 className="brand-name">PARK CONTROL</h2>
-            <span className="brand-tagline">TU PUNTO DE LLEGADA</span>
+            <h2 className="brand-name">PARKING FLOW</h2>
+            <span className="brand-tagline">GESTIÓN INTELIGENTE DE PARQUEADEROS</span>
           </div>
         </div>
 
@@ -104,7 +104,7 @@ export const Login: React.FC = () => {
         </div>
 
         <div className="hero-bottom-footer">
-          <span>PARK CONTROL • Tu punto de llegada</span>
+          <span>PARKING FLOW • Gestión Integral Multi-Sede</span>
           <span className="hero-version-pill">v{appVersion}</span>
         </div>
       </div>
@@ -114,11 +114,11 @@ export const Login: React.FC = () => {
         {/* Cabecera Móvil Compacta */}
         <div className="mobile-brand-header">
           <div className="mobile-logo-icon">
-            <Car size={24} color="#ffffff" />
+            <img src="/logo.png" alt="Parking Flow" className="mobile-logo-img" />
           </div>
           <div className="mobile-brand-texts">
-            <h2 className="mobile-brand-name">PARK CONTROL</h2>
-            <span className="mobile-brand-tagline">TU PUNTO DE LLEGADA</span>
+            <h2 className="mobile-brand-name">PARKING FLOW</h2>
+            <span className="mobile-brand-tagline">GESTIÓN INTELIGENTE DE PARQUEADEROS</span>
           </div>
         </div>
 

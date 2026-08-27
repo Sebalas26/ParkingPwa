@@ -47,11 +47,21 @@
   font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
 }
 
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  position: relative;
+}
+
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
   background: var(--bg-main, #f4f7f6);
   color: var(--text-primary, #1e293b);
   min-height: 100vh;
+  min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

@@ -40,6 +40,20 @@
   justify-content: center;
   box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
   flex-shrink: 0;
+  padding: 4px;
+}
+
+.brand-logo-img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.mobile-logo-img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
 }
 
 .brand-title-group {

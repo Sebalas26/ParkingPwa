@@ -137,7 +137,7 @@ export const Caja: React.FC = () => {
   };
 
   return (
-    <div className="caja-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', height: '100%', overflowY: 'auto', paddingBottom: '2rem' }}>
+    <div className="caja-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', minHeight: '100%', paddingBottom: '2rem' }}>
       <div className="caja-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

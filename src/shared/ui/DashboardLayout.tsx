@@ -45,14 +45,20 @@ export const DashboardLayout: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Cerrar menú móvil al cambiar de ruta
+  const mainContentRef = React.useRef<HTMLElement>(null);
+
+  // Cerrar menú móvil y resetear scroll al cambiar de ruta
   useEffect(() => {
     setIsMobileMenuOpen(false);
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTop = 0;
+    }
+    window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  const handleLogout = () => {
-    authService.logout();
-    navigate('/');
+  const handleLogout = async () => {
+    await authService.logout();
+    navigate('/', { replace: true });
   };
 
   const handleNavigate = (path: string) => {
@@ -90,7 +96,7 @@ export const DashboardLayout: React.FC = () => {
       <aside className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <div className="logo-container">
-            <Car size={24} className="logo-icon" />
+            <img src="/logo.png" alt="Parking Flow" className="sidebar-logo-img" />
           </div>
           <div className="app-title-group">
             <span className="app-name">Parking Flow</span>
@@ -185,7 +191,7 @@ export const DashboardLayout: React.FC = () => {
         </div>
       </aside>
 
-      <main className="main-content">
+      <main ref={mainContentRef} className="main-content">
         <header className="top-bar">
           <div className="top-bar-left">
             <button
@@ -197,7 +203,7 @@ export const DashboardLayout: React.FC = () => {
               <Menu size={22} />
             </button>
             <div className="mobile-brand">
-              <Car size={20} className="mobile-brand-icon" />
+              <img src="/logo.png" alt="Parking Flow" className="mobile-header-logo-img" />
               <span className="mobile-brand-name">Parking Flow</span>
             </div>
           </div>
