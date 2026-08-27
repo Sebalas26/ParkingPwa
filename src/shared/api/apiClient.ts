@@ -101,6 +101,17 @@ export const apiClient = {
     return handleResponse<T>(response);
   },
 
+  patch: async <T>(endpoint: string, body?: any): Promise<T> => {
+    const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+
+    return handleResponse<T>(response);
+  },
+
   delete: async <T>(endpoint: string): Promise<T> => {
     const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
     const response = await fetch(url, {
