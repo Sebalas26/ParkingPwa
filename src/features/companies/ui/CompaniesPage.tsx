@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Building2,
   Plus,
@@ -12,14 +13,19 @@ import {
   Mail,
   X,
   Loader2,
-  Building
+  Building,
+  Sliders
 } from 'lucide-react';
 import { companyService } from '../data/companyService';
 import { apiClient } from '../../../shared/api/apiClient';
+import { useBranchContext } from '../../../shared/context/ParqueaderoContext';
 import type { CompanyDto, CreateCompanyDto, UpdateCompanyDto } from '../model/CompanyContracts';
 import './CompaniesPage.css';
 
 export const CompaniesPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { startInspectingCompany } = useBranchContext();
+
   const [companies, setCompanies] = useState<CompanyDto[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -182,6 +188,18 @@ export const CompaniesPage: React.FC = () => {
     }
   };
 
+  const handleAdministerCompany = async (company: CompanyDto) => {
+    try {
+      setActionLoading(true);
+      await startInspectingCompany(company);
+      navigate('/dashboard');
+    } catch (err) {
+      console.error('Error al iniciar administración del parqueadero:', err);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const filteredCompanies = companies.filter((c) => {
     const term = searchTerm.toLowerCase();
     return (
@@ -203,14 +221,18 @@ export const CompaniesPage: React.FC = () => {
       <div className="companies-header">
         <div className="companies-title-box">
           <h1>
-            <Building2 size={28} color="#10b981" />
-            Gestión de Empresas SaaS
+            <Building2 size={26} color="var(--primary-color, #07665e)" />
+            Parqueaderos SaaS & Empresas
           </h1>
-          <p>Administración centralizada de clientes, límites de sedes y aprovisionamiento de tenants.</p>
+          <p>Supervisa todos los clientes SaaS, asignación de planes y límites de sucursales en tiempo real.</p>
         </div>
-        <button type="button" className="btn-primary-gradient" onClick={handleOpenCreateModal}>
+        <button
+          type="button"
+          className="btn-primary-gradient"
+          onClick={handleOpenCreateModal}
+        >
           <Plus size={18} />
-          Nueva Empresa Cliente
+          Registrar Nuevo Parqueadero
         </button>
       </div>
 
@@ -222,7 +244,7 @@ export const CompaniesPage: React.FC = () => {
           </div>
           <div className="kpi-info-box">
             <span className="kpi-value">{totalCompanies}</span>
-            <span className="kpi-label">Empresas Registradas</span>
+            <span className="kpi-label">Parqueaderos Registrados</span>
           </div>
         </div>
 
@@ -232,7 +254,7 @@ export const CompaniesPage: React.FC = () => {
           </div>
           <div className="kpi-info-box">
             <span className="kpi-value">{activeCompanies}</span>
-            <span className="kpi-label">Suscripciones Activas</span>
+            <span className="kpi-label">Empresas Activas</span>
           </div>
         </div>
 
@@ -259,8 +281,8 @@ export const CompaniesPage: React.FC = () => {
 
       {/* Toolbar */}
       <div className="companies-toolbar">
-        <div className="search-input-wrapper">
-          <Search size={18} color="#9ca3af" />
+        <div className="search-input-box">
+          <Search size={18} color="var(--primary-color, #07665e)" />
           <input
             type="text"
             placeholder="Buscar por nombre, NIT, email o ciudad..."
@@ -268,7 +290,7 @@ export const CompaniesPage: React.FC = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <span style={{ fontSize: '0.813rem', color: '#9ca3af' }}>
+        <span style={{ fontSize: '0.813rem', color: 'var(--text-secondary, #64748b)', fontWeight: 600 }}>
           Mostrando {filteredCompanies.length} de {totalCompanies} empresas
         </span>
       </div>
@@ -276,13 +298,13 @@ export const CompaniesPage: React.FC = () => {
       {/* Table */}
       <div className="companies-table-card">
         {loading ? (
-          <div style={{ padding: '3rem', textAlign: 'center', color: '#9ca3af' }}>
-            <Loader2 size={32} className="animate-spin" style={{ margin: '0 auto 0.5rem' }} />
+          <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary, #64748b)' }}>
+            <Loader2 size={32} className="animate-spin" style={{ margin: '0 auto 0.5rem', color: 'var(--primary-color, #07665e)' }} />
             <p>Cargando empresas registradas...</p>
           </div>
         ) : filteredCompanies.length === 0 ? (
-          <div style={{ padding: '3rem', textAlign: 'center', color: '#9ca3af' }}>
-            <Building size={48} style={{ opacity: 0.3, margin: '0 auto 1rem' }} />
+          <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary, #64748b)' }}>
+            <Building size={48} style={{ opacity: 0.3, margin: '0 auto 1rem', color: 'var(--primary-color, #07665e)' }} />
             <p>No se encontraron empresas con el criterio de búsqueda.</p>
           </div>
         ) : (
@@ -310,16 +332,16 @@ export const CompaniesPage: React.FC = () => {
                       </div>
                     </td>
                     <td>
-                      <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{c.nit}</span>
+                      <span style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--text-primary, #1e293b)' }}>{c.nit}</span>
                     </td>
                     <td>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.125rem', fontSize: '0.813rem' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#d1d5db' }}>
-                          <Mail size={13} color="#9ca3af" /> {c.email}
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-primary, #1e293b)' }}>
+                          <Mail size={13} color="var(--primary-color, #07665e)" /> {c.email}
                         </span>
                         {c.phone && (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#9ca3af' }}>
-                            <Phone size={13} /> {c.phone}
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary, #64748b)' }}>
+                            <Phone size={13} color="var(--text-secondary, #64748b)" /> {c.phone}
                           </span>
                         )}
                       </div>
@@ -330,7 +352,7 @@ export const CompaniesPage: React.FC = () => {
                       </span>
                     </td>
                     <td>
-                      <span style={{ fontWeight: 600, color: '#f3f4f6' }}>
+                      <span style={{ fontWeight: 700, color: 'var(--text-primary, #1e293b)' }}>
                         {c.branchesCount} / {c.maxBranches}
                       </span>
                     </td>
@@ -341,7 +363,7 @@ export const CompaniesPage: React.FC = () => {
                       </span>
                     </td>
                     <td>
-                      <span style={{ color: '#9ca3af', fontSize: '0.813rem' }}>
+                      <span style={{ color: 'var(--text-secondary, #64748b)', fontSize: '0.813rem', fontWeight: 500 }}>
                         {new Date(c.createdAt).toLocaleDateString()}
                       </span>
                     </td>
@@ -349,11 +371,21 @@ export const CompaniesPage: React.FC = () => {
                       <div className="table-actions" style={{ justifyContent: 'flex-end' }}>
                         <button
                           type="button"
+                          className="btn-action-administer"
+                          title="Entrar a administrar este parqueadero (Sedes, Tarifas, Caja, Reportes)"
+                          onClick={() => handleAdministerCompany(c)}
+                          disabled={actionLoading}
+                        >
+                          <Sliders size={14} />
+                          <span>Administrar</span>
+                        </button>
+                        <button
+                          type="button"
                           className="btn-icon-action"
                           title="Ver Sedes de este Parqueadero"
                           onClick={() => handleViewBranches(c)}
                         >
-                          <Layers size={16} color="#06b6d4" />
+                          <Layers size={16} color="var(--primary-color, #07665e)" />
                         </button>
                         <button
                           type="button"
@@ -369,7 +401,7 @@ export const CompaniesPage: React.FC = () => {
                           title={c.isActive ? 'Suspender suscripción' : 'Activar suscripción'}
                           onClick={() => handleToggleStatus(c)}
                         >
-                          <Power size={16} color={c.isActive ? '#ef4444' : '#10b981'} />
+                          <Power size={16} color={c.isActive ? '#ef4444' : 'var(--primary-color, #07665e)'} />
                         </button>
                       </div>
                     </td>
@@ -726,22 +758,22 @@ export const CompaniesPage: React.FC = () => {
             </div>
 
             <div className="modal-body">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(31, 41, 55, 0.5)', padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.875rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-main, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)', padding: '0.85rem 1.15rem', borderRadius: '10px', fontSize: '0.875rem', color: 'var(--text-primary, #1e293b)' }}>
                 <span>NIT: <strong>{selectedCompany.nit}</strong></span>
-                <span>Plan: <strong>{selectedCompany.planType}</strong></span>
+                <span>Plan: <strong style={{ color: 'var(--primary-color, #07665e)' }}>{selectedCompany.planType}</strong></span>
                 <span>Sedes Registradas: <strong>{companyBranches.length} / {selectedCompany.maxBranches}</strong></span>
               </div>
 
               {loadingBranches ? (
-                <div style={{ padding: '2rem', textAlign: 'center', color: '#9ca3af' }}>
-                  <Loader2 size={28} className="animate-spin" style={{ margin: '0 auto 0.5rem' }} />
+                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary, #64748b)' }}>
+                  <Loader2 size={28} className="animate-spin" style={{ margin: '0 auto 0.5rem', color: 'var(--primary-color, #07665e)' }} />
                   <p>Cargando sedes...</p>
                 </div>
               ) : companyBranches.length === 0 ? (
-                <div style={{ padding: '2.5rem', textAlign: 'center', color: '#9ca3af' }}>
-                  <Building size={40} style={{ opacity: 0.4, margin: '0 auto 0.75rem' }} />
-                  <p style={{ fontWeight: 600, color: '#e5e7eb' }}>Este parqueadero aún no tiene sedes creadas.</p>
-                  <p style={{ fontSize: '0.813rem', color: '#9ca3af', marginTop: '0.25rem' }}>
+                <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-secondary, #64748b)' }}>
+                  <Building size={40} style={{ opacity: 0.4, margin: '0 auto 0.75rem', color: 'var(--primary-color, #07665e)' }} />
+                  <p style={{ fontWeight: 700, color: 'var(--text-primary, #1e293b)' }}>Este parqueadero aún no tiene sedes creadas.</p>
+                  <p style={{ fontSize: '0.813rem', color: 'var(--text-secondary, #64748b)', marginTop: '0.25rem' }}>
                     El administrador del cliente registrará sus sedes al acceder a la plataforma con su usuario.
                   </p>
                 </div>

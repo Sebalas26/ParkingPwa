@@ -35,7 +35,11 @@ export const DashboardLayout: React.FC = () => {
     activeBranch,
     setActiveBranchId,
     hasZeroBranches,
+    inspectedCompany,
+    stopInspectingCompany,
   } = useBranchContext();
+
+  const isSuperAdminGlobal = Boolean(user?.isSuperAdmin && !inspectedCompany);
 
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -45,6 +49,13 @@ export const DashboardLayout: React.FC = () => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Route guard: si SuperAdmin está en modo global y entra a una ruta que no sea /dashboard/companies, redirigir
+  useEffect(() => {
+    if (isSuperAdminGlobal && location.pathname !== '/dashboard/companies') {
+      navigate('/dashboard/companies', { replace: true });
+    }
+  }, [isSuperAdminGlobal, location.pathname, navigate]);
 
   const mainContentRef = React.useRef<HTMLElement>(null);
 
@@ -109,7 +120,7 @@ export const DashboardLayout: React.FC = () => {
           </div>
           <div className="app-title-group">
             <span className="app-name">Parking Flow</span>
-            <span className="app-subtitle">{user?.isSuperAdmin ? 'Plataforma SaaS Global' : 'Gestión Multi-Sede'}</span>
+            <span className="app-subtitle">{user?.isSuperAdmin ? (inspectedCompany ? `Admin: ${inspectedCompany.name}` : 'Plataforma SaaS Global') : 'Gestión Multi-Sede'}</span>
           </div>
           <button
             type="button"
@@ -133,79 +144,105 @@ export const DashboardLayout: React.FC = () => {
         <WatermarkLogo />
 
         <nav className="nav-menu">
-          {user?.isSuperAdmin && (
+          {/* MODO SUPERADMIN GLOBAL: Solo ve Parqueaderos SaaS */}
+          {isSuperAdminGlobal ? (
             <button
               type="button"
               className={`nav-item ${location.pathname.startsWith('/dashboard/companies') ? 'active' : ''}`}
               onClick={() => handleNavigate('/dashboard/companies')}
-              style={{ background: location.pathname.startsWith('/dashboard/companies') ? 'rgba(16, 185, 129, 0.2)' : undefined }}
             >
-              <Building2 size={20} color="#10b981" />
-              <span style={{ fontWeight: 600 }}>Parqueaderos SaaS</span>
+              <Building2 size={20} />
+              <span>Parqueaderos SaaS</span>
             </button>
-          )}
+          ) : (
+            <>
+              {/* Si es SuperAdmin en modo inspección, botón destacado para salir */}
+              {user?.isSuperAdmin && inspectedCompany && (
+                <button
+                  type="button"
+                  className="nav-item"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    color: '#ffffff',
+                    marginBottom: '8px',
+                    border: '1px solid rgba(255, 255, 255, 0.25)',
+                    fontWeight: 700
+                  }}
+                  onClick={() => {
+                    stopInspectingCompany();
+                    handleNavigate('/dashboard/companies');
+                  }}
+                  title="Volver al catálogo global de empresas SaaS"
+                >
+                  <LogOut size={18} />
+                  <span>🔙 Volver a SaaS</span>
+                </button>
+              )}
 
-          {authService.hasPermission('dashboard.view') && (
-            <button
-              type="button"
-              className={`nav-item ${location.pathname === '/dashboard' || (!user?.isSuperAdmin && location.pathname === '/') ? 'active' : ''}`}
-              onClick={() => handleNavigate('/dashboard')}
-            >
-              <LayoutDashboard size={20} />
-              <span>Dashboard</span>
-            </button>
-          )}
-          {authService.hasPermission('checkout.view') && (
-            <button
-              type="button"
-              className={`nav-item ${location.pathname.startsWith('/dashboard/caja') ? 'active' : ''}`}
-              onClick={() => handleNavigate('/dashboard/caja')}
-            >
-              <Wallet size={20} />
-              <span>Caja</span>
-            </button>
-          )}
-          {authService.hasPermission('recent_entries.view') && (
-            <button
-              type="button"
-              className={`nav-item ${location.pathname.startsWith('/dashboard/vehicles') ? 'active' : ''}`}
-              onClick={() => handleNavigate('/dashboard/vehicles')}
-            >
-              <Car size={20} />
-              <span>Activos</span>
-            </button>
-          )}
-          {authService.hasPermission('reports.view') && (
-            <button
-              type="button"
-              className={`nav-item ${location.pathname.startsWith('/dashboard/reports') ? 'active' : ''}`}
-              onClick={() => handleNavigate('/dashboard/reports')}
-            >
-              <BarChart size={20} />
-              <span>Reportes</span>
-            </button>
-          )}
-          {authService.hasPermission('novedades.view') && (
-            <button
-              type="button"
-              className={`nav-item ${location.pathname.startsWith('/dashboard/novedades') ? 'active' : ''}`}
-              onClick={() => handleNavigate('/dashboard/novedades')}
-            >
-              <BellRing size={20} />
-              <span>Novedades</span>
-            </button>
-          )}
-          {(authService.hasPermission('settings.parqueaderos.view') || authService.hasPermission('branches.view') || authService.hasPermission('users.view') || authService.hasPermission('rates.view') || authService.hasPermission('payment_methods.view') || authService.hasPermission('agreements.view')) && (
-            <button
-              type="button"
-              className={`nav-item ${location.pathname.startsWith('/dashboard/settings') ? 'active' : ''}`}
-              onClick={() => handleNavigate('/dashboard/settings')}
-            >
-              <Settings size={20} />
-              <span>Configuración</span>
-            </button>
+              {authService.hasPermission('dashboard.view') && (
+                <button
+                  type="button"
+                  className={`nav-item ${location.pathname === '/dashboard' || location.pathname === '/' ? 'active' : ''}`}
+                  onClick={() => handleNavigate('/dashboard')}
+                >
+                  <LayoutDashboard size={20} />
+                  <span>Dashboard</span>
+                </button>
+              )}
+              {authService.hasPermission('checkout.view') && (
+                <button
+                  type="button"
+                  className={`nav-item ${location.pathname.startsWith('/dashboard/caja') ? 'active' : ''}`}
+                  onClick={() => handleNavigate('/dashboard/caja')}
+                >
+                  <Wallet size={20} />
+                  <span>Caja</span>
+                </button>
+              )}
+              {authService.hasPermission('recent_entries.view') && (
+                <button
+                  type="button"
+                  className={`nav-item ${location.pathname.startsWith('/dashboard/vehicles') ? 'active' : ''}`}
+                  onClick={() => handleNavigate('/dashboard/vehicles')}
+                >
+                  <Car size={20} />
+                  <span>Activos</span>
+                </button>
+              )}
+              {authService.hasPermission('reports.view') && (
+                <button
+                  type="button"
+                  className={`nav-item ${location.pathname.startsWith('/dashboard/reports') ? 'active' : ''}`}
+                  onClick={() => handleNavigate('/dashboard/reports')}
+                >
+                  <BarChart size={20} />
+                  <span>Reportes</span>
+                </button>
+              )}
+              {authService.hasPermission('novedades.view') && (
+                <button
+                  type="button"
+                  className={`nav-item ${location.pathname.startsWith('/dashboard/novedades') ? 'active' : ''}`}
+                  onClick={() => handleNavigate('/dashboard/novedades')}
+                >
+                  <BellRing size={20} />
+                  <span>Novedades</span>
+                </button>
+              )}
+              {(authService.hasPermission('settings.parqueaderos.view') || authService.hasPermission('branches.view') || authService.hasPermission('users.view') || authService.hasPermission('rates.view') || authService.hasPermission('payment_methods.view') || authService.hasPermission('agreements.view')) && (
+                <button
+                  type="button"
+                  className={`nav-item ${location.pathname.startsWith('/dashboard/settings') ? 'active' : ''}`}
+                  onClick={() => handleNavigate('/dashboard/settings')}
+                >
+                  <Settings size={20} />
+                  <span>Configuración</span>
+                </button>
+              )}
+            </>
           )}
         </nav>
+
         <div className="sidebar-footer">
           <div className="profile-avatar">
             <User size={16} />
@@ -224,6 +261,29 @@ export const DashboardLayout: React.FC = () => {
       </aside>
 
       <div className="content-wrapper">
+        {user?.isSuperAdmin && inspectedCompany && (
+          <div className="impersonation-bar">
+            <div className="impersonation-bar-left">
+              <span className="impersonation-badge">👑 Modo Administración</span>
+              <span className="impersonation-title">
+                Gestionando Parqueadero: <strong>{inspectedCompany.name}</strong> {inspectedCompany.nit ? `(NIT: ${inspectedCompany.nit})` : ''}
+              </span>
+            </div>
+            <button
+              type="button"
+              className="btn-exit-impersonation"
+              onClick={() => {
+                stopInspectingCompany();
+                navigate('/dashboard/companies');
+              }}
+              title="Finalizar gestión y volver al catálogo global de empresas"
+            >
+              <LogOut size={15} />
+              <span>Volver a Plataforma SaaS</span>
+            </button>
+          </div>
+        )}
+
         <header className="top-bar">
           <div className="top-bar-left">
             <button
@@ -242,30 +302,37 @@ export const DashboardLayout: React.FC = () => {
           </div>
 
           <div className="header-actions">
-            {!location.pathname.startsWith('/dashboard/settings') && branchesList.length > 0 && (
-              <div className="branch-selector-pill">
-                <Building2 size={16} style={{ color: '#07665e', flexShrink: 0 }} />
-                {branchesList.length > 1 ? (
-                  <select
-                    value={activeBranchId ?? ''}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setActiveBranchId(val ? Number(val) : null);
-                    }}
-                    className="branch-select-native"
-                  >
-                    {branchesList.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        📍 {b.code} — {b.name} ({b.totalCapacity} pl)
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <span className="branch-name-single">
-                    📍 {activeBranch?.code} — {activeBranch?.name}
-                  </span>
-                )}
+            {isSuperAdminGlobal ? (
+              <div className="global-saas-badge">
+                <Building2 size={16} />
+                <span>👑 Plataforma SaaS Global</span>
               </div>
+            ) : (
+              !location.pathname.startsWith('/dashboard/settings') && branchesList.length > 0 && (
+                <div className="branch-selector-pill">
+                  <Building2 size={16} style={{ color: '#07665e', flexShrink: 0 }} />
+                  {branchesList.length > 1 ? (
+                    <select
+                      value={activeBranchId ?? ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setActiveBranchId(val ? Number(val) : null);
+                      }}
+                      className="branch-select-native"
+                    >
+                      {branchesList.map((b) => (
+                        <option key={b.id} value={b.id}>
+                          📍 {b.code} — {b.name} ({b.totalCapacity} pl)
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span className="branch-name-single">
+                      📍 {activeBranch?.code} — {activeBranch?.name}
+                    </span>
+                  )}
+                </div>
+              )
             )}
 
             <PwaInstallPrompt />
@@ -291,54 +358,77 @@ export const DashboardLayout: React.FC = () => {
 
       {/* Mobile Bottom Navigation Bar (PWA Experience) */}
       <nav className="bottom-nav-bar" aria-label="Navegación Móvil">
-        {authService.hasPermission('dashboard.view') && (
-          <button
-            type="button"
-            className={`bottom-nav-item ${location.pathname === '/dashboard' || location.pathname === '/' ? 'active' : ''}`}
-            onClick={() => handleNavigate('/dashboard')}
-          >
-            <LayoutDashboard size={20} />
-            <span>Dashboard</span>
-          </button>
+        {isSuperAdminGlobal ? (
+          <>
+            <button
+              type="button"
+              className="bottom-nav-item active"
+              onClick={() => handleNavigate('/dashboard/companies')}
+            >
+              <Building2 size={20} />
+              <span>Parqueaderos</span>
+            </button>
+            <button
+              type="button"
+              className="bottom-nav-item"
+              onClick={handleLogout}
+            >
+              <LogOut size={20} />
+              <span>Salir</span>
+            </button>
+          </>
+        ) : (
+          <>
+            {authService.hasPermission('dashboard.view') && (
+              <button
+                type="button"
+                className={`bottom-nav-item ${location.pathname === '/dashboard' || location.pathname === '/' ? 'active' : ''}`}
+                onClick={() => handleNavigate('/dashboard')}
+              >
+                <LayoutDashboard size={20} />
+                <span>Dashboard</span>
+              </button>
+            )}
+            {authService.hasPermission('checkout.view') && (
+              <button
+                type="button"
+                className={`bottom-nav-item ${location.pathname.startsWith('/dashboard/caja') ? 'active' : ''}`}
+                onClick={() => handleNavigate('/dashboard/caja')}
+              >
+                <Wallet size={20} />
+                <span>Caja</span>
+              </button>
+            )}
+            {authService.hasPermission('recent_entries.view') && (
+              <button
+                type="button"
+                className={`bottom-nav-item ${location.pathname.startsWith('/dashboard/vehicles') ? 'active' : ''}`}
+                onClick={() => handleNavigate('/dashboard/vehicles')}
+              >
+                <Car size={20} />
+                <span>Activos</span>
+              </button>
+            )}
+            {authService.hasPermission('reports.view') && (
+              <button
+                type="button"
+                className={`bottom-nav-item ${location.pathname.startsWith('/dashboard/reports') ? 'active' : ''}`}
+                onClick={() => handleNavigate('/dashboard/reports')}
+              >
+                <BarChart size={20} />
+                <span>Reportes</span>
+              </button>
+            )}
+            <button
+              type="button"
+              className={`bottom-nav-item ${isMobileMenuOpen || location.pathname.startsWith('/dashboard/settings') || location.pathname.startsWith('/dashboard/novedades') ? 'active' : ''}`}
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              <Menu size={20} />
+              <span>Menú</span>
+            </button>
+          </>
         )}
-        {authService.hasPermission('checkout.view') && (
-          <button
-            type="button"
-            className={`bottom-nav-item ${location.pathname.startsWith('/dashboard/caja') ? 'active' : ''}`}
-            onClick={() => handleNavigate('/dashboard/caja')}
-          >
-            <Wallet size={20} />
-            <span>Caja</span>
-          </button>
-        )}
-        {authService.hasPermission('recent_entries.view') && (
-          <button
-            type="button"
-            className={`bottom-nav-item ${location.pathname.startsWith('/dashboard/vehicles') ? 'active' : ''}`}
-            onClick={() => handleNavigate('/dashboard/vehicles')}
-          >
-            <Car size={20} />
-            <span>Activos</span>
-          </button>
-        )}
-        {authService.hasPermission('reports.view') && (
-          <button
-            type="button"
-            className={`bottom-nav-item ${location.pathname.startsWith('/dashboard/reports') ? 'active' : ''}`}
-            onClick={() => handleNavigate('/dashboard/reports')}
-          >
-            <BarChart size={20} />
-            <span>Reportes</span>
-          </button>
-        )}
-        <button
-          type="button"
-          className={`bottom-nav-item ${isMobileMenuOpen || location.pathname.startsWith('/dashboard/settings') || location.pathname.startsWith('/dashboard/novedades') ? 'active' : ''}`}
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        >
-          <Menu size={20} />
-          <span>Menú</span>
-        </button>
       </nav>
     </div>
   );

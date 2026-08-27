@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import type { BranchDto } from '../../features/settings/model/BranchesContracts';
 import { branchesService } from '../../features/settings/data/branchesService';
 import type { ParqueaderoDto } from '../../features/settings/model/ParqueaderosContracts';
+import type { CompanyDto } from '../../features/companies/model/CompanyContracts';
+import { apiClient } from '../api/apiClient';
 
 interface BranchContextType {
   // Nueva API Multi-Sede
@@ -12,6 +14,11 @@ interface BranchContextType {
   refreshBranches: () => Promise<void>;
   isLoadingBranches: boolean;
   hasZeroBranches: boolean;
+
+  // Modo Impersonación SaaS para SuperAdmin
+  inspectedCompany: CompanyDto | null;
+  startInspectingCompany: (company: CompanyDto) => Promise<void>;
+  stopInspectingCompany: () => void;
 
   // Compatibilidad con vistas existentes
   parqueaderosList: ParqueaderoDto[];
@@ -31,6 +38,10 @@ const BranchContext = createContext<BranchContextType>({
   isLoadingBranches: false,
   hasZeroBranches: false,
 
+  inspectedCompany: null,
+  startInspectingCompany: async () => {},
+  stopInspectingCompany: () => {},
+
   parqueaderosList: [],
   selectedParqueaderoId: null,
   selectedParqueadero: null,
@@ -42,6 +53,15 @@ const BranchContext = createContext<BranchContextType>({
 export const ParqueaderoProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [branchesList, setBranchesList] = useState<BranchDto[]>([]);
   const [isLoadingBranches, setIsLoadingBranches] = useState<boolean>(true);
+  const [inspectedCompany, setInspectedCompany] = useState<CompanyDto | null>(() => {
+    try {
+      const saved = sessionStorage.getItem('parkflow_inspected_company');
+      return saved ? (JSON.parse(saved) as CompanyDto) : null;
+    } catch {
+      return null;
+    }
+  });
+
   const [activeBranchId, setActiveBranchIdState] = useState<number | null>(() => {
     const saved = localStorage.getItem('parkflow_active_branch_id') || localStorage.getItem('parkflow_selected_parqueadero_id');
     if (!saved || saved === 'all') return null;
@@ -52,7 +72,23 @@ export const ParqueaderoProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const refreshBranches = useCallback(async () => {
     setIsLoadingBranches(true);
     try {
-      const data = await branchesService.getAll();
+      let data: BranchDto[] = [];
+      const currentInspected = inspectedCompany || (() => {
+        try {
+          const s = sessionStorage.getItem('parkflow_inspected_company');
+          return s ? (JSON.parse(s) as CompanyDto) : null;
+        } catch {
+          return null;
+        }
+      })();
+
+      if (currentInspected && currentInspected.id) {
+        const companyBranches = await apiClient.get<BranchDto[]>(`/Branches/company/${currentInspected.id}`);
+        data = Array.isArray(companyBranches) ? companyBranches : [];
+      } else {
+        data = await branchesService.getAll();
+      }
+
       setBranchesList(data || []);
 
       if (data && data.length > 0) {
@@ -77,7 +113,7 @@ export const ParqueaderoProvider: React.FC<{ children: React.ReactNode }> = ({ c
     } finally {
       setIsLoadingBranches(false);
     }
-  }, []);
+  }, [inspectedCompany]);
 
   useEffect(() => {
     refreshBranches();
@@ -92,6 +128,38 @@ export const ParqueaderoProvider: React.FC<{ children: React.ReactNode }> = ({ c
       localStorage.removeItem('parkflow_active_branch_id');
       localStorage.removeItem('parkflow_selected_parqueadero_id');
     }
+  };
+
+  const startInspectingCompany = async (company: CompanyDto) => {
+    setInspectedCompany(company);
+    sessionStorage.setItem('parkflow_inspected_company', JSON.stringify(company));
+    setIsLoadingBranches(true);
+    try {
+      const branches = await apiClient.get<BranchDto[]>(`/Branches/company/${company.id}`);
+      const validBranches = Array.isArray(branches) ? branches : [];
+      setBranchesList(validBranches);
+      if (validBranches.length > 0) {
+        const defaultBranch = validBranches.find((b) => b.isActive) || validBranches[0];
+        setActiveBranchId(defaultBranch.id);
+      } else {
+        setActiveBranchId(null);
+      }
+    } catch (err) {
+      console.error('Error al cargar sedes de la empresa inspeccionada:', err);
+      setBranchesList([]);
+      setActiveBranchId(null);
+    } finally {
+      setIsLoadingBranches(false);
+    }
+  };
+
+  const stopInspectingCompany = () => {
+    setInspectedCompany(null);
+    sessionStorage.removeItem('parkflow_inspected_company');
+    localStorage.removeItem('parkflow_active_branch_id');
+    localStorage.removeItem('parkflow_selected_parqueadero_id');
+    setActiveBranchIdState(null);
+    setBranchesList([]);
   };
 
   const activeBranch = activeBranchId !== null
@@ -151,6 +219,10 @@ export const ParqueaderoProvider: React.FC<{ children: React.ReactNode }> = ({ c
         refreshBranches,
         isLoadingBranches,
         hasZeroBranches,
+
+        inspectedCompany,
+        startInspectingCompany,
+        stopInspectingCompany,
 
         parqueaderosList,
         selectedParqueaderoId: activeBranchId,

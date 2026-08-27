@@ -7,6 +7,40 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-27 15:40:00] - [FEAT] [SAAS] [UX] - Menú Exclusivo SuperAdmin, Impersonación con Persistencia F5, Route Guards y Rediseño Visual
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > _"Listo funciono excelente, pero sabes que veo es que al super admin se le muestra todo el menu como dashboard como caja activos reportes novedades configuracion no deberia ser eso ya con el menu de parqueaderos saas y con lo que se tiene en las opciones que colocaste super bien que no estan de acorde al diseño que se tiene eso si lo creaste horible tu ya tienes los colores entonces corregir eso. aparte debes agregar otra opcion que diga configurar que signifique que yo como super admin pueda ahora si hacer de cuenta que ingrese como administrador si me explico para yo ver todo lo de ese parqueadero pero logico con la opcion de devolverme a mi visual de super admin y cambias asi de parqueaderos si me explico ya que me imagino tienes claro y la BD esta configurada para que todo los medios de pagos tarifas y todo sean independientes a cada parquedero y dentro de cada sede de su parqueadero igual si me hago entender ? analiza"_
+- **🤖 Resumen Técnico para la IA**:
+  1. **Menú Condicional para SuperAdmin (`DashboardLayout.tsx`)**:
+     - En modo global (`user?.isSuperAdmin && !inspectedCompany`), el menú lateral y la barra inferior móvil muestran **únicamente "🏢 Parqueaderos SaaS"**, ocultando completamente los módulos operativos de sede (Caja, Activos, etc.).
+  2. **Modo Impersonación / Configurar Parqueadero (`ParqueaderoContext.tsx`, `DashboardLayout.tsx`)**:
+     - Se añadieron `inspectedCompany`, `startInspectingCompany(company)` y `stopInspectingCompany()` en `ParqueaderoContext`.
+     - Al hacer clic en **"⚙️ Administrar"** en una empresa, se cargan sus sedes mediante `GET /api/Branches/company/{companyId}`, se establece la primera sede como activa y se abre el acceso completo a los módulos operativos de ese cliente.
+  3. **Persistencia ante F5 (Page Refresh)**:
+     - `inspectedCompany` se almacena en `sessionStorage` (`parkflow_inspected_company`). Al recargar la página, `ParqueaderoContext` restaura automáticamente el contexto de administración del parqueadero sin expulsar al usuario.
+  4. **Limpieza Total de Estado al Salir (`stopInspectingCompany`)**:
+     - Al salir, se purga `sessionStorage`, se resetea la lista de sedes y la sede activa, y se navega limpiamente a `/dashboard/companies` evitando cualquier data cruzada.
+  5. **Protección de Rutas Operativas (Route Guards)**:
+     - Si el SuperAdmin está en modo SaaS Global (sin empresa seleccionada) e intenta tipear manualmente `/dashboard/caja`, `/dashboard/vehicles`, etc., es interceptado y redirigido automáticamente a `/dashboard/companies`.
+  6. **Banner de Impersonación Superior (`DashboardLayout.tsx`, `DashboardLayout.css`)**:
+     - Banner esmeralda superior que indica: `👑 Modo Administración: Gestionando Parqueadero [Nombre] (NIT: [nit])` junto al botón interactivo `🔙 Volver a Plataforma SaaS`.
+  7. **Rediseño Visual Integral de `CompaniesPage` (`CompaniesPage.tsx`, `CompaniesPage.css`)**:
+     - Adaptado al sistema de diseño oficial de la PWA (`--primary-color: #07665e`, fondos `#f4f7f6` / `#ffffff`, textos `#1e293b` / `#64748b`, bordes `#e2e8f0`).
+     - Tarjetas KPI estilizadas, buscador limpio, tabla con badges oficiales de planes (`Basic`, `Pro`, `Enterprise`) y botón primario de acción **"⚙️ Administrar"**.
+  8. **Bump de Versión**:
+     - Actualizado `.env` a `0.0.16 Dev`.
+- **📦 Componentes Modificados**:
+  - `src/shared/context/ParqueaderoContext.tsx`
+  - `src/shared/ui/DashboardLayout.tsx`
+  - `src/shared/ui/DashboardLayout.css`
+  - `src/features/companies/ui/CompaniesPage.tsx`
+  - `src/features/companies/ui/CompaniesPage.css`
+  - `.env`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript).
+
 ### [2026-08-27 15:20:00] - [FEAT] [UI/UX] [SUPERADMIN] - Integración /Auth/login, Supresión de Onboarding y Visor de Sedes SaaS
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
