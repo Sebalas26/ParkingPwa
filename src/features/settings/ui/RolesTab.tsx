@@ -323,6 +323,16 @@ export const RolesTab: React.FC = () => {
 
   const currentGroupedModules = activePlatform === 'wpf' ? desktopGrouped : webGrouped;
 
+  const currentUserForFilter = authService.getCurrentUser();
+  const isUserSuperAdmin = currentUserForFilter?.isSuperAdmin === true;
+
+  const displayRoles = roles.filter((r) => {
+    if (isSuperAdminRole(r) && !isUserSuperAdmin) {
+      return false;
+    }
+    return true;
+  });
+
   return (
     <div className="settings-section-card">
       <div className="section-header">
@@ -349,8 +359,8 @@ export const RolesTab: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {roles.length > 0 ? (
-              roles.map((r) => {
+            {displayRoles.length > 0 ? (
+              displayRoles.map((r) => {
                 const roleId = r.idUserRol ?? r.id ?? 1;
                 const assignedCount = rolePermissionsMap[roleId]?.length || 0;
                 const roleTitle = r.roleName || r.role || r.name || `Rol #${roleId}`;
@@ -463,7 +473,12 @@ export const RolesTab: React.FC = () => {
             ) : (
               <tr>
                 <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
-                  {isLoading ? 'Cargando roles desde la API...' : 'No se encontraron roles registrados en el sistema.'}
+                  {isLoading ? (
+                    <div className="loader-container">
+                      <div className="spinner"></div>
+                      <span>Cargando roles desde la API...</span>
+                    </div>
+                  ) : 'No se encontraron roles registrados en el sistema.'}
                 </td>
               </tr>
             )}

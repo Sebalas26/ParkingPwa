@@ -1015,7 +1015,12 @@ export const Dashboard: React.FC = () => {
                 ) : (
                   <tr>
                     <td colSpan={5} style={{ textAlign: 'center', padding: '28px', color: 'var(--text-secondary)' }}>
-                      {isLoading ? 'Cargando stream vehicular...' : 'No hay vehículos activos que coincidan con la búsqueda.'}
+                      {isLoading ? (
+                        <div className="loader-container">
+                          <div className="spinner"></div>
+                          <span>Cargando stream vehicular...</span>
+                        </div>
+                      ) : 'No hay vehículos activos que coincidan con la búsqueda.'}
                     </td>
                   </tr>
                 )}

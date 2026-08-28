@@ -329,7 +329,12 @@ export const Vehicles: React.FC = () => {
             ) : (
               <tr>
                 <td colSpan={8} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
-                  {isLoading ? 'Cargando vehículos activos...' : 'No hay vehículos activos que coincidan con la búsqueda.'}
+                  {isLoading ? (
+                    <div className="loader-container">
+                      <div className="spinner"></div>
+                      <span>Cargando vehículos activos...</span>
+                    </div>
+                  ) : 'No hay vehículos activos que coincidan con la búsqueda.'}
                 </td>
               </tr>
             )}
