@@ -7,16 +7,17 @@ export const UpdatePromptModal: React.FC = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [hasNewVersion, setHasNewVersion] = useState(false);
   const localBuildTimeRef = useRef<number>(
-    typeof __APP_BUILD_TIME__ !== 'undefined' ? __APP_BUILD_TIME__ : Date.now()
+    typeof __APP_BUILD_TIME__ === 'number' ? __APP_BUILD_TIME__ : Date.now()
   );
-  const currentAppVersion = import.meta.env.VITE_APP_VERSION || '0.0.39 Dev';
+  const currentAppVersion = import.meta.env.VITE_APP_VERSION || '0.0.1 Dev';
 
   const {
     needRefresh: [needRefresh],
+    updateServiceWorker,
   } = useRegisterSW({
     onRegistered(registration) {
       if (registration) {
-        // Sondeo del Service Worker cada 10 segundos
+        // Sondeo proactivo del Service Worker cada 10 segundos
         const swInterval = setInterval(() => {
           registration.update().catch(() => {});
         }, 10 * 1000);
@@ -31,9 +32,9 @@ export const UpdatePromptModal: React.FC = () => {
 
   // Motor 2: Sondeo ultrarrápido al manifiesto de versión (cada 8 segundos)
   const checkForVersionJson = useCallback(async () => {
-    // Si acaba de actualizarse en los últimos 12 segundos, evitar re-chequeo transitorio
+    // Si acaba de actualizarse en los últimos 15 segundos, evitar re-chequeo transitorio
     const lastUpdateTimestamp = Number(sessionStorage.getItem('pwa_just_updated') || '0');
-    if (Date.now() - lastUpdateTimestamp < 12000) {
+    if (Date.now() - lastUpdateTimestamp < 15000) {
       return;
     }
 
@@ -48,12 +49,17 @@ export const UpdatePromptModal: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        if (data) {
-          const isDifferentVersion = Boolean(data.version && data.version !== currentAppVersion);
-          const isNewerBuild = Boolean(data.buildTime && data.buildTime > localBuildTimeRef.current);
+        if (data && typeof data.buildTime === 'number') {
+          // Un build es nuevo ÚNICAMENTE si el servidor tiene un timestamp posterior al de la app en memoria
+          const isNewerBuild = data.buildTime > (localBuildTimeRef.current + 2000);
+          const isNewerVersion = Boolean(
+            data.version && 
+            data.version !== currentAppVersion && 
+            data.buildTime >= localBuildTimeRef.current
+          );
 
-          if (isDifferentVersion || isNewerBuild) {
-            console.log('[PWA Version Tracker] Nueva versión detectada en servidor:', data.version || data.buildTime);
+          if (isNewerBuild || isNewerVersion) {
+            console.log('[PWA Version Tracker] Nueva versión detectada en servidor:', data.version, 'Build:', data.buildTime);
             setHasNewVersion(true);
           }
         }
@@ -98,12 +104,9 @@ export const UpdatePromptModal: React.FC = () => {
         await Promise.all(cacheKeys.map((key) => caches.delete(key)));
       }
 
-      // 2. Desregistrar Service Workers activos viejos
-      if ('serviceWorker' in navigator) {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        for (const reg of registrations) {
-          await reg.unregister();
-        }
+      // 2. Forzar actualización del Service Worker
+      if (typeof updateServiceWorker === 'function') {
+        await updateServiceWorker(true);
       }
     } catch (err) {
       console.warn('[PWA Purge Error]:', err);

@@ -1,36 +1,39 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const buildTimestamp = Date.now();
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  const appVersion = env.VITE_APP_VERSION || '0.0.1 Dev';
+  const buildTimestamp = Date.now();
 
-function versionTrackerPlugin() {
+  function versionTrackerPlugin() {
+    return {
+      name: 'version-tracker-plugin',
+      buildStart() {
+        const publicDir = path.resolve(process.cwd(), 'public');
+        if (!fs.existsSync(publicDir)) {
+          fs.mkdirSync(publicDir, { recursive: true });
+        }
+        const versionData = {
+          version: appVersion,
+          buildTime: buildTimestamp,
+          timestampIso: new Date(buildTimestamp).toISOString(),
+        };
+        fs.writeFileSync(path.join(publicDir, 'version.json'), JSON.stringify(versionData, null, 2));
+      },
+    };
+  }
+
   return {
-    name: 'version-tracker-plugin',
-    buildStart() {
-      const publicDir = path.resolve(process.cwd(), 'public');
-      if (!fs.existsSync(publicDir)) {
-        fs.mkdirSync(publicDir, { recursive: true });
-      }
-      const versionData = {
-        version: process.env.VITE_APP_VERSION || '0.0.39 Dev',
-        buildTime: buildTimestamp,
-        timestampIso: new Date(buildTimestamp).toISOString(),
-      };
-      fs.writeFileSync(path.join(publicDir, 'version.json'), JSON.stringify(versionData, null, 2));
+    define: {
+      __APP_BUILD_TIME__: buildTimestamp,
     },
-  };
-}
-
-export default defineConfig({
-  define: {
-    __APP_BUILD_TIME__: buildTimestamp,
-  },
-  plugins: [
-    react(),
-    versionTrackerPlugin(),
+    plugins: [
+      react(),
+      versionTrackerPlugin(),
     VitePWA({
       registerType: 'autoUpdate',
       devOptions: {
@@ -145,5 +148,7 @@ export default defineConfig({
       },
     }),
   ],
+};
 });
+
 

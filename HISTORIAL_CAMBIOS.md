@@ -7,6 +7,28 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-28 15:05:00] - [FIX] [PWA] - Corrección de Sincronización loadEnv en Vite y Criterio Estricto de Timestamp en Modal
+
+#### 💬 Prompt Original del Usuario
+> "pero esxiste un error si cierro la pwa y vuelvo y la abro vuelve a salir lo de actualizar parece que no cambia para que no lo hace ahora vi otro error le doy actualizar listo cierra la modal de actualizar y quedo ay espero como 5 segundo y vuevle a salir lo de actualizar osea no lo hace bien queda algo como pendiente algo que sigue diciendo tiene que actualizar si me explico. analisa eso."
+
+#### 🤖 Resumen Técnico para la IA
+1. **Corrección de Lectura `.env` en `vite.config.ts`**:
+   - `process.env.VITE_APP_VERSION` no era cargado en Node.js por defecto. Se refactorizó la configuración usando `defineConfig(({ mode }) => { const env = loadEnv(mode, process.cwd(), ''); ... })`.
+   - Ahora `versionTrackerPlugin()` escribe en `version.json` exactamente la versión de `.env` (`0.0.40 Dev`), eliminando la discrepancia permanente de versiones entre el servidor y el cliente.
+2. **Criterio Unidireccional de Novedad (`UpdatePromptModal.tsx`)**:
+   - Se blindó la condición de alerta: sólo activa `setHasNewVersion(true)` si `data.buildTime > (localBuildTimeRef.current + 2000)` o si la versión del servidor es distinta Y su build es posterior/igual.
+   - Si el build es igual o menor, el sistema ignora la respuesta silenciosamente, garantizando que tras actualizar o reiniciar la PWA no se vuelva a mostrar la modal.
+
+#### 📦 Componentes Modificados
+- `vite.config.ts` — Carga con `loadEnv` y sincronización exacta de `VITE_APP_VERSION`
+- `src/shared/ui/UpdatePromptModal.tsx` — Criterio estricto de timestamp más reciente y validación segura
+- `public/version.json` y `dist/version.json` — Sincronizados con `0.0.40 Dev`
+
+#### ✅ Verificación y Compilación
+- `npm run build` → **0 Errores** (Precache: 31 entries).
+
+
 ### [2026-08-28 14:54:00] - [FEAT] [PWA] - Reactivación de Modal de Actualización Obligatoria con Persistencia de Ruta y Prevención de Bucles
 
 #### 💬 Prompt Original del Usuario
