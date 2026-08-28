@@ -1,5 +1,7 @@
 export interface BranchDto {
   id: number;
+  companyId?: number;
+  companyName?: string;
   code: string;
   name: string;
   address?: string;
@@ -18,6 +20,7 @@ export interface BranchDto {
 }
 
 export interface CreateBranchDto {
+  companyId?: number;
   code: string;
   name: string;
   address?: string;
@@ -29,6 +32,7 @@ export interface CreateBranchDto {
 }
 
 export interface UpdateBranchDto {
+  companyId?: number;
   code: string;
   name: string;
   address?: string;

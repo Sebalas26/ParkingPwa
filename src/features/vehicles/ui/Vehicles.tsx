@@ -48,11 +48,22 @@ export const Vehicles: React.FC = () => {
       const active = (data || []).filter((t) => t.isActive ?? true);
       setVehicleTypesList(active);
       if (active.length > 0) {
-        setVehicleType(Number(active[0].vehicleType) || 0);
+        setVehicleType((prev) => {
+          const exists = active.some((a) => Number(a.vehicleType) === Number(prev));
+          return exists ? prev : (Number(active[0].vehicleType) || 0);
+        });
       }
     } catch (err) {
       console.error('Error al cargar tipos de vehículos configurados:', err);
     }
+  };
+
+  const handleOpenCheckIn = async () => {
+    setPlateNumber('');
+    setPhoneNumber('');
+    setNotes('');
+    setIsCheckInModalOpen(true);
+    await loadVehicleTypes();
   };
 
   const loadMediosPago = async () => {
@@ -222,7 +233,7 @@ export const Vehicles: React.FC = () => {
         </div>
 
         {authService.hasPermission('checkin.create') && (
-          <button className="btn-primary" style={{ width: 'auto' }} onClick={() => setIsCheckInModalOpen(true)}>
+          <button className="btn-primary" style={{ width: 'auto' }} onClick={handleOpenCheckIn}>
             <Plus size={16} /> Registrar Ingreso
           </button>
         )}
@@ -383,14 +394,9 @@ export const Vehicles: React.FC = () => {
                           </option>
                         ))
                       ) : (
-                        <>
-                          <option value={0}>Auto / Sedán</option>
-                          <option value={5}>SUV / Camioneta</option>
-                          <option value={1}>Motocicleta</option>
-                          <option value={3}>Camioneta / Van</option>
-                          <option value={2}>Camión / Bus</option>
-                          <option value={4}>Bicicleta</option>
-                        </>
+                        <option value="" disabled>
+                          Cargando tipos de vehículos desde la base de datos...
+                        </option>
                       )}
                     </select>
                   </div>

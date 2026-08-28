@@ -134,7 +134,19 @@ export const ParqueaderosTab: React.FC = () => {
       if (editingBranch.id) {
         await branchesService.update(editingBranch.id, editingBranch as UpdateBranchDto);
       } else {
-        await branchesService.create(editingBranch as CreateBranchDto);
+        const currentUser = authService.getCurrentUser();
+        const payload: CreateBranchDto = {
+          code: editingBranch.code.trim().toUpperCase(),
+          name: editingBranch.name.trim(),
+          address: editingBranch.address?.trim() || '',
+          phone: editingBranch.phone?.trim(),
+          city: editingBranch.city?.trim(),
+          totalCapacity: editingBranch.totalCapacity || 100,
+          notes: editingBranch.notes?.trim(),
+          logoBase64: editingBranch.logoBase64?.trim(),
+          companyId: currentUser?.companyId || undefined,
+        };
+        await branchesService.create(payload);
       }
       setIsEditModalOpen(false);
       setEditingBranch(null);

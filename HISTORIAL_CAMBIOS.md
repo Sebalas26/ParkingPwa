@@ -7,6 +7,74 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-28 17:00:00] - [FEATURE] [MULTI-TENANT] [SECURITY] - Propagación Explícita de CompanyId en Gestión de Sedes y Usuarios
+
+#### 💬 Prompt Original del Usuario
+> "Verificar que cuando se cree la compañia se guarde en la base de datos el companyid por que no se esta guardando entonces eso no va a generara el desacoplamiento que se necesita para cuadno creemos varias organizaciones por que es la idea del saas multitenat"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Propagación de `CompanyId` en PWA (`ParqueaderosTab.tsx`, `BranchesContracts.ts`)**:
+   - Se tipó `companyId` y `companyName` en `BranchDto`, `CreateBranchDto` y `UpdateBranchDto`.
+   - En `ParqueaderosTab.tsx`, al crear una sede se envía explícitamente el `companyId` del usuario autenticado (`authService.getCurrentUser()?.companyId`) para asegurar que la nueva sede quede vinculada a la empresa correspondiente.
+2. **Bump de Versión**:
+   - Actualizado `.env` a `0.0.49 Dev`.
+
+#### 📦 Componentes Modificados
+- `src/features/settings/model/BranchesContracts.ts` — Inclusión de `companyId` en contratos de sedes
+- `src/features/settings/ui/ParqueaderosTab.tsx` — Envío de `companyId` en creación de sede
+- `.env` — Versión `0.0.49 Dev`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` → **0 Errores** (build en 1.20s).
+
+### [2026-08-28 16:51:00] - [UI/UX] [LOGIN] - Eliminación de Botones de Control de Ventana (Minimizar / Cerrar) en Pantalla de Login
+
+#### 💬 Prompt Original del Usuario
+> "quita del login estos iconos" (con captura adjunta resaltando los botones de minimizar y cerrar en la esquina superior derecha del login)
+
+#### 🤖 Resumen Técnico para la IA
+1. **Limpieza Visual del Login (`Login.tsx` & `Login.css`)**:
+   - Se removió el contenedor `<div className="form-side-top-bar">` y los botones `<div className="window-controls">` que ejecutaban `window.blur()` y `window.close()`.
+   - Se eliminaron las clases CSS huérfanas `.form-side-top-bar`, `.window-controls`, `.win-btn`, `.win-min` y `.win-close` en [`Login.css`](file:///c:/Users/sebastianredondo/Documents/pwa/ParkingPwa/src/features/auth/ui/Login.css).
+   - El formulario de autenticación ahora se centra verticalmente de manera limpia y estética en la columna derecha.
+2. **Bump de Versión**:
+   - Actualizado `.env` a `0.0.48 Dev` para invalidación del Service Worker.
+
+#### 📦 Componentes Modificados
+- `src/features/auth/ui/Login.tsx` — Eliminación de botones de control de ventana
+- `src/features/auth/ui/Login.css` — Limpieza de reglas CSS obsoletas
+- `.env` — Versión `0.0.48 Dev`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` → **0 Errores** (build en 624ms).
+
+### [2026-08-28 16:48:00] - [FEATURE] [API] [INTEGRATION] - Conexión Dinámica de Tipos de Vehículos a BD / API en Diálogo de Ingreso de Vehículos
+
+#### 💬 Prompt Original del Usuario
+> "ayudame con que en el dialog de ingreso de vehiculo desde el pwa , muestre los tipos de vehiculos que tengo en mi bd y api, actualmente me muestra quemados y esta mal"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Desacoplamiento y Jerarquía de Catálogo en `vehiculosConfigService.ts`**:
+   - Anteriormente, `vehiculosConfigService.getConfigs(branchId)` filtraba estrictamente por `r.branchId === branchId`. Si la sede no contaba con tarifas específicas sobreescritas a nivel de sede (muy común cuando se opera con el catálogo general de BD con `BranchId = null`), la función retornaba un arreglo vacío `[]`.
+   - Se refactorizó `getConfigs` para consultar `/VehicleRates` y combinar inteligentemente las tarifas particulares de la sede con el catálogo general de tipos de vehículos de la empresa / sistema (`r.branchId === null`), utilizando `r.displayName` configurado en base de datos.
+2. **Eliminación Total de Opciones Quemadas en `Vehicles.tsx`**:
+   - Se removió el bloque de opciones fijas quemadas (`<option value={0}>Auto / Sedán</option>...`) del modal de ingreso.
+   - El `<select>` ahora se alimenta exclusivamente de la lista reactiva `vehicleTypesList.map(...)` proveniente de la API y base de datos.
+   - Se implementó `handleOpenCheckIn` para forzar la recarga reactiva de los tipos de vehículos al abrir el diálogo y auto-seleccionar el primer tipo activo configurado en BD.
+3. **Bump de Versión**:
+   - Actualizado `.env` a `0.0.47 Dev` para forzar invalidación de caché del Service Worker en navegadores y móviles.
+
+#### 📦 Componentes Modificados
+- `src/features/settings/data/vehiculosConfigService.ts` — Consulta y combinación dinámica de tipos de vehículos y tarifas de BD
+- `src/features/vehicles/ui/Vehicles.tsx` — Diálogo de ingreso 100% dinámico y eliminación de opciones quemadas
+- `.env` — Versión `0.0.47 Dev`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` → **0 Errores** (Precache: 31 entries generadas limpiamente).
+
 ### [2026-08-28 16:38:00] - [FEAT] [UI/UX] [MOBILE] - Implementación de Tarjetas Expandibles Interactivas (Accordion Cards) en Vistas Móviles
 
 #### 💬 Prompt Original del Usuario

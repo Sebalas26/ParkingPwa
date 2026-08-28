@@ -82,18 +82,6 @@ export const Login: React.FC = () => {
 
       {/* Columna Derecha / Móvil: Formulario de Autenticación */}
       <div className="login-form-side">
-        {/* Barra superior estilo ventana WPF (Desktop) */}
-        <div className="form-side-top-bar">
-          <div className="window-controls">
-            <button type="button" className="win-btn win-min" tabIndex={-1} aria-label="Minimizar" onClick={() => window.blur()}>
-              <svg viewBox="0 0 10 1" width="10" height="1"><rect width="10" height="1" fill="currentColor" /></svg>
-            </button>
-            <button type="button" className="win-btn win-close" tabIndex={-1} aria-label="Cerrar" onClick={() => window.close()}>
-              <svg viewBox="0 0 10 10" width="10" height="10"><path d="M1 1l8 8m0-8L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
-            </button>
-          </div>
-        </div>
-
         <div className="login-form-wrapper">
           <div className="form-header-box">
             <img src="/logo-new.png" alt="Parking Flow Icon" className="form-top-logo" />
