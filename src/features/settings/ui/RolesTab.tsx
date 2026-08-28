@@ -155,21 +155,33 @@ export const RolesTab: React.FC = () => {
     e.preventDefault();
     if (!editingRole || !editingRole.roleName?.trim()) return;
 
-    // Check if the edited role is Super Administrador based on current roleName
-    if (isSuperAdminRole({ roleName: editingRole.roleName, idUserRol: editingRole.idUserRol } as RoleDto)) {
-        showToast('No está permitido modificar el rol Super Administrador.', 'warning');
-        return;
-    }
-
     const currentUser = authService.getCurrentUser();
     const isSuperAdmin = currentUser?.isSuperAdmin === true;
 
-    // We can't rely solely on editingRole.idUserRol === 1 anymore if we separated them.
-    // Let's assume if it was 1, it might have been Admin or SuperAdmin.
-    // If it is the Admin role being edited (and not SuperAdmin which is caught above), only SuperAdmin can save.
-    if ((editingRole.idUserRol === 1 || editingRole.roleName.toLowerCase().includes('admin')) && !isSuperAdmin) {
-      showToast('No está permitido modificar el rol Administrador.', 'warning');
+    // Normalizar el nombre ingresado para validar si se intenta crear/modificar como un rol del sistema
+    const normalizedInputName = editingRole.roleName.trim().toLowerCase();
+    const isInputSuperAdmin = normalizedInputName === 'super administrador' || normalizedInputName === 'super admin' || normalizedInputName === 'superadmin';
+    const isInputAdmin = normalizedInputName === 'administrador' || normalizedInputName === 'admin';
+
+    // El Super Administrador no puede ser modificado o simulado bajo ninguna circunstancia
+    if (isInputSuperAdmin) {
+      showToast('No está permitido crear o modificar el rol Super Administrador.', 'warning');
       return;
+    }
+
+    // El Administrador del sistema no puede ser creado o modificado por un usuario regular
+    if (isInputAdmin && !isSuperAdmin) {
+      showToast('No está permitido crear o modificar el rol Administrador.', 'warning');
+      return;
+    }
+
+    // Si se está editando un rol existente, validar que no sea un rol protegido si no es SuperAdmin
+    if (editingRole.idUserRol && !isSuperAdmin) {
+      const originalRole = roles.find((r) => (r.idUserRol ?? r.id) === editingRole.idUserRol);
+      if (originalRole && isProtectedSystemRole(originalRole)) {
+        showToast('No está permitido modificar los roles principales del sistema.', 'warning');
+        return;
+      }
     }
 
     try {

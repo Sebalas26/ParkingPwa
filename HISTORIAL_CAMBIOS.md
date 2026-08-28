@@ -7,6 +7,24 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-28 11:22:00] - [FEAT] [SECURITY] [UI] - Filtro de SuperAdmin y Protección Flexibilizada de Roles del Sistema
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"Requiero que cuando tenga en mi pwa un usuario administrador, no me muestre el rol super administrador, adicional que en la accion el rol administrador me salga bloqueado, el podra editar y crear otros roles diferentes a administrador"*
+- **🤖 Resumen Técnico para la IA**:
+  1. **Filtrado de Rol Super Administrador**:
+     - En `UsuariosTab.tsx` se modificó `loadData` para filtrar la lista de roles (`rolesData`). Si el usuario actual de la PWA no es Super Administrador, el rol "Super Administrador" es excluido de las opciones seleccionables y asignables, previniendo visualizaciones cruzadas no deseadas.
+  2. **Protección Flexibilizada de Roles Principales**:
+     - En `RolesTab.tsx` se refactorizó `handleSaveRole` para evitar el uso del método de búsqueda restrictivo `.includes('admin')`. Ahora se usa validación exacta de nombres normalizados (`'administrador'`, `'admin'`, `'super administrador'`, `'super admin'`, `'superadmin'`).
+     - Esto permite que un Administrador estándar cree y edite libremente otros roles personalizados (por ejemplo, *"Auxiliar Administrativo"*) sin ser erróneamente bloqueado.
+     - Se mantiene el bloqueo estricto en la columna de acciones para los roles principales del sistema (con candado y sin botones de acción) para usuarios estándar.
+- **📦 Componentes Modificados**:
+  - `src/features/settings/ui/RolesTab.tsx`
+  - `src/features/settings/ui/UsuariosTab.tsx`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript).
+
 ### [2026-08-28 09:21:00] - [FEAT] [UI] - Responsive Onboarding y Soporte para Imagen de Sede
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:

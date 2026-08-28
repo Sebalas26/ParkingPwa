@@ -63,8 +63,18 @@ export const UsuariosTab: React.FC = () => {
       ]);
       setUsuarios(usersData || []);
       setIdentTypes(typesData || []);
-      setAllUserRoles(rolesData || []);
-      setAssignableRoles(rolesData || []);
+
+      const currentUser = authService.getCurrentUser();
+      const isUserSuperAdmin = currentUser?.isSuperAdmin === true;
+
+      const filteredRoles = (rolesData || []).filter((r) => {
+        const name = (r.roleName || r.role || r.name || '').trim().toLowerCase();
+        const isSuperAdmin = name === 'super administrador' || name === 'super admin' || name === 'superadmin';
+        return !isSuperAdmin || isUserSuperAdmin;
+      });
+
+      setAllUserRoles(filteredRoles);
+      setAssignableRoles(filteredRoles);
       setAllBranches(branchesData || []);
     } catch (err) {
       console.error('Error al cargar datos de usuarios y sedes:', err);
