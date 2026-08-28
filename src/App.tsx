@@ -12,6 +12,7 @@ import { CompaniesPage } from './features/companies/ui/CompaniesPage';
 import { ParqueaderoProvider } from './shared/context/ParqueaderoContext';
 import { authService } from './features/auth/data/authService';
 import { apiClient } from './shared/api/apiClient';
+import { UpdatePromptModal } from './shared/ui/UpdatePromptModal';
 
 const SessionHeartbeat: React.FC = () => {
   useEffect(() => {
@@ -73,6 +74,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 function App() {
   return (
     <ParqueaderoProvider>
+      <UpdatePromptModal />
       <Router>
         <Routes>
           {/* Ruta raíz limpia: Muestra el Login directamente o Dashboard si ya inició sesión */}

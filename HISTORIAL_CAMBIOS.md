@@ -7,6 +7,33 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-28 14:54:00] - [FEAT] [PWA] - Reactivación de Modal de Actualización Obligatoria con Persistencia de Ruta y Prevención de Bucles
+
+#### 💬 Prompt Original del Usuario
+> "si por que la ultima vez que pasaba actualizaba y como que se refrescaba la pagina y volvia a salir lo de actualizar y eso debe salir en cualquier ventana que esrte si estoy en alguna configuracion me sale eso actualzia y yo sigo en la misma pagina de configuración haciendo todo normal si me explico ?"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Persistencia de la Ruta Activa (`handleUpdate`)**:
+   - En `UpdatePromptModal.tsx`, al pulsar *"Actualizar Ahora"*, se captura la URL completa del usuario (`new URL(window.location.href)`) y se le inyecta el cache-buster `_v=${Date.now()}`.
+   - Esto garantiza que si el operador está en `/dashboard/settings`, `/dashboard/vehicles` o `/dashboard/caja`, tras actualizar la aplicación **permanezca en la misma pantalla** sin ser expulsado a `/` o al login.
+2. **Eliminación Total de Bucles y Falsos Positivos**:
+   - Se reactivó `versionTrackerPlugin()` en `vite.config.ts` para generar `public/version.json` con `buildTime` (timestamp numérico exacto) y la constante global `__APP_BUILD_TIME__`.
+   - Se configuró Workbox con `NetworkOnly` para `/version.json` para que nunca quede atrapado en el caché local.
+   - En `UpdatePromptModal.tsx`, `checkForVersionJson` verifica `sessionStorage.getItem('pwa_just_updated')` (pausa de 12s post-recarga) y compara `data.buildTime > localBuildTimeRef.current` para garantizar que la app solo alerte cuando el servidor tenga un build realmente posterior al bundle cargado en memoria.
+3. **Disponibilidad Global en Toda la App (`App.tsx`)**:
+   - Se importó y montó `<UpdatePromptModal />` en la raíz de `App.tsx` (dentro de `ParqueaderoProvider`), permitiendo que el sondeo reactivo (cada 8s y al reenfocar la ventana) funcione de forma omnipresente en cualquier módulo del sistema.
+
+#### 📦 Componentes Modificados
+- `vite.config.ts` — `versionTrackerPlugin()`, `define: { __APP_BUILD_TIME__ }`, Workbox `NetworkOnly` para `/version.json`
+- `src/vite-env.d.ts` — Declaración global de `__APP_BUILD_TIME__`
+- `src/shared/ui/UpdatePromptModal.tsx` — Doble motor reactivo, persistencia de URL activa y purgado de caché
+- `src/App.tsx` — Montaje global de `UpdatePromptModal`
+- `public/version.json` y `dist/version.json` — Generados automáticamente con el build
+
+#### ✅ Verificación y Compilación
+- `npm run build` → **0 Errores** (Precache: 31 entries generadas limpiamente).
+
+
 ### [2026-08-28 12:18:00] - [FIX] [PWA] - Corrección Integral de Íconos PWA para Android (Chrome WebAPK) e iOS (Safari)
 
 #### 💬 Prompt Original del Usuario
