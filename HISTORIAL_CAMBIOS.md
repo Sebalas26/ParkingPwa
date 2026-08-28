@@ -7,15 +7,15 @@
 
 ## 📋 Registro Cronológico de Cambios
 
-### [2026-08-28 08:52:00] - [FEAT] [SECURITY] - Permiso de Edición del Rol Administrador Exclusivo para SuperAdmin
+### [2026-08-28 09:00:00] - [FEAT] [SECURITY] [UI] - Habilitación de Acciones y Configuración del Rol Administrador para SuperAdmin
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
-  > *"Cuando estoy en el usuario con rol superadministrador, no me permite modificar los permisos del administrador, me lo puedes ajustar para que lo permita , adicional que si ingresa el usuario con el rol administrador, ahi si no permita"*
+  > *"Sigo viendo que desde el usuario con rol superadministrador no me permite ver las acciones del rol administrador"*
 - **🤖 Resumen Técnico para la IA**:
-  1. Se modificó [`RolesTab.tsx`](file:///c:/Users/sebastianredondo/Documents/pwa/ParkingPwa/src/features/settings/ui/RolesTab.tsx) para condicionar las restricciones del rol `Administrador`.
-  2. En `handleOpenPermissionsModal` y `handleSavePermissions`, ahora se valida si el usuario autenticado (`authService.getCurrentUser()`) tiene `isSuperAdmin === true`.
-  3. Si es SuperAdmin, se le permite abrir y guardar los permisos asignados al rol `Administrador` (permitiendo su personalización).
-  4. Si es un usuario administrador estándar (u otro rol diferente a SuperAdmin), se mantiene el bloqueo de seguridad impidiéndole alterar los privilegios del rol `Administrador`.
+  1. En [`RolesTab.tsx`](file:///c:/Users/sebastianredondo/Documents/pwa/ParkingPwa/src/features/settings/ui/RolesTab.tsx), la columna `ACCIONES` y la columna `PERMISOS ASIGNADOS` de la tabla renderizaban un candado fijo y badge de "100% Acceso Total" cuando `isAdminRole(r)` era verdadero, impidiendo que el SuperAdmin pudiera hacer clic en "Configurar Permisos" o "Editar".
+  2. Se introdujo `isLockedForCurrentUser = isSystemAdmin && !isSuperAdmin`. Si el usuario en sesión es `Super Administrador`, se habilitan completamente los botones `Configurar Permisos` y `Editar` para el rol Administrador.
+  3. Para usuarios con rol Administrador estándar (u otros roles), el rol Administrador se mantiene bloqueado como protegido con el icono de candado.
+  4. Se actualizaron `handleOpenEditRole` y `handleSaveRole` para permitir que el SuperAdmin también edite el rol Administrador si lo requiere.
 - **📦 Componentes Modificados**:
   - `src/features/settings/ui/RolesTab.tsx`
   - `HISTORIAL_CAMBIOS.md`

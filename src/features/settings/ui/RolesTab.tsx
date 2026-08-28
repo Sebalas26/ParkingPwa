@@ -121,7 +121,10 @@ export const RolesTab: React.FC = () => {
   };
 
   const handleOpenEditRole = (role: RoleDto) => {
-    if (isAdminRole(role)) {
+    const currentUser = authService.getCurrentUser();
+    const isSuperAdmin = currentUser?.isSuperAdmin === true;
+
+    if (isAdminRole(role) && !isSuperAdmin) {
       showToast('El rol Administrador es un rol del sistema protegido y no se puede editar.', 'warning');
       return;
     }
@@ -137,7 +140,10 @@ export const RolesTab: React.FC = () => {
     e.preventDefault();
     if (!editingRole || !editingRole.roleName?.trim()) return;
 
-    if (editingRole.idUserRol === 1) {
+    const currentUser = authService.getCurrentUser();
+    const isSuperAdmin = currentUser?.isSuperAdmin === true;
+
+    if (editingRole.idUserRol === 1 && !isSuperAdmin) {
       showToast('No está permitido modificar el rol Administrador.', 'warning');
       return;
     }
@@ -325,6 +331,9 @@ export const RolesTab: React.FC = () => {
                 const assignedCount = rolePermissionsMap[roleId]?.length || 0;
                 const roleTitle = r.roleName || r.role || r.name || `Rol #${roleId}`;
                 const isSystemAdmin = isAdminRole(r);
+                const currentUser = authService.getCurrentUser();
+                const isSuperAdmin = currentUser?.isSuperAdmin === true;
+                const isLockedForCurrentUser = isSystemAdmin && !isSuperAdmin;
 
                 return (
                   <tr key={roleId}>
@@ -356,7 +365,7 @@ export const RolesTab: React.FC = () => {
                       </div>
                     </td>
                     <td style={{ whiteSpace: 'nowrap' }}>
-                      {isSystemAdmin ? (
+                      {isLockedForCurrentUser ? (
                         <span
                           className="badge"
                           style={{
@@ -389,9 +398,9 @@ export const RolesTab: React.FC = () => {
                       </span>
                     </td>
                     <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
-                      {isSystemAdmin ? (
+                      {isLockedForCurrentUser ? (
                         <span style={{ fontSize: '0.78rem', color: '#64748b', fontStyle: 'italic', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                          <Lock size={12} />
+                          <Lock size={12} /> Protegido
                         </span>
                       ) : (
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
