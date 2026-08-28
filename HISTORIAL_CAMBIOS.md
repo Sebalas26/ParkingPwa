@@ -7,6 +7,70 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-27 23:17:00] - [FEATURE] [API] [INTEGRATION] - Implementación de Salida de Vehículos (Check-Out) con Liquidación y Cobro
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"adicional quisiera que ese modulo tuviese la opcion para dar salida a los vehiculos que esten activos, conectate a la api que hay una que permite esa acccion"*
+- **🤖 Resumen Técnico para la IA**:
+  1. **Acción de Salida en Tabla de Vehículos Activos (`Vehicles.tsx`)**:
+     - Se incorporó la columna `ACCIONES` con el botón de acción rápida `[Dar Salida]` en cada fila de vehículo activo.
+  2. **Modal Interactivo de Liquidación y Salida**:
+     - Muestra la tarjeta del vehículo con placa destacada, número de tiquete, horas transcurridas y tarifa horaria.
+     - Calcula en tiempo real el total a pagar (`billableHours * hourlyRate`).
+     - Integra el selector de medios de pago activos vía `mediosPagoService.getPaymentMethods()`.
+     - Permite ingresar el monto recibido y calcula reactivamente el cambio / vueltas a entregar al cliente.
+  3. **Conexión al Endpoint de Salida (`vehicleService.checkOut`)**:
+     - Envía la solicitud `POST /Tickets/check-out` con `ticketId`, `paymentMethod`, `amountPaid` y `discountAmount: 0`.
+     - Presenta modal de confirmación con el resumen de la liquidación y actualiza reactivamente la tabla de activos (`loadActiveVehicles()`).
+  4. **Bump de Versión**:
+     - Actualizado `.env` a `0.0.29 Dev`.
+- **📦 Componentes Modificados**:
+  - `src/features/vehicles/ui/Vehicles.tsx`
+  - `.env`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript compilaron en 1.41s).
+
+### [2026-08-27 23:13:00] - [FEATURE] [API] [INTEGRATION] - Conexión Dinámica de Tipos de Vehículos a BD / API en Registro de Ingreso
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"en el dialog de registrar ingrso de vehiculo, me muestra los tipos de vehiculos, pero veo que esta quemados, ajustalos conectadolos a la api y bd que tengo para los tipos de vehiculos que tengo creados"*
+- **🤖 Resumen Técnico para la IA**:
+  1. **Integración con API de Tipos de Vehículos (`Vehicles.tsx`)**:
+     - Se integró `vehiculosConfigService.getConfigs(selectedParqueaderoId)` para consultar dinámicamente los tipos de vehículos activos en la BD (`/VehicleRates`), respetando la parametrización multi-sede y catálogo global.
+  2. **Selector Dinámico en Diálogo Modal de Ingreso**:
+     - Se reemplazó la lista estática en `<select>` por el renderizado reactivo de `vehicleTypesList`, mostrando los nombres personalizados configurados en BD (`vt.category`) y asignando su `vehicleType` numérico real.
+     - Se configuró la selección por defecto del primer tipo activo de la BD al abrir el diálogo.
+  3. **Píldoras de Filtro y Resolución de Nombres Dinámica**:
+     - `getVehicleTypeName(type)` y las píldoras de filtrado superior ahora se generan a partir de los tipos de vehículos reales de la BD, con iconos representativos adaptados.
+  4. **Bump de Versión**:
+     - Actualizado `.env` a `0.0.28 Dev`.
+- **📦 Componentes Modificados**:
+  - `src/features/vehicles/ui/Vehicles.tsx`
+  - `.env`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript compilaron en 1.99s).
+
+### [2026-08-27 23:06:00] - [UI/UX] - Eliminación de la Columna Acciones en Historial Consolidado de Cajas
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"en el modulo de cajas, elimina la columna acciones del historial , es donde te señale en rojo"* (Captura con el botón Cerrar Caja señalado en rojo dentro de la tabla Historial)
+- **🤖 Resumen Técnico para la IA**:
+  1. **Ajuste en la Tabla Historial (`Caja.tsx`)**:
+     - Se eliminó `<th className="text-right">ACCIONES</th>` del `<thead>` de la tabla de Historial Consolidado de Cajas.
+     - Se removió la celda `<td>` de acción en el mapeo de registros históricos.
+     - Se actualizó el `colSpan` a `6` para el mensaje de estado sin registros.
+     - La tabla de *Turno de Caja Activo* y el botón superior de cierre de turno conservan intacta la funcionalidad operativa de arqueo y cierre.
+  2. **Bump de Versión**:
+     - Actualizado `.env` a `0.0.27 Dev`.
+- **📦 Componentes Modificados**:
+  - `src/features/caja/ui/Caja.tsx`
+  - `.env`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript compilaron en 3.88s).
+
 ### [2026-08-27 22:58:00] - [UI/UX] - Centrado de Encabezado de Login y Eliminación de Píldora API Central Online
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:

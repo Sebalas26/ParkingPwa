@@ -338,7 +338,6 @@ export const Caja: React.FC = () => {
                 <th className="text-right">BASE INICIAL</th>
                 <th className="text-right">TOTAL RECAUDADO</th>
                 <th className="text-center">ESTADO</th>
-                <th className="text-right">ACCIONES</th>
               </tr>
             </thead>
             <tbody>
@@ -367,37 +366,12 @@ export const Caja: React.FC = () => {
                           {isClosed ? <XCircle size={12} /> : <CheckCircle size={12} />} {isClosed ? 'Cerrado' : 'Abierto'}
                         </span>
                       </td>
-                      <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
-                        {!isClosed && (authService.hasPermission('shift.close') || authService.hasPermission('shifts.close')) && (
-                          <button
-                            type="button"
-                            className="btn-action"
-                            style={{
-                              background: '#ef4444',
-                              color: '#ffffff',
-                              border: 'none',
-                              padding: '5px 10px',
-                              borderRadius: '6px',
-                              fontSize: '0.78rem',
-                              fontWeight: 600,
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                            }}
-                            onClick={() => handleOpenCloseShift(h)}
-                            title="Cerrar esta caja"
-                          >
-                            <LogOut size={13} /> Cerrar Caja
-                          </button>
-                        )}
-                      </td>
                     </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
                     {isLoading ? 'Cargando historial...' : 'No hay registros históricos para los filtros seleccionados.'}
                   </td>
                 </tr>

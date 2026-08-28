@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Car, Bike, Truck, Plus, CheckCircle, Search, X, Building } from 'lucide-react';
+import { Car, Bike, Truck, Plus, CheckCircle, Search, X, Building, LogOut, Receipt } from 'lucide-react';
 import { vehicleService } from '../data/vehicleService';
+import { vehiculosConfigService } from '../../settings/data/vehiculosConfigService';
+import { mediosPagoService } from '../../settings/data/mediosPagoService';
+import type { VehiculoConfigDto } from '../../settings/model/VehiculosConfigContracts';
+import type { PaymentMethodDto } from '../../settings/model/MediosPagoContracts';
 import type { TicketDto } from '../model/VehicleContracts';
 import { formatTime, calculateDuration } from '../../../shared/utils/dateUtils';
 import { useParqueaderoContext } from '../../../shared/context/ParqueaderoContext';
@@ -11,6 +15,8 @@ import './Vehicles.css';
 export const Vehicles: React.FC = () => {
   const { selectedParqueadero, selectedParqueaderoId } = useParqueaderoContext();
   const [vehicles, setVehicles] = useState<TicketDto[]>([]);
+  const [vehicleTypesList, setVehicleTypesList] = useState<VehiculoConfigDto[]>([]);
+  const [mediosPagoList, setMediosPagoList] = useState<PaymentMethodDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filterType, setFilterType] = useState('Todos');
   const [searchTerm, setSearchTerm] = useState('');
@@ -18,13 +24,49 @@ export const Vehicles: React.FC = () => {
   // Modal Ingreso Rápido
   const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
   const [plateNumber, setPlateNumber] = useState('');
-  const [vehicleType, setVehicleType] = useState(0); // 0: Car, 1: Motorcycle, 2: Truck, 3: Van
+  const [vehicleType, setVehicleType] = useState<number>(0);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [notes, setNotes] = useState('');
 
+  // Modal Salida / Check-Out
+  const [isCheckOutModalOpen, setIsCheckOutModalOpen] = useState(false);
+  const [selectedVehicleForCheckOut, setSelectedVehicleForCheckOut] = useState<TicketDto | null>(null);
+  const [paymentMethodId, setPaymentMethodId] = useState<number>(0);
+  const [amountPaidInput, setAmountPaidInput] = useState<string>('');
+  const [isSubmittingCheckOut, setIsSubmittingCheckOut] = useState(false);
+  const [checkOutSuccessInfo, setCheckOutSuccessInfo] = useState<{ plate: string; total: number; change: number; ticketNumber: string } | null>(null);
+
   useEffect(() => {
     loadActiveVehicles();
+    loadVehicleTypes();
+    loadMediosPago();
   }, [selectedParqueaderoId]);
+
+  const loadVehicleTypes = async () => {
+    try {
+      const data = await vehiculosConfigService.getConfigs(selectedParqueaderoId);
+      const active = (data || []).filter((t) => t.isActive ?? true);
+      setVehicleTypesList(active);
+      if (active.length > 0) {
+        setVehicleType(Number(active[0].vehicleType) || 0);
+      }
+    } catch (err) {
+      console.error('Error al cargar tipos de vehículos configurados:', err);
+    }
+  };
+
+  const loadMediosPago = async () => {
+    try {
+      const data = await mediosPagoService.getPaymentMethods();
+      const active = (data || []).filter((m) => m.isActive ?? true);
+      setMediosPagoList(active);
+      if (active.length > 0) {
+        setPaymentMethodId(active[0].id);
+      }
+    } catch (err) {
+      console.error('Error al cargar medios de pago:', err);
+    }
+  };
 
   const loadActiveVehicles = async () => {
     setIsLoading(true);
@@ -59,7 +101,70 @@ export const Vehicles: React.FC = () => {
     }
   };
 
+  const calculateCheckOutDetails = (ticket: TicketDto) => {
+    const entry = new Date(ticket.entryTimeUtc || (ticket as any).entryTime || (ticket as any).createdAtUtc || new Date());
+    const now = new Date();
+    const totalMinutes = Math.max(0, Math.floor((now.getTime() - entry.getTime()) / 60000));
+    const billableHours = Math.max(1, Math.ceil(totalMinutes / 60));
+    const rate = ticket.hourlyRate || 3000;
+    const totalAmount = billableHours * rate;
+    return { entry, now, totalMinutes, billableHours, rate, totalAmount };
+  };
+
+  const handleOpenCheckOut = (ticket: TicketDto) => {
+    setSelectedVehicleForCheckOut(ticket);
+    const details = calculateCheckOutDetails(ticket);
+    setAmountPaidInput(String(details.totalAmount));
+    if (mediosPagoList.length > 0) {
+      setPaymentMethodId(mediosPagoList[0].id);
+    } else {
+      setPaymentMethodId(0);
+    }
+    setIsCheckOutModalOpen(true);
+  };
+
+  const handleConfirmCheckOut = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedVehicleForCheckOut) return;
+
+    const details = calculateCheckOutDetails(selectedVehicleForCheckOut);
+    const amountPaid = parseFloat(amountPaidInput) || details.totalAmount;
+
+    if (amountPaid < details.totalAmount) {
+      alert(`El monto recibido ($${amountPaid.toLocaleString()}) no puede ser menor al total a cobrar ($${details.totalAmount.toLocaleString()}).`);
+      return;
+    }
+
+    setIsSubmittingCheckOut(true);
+    try {
+      await vehicleService.checkOut({
+        ticketId: selectedVehicleForCheckOut.ticketId,
+        paymentMethod: Number(paymentMethodId),
+        amountPaid: amountPaid,
+        discountAmount: 0,
+      });
+
+      const changeGiven = Math.max(0, amountPaid - details.totalAmount);
+      setCheckOutSuccessInfo({
+        plate: selectedVehicleForCheckOut.plateNumber,
+        ticketNumber: selectedVehicleForCheckOut.ticketNumber,
+        total: details.totalAmount,
+        change: changeGiven,
+      });
+
+      setIsCheckOutModalOpen(false);
+      setSelectedVehicleForCheckOut(null);
+      await loadActiveVehicles();
+    } catch (err: any) {
+      alert(err?.message || 'Error al procesar la salida del vehículo.');
+    } finally {
+      setIsSubmittingCheckOut(false);
+    }
+  };
+
   const getVehicleTypeName = (type: number | string) => {
+    const found = vehicleTypesList.find((v) => String(v.vehicleType) === String(type));
+    if (found && found.category) return found.category;
     switch (String(type)) {
       case '1':
       case 'Motorcycle':
@@ -70,10 +175,24 @@ export const Vehicles: React.FC = () => {
       case '3':
       case 'Van':
         return 'Camioneta';
+      case '4':
+      case 'Bicycle':
+        return 'Bicicleta';
+      case '5':
+      case 'Suv':
+        return 'SUV';
       default:
         return 'Auto';
     }
   };
+
+  const dynamicFilterCategories = [
+    'Todos',
+    ...Array.from(new Set(vehicleTypesList.map((v) => v.category).filter(Boolean))),
+  ];
+  const filterOptions = dynamicFilterCategories.length > 1
+    ? dynamicFilterCategories
+    : ['Todos', 'Auto', 'Camioneta', 'Motocicleta', 'Camión'];
 
   const displayedVehicles = vehicles.filter((v) => {
     const typeName = getVehicleTypeName(v.vehicleType);
@@ -83,6 +202,10 @@ export const Vehicles: React.FC = () => {
       v.ticketNumber.toLowerCase().includes(searchTerm.toLowerCase());
     return matchType && matchSearch;
   });
+
+  const checkOutDetails = selectedVehicleForCheckOut ? calculateCheckOutDetails(selectedVehicleForCheckOut) : null;
+  const currentAmountPaid = parseFloat(amountPaidInput) || 0;
+  const currentChange = checkOutDetails ? Math.max(0, currentAmountPaid - checkOutDetails.totalAmount) : 0;
 
   return (
     <div className="vehicles-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', height: '100%', overflowY: 'auto', paddingBottom: '2rem' }}>
@@ -95,7 +218,7 @@ export const Vehicles: React.FC = () => {
               {selectedParqueadero ? selectedParqueadero.name : '🌐 Todos los Parqueaderos'}
             </span>
           </div>
-          <p className="text-muted" style={{ margin: 0, fontSize: '0.9rem' }}>Consulta y gestión de vehículos que se encuentran actualmente dentro de las instalaciones.</p>
+          <p className="text-muted" style={{ margin: 0, fontSize: '0.9rem' }}>Consulta, control de estancia y liquidación de salida para los vehículos en el parqueadero.</p>
         </div>
 
         {authService.hasPermission('checkin.create') && (
@@ -108,7 +231,7 @@ export const Vehicles: React.FC = () => {
       <div className="vehicles-toolbar">
         <div className="filters-group">
           <span className="filter-label">Tipo de Vehículo:</span>
-          {['Todos', 'Auto', 'Camioneta', 'Motocicleta', 'Camión'].map((type) => (
+          {filterOptions.map((type) => (
             <button
               key={type}
               className={`filter-pill ${filterType === type ? 'active' : ''}`}
@@ -142,6 +265,7 @@ export const Vehicles: React.FC = () => {
               <th>TIEMPO EN SITIO</th>
               <th>TARIFA BASE</th>
               <th>ESTADO</th>
+              <th className="text-right">ACCIONES</th>
             </tr>
           </thead>
           <tbody>
@@ -154,7 +278,13 @@ export const Vehicles: React.FC = () => {
                     <td className="font-bold text-primary" style={{ fontSize: '1rem' }}>{v.plateNumber}</td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {typeName === 'Motocicleta' ? <Bike size={16} /> : typeName === 'Camioneta' || typeName === 'Camión' ? <Truck size={16} /> : <Car size={16} />}
+                        {typeName.toLowerCase().includes('moto') ? (
+                          <Bike size={16} />
+                        ) : typeName.toLowerCase().includes('camion') || typeName.toLowerCase().includes('camión') || typeName.toLowerCase().includes('truck') ? (
+                          <Truck size={16} />
+                        ) : (
+                          <Car size={16} />
+                        )}
                         <span>{typeName}</span>
                       </div>
                     </td>
@@ -170,12 +300,35 @@ export const Vehicles: React.FC = () => {
                         <CheckCircle size={12} /> Activo
                       </span>
                     </td>
+                    <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
+                      <button
+                        type="button"
+                        className="btn-action primary"
+                        style={{
+                          background: '#10b981',
+                          color: '#ffffff',
+                          border: 'none',
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                        }}
+                        onClick={() => handleOpenCheckOut(v)}
+                        title="Registrar salida y cobro del vehículo"
+                      >
+                        <LogOut size={14} /> Dar Salida
+                      </button>
+                    </td>
                   </tr>
                 );
               })
             ) : (
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
+                <td colSpan={8} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
                   {isLoading ? 'Cargando vehículos activos...' : 'No hay vehículos activos que coincidan con la búsqueda.'}
                 </td>
               </tr>
@@ -216,12 +369,24 @@ export const Vehicles: React.FC = () => {
                       className="input-field"
                       value={vehicleType}
                       onChange={(e) => setVehicleType(Number(e.target.value))}
+                      required
                     >
-                      <option value={0}>Auto / Sedán</option>
-                      <option value={5}>SUV</option>
-                      <option value={1}>Motocicleta</option>
-                      <option value={3}>Camioneta / Van</option>
-                      <option value={2}>Camión / Bus</option>
+                      {vehicleTypesList.length > 0 ? (
+                        vehicleTypesList.map((vt) => (
+                          <option key={vt.rateId || `${vt.vehicleType}-${vt.category}`} value={vt.vehicleType}>
+                            {vt.category}
+                          </option>
+                        ))
+                      ) : (
+                        <>
+                          <option value={0}>Auto / Sedán</option>
+                          <option value={5}>SUV / Camioneta</option>
+                          <option value={1}>Motocicleta</option>
+                          <option value={3}>Camioneta / Van</option>
+                          <option value={2}>Camión / Bus</option>
+                          <option value={4}>Bicicleta</option>
+                        </>
+                      )}
                     </select>
                   </div>
 
@@ -256,6 +421,232 @@ export const Vehicles: React.FC = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+
+      {/* Modal Registrar Salida / Check-Out */}
+      {isCheckOutModalOpen && selectedVehicleForCheckOut && checkOutDetails && (
+        <ModalPortal>
+          <div className="modal-overlay">
+            <div className="modal-card" style={{ maxWidth: '480px' }}>
+              <div className="modal-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <LogOut size={20} color="#10b981" />
+                  <h3 style={{ margin: 0 }}>Registrar Salida de Vehículo</h3>
+                </div>
+                <button className="btn-close-modal" onClick={() => setIsCheckOutModalOpen(false)}>
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form onSubmit={handleConfirmCheckOut}>
+                <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {/* Tarjeta de identificación del vehículo */}
+                  <div style={{
+                    background: 'var(--bg-card, #ffffff)',
+                    border: '1px solid var(--border-color, #e2e8f0)',
+                    borderRadius: '10px',
+                    padding: '14px 16px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                    <div>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 700 }}>PLACA VEHÍCULO</span>
+                      <div style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--primary-color)', letterSpacing: '1px' }}>
+                        {selectedVehicleForCheckOut.plateNumber}
+                      </div>
+                      <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                        {getVehicleTypeName(selectedVehicleForCheckOut.vehicleType)}
+                      </span>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 700 }}>TIQUETE</span>
+                      <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                        {selectedVehicleForCheckOut.ticketNumber}
+                      </div>
+                      <span className="badge badge-success" style={{ fontSize: '0.75rem', padding: '2px 6px', marginTop: '4px', display: 'inline-block' }}>
+                        En Sitio
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Resumen de tiempos y tarifas */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gap: '10px',
+                    background: 'rgba(0, 0, 0, 0.02)',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color, #e2e8f0)',
+                  }}>
+                    <div>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Hora Entrada</span>
+                      <p style={{ margin: '2px 0 0 0', fontWeight: 700, fontSize: '0.85rem' }}>
+                        {formatTime(checkOutDetails.entry)}
+                      </p>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Hora Salida (Actual)</span>
+                      <p style={{ margin: '2px 0 0 0', fontWeight: 700, fontSize: '0.85rem' }}>
+                        {formatTime(checkOutDetails.now)}
+                      </p>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Tiempo Transcurrido</span>
+                      <p style={{ margin: '2px 0 0 0', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                        {calculateDuration(checkOutDetails.entry)} ({checkOutDetails.billableHours} hr{checkOutDetails.billableHours > 1 ? 's' : ''})
+                      </p>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Tarifa por Hora</span>
+                      <p style={{ margin: '2px 0 0 0', fontWeight: 700, fontSize: '0.85rem' }}>
+                        ${checkOutDetails.rate.toLocaleString()} /hr
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Cuadro Destacado de Total a Cobrar */}
+                  <div style={{
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    borderRadius: '10px',
+                    padding: '16px',
+                    color: '#ffffff',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                    <div>
+                      <span style={{ fontSize: '0.8rem', opacity: 0.9, fontWeight: 600 }}>TOTAL A LIQUIDAR</span>
+                      <div style={{ fontSize: '1.8rem', fontWeight: 900, lineHeight: 1.1 }}>
+                        $ {checkOutDetails.totalAmount.toLocaleString()}
+                      </div>
+                    </div>
+                    <Receipt size={32} style={{ opacity: 0.7 }} />
+                  </div>
+
+                  {/* Formulario de Pago */}
+                  <div className="form-group">
+                    <label>Medio de Pago *</label>
+                    <select
+                      className="input-field"
+                      value={paymentMethodId}
+                      onChange={(e) => setPaymentMethodId(Number(e.target.value))}
+                      required
+                    >
+                      {mediosPagoList.length > 0 ? (
+                        mediosPagoList.map((m) => (
+                          <option key={m.id} value={m.id}>
+                            {m.name}
+                          </option>
+                        ))
+                      ) : (
+                        <>
+                          <option value={0}>Efectivo</option>
+                          <option value={1}>Tarjeta Débito / Crédito</option>
+                          <option value={2}>Transferencia / QR</option>
+                          <option value={3}>Nequi / Daviplata</option>
+                        </>
+                      )}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Monto Recibido ($)</label>
+                    <input
+                      type="number"
+                      className="input-field"
+                      value={amountPaidInput}
+                      onChange={(e) => setAmountPaidInput(e.target.value)}
+                      min={checkOutDetails.totalAmount}
+                      step="100"
+                      required
+                      placeholder="Ingrese valor recibido"
+                    />
+                  </div>
+
+                  {/* Cálculo de Cambio / Vueltas */}
+                  {currentChange > 0 && (
+                    <div style={{
+                      background: 'rgba(16, 185, 129, 0.1)',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      borderRadius: '8px',
+                      padding: '10px 14px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#059669' }}>
+                        Cambio / Vueltas a Entregar:
+                      </span>
+                      <span style={{ fontSize: '1.1rem', fontWeight: 900, color: '#059669' }}>
+                        $ {currentChange.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="modal-footer">
+                  <button type="button" className="btn-cancel" onClick={() => setIsCheckOutModalOpen(false)}>
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    disabled={isSubmittingCheckOut}
+                    style={{ width: 'auto', background: '#10b981', borderColor: '#10b981', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <CheckCircle size={16} />
+                    {isSubmittingCheckOut ? 'Procesando Salida...' : 'Cobrar y Registrar Salida'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+
+      {/* Diálogo de Confirmación Exitosa de Salida */}
+      {checkOutSuccessInfo && (
+        <ModalPortal>
+          <div className="modal-overlay">
+            <div className="modal-card" style={{ maxWidth: '420px', textAlign: 'center', padding: '24px' }}>
+              <div style={{ width: '56px', height: '56px', background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}>
+                <CheckCircle size={32} />
+              </div>
+              <h3 style={{ margin: '0 0 8px 0', fontSize: '1.3rem' }}>¡Salida Registrada con Éxito!</h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0 0 16px 0' }}>
+                El vehículo con placa <strong style={{ color: 'var(--primary-color)' }}>{checkOutSuccessInfo.plate}</strong> ha completado su estancia y salida.
+              </p>
+
+              <div style={{ background: 'var(--table-header-bg, #f8fafc)', borderRadius: '8px', padding: '12px 16px', marginBottom: '20px', textAlign: 'left', border: '1px solid var(--border-color)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.85rem' }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>Tiquete:</span>
+                  <span style={{ fontWeight: 700 }}>{checkOutSuccessInfo.ticketNumber}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.85rem' }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>Total Cobrado:</span>
+                  <span style={{ fontWeight: 800, color: 'var(--primary-color)' }}>$ {checkOutSuccessInfo.total.toLocaleString()}</span>
+                </div>
+                {checkOutSuccessInfo.change > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Cambio Entregado:</span>
+                    <span style={{ fontWeight: 800, color: '#10b981' }}>$ {checkOutSuccessInfo.change.toLocaleString()}</span>
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => setCheckOutSuccessInfo(null)}
+                style={{ width: '100%' }}
+              >
+                Aceptar y Continuar
+              </button>
             </div>
           </div>
         </ModalPortal>
