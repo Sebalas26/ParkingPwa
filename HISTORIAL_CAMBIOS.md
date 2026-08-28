@@ -7,6 +7,43 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-28 16:38:00] - [FEAT] [UI/UX] [MOBILE] - Implementación de Tarjetas Expandibles Interactivas (Accordion Cards) en Vistas Móviles
+
+#### 💬 Prompt Original del Usuario
+> "Ayudame con algunos ajustes visuales, exitste en mi pwa muchas card en lista que se ven como la imagen que te anexe, sin embargo quisiera que tuviesen un mejor diseño, me gustaria como el de la segunda iamgen que te pase"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Arquitectura Responsiva Dual (`desktop-table-view` + `mobile-card-list`)**:
+   - Se diseñó un patrón híbrido en [`Settings.css`](file:///c:/Users/sebastianredondo/Documents/pwa/ParkingPwa/src/features/settings/ui/Settings.css): en pantallas de escritorio (`> 768px`) se preservan las tablas de datos amplias y estructuradas (`.desktop-table-view`), mientras que en smartphones y pantallas móviles (`<= 768px`) se ocultan las tablas y se despliegan automáticamente listas de **Tarjetas Expandibles Interactivas (Accordion Cards)** (`.mobile-card-list`).
+2. **Diseño Visual de las Tarjetas Expandibles**:
+   - **Avatar Dinámico**: Iniciales con paletas de colores armónicas (o ícono temático: escudo, etiqueta, tarjeta, vehículo) e indicador de estado de conexión/actividad (punto verde/rojo).
+   - **Jerarquía Tipográfica**: Título en negrita de alta legibilidad, subtítulo con identificador/documento/rol y botón chevron animado con rotación fluida de 180°.
+   - **Panel de Detalles Desplegable (`.card-details-panel`)**: Fondo suave con bordes redondeados (`#f8fafc`), cuadrícula de pares clave-valor estructurada y badges oficiales.
+   - **Barra de Acciones Ergonómica**: Botones de acción táctiles tipo píldora (`[Editar]`, `[Permisos]`, `[Eliminar]`, `[Inactivar]`).
+3. **Módulos Adaptados**:
+   - `UsuariosTab.tsx` — Gestión de usuarios con iniciales y detalles de rol/documento/sedes.
+   - `RolesTab.tsx` — Roles y matriz con avatar de escudo y conteo de permisos asignados.
+   - `ConveniosTab.tsx` — Convenios comerciales con logo/avatar y detalles de descuento y horas máximas.
+   - `MediosPagoTab.tsx` — Medios de pago con emoji/ícono representativo y estado en cajas.
+   - `ResolucionesTab.tsx` — Resoluciones de facturación DIAN con prefijo y vigencia.
+   - `VehiculosConfigTab.tsx` — Catálogo general de vehículos con íconos por clasificación.
+4. **Bump de Versión**:
+   - Actualizado `.env` a `0.0.46 Dev` para forzar invalidación de caché en el Service Worker.
+
+#### 📦 Componentes Modificados
+- `src/features/settings/ui/Settings.css` — Clases CSS del sistema de tarjetas expandibles y media queries
+- `src/features/settings/ui/UsuariosTab.tsx` — Vista dual de usuarios
+- `src/features/settings/ui/RolesTab.tsx` — Vista dual de roles
+- `src/features/settings/ui/ConveniosTab.tsx` — Vista dual de convenios
+- `src/features/settings/ui/MediosPagoTab.tsx` — Vista dual de medios de pago
+- `src/features/settings/ui/ResolucionesTab.tsx` — Vista dual de resoluciones
+- `src/features/settings/ui/VehiculosConfigTab.tsx` — Vista dual de tipos de vehículos
+- `.env` — Versión `0.0.46 Dev`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` → **0 Errores** (Precache: 31 entries generadas limpiamente).
+
 ### [2026-08-28 15:32:00] - [FIX] [AUTH] - Corrección de Error 401 en Login (Diferenciación de Credenciales Inválidas vs Concurrencia)
 
 #### 💬 Prompt Original del Usuario

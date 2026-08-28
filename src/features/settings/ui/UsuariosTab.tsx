@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, X, Shield, Trash2, IdCard, Search, Loader2, AlertTriangle } from 'lucide-react';
+import { Plus, Edit2, X, Shield, Trash2, IdCard, Search, Loader2, AlertTriangle, ChevronDown } from 'lucide-react';
 import type { UserDto, SaveUserDto, GetIdentificationTypeDto, GetUserRoleDto } from '../model/UsuariosContracts';
 import type { BranchDto } from '../model/BranchesContracts';
 import { usuariosService } from '../data/usuariosService';
@@ -30,6 +30,27 @@ const getDocTypeLabel = (identification?: string, name?: string) => {
   }
 };
 
+const getAvatarStyle = (index: number) => {
+  const palettes = [
+    { bg: '#dcfce7', text: '#15803d' }, // Emerald / Green
+    { bg: '#dbeafe', text: '#1d4ed8' }, // Blue
+    { bg: '#f3e8ff', text: '#7e22ce' }, // Purple
+    { bg: '#ffedd5', text: '#c2410c' }, // Orange
+    { bg: '#ccfbf1', text: '#0f766e' }, // Teal
+    { bg: '#fef3c7', text: '#b45309' }, // Amber
+  ];
+  return palettes[index % palettes.length];
+};
+
+const getInitials = (name?: string, username?: string) => {
+  const target = (name || username || 'U').trim();
+  const parts = target.split(' ').filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+  return target.slice(0, 2).toUpperCase();
+};
+
 export const UsuariosTab: React.FC = () => {
   const [usuarios, setUsuarios] = useState<UserDto[]>([]);
   const [identTypes, setIdentTypes] = useState<GetIdentificationTypeDto[]>([]);
@@ -43,6 +64,7 @@ export const UsuariosTab: React.FC = () => {
   const [editingUsuario, setEditingUsuario] = useState<SaveUserDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingUser, setIsSavingUser] = useState(false);
+  const [expandedUserId, setExpandedUserId] = useState<number | null>(null);
 
   // Estado para el modal de confirmación de eliminación con loader
   const [userToDelete, setUserToDelete] = useState<UserDto | null>(null);
@@ -241,81 +263,184 @@ export const UsuariosTab: React.FC = () => {
         )}
       </div>
 
-      <div className="table-responsive" style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-        <table className="data-table" style={{ minWidth: '600px' }}>
-          <thead>
-            <tr>
-              <th>NOMBRE COMPLETO</th>
-              <th>DOCUMENTO</th>
-              <th>USUARIO / CORREO</th>
-              <th>ROL</th>
-              <th>ESTADO</th>
-              <th className="text-right">ACCIONES</th>
-            </tr>
-          </thead>
-          <tbody>
-            {displayUsers.length > 0 ? (
-              displayUsers.map((u) => {
-                const docTypeName = u.identificationTypeDto?.name || u.identificationTypeDto?.identification || 'CC';
-                const roleTitle = u.userRoleDto?.roleName || u.roleName || u.role || (u.userRoleId === 1 ? 'Administrador' : 'Operador');
-                const isActive = u.isActive ?? (u.status === true || u.status === 'Activo' || u.status === 'Active');
-
-                return (
-                  <tr key={u.id}>
-                    <td className="font-bold">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-                        <IdCard size={16} color="#07665e" />
-                        <span>{u.fullName || `${u.firstName || ''} ${u.firstSurname || ''}`.trim() || u.username}</span>
-                      </div>
-                    </td>
-                    <td style={{ whiteSpace: 'nowrap' }}>
-                      <span style={{ fontSize: '0.85rem', color: '#475569' }}>
-                        <strong>{docTypeName}:</strong> {u.identificationNumber || 'N/A'}
-                      </span>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', flexDirection: 'column', minWidth: '140px' }}>
-                        <span style={{ fontWeight: 600, color: '#1e293b' }}>@{u.username}</span>
-                        <span style={{ fontSize: '0.78rem', color: '#64748b' }}>{u.email}</span>
-                      </div>
-                    </td>
-                    <td style={{ whiteSpace: 'nowrap' }}>
-                      <span className={`badge ${u.userRoleId === 1 || roleTitle.toLowerCase().includes('admin') ? 'badge-primary' : 'badge-info'}`}>
-                        <Shield size={12} style={{ marginRight: '4px' }} />
-                        {roleTitle}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`badge ${isActive ? 'badge-success' : 'badge-danger'}`}>
-                        {isActive ? 'Activo' : 'Inactivo'}
-                      </span>
-                    </td>
-                    <td className="text-right">
-                      <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                        {authService.hasPermission('users.edit') && (
-                          <button className="btn-icon" onClick={() => handleOpenEdit(u)} title="Editar Usuario">
-                            <Edit2 size={16} />
-                          </button>
-                        )}
-                        {authService.hasPermission('users.edit') && (
-                          <button className="btn-icon danger" onClick={() => setUserToDelete(u)} title="Eliminar Usuario de la BD">
-                            <Trash2 size={16} />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
+      {/* 1. VISTA DESKTOP - TABLA CLÁSICA */}
+      <div className="desktop-table-view">
+        <div className="table-responsive" style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <table className="data-table" style={{ minWidth: '600px' }}>
+            <thead>
               <tr>
-                <td colSpan={6} className="text-center py-6 text-muted">
-                  {isLoading ? 'Cargando usuarios...' : 'No hay usuarios registrados.'}
-                </td>
+                <th>NOMBRE COMPLETO</th>
+                <th>DOCUMENTO</th>
+                <th>USUARIO / CORREO</th>
+                <th>ROL</th>
+                <th>ESTADO</th>
+                <th className="text-right">ACCIONES</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {displayUsers.length > 0 ? (
+                displayUsers.map((u) => {
+                  const docTypeName = u.identificationTypeDto?.name || u.identificationTypeDto?.identification || 'CC';
+                  const roleTitle = u.userRoleDto?.roleName || u.roleName || u.role || (u.userRoleId === 1 ? 'Administrador' : 'Operador');
+                  const isActive = u.isActive ?? (u.status === true || u.status === 'Activo' || u.status === 'Active');
+
+                  return (
+                    <tr key={u.id}>
+                      <td className="font-bold">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+                          <IdCard size={16} color="#07665e" />
+                          <span>{u.fullName || `${u.firstName || ''} ${u.firstSurname || ''}`.trim() || u.username}</span>
+                        </div>
+                      </td>
+                      <td style={{ whiteSpace: 'nowrap' }}>
+                        <span style={{ fontSize: '0.85rem', color: '#475569' }}>
+                          <strong>{docTypeName}:</strong> {u.identificationNumber || 'N/A'}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column', minWidth: '140px' }}>
+                          <span style={{ fontWeight: 600, color: '#1e293b' }}>@{u.username}</span>
+                          <span style={{ fontSize: '0.78rem', color: '#64748b' }}>{u.email}</span>
+                        </div>
+                      </td>
+                      <td style={{ whiteSpace: 'nowrap' }}>
+                        <span className={`badge ${u.userRoleId === 1 || roleTitle.toLowerCase().includes('admin') ? 'badge-primary' : 'badge-info'}`}>
+                          <Shield size={12} style={{ marginRight: '4px' }} />
+                          {roleTitle}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`badge ${isActive ? 'badge-success' : 'badge-danger'}`}>
+                          {isActive ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </td>
+                      <td className="text-right">
+                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                          {authService.hasPermission('users.edit') && (
+                            <button className="btn-icon" onClick={() => handleOpenEdit(u)} title="Editar Usuario">
+                              <Edit2 size={16} />
+                            </button>
+                          )}
+                          {authService.hasPermission('users.edit') && (
+                            <button className="btn-icon danger" onClick={() => setUserToDelete(u)} title="Eliminar Usuario de la BD">
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={6} className="text-center py-6 text-muted">
+                    {isLoading ? 'Cargando usuarios...' : 'No hay usuarios registrados.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 2. VISTA MOBILE - LISTA DE TARJETAS EXPANDIBLES (ACCORDION) */}
+      <div className="mobile-card-list">
+        {displayUsers.length > 0 ? (
+          displayUsers.map((u, idx) => {
+            const docTypeName = u.identificationTypeDto?.name || u.identificationTypeDto?.identification || 'CC';
+            const roleTitle = u.userRoleDto?.roleName || u.roleName || u.role || (u.userRoleId === 1 ? 'Administrador' : 'Operador');
+            const isActive = u.isActive ?? (u.status === true || u.status === 'Activo' || u.status === 'Active');
+            const isExpanded = expandedUserId === u.id;
+            const displayName = u.fullName || `${u.firstName || ''} ${u.firstSurname || ''}`.trim() || u.username;
+            const avatarColor = getAvatarStyle(idx);
+            const initials = getInitials(displayName, u.username);
+
+            return (
+              <div key={u.id} className={`expandable-card ${isExpanded ? 'expanded' : ''}`}>
+                <div
+                  className="expandable-card-header"
+                  onClick={() => setExpandedUserId(isExpanded ? null : u.id)}
+                >
+                  <div className="expandable-card-main">
+                    <div
+                      className="expandable-card-avatar"
+                      style={{ background: avatarColor.bg, color: avatarColor.text }}
+                    >
+                      {initials}
+                      <span className={`avatar-status-dot ${isActive ? 'active' : 'inactive'}`} />
+                    </div>
+                    <div className="expandable-card-info">
+                      <span className="expandable-card-title">{displayName}</span>
+                      <span className="expandable-card-subtitle">
+                        @{u.username} • {docTypeName}: {u.identificationNumber || 'N/A'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className={`expandable-card-chevron ${isExpanded ? 'expanded' : ''}`}>
+                    <ChevronDown size={18} />
+                  </div>
+                </div>
+
+                {isExpanded && (
+                  <div className="expandable-card-body">
+                    <div className="card-details-panel">
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Documento:</span>
+                        <span className="card-detail-value">{docTypeName}: {u.identificationNumber || 'N/A'}</span>
+                      </div>
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Usuario:</span>
+                        <span className="card-detail-value">@{u.username}</span>
+                      </div>
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Correo:</span>
+                        <span className="card-detail-value">{u.email || 'N/A'}</span>
+                      </div>
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Rol Asignado:</span>
+                        <span className={`badge ${u.userRoleId === 1 || roleTitle.toLowerCase().includes('admin') ? 'badge-primary' : 'badge-info'}`}>
+                          <Shield size={12} style={{ marginRight: '4px' }} />
+                          {roleTitle}
+                        </span>
+                      </div>
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Estado:</span>
+                        <span className={`badge ${isActive ? 'badge-success' : 'badge-danger'}`}>
+                          {isActive ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="expandable-card-actions">
+                      {authService.hasPermission('users.edit') && (
+                        <button
+                          type="button"
+                          className="card-action-btn card-action-btn-outline"
+                          onClick={() => handleOpenEdit(u)}
+                        >
+                          <Edit2 size={14} /> Editar
+                        </button>
+                      )}
+                      {authService.hasPermission('users.edit') && (
+                        <button
+                          type="button"
+                          className="card-action-btn card-action-btn-danger"
+                          onClick={() => setUserToDelete(u)}
+                        >
+                          <Trash2 size={14} /> Eliminar
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })
+        ) : (
+          <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b', background: '#f8fafc', borderRadius: '14px' }}>
+            {isLoading ? 'Cargando usuarios...' : 'No hay usuarios registrados.'}
+          </div>
+        )}
       </div>
 
       {/* Modal Crear/Editar Usuario */}

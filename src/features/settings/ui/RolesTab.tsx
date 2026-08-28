@@ -55,6 +55,7 @@ export const RolesTab: React.FC = () => {
   const [activePlatform, setActivePlatform] = useState<PlatformTab>('wpf');
   const [expandedModuleId, setExpandedModuleId] = useState<number | null>(null);
   const [isSavingPermissions, setIsSavingPermissions] = useState(false);
+  const [expandedRoleId, setExpandedRoleId] = useState<number | null>(null);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -359,143 +360,276 @@ export const RolesTab: React.FC = () => {
         )}
       </div>
 
-      <div className="table-responsive" style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-        <table className="data-table" style={{ minWidth: '580px' }}>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>NOMBRE DEL ROL</th>
-              <th>PERMISOS ASIGNADOS</th>
-              <th>ESTADO</th>
-              <th className="text-right">ACCIONES</th>
-            </tr>
-          </thead>
-          <tbody>
-            {displayRoles.length > 0 ? (
-              displayRoles.map((r) => {
-                const roleId = r.idUserRol ?? r.id ?? 1;
-                const assignedCount = rolePermissionsMap[roleId]?.length || 0;
-                const roleTitle = r.roleName || r.role || r.name || `Rol #${roleId}`;
-                
-                const isRoleSuperAdmin = isSuperAdminRole(r);
-                const isRoleAdmin = isAdminRole(r);
-                const isProtected = isProtectedSystemRole(r);
-                
-                const currentUser = authService.getCurrentUser();
-                const isUserSuperAdmin = currentUser?.isSuperAdmin === true;
-                
-                // El Super Administrador SIEMPRE está bloqueado para edición de permisos o configuración
-                // El Administrador está bloqueado a menos que el usuario logueado sea Super Administrador
-                const isLockedForCurrentUser = isRoleSuperAdmin || (isRoleAdmin && !isUserSuperAdmin);
+      {/* 1. VISTA DESKTOP - TABLA CLÁSICA */}
+      <div className="desktop-table-view">
+        <div className="table-responsive" style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <table className="data-table" style={{ minWidth: '580px' }}>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>NOMBRE DEL ROL</th>
+                <th>PERMISOS ASIGNADOS</th>
+                <th>ESTADO</th>
+                <th className="text-right">ACCIONES</th>
+              </tr>
+            </thead>
+            <tbody>
+              {displayRoles.length > 0 ? (
+                displayRoles.map((r) => {
+                  const roleId = r.idUserRol ?? r.id ?? 1;
+                  const assignedCount = rolePermissionsMap[roleId]?.length || 0;
+                  const roleTitle = r.roleName || r.role || r.name || `Rol #${roleId}`;
+                  
+                  const isRoleSuperAdmin = isSuperAdminRole(r);
+                  const isRoleAdmin = isAdminRole(r);
+                  const isProtected = isProtectedSystemRole(r);
+                  
+                  const currentUser = authService.getCurrentUser();
+                  const isUserSuperAdmin = currentUser?.isSuperAdmin === true;
+                  
+                  // El Super Administrador SIEMPRE está bloqueado para edición de permisos o configuración
+                  // El Administrador está bloqueado a menos que el usuario logueado sea Super Administrador
+                  const isLockedForCurrentUser = isRoleSuperAdmin || (isRoleAdmin && !isUserSuperAdmin);
 
-                return (
-                  <tr key={roleId}>
-                    <td className="font-bold text-muted">#{roleId}</td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-                        <div
-                          style={{
-                            width: '32px',
-                            height: '32px',
-                            borderRadius: '8px',
-                            background: isProtected ? 'rgba(217, 119, 6, 0.12)' : 'rgba(7, 102, 94, 0.08)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: isProtected ? '#d97706' : 'var(--primary-color, #07665e)',
-                          }}
-                        >
-                          {isProtected ? <ShieldCheck size={16} /> : <Shield size={16} />}
-                        </div>
-                        <div>
-                          <span className="font-bold">{roleTitle}</span>
-                          {isProtected && (
-                            <div style={{ fontSize: '0.72rem', color: '#d97706', fontWeight: 600 }}>
-                              Rol Principal del Sistema
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td style={{ whiteSpace: 'nowrap' }}>
-                      {isProtected ? (
-                        <span
-                          className="badge"
-                          style={{
-                            background: 'rgba(217, 119, 6, 0.12)',
-                            color: '#d97706',
-                            fontWeight: 700,
-                            border: '1px solid rgba(217, 119, 6, 0.3)',
-                          }}
-                        >
-                          <ShieldCheck size={12} style={{ marginRight: 4 }} />
-                          100% Acceso Total
-                        </span>
-                      ) : (
-                        <span
-                          className="badge"
-                          style={{
-                            background: assignedCount > 0 ? 'rgba(7, 102, 94, 0.1)' : 'rgba(100, 116, 139, 0.1)',
-                            color: assignedCount > 0 ? '#07665e' : '#64748b',
-                            fontWeight: 600,
-                          }}
-                        >
-                          <Key size={12} style={{ marginRight: 4 }} />
-                          {assignedCount} / {allActions.length} Permisos Asignados
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      <span className={`badge ${r.isActive ? 'badge-success' : 'badge-danger'}`}>
-                        {r.isActive ? 'Activo' : 'Inactivo'}
-                      </span>
-                    </td>
-                    <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
-                      {isLockedForCurrentUser ? (
-                        <span style={{ fontSize: '0.78rem', color: '#64748b', fontStyle: 'italic', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                          <Lock size={12} /> Protegido
-                        </span>
-                      ) : (
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                          <button
-                            className="btn-action primary"
+                  return (
+                    <tr key={roleId}>
+                      <td className="font-bold text-muted">#{roleId}</td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+                          <div
                             style={{
-                              background: 'var(--primary-color, #07665e)',
-                              color: '#ffffff',
-                              border: 'none',
-                              padding: '6px 12px',
-                              borderRadius: '6px',
-                              cursor: 'pointer',
-                              fontWeight: 600,
-                              fontSize: '0.8rem',
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '8px',
+                              background: isProtected ? 'rgba(217, 119, 6, 0.12)' : 'rgba(7, 102, 94, 0.08)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: isProtected ? '#d97706' : 'var(--primary-color, #07665e)',
                             }}
+                          >
+                            {isProtected ? <ShieldCheck size={16} /> : <Shield size={16} />}
+                          </div>
+                          <div>
+                            <span className="font-bold">{roleTitle}</span>
+                            {isProtected && (
+                              <div style={{ fontSize: '0.72rem', color: '#d97706', fontWeight: 600 }}>
+                                Rol Principal del Sistema
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td style={{ whiteSpace: 'nowrap' }}>
+                        {isProtected ? (
+                          <span
+                            className="badge"
+                            style={{
+                              background: 'rgba(217, 119, 6, 0.12)',
+                              color: '#d97706',
+                              fontWeight: 700,
+                              border: '1px solid rgba(217, 119, 6, 0.3)',
+                            }}
+                          >
+                            <ShieldCheck size={12} style={{ marginRight: 4 }} />
+                            100% Acceso Total
+                          </span>
+                        ) : (
+                          <span
+                            className="badge"
+                            style={{
+                              background: assignedCount > 0 ? 'rgba(7, 102, 94, 0.1)' : 'rgba(100, 116, 139, 0.1)',
+                              color: assignedCount > 0 ? '#07665e' : '#64748b',
+                              fontWeight: 600,
+                            }}
+                          >
+                            <Key size={12} style={{ marginRight: 4 }} />
+                            {assignedCount} / {allActions.length} Permisos Asignados
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        <span className={`badge ${r.isActive ? 'badge-success' : 'badge-danger'}`}>
+                          {r.isActive ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </td>
+                      <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
+                        {isLockedForCurrentUser ? (
+                          <span style={{ fontSize: '0.78rem', color: '#64748b', fontStyle: 'italic', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <Lock size={12} /> Protegido
+                          </span>
+                        ) : (
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                            <button
+                              className="btn-action primary"
+                              style={{
+                                background: 'var(--primary-color, #07665e)',
+                                color: '#ffffff',
+                                border: 'none',
+                                padding: '6px 12px',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                                fontSize: '0.8rem',
+                              }}
+                              onClick={() => handleOpenPermissionsModal(r)}
+                            >
+                              <Key size={13} style={{ marginRight: 4 }} /> Configurar Permisos
+                            </button>
+                            <button className="btn-action primary" onClick={() => handleOpenEditRole(r)}>
+                              <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
+                    {isLoading ? (
+                      <div className="loader-container">
+                        <div className="spinner"></div>
+                        <span>Cargando roles desde la API...</span>
+                      </div>
+                    ) : 'No se encontraron roles registrados en el sistema.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 2. VISTA MOBILE - LISTA DE TARJETAS EXPANDIBLES (ACCORDION) */}
+      <div className="mobile-card-list">
+        {displayRoles.length > 0 ? (
+          displayRoles.map((r) => {
+            const roleId = r.idUserRol ?? r.id ?? 1;
+            const assignedCount = rolePermissionsMap[roleId]?.length || 0;
+            const roleTitle = r.roleName || r.role || r.name || `Rol #${roleId}`;
+            const isRoleSuperAdmin = isSuperAdminRole(r);
+            const isRoleAdmin = isAdminRole(r);
+            const isProtected = isProtectedSystemRole(r);
+            const currentUser = authService.getCurrentUser();
+            const isUserSuperAdmin = currentUser?.isSuperAdmin === true;
+            const isLockedForCurrentUser = isRoleSuperAdmin || (isRoleAdmin && !isUserSuperAdmin);
+            const isExpanded = expandedRoleId === roleId;
+
+            return (
+              <div key={roleId} className={`expandable-card ${isExpanded ? 'expanded' : ''}`}>
+                <div
+                  className="expandable-card-header"
+                  onClick={() => setExpandedRoleId(isExpanded ? null : roleId)}
+                >
+                  <div className="expandable-card-main">
+                    <div
+                      className="expandable-card-avatar"
+                      style={{
+                        background: isProtected ? '#fef3c7' : '#ccfbf1',
+                        color: isProtected ? '#b45309' : '#0f766e',
+                      }}
+                    >
+                      {isProtected ? <ShieldCheck size={20} /> : <Shield size={20} />}
+                      <span className={`avatar-status-dot ${r.isActive ? 'active' : 'inactive'}`} />
+                    </div>
+                    <div className="expandable-card-info">
+                      <span className="expandable-card-title">{roleTitle}</span>
+                      <span className="expandable-card-subtitle">
+                        ID #{roleId} • {isProtected ? 'Rol del Sistema' : `${assignedCount} permisos`}
+                      </span>
+                    </div>
+                  </div>
+                  <div className={`expandable-card-chevron ${isExpanded ? 'expanded' : ''}`}>
+                    <ChevronDown size={18} />
+                  </div>
+                </div>
+
+                {isExpanded && (
+                  <div className="expandable-card-body">
+                    <div className="card-details-panel">
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Identificador:</span>
+                        <span className="card-detail-value">#{roleId}</span>
+                      </div>
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Tipo de Rol:</span>
+                        <span className="card-detail-value" style={{ color: isProtected ? '#d97706' : '#07665e' }}>
+                          {isProtected ? 'Rol Principal del Sistema' : 'Rol Personalizado'}
+                        </span>
+                      </div>
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Permisos Asignados:</span>
+                        {isProtected ? (
+                          <span
+                            className="badge"
+                            style={{
+                              background: 'rgba(217, 119, 6, 0.12)',
+                              color: '#d97706',
+                              fontWeight: 700,
+                              border: '1px solid rgba(217, 119, 6, 0.3)',
+                            }}
+                          >
+                            <ShieldCheck size={12} style={{ marginRight: 4 }} />
+                            100% Acceso Total
+                          </span>
+                        ) : (
+                          <span
+                            className="badge"
+                            style={{
+                              background: assignedCount > 0 ? 'rgba(7, 102, 94, 0.1)' : 'rgba(100, 116, 139, 0.1)',
+                              color: assignedCount > 0 ? '#07665e' : '#64748b',
+                              fontWeight: 600,
+                            }}
+                          >
+                            <Key size={12} style={{ marginRight: 4 }} />
+                            {assignedCount} / {allActions.length} Permisos
+                          </span>
+                        )}
+                      </div>
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Estado:</span>
+                        <span className={`badge ${r.isActive ? 'badge-success' : 'badge-danger'}`}>
+                          {r.isActive ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="expandable-card-actions">
+                      {isLockedForCurrentUser ? (
+                        <span style={{ fontSize: '0.8rem', color: '#64748b', fontStyle: 'italic', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <Lock size={13} /> Rol Protegido por el Sistema
+                        </span>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            className="card-action-btn card-action-btn-primary"
                             onClick={() => handleOpenPermissionsModal(r)}
                           >
-                            <Key size={13} style={{ marginRight: 4 }} /> Configurar Permisos
+                            <Key size={14} /> Permisos
                           </button>
-                          <button className="btn-action primary" onClick={() => handleOpenEditRole(r)}>
-                            <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
+                          <button
+                            type="button"
+                            className="card-action-btn card-action-btn-outline"
+                            onClick={() => handleOpenEditRole(r)}
+                          >
+                            <Edit2 size={14} /> Editar
                           </button>
-                        </div>
+                        </>
                       )}
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
-              <tr>
-                <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
-                  {isLoading ? (
-                    <div className="loader-container">
-                      <div className="spinner"></div>
-                      <span>Cargando roles desde la API...</span>
                     </div>
-                  ) : 'No se encontraron roles registrados en el sistema.'}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                  </div>
+                )}
+              </div>
+            );
+          })
+        ) : (
+          <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b', background: '#f8fafc', borderRadius: '14px' }}>
+            {isLoading ? 'Cargando roles...' : 'No se encontraron roles registrados.'}
+          </div>
+        )}
       </div>
 
       {/* Modal Crear / Editar Rol */}

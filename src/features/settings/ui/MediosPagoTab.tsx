@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, X, CreditCard } from 'lucide-react';
+import { Plus, Edit2, X, CreditCard, ChevronDown } from 'lucide-react';
 import type { PaymentMethodDto, SavePaymentMethodDto } from '../model/MediosPagoContracts';
 import { mediosPagoService } from '../data/mediosPagoService';
 import { authService } from '../../auth/data/authService';
@@ -29,6 +29,7 @@ export const MediosPagoTab: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMedio, setEditingMedio] = useState<SavePaymentMethodDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [expandedPaymentId, setExpandedPaymentId] = useState<number | null>(null);
 
   const loadMediosPago = async () => {
     setIsLoading(true);
@@ -139,70 +140,152 @@ export const MediosPagoTab: React.FC = () => {
         )}
       </div>
 
-      <div className="table-responsive" style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-        <table className="data-table" style={{ minWidth: '520px' }}>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>MEDIO DE PAGO</th>
-              <th>ÍCONO</th>
-              <th>ESTADO</th>
-              <th className="text-right">ACCIONES</th>
-            </tr>
-          </thead>
-          <tbody>
-            {mediosPago.length > 0 ? (
-              mediosPago.map((mp) => {
-                const isAct = mp.isActive ?? (mp.status === 'Activo' || mp.status === true || mp.status === 'Active');
-
-                return (
-                  <tr key={mp.id}>
-                    <td className="font-bold text-muted">#{mp.id}</td>
-                    <td className="font-bold">
-                      <span style={{ whiteSpace: 'nowrap' }}>{mp.name}</span>
-                    </td>
-                    <td>
-                      <div
-                        style={{
-                          width: '36px',
-                          height: '36px',
-                          borderRadius: '8px',
-                          background: 'rgba(7, 102, 94, 0.08)',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '1.25rem',
-                        }}
-                      >
-                        {getIconComponent(mp.icon || mp.name)}
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`badge ${isAct ? 'badge-success' : 'badge-danger'}`}>
-                        {isAct ? 'Activo' : 'Inactivo'}
-                      </span>
-                    </td>
-                    <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
-                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                        {authService.hasPermission('settings.medios_pago.manage') && (
-                          <button className="btn-action primary" onClick={() => handleOpenEdit(mp)}>
-                            <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
+      {/* 1. VISTA DESKTOP - TABLA CLÁSICA */}
+      <div className="desktop-table-view">
+        <div className="table-responsive" style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <table className="data-table" style={{ minWidth: '520px' }}>
+            <thead>
               <tr>
-                <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
-                  {isLoading ? 'Cargando medios de pago desde la API...' : 'No se encontraron medios de pago registrados en la base de datos.'}
-                </td>
+                <th>ID</th>
+                <th>MEDIO DE PAGO</th>
+                <th>ÍCONO</th>
+                <th>ESTADO</th>
+                <th className="text-right">ACCIONES</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {mediosPago.length > 0 ? (
+                mediosPago.map((mp) => {
+                  const isAct = mp.isActive ?? (mp.status === 'Activo' || mp.status === true || mp.status === 'Active');
+
+                  return (
+                    <tr key={mp.id}>
+                      <td className="font-bold text-muted">#{mp.id}</td>
+                      <td className="font-bold">
+                        <span style={{ whiteSpace: 'nowrap' }}>{mp.name}</span>
+                      </td>
+                      <td>
+                        <div
+                          style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '8px',
+                            background: 'rgba(7, 102, 94, 0.08)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1.25rem',
+                          }}
+                        >
+                          {getIconComponent(mp.icon || mp.name)}
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`badge ${isAct ? 'badge-success' : 'badge-danger'}`}>
+                          {isAct ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </td>
+                      <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                          {authService.hasPermission('settings.medios_pago.manage') && (
+                            <button className="btn-action primary" onClick={() => handleOpenEdit(mp)}>
+                              <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
+                    {isLoading ? 'Cargando medios de pago desde la API...' : 'No se encontraron medios de pago registrados en la base de datos.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 2. VISTA MOBILE - LISTA DE TARJETAS EXPANDIBLES (ACCORDION) */}
+      <div className="mobile-card-list">
+        {mediosPago.length > 0 ? (
+          mediosPago.map((mp) => {
+            const isAct = mp.isActive ?? (mp.status === 'Activo' || mp.status === true || mp.status === 'Active');
+            const isExpanded = expandedPaymentId === mp.id;
+
+            return (
+              <div key={mp.id} className={`expandable-card ${isExpanded ? 'expanded' : ''}`}>
+                <div
+                  className="expandable-card-header"
+                  onClick={() => setExpandedPaymentId(isExpanded ? null : mp.id)}
+                >
+                  <div className="expandable-card-main">
+                    <div
+                      className="expandable-card-avatar"
+                      style={{ background: '#f1f5f9', color: '#0f172a', fontSize: '1.35rem' }}
+                    >
+                      {getIconComponent(mp.icon || mp.name)}
+                      <span className={`avatar-status-dot ${isAct ? 'active' : 'inactive'}`} />
+                    </div>
+                    <div className="expandable-card-info">
+                      <span className="expandable-card-title">{mp.name}</span>
+                      <span className="expandable-card-subtitle">
+                        ID #{mp.id} • {isAct ? 'Disponible en caja' : 'Deshabilitado'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className={`expandable-card-chevron ${isExpanded ? 'expanded' : ''}`}>
+                    <ChevronDown size={18} />
+                  </div>
+                </div>
+
+                {isExpanded && (
+                  <div className="expandable-card-body">
+                    <div className="card-details-panel">
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Identificador:</span>
+                        <span className="card-detail-value">#{mp.id}</span>
+                      </div>
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Nombre Comercial:</span>
+                        <span className="card-detail-value">{mp.name}</span>
+                      </div>
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Ícono Representativo:</span>
+                        <span className="card-detail-value">{getIconComponent(mp.icon || mp.name)} ({mp.icon || 'Predeterminado'})</span>
+                      </div>
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Estado en Cajas:</span>
+                        <span className={`badge ${isAct ? 'badge-success' : 'badge-danger'}`}>
+                          {isAct ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="expandable-card-actions">
+                      {authService.hasPermission('settings.medios_pago.manage') && (
+                        <button
+                          type="button"
+                          className="card-action-btn card-action-btn-outline"
+                          onClick={() => handleOpenEdit(mp)}
+                        >
+                          <Edit2 size={14} /> Editar
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })
+        ) : (
+          <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b', background: '#f8fafc', borderRadius: '14px' }}>
+            {isLoading ? 'Cargando medios de pago...' : 'No hay medios de pago registrados.'}
+          </div>
+        )}
       </div>
 
       {/* Modal Crear / Editar Medio de Pago */}

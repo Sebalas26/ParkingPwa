@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Search, Edit2, Trash2, X, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, FileText, CheckCircle, AlertCircle, ChevronDown } from 'lucide-react';
 import { resolucionesService } from '../data/resolucionesService';
 import type { BillingResolutionDto, SaveBillingResolutionDto } from '../model/ResolucionesContracts';
 import { authService } from '../../../features/auth/data/authService';
@@ -23,6 +23,7 @@ export const ResolucionesTab: React.FC = () => {
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isCustomDocType, setIsCustomDocType] = useState(false);
+  const [expandedResId, setExpandedResId] = useState<string | null>(null);
 
   const loadResolutions = async () => {
     setIsLoading(true);
@@ -168,87 +169,184 @@ export const ResolucionesTab: React.FC = () => {
         />
       </div>
 
-      {/* Tabla de Resoluciones */}
-      <div className="table-responsive" style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-        <table className="data-table" style={{ minWidth: '720px' }}>
-          <thead>
-            <tr>
-              <th>NOMBRE RESOLUCIÓN</th>
-              <th>TIPO DE DOCUMENTO</th>
-              <th>PREFIJO</th>
-              <th>NÚMERO</th>
-              <th className="text-right">DESDE</th>
-              <th className="text-right">HASTA</th>
-              <th>FECHA DESDE</th>
-              <th>FECHA HASTA</th>
-              <th>ESTADO</th>
-              <th className="text-right">ACCIONES</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredResolutions.length > 0 ? (
-              filteredResolutions.map((res) => (
-                <tr key={res.resolutionId}>
-                  <td className="font-bold text-primary">{res.name}</td>
-                  <td style={{ maxWidth: '280px', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                    {res.documentType}
+      {/* 1. VISTA DESKTOP - TABLA CLÁSICA */}
+      <div className="desktop-table-view">
+        <div className="table-responsive" style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <table className="data-table" style={{ minWidth: '720px' }}>
+            <thead>
+              <tr>
+                <th>NOMBRE RESOLUCIÓN</th>
+                <th>TIPO DE DOCUMENTO</th>
+                <th>PREFIJO</th>
+                <th>NÚMERO</th>
+                <th className="text-right">DESDE</th>
+                <th className="text-right">HASTA</th>
+                <th>FECHA DESDE</th>
+                <th>FECHA HASTA</th>
+                <th>ESTADO</th>
+                <th className="text-right">ACCIONES</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredResolutions.length > 0 ? (
+                filteredResolutions.map((res) => (
+                  <tr key={res.resolutionId}>
+                    <td className="font-bold text-primary">{res.name}</td>
+                    <td style={{ maxWidth: '280px', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                      {res.documentType}
+                    </td>
+                    <td>
+                      <span
+                        style={{
+                          background: '#f1f5f9',
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          fontWeight: 700,
+                          fontSize: '0.82rem',
+                          color: '#0f172a',
+                          border: '1px solid #e2e8f0',
+                        }}
+                      >
+                        {res.prefix}
+                      </span>
+                    </td>
+                    <td className="font-bold">{res.resolutionNumber}</td>
+                    <td className="text-right font-bold text-muted">{res.fromNumber.toLocaleString()}</td>
+                    <td className="text-right font-bold text-muted">{res.toNumber.toLocaleString()}</td>
+                    <td style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                      {res.validFrom ? res.validFrom.split('T')[0] : '--'}
+                    </td>
+                    <td style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                      {res.validTo ? res.validTo.split('T')[0] : '--'}
+                    </td>
+                    <td>
+                      <span className={`badge ${res.isActive ? 'badge-success' : 'badge-danger'}`}>
+                        {res.isActive ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </td>
+                    <td className="text-right">
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                        <button className="btn-action primary" onClick={() => handleOpenEdit(res)} title="Editar Resolución">
+                          <Edit2 size={14} />
+                        </button>
+                        {res.isActive && (
+                          <button
+                            className="btn-action danger"
+                            onClick={() => handleDeactivate(res.resolutionId, res.name)}
+                            title="Desactivar Resolución"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={10} style={{ textAlign: 'center', padding: '36px', color: 'var(--text-secondary)' }}>
+                    {isLoading ? 'Cargando resoluciones...' : 'No se encontraron resoluciones de facturación registradas.'}
                   </td>
-                  <td>
-                    <span
-                      style={{
-                        background: '#f1f5f9',
-                        padding: '3px 8px',
-                        borderRadius: '6px',
-                        fontWeight: 700,
-                        fontSize: '0.82rem',
-                        color: '#0f172a',
-                        border: '1px solid #e2e8f0',
-                      }}
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 2. VISTA MOBILE - LISTA DE TARJETAS EXPANDIBLES (ACCORDION) */}
+      <div className="mobile-card-list">
+        {filteredResolutions.length > 0 ? (
+          filteredResolutions.map((res) => {
+            const isExpanded = expandedResId === res.resolutionId;
+
+            return (
+              <div key={res.resolutionId} className={`expandable-card ${isExpanded ? 'expanded' : ''}`}>
+                <div
+                  className="expandable-card-header"
+                  onClick={() => setExpandedResId(isExpanded ? null : res.resolutionId)}
+                >
+                  <div className="expandable-card-main">
+                    <div
+                      className="expandable-card-avatar"
+                      style={{ background: '#f3e8ff', color: '#7e22ce' }}
                     >
-                      {res.prefix}
-                    </span>
-                  </td>
-                  <td className="font-bold">{res.resolutionNumber}</td>
-                  <td className="text-right font-bold text-muted">{res.fromNumber.toLocaleString()}</td>
-                  <td className="text-right font-bold text-muted">{res.toNumber.toLocaleString()}</td>
-                  <td style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                    {res.validFrom ? res.validFrom.split('T')[0] : '--'}
-                  </td>
-                  <td style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                    {res.validTo ? res.validTo.split('T')[0] : '--'}
-                  </td>
-                  <td>
-                    <span className={`badge ${res.isActive ? 'badge-success' : 'badge-danger'}`}>
-                      {res.isActive ? 'Activo' : 'Inactivo'}
-                    </span>
-                  </td>
-                  <td className="text-right">
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                      <button className="btn-action primary" onClick={() => handleOpenEdit(res)} title="Editar Resolución">
-                        <Edit2 size={14} />
+                      <FileText size={20} />
+                      <span className={`avatar-status-dot ${res.isActive ? 'active' : 'inactive'}`} />
+                    </div>
+                    <div className="expandable-card-info">
+                      <span className="expandable-card-title">{res.name}</span>
+                      <span className="expandable-card-subtitle">
+                        Prefijo: {res.prefix} • Res. #{res.resolutionNumber}
+                      </span>
+                    </div>
+                  </div>
+                  <div className={`expandable-card-chevron ${isExpanded ? 'expanded' : ''}`}>
+                    <ChevronDown size={18} />
+                  </div>
+                </div>
+
+                {isExpanded && (
+                  <div className="expandable-card-body">
+                    <div className="card-details-panel">
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Prefijo Autorizado:</span>
+                        <span className="card-detail-value" style={{ fontWeight: 800 }}>{res.prefix}</span>
+                      </div>
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Número Resolución:</span>
+                        <span className="card-detail-value">{res.resolutionNumber}</span>
+                      </div>
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Rango Autorizado:</span>
+                        <span className="card-detail-value">{res.fromNumber.toLocaleString()} ➔ {res.toNumber.toLocaleString()}</span>
+                      </div>
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Tipo Documento:</span>
+                        <span className="card-detail-value" style={{ fontSize: '0.78rem' }}>{res.documentType}</span>
+                      </div>
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Vigencia:</span>
+                        <span className="card-detail-value">
+                          {res.validFrom ? res.validFrom.split('T')[0] : '--'} al {res.validTo ? res.validTo.split('T')[0] : '--'}
+                        </span>
+                      </div>
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Estado:</span>
+                        <span className={`badge ${res.isActive ? 'badge-success' : 'badge-danger'}`}>
+                          {res.isActive ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="expandable-card-actions">
+                      <button
+                        type="button"
+                        className="card-action-btn card-action-btn-outline"
+                        onClick={() => handleOpenEdit(res)}
+                      >
+                        <Edit2 size={14} /> Editar
                       </button>
                       {res.isActive && (
                         <button
-                          className="btn-action danger"
+                          type="button"
+                          className="card-action-btn card-action-btn-danger"
                           onClick={() => handleDeactivate(res.resolutionId, res.name)}
-                          title="Desactivar Resolución"
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={14} /> Desactivar
                         </button>
                       )}
                     </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={10} style={{ textAlign: 'center', padding: '36px', color: 'var(--text-secondary)' }}>
-                  {isLoading ? 'Cargando resoluciones de facturación...' : 'No se encontraron resoluciones registradas.'}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                  </div>
+                )}
+              </div>
+            );
+          })
+        ) : (
+          <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b', background: '#f8fafc', borderRadius: '14px' }}>
+            {isLoading ? 'Cargando resoluciones...' : 'No se encontraron resoluciones registradas.'}
+          </div>
+        )}
       </div>
 
       {/* Modal Crear / Editar Resolución */}

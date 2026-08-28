@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, AlertTriangle, Loader2, X, Car, Bike, Truck } from 'lucide-react';
+import { Plus, Edit2, Trash2, AlertTriangle, Loader2, X, Car, Bike, Truck, ChevronDown } from 'lucide-react';
 import type { VehiculoConfigDto, SaveVehiculoConfigDto } from '../model/VehiculosConfigContracts';
 import { vehiculosConfigService } from '../data/vehiculosConfigService';
 import { authService } from '../../auth/data/authService';
@@ -13,6 +13,7 @@ export const VehiculosConfigTab: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [deletingConfig, setDeletingConfig] = useState<VehiculoConfigDto | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [expandedConfigId, setExpandedConfigId] = useState<number | string | null>(null);
 
   useEffect(() => {
     loadConfigs();
@@ -126,53 +127,147 @@ export const VehiculosConfigTab: React.FC = () => {
         )}
       </div>
 
-      <div className="table-responsive" style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-        <table className="data-table" style={{ minWidth: '480px' }}>
-          <thead>
-            <tr>
-              <th>TIPO / CATEGORÍA DE VEHÍCULO</th>
-              <th>ESTADO EN CATÁLOGO</th>
-              <th className="text-right">ACCIONES</th>
-            </tr>
-          </thead>
-          <tbody>
-            {configs.length > 0 ? (
-              configs.map((c) => (
-                <tr key={c.rateId || c.category}>
-                  <td className="font-bold">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-                      {Number(c.vehicleType) === 1 ? <Bike size={18} color="#2563eb" /> : Number(c.vehicleType) === 2 ? <Truck size={18} color="#d97706" /> : <Car size={18} color="#07665e" />}
-                      <span>{c.category}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <span className={`badge ${c.isActive ? 'badge-success' : 'badge-danger'}`}>
-                      {c.isActive ? 'Activo' : 'Inactivo'}
-                    </span>
-                  </td>
-                  <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
-                    {(authService.hasPermission('settings.vehiculos.manage') || authService.hasPermission('rates.edit')) && (
-                      <button className="btn-icon" style={{ marginRight: '4px' }} onClick={() => handleOpenEdit(c)} title="Editar Tipo de Vehículo">
-                        <Edit2 size={16} />
-                      </button>
-                    )}
-                    {(authService.hasPermission('settings.vehiculos.manage') || authService.hasPermission('rates.delete')) && (
-                      <button className="btn-icon" style={{ color: '#ef4444' }} onClick={() => handleOpenDelete(c)} title="Eliminar Tipo de Vehículo">
-                        <Trash2 size={16} />
-                      </button>
-                    )}
+      {/* 1. VISTA DESKTOP - TABLA CLÁSICA */}
+      <div className="desktop-table-view">
+        <div className="table-responsive" style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <table className="data-table" style={{ minWidth: '480px' }}>
+            <thead>
+              <tr>
+                <th>TIPO / CATEGORÍA DE VEHÍCULO</th>
+                <th>ESTADO EN CATÁLOGO</th>
+                <th className="text-right">ACCIONES</th>
+              </tr>
+            </thead>
+            <tbody>
+              {configs.length > 0 ? (
+                configs.map((c) => (
+                  <tr key={c.rateId || c.category}>
+                    <td className="font-bold">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+                        {Number(c.vehicleType) === 1 ? <Bike size={18} color="#2563eb" /> : Number(c.vehicleType) === 2 ? <Truck size={18} color="#d97706" /> : <Car size={18} color="#07665e" />}
+                        <span>{c.category}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`badge ${c.isActive ? 'badge-success' : 'badge-danger'}`}>
+                        {c.isActive ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </td>
+                    <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
+                      {(authService.hasPermission('settings.vehiculos.manage') || authService.hasPermission('rates.edit')) && (
+                        <button className="btn-icon" style={{ marginRight: '4px' }} onClick={() => handleOpenEdit(c)} title="Editar Tipo de Vehículo">
+                          <Edit2 size={16} />
+                        </button>
+                      )}
+                      {(authService.hasPermission('settings.vehiculos.manage') || authService.hasPermission('rates.delete')) && (
+                        <button className="btn-icon" style={{ color: '#ef4444' }} onClick={() => handleOpenDelete(c)} title="Eliminar Tipo de Vehículo">
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={3} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
+                    {isLoading ? 'Cargando tipos de vehículos...' : 'No hay tipos de vehículos registrados en el catálogo general. Crea los tipos de vehículos que tu negocio recibe (ej: Automóvil, Motocicleta, Camión).'}
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={3} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
-                  {isLoading ? 'Cargando tipos de vehículos...' : 'No hay tipos de vehículos registrados en el catálogo general. Crea los tipos de vehículos que tu negocio recibe (ej: Automóvil, Motocicleta, Camión).'}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 2. VISTA MOBILE - LISTA DE TARJETAS EXPANDIBLES (ACCORDION) */}
+      <div className="mobile-card-list">
+        {configs.length > 0 ? (
+          configs.map((c) => {
+            const keyId = c.rateId || c.category;
+            const isExpanded = expandedConfigId === keyId;
+            const isBike = Number(c.vehicleType) === 1;
+            const isTruck = Number(c.vehicleType) === 2;
+
+            return (
+              <div key={keyId} className={`expandable-card ${isExpanded ? 'expanded' : ''}`}>
+                <div
+                  className="expandable-card-header"
+                  onClick={() => setExpandedConfigId(isExpanded ? null : keyId)}
+                >
+                  <div className="expandable-card-main">
+                    <div
+                      className="expandable-card-avatar"
+                      style={{
+                        background: isBike ? '#dbeafe' : isTruck ? '#ffedd5' : '#ccfbf1',
+                        color: isBike ? '#1d4ed8' : isTruck ? '#c2410c' : '#0f766e',
+                      }}
+                    >
+                      {isBike ? <Bike size={20} /> : isTruck ? <Truck size={20} /> : <Car size={20} />}
+                      <span className={`avatar-status-dot ${c.isActive ? 'active' : 'inactive'}`} />
+                    </div>
+                    <div className="expandable-card-info">
+                      <span className="expandable-card-title">{c.category}</span>
+                      <span className="expandable-card-subtitle">
+                        Tipo: {isBike ? 'Motocicleta / 2 Ruedas' : isTruck ? 'Vehículo Pesado / Camión' : 'Vehículo Ligero / Automóvil'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className={`expandable-card-chevron ${isExpanded ? 'expanded' : ''}`}>
+                    <ChevronDown size={18} />
+                  </div>
+                </div>
+
+                {isExpanded && (
+                  <div className="expandable-card-body">
+                    <div className="card-details-panel">
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Categoría:</span>
+                        <span className="card-detail-value">{c.category}</span>
+                      </div>
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Clasificación:</span>
+                        <span className="card-detail-value">
+                          {isBike ? 'Motocicleta (2 Ruedas)' : isTruck ? 'Pesado / Camión' : 'Automóvil / Camioneta'}
+                        </span>
+                      </div>
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Estado en Catálogo:</span>
+                        <span className={`badge ${c.isActive ? 'badge-success' : 'badge-danger'}`}>
+                          {c.isActive ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="expandable-card-actions">
+                      {(authService.hasPermission('settings.vehiculos.manage') || authService.hasPermission('rates.edit')) && (
+                        <button
+                          type="button"
+                          className="card-action-btn card-action-btn-outline"
+                          onClick={() => handleOpenEdit(c)}
+                        >
+                          <Edit2 size={14} /> Editar
+                        </button>
+                      )}
+                      {(authService.hasPermission('settings.vehiculos.manage') || authService.hasPermission('rates.delete')) && (
+                        <button
+                          type="button"
+                          className="card-action-btn card-action-btn-danger"
+                          onClick={() => handleOpenDelete(c)}
+                        >
+                          <Trash2 size={14} /> Eliminar
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })
+        ) : (
+          <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b', background: '#f8fafc', borderRadius: '14px' }}>
+            {isLoading ? 'Cargando tipos de vehículos...' : 'No hay tipos de vehículos registrados.'}
+          </div>
+        )}
       </div>
 
       {isModalOpen && editingConfig && (
