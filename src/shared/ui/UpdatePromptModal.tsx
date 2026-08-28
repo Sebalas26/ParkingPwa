@@ -18,10 +18,10 @@ export const UpdatePromptModal: React.FC = () => {
   } = useRegisterSW({
     onRegistered(registration) {
       if (registration) {
-        // Sondeo proactivo del Service Worker cada 10 segundos
+        // Sondeo proactivo del Service Worker cada 25 segundos
         const swInterval = setInterval(() => {
           registration.update().catch(() => {});
-        }, 10 * 1000);
+        }, 25 * 1000);
 
         return () => clearInterval(swInterval);
       }
@@ -31,7 +31,7 @@ export const UpdatePromptModal: React.FC = () => {
     },
   });
 
-  // Motor 2: Sondeo ultrarrápido al manifiesto de versión (cada 8 segundos)
+  // Motor 2: Sondeo al manifiesto de versión (cada 12 segundos)
   const checkForVersionJson = useCallback(async () => {
     // Si acaba de actualizarse en los últimos 15 segundos, evitar re-chequeo transitorio
     const lastUpdateTimestamp = Number(sessionStorage.getItem('pwa_just_updated') || '0');
@@ -77,7 +77,7 @@ export const UpdatePromptModal: React.FC = () => {
   useEffect(() => {
     checkForVersionJson();
 
-    const versionInterval = setInterval(checkForVersionJson, 8 * 1000);
+    const versionInterval = setInterval(checkForVersionJson, 12 * 1000);
 
     const handleFocus = () => {
       checkForVersionJson();

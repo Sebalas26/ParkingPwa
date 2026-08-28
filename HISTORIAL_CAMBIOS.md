@@ -7,6 +7,27 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-28 15:26:00] - [FIX] [PWA] - Eliminación de Recargas Espontáneas en Bucle mediante registerType: 'prompt'
+
+#### 💬 Prompt Original del Usuario
+> "listo lo de actualizar, pero tiene un bucle osea queda abierta pero como cada cierto tiempo se refresca no se que le sucede que tocaste de eso analiza"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Desactivación de Auto-Reload No Deseado (`vite.config.ts`)**:
+   - `VitePWA` tenía configurado `registerType: 'autoUpdate'`. Este modo inyectaba un manejador de eventos interno en el navegador que forzaba `window.location.reload()` en cuanto el Service Worker se activaba en segundo plano.
+   - Se cambió a `registerType: 'prompt'`, delegando el control total y exclusivo de la recarga a la interacción explícita del usuario mediante el botón *"Actualizar Ahora"* de `UpdatePromptModal`.
+2. **Optimización de Intervalos de Sondeo (`UpdatePromptModal.tsx`)**:
+   - Sondeo de Service Worker ajustado a 25 segundos y sondeo a `version.json` a 12 segundos para estabilidad y ahorro de recursos.
+   - La aplicación ahora permanece 100% estable y abierta indefinidamente sin refrescarse sola.
+
+#### 📦 Componentes Modificados
+- `vite.config.ts` — `registerType: 'prompt'`
+- `src/shared/ui/UpdatePromptModal.tsx` — Optimización de intervalos
+
+#### ✅ Verificación y Compilación
+- `npm run build` → **0 Errores** (Precache: 31 entries generadas limpiamente).
+
+
 ### [2026-08-28 15:14:00] - [FEAT] [UI] - Visualización Clara de Transición de Versión en Modal de Actualización (vActual ➔ vNueva)
 
 #### 💬 Prompt Original del Usuario

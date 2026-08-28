@@ -35,7 +35,7 @@ export default defineConfig(({ mode }) => {
       react(),
       versionTrackerPlugin(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       devOptions: {
         enabled: true,
         type: 'module',
