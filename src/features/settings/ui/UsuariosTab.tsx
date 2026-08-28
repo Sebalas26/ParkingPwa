@@ -5,6 +5,7 @@ import type { BranchDto } from '../model/BranchesContracts';
 import { usuariosService } from '../data/usuariosService';
 import { branchesService } from '../data/branchesService';
 import { authService } from '../../auth/data/authService';
+import { ModalPortal } from '../../../shared/ui/ModalPortal';
 
 const getDocTypeLabel = (identification?: string, name?: string) => {
   const code = (identification || '').trim().toUpperCase();
@@ -290,7 +291,8 @@ export const UsuariosTab: React.FC = () => {
 
       {/* Modal Crear/Editar Usuario */}
       {isModalOpen && editingUsuario && (
-        <div className="modal-overlay">
+        <ModalPortal>
+          <div className="modal-overlay">
           <div className="modal-content" style={{ maxWidth: '640px' }}>
             <div className="modal-header">
               <h3>{editingUsuario.id ? 'Editar Usuario' : 'Crear Nuevo Usuario'}</h3>
@@ -625,11 +627,13 @@ export const UsuariosTab: React.FC = () => {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* Modal / Dialog de Confirmación de Eliminación al estilo PWA */}
       {userToDelete && (
-        <div className="confirm-dialog-overlay">
+        <ModalPortal>
+          <div className="confirm-dialog-overlay">
           <div className="confirm-dialog-card">
             <div style={{ margin: '0 auto 14px auto', width: '52px', height: '52px', borderRadius: '50%', background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <AlertTriangle size={26} />
@@ -680,6 +684,7 @@ export const UsuariosTab: React.FC = () => {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   );

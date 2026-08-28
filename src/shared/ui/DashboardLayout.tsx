@@ -116,7 +116,7 @@ export const DashboardLayout: React.FC = () => {
       <aside className={`sidebar ${isMobileMenuOpen ? 'open' : ''} ${isDesktopSidebarCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-header">
           <div className="logo-container">
-            <img src="/logo.png" alt="Parking Flow" className="sidebar-logo-img" />
+            <img src="/logo-new.png" alt="Parking Flow" className="sidebar-logo-img" />
           </div>
           <div className="app-title-group">
             <span className="app-name">Parking Flow</span>
@@ -296,7 +296,7 @@ export const DashboardLayout: React.FC = () => {
               {isDesktopSidebarCollapsed ? <PanelLeft size={20} /> : <Menu size={20} />}
             </button>
             <div className="header-brand-info">
-              <img src="/logo.png" alt="Parking Flow" className="header-brand-logo-img" />
+              <img src="/logo-new.png" alt="Parking Flow" className="header-brand-logo-img" />
               <span className="header-brand-title">Parking Flow</span>
             </div>
           </div>

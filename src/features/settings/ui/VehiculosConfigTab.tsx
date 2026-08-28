@@ -3,6 +3,7 @@ import { Plus, Edit2, Trash2, AlertTriangle, Loader2, X, Car, Bike, Truck } from
 import type { VehiculoConfigDto, SaveVehiculoConfigDto } from '../model/VehiculosConfigContracts';
 import { vehiculosConfigService } from '../data/vehiculosConfigService';
 import { authService } from '../../auth/data/authService';
+import { ModalPortal } from '../../../shared/ui/ModalPortal';
 
 export const VehiculosConfigTab: React.FC = () => {
   const [configs, setConfigs] = useState<VehiculoConfigDto[]>([]);
@@ -175,7 +176,8 @@ export const VehiculosConfigTab: React.FC = () => {
       </div>
 
       {isModalOpen && editingConfig && (
-        <div className="modal-overlay">
+        <ModalPortal>
+          <div className="modal-overlay">
           <div className="modal-content" style={{ maxWidth: '440px' }}>
             <div className="modal-header">
               <h3>{editingConfig.rateId ? 'Editar Tipo de Vehículo' : 'Nuevo Tipo de Vehículo'}</h3>
@@ -231,11 +233,13 @@ export const VehiculosConfigTab: React.FC = () => {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* Modal de Confirmación para Eliminar Tipo de Vehículo */}
       {deletingConfig && (
-        <div className="confirm-dialog-overlay" style={{ zIndex: 20000 }}>
+        <ModalPortal>
+          <div className="confirm-dialog-overlay" style={{ zIndex: 20000 }}>
           <div className="confirm-dialog-card">
             <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#fee2e2', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}>
               <AlertTriangle size={24} />
@@ -274,6 +278,7 @@ export const VehiculosConfigTab: React.FC = () => {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   );

@@ -42,6 +42,7 @@
   color: #ffffff;
   background: none;
   -webkit-background-clip: initial;
+  background-clip: initial;
   -webkit-text-fill-color: initial;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
 }

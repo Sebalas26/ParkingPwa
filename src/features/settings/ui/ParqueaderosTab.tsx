@@ -35,6 +35,7 @@ import type { UserDto } from '../model/UsuariosContracts';
 import type { VehiculoConfigDto, SaveVehiculoConfigDto } from '../model/VehiculosConfigContracts';
 import { useBranchContext } from '../../../shared/context/ParqueaderoContext';
 import { authService } from '../../auth/data/authService';
+import { ModalPortal } from '../../../shared/ui/ModalPortal';
 import { formatCurrencyInput, parseCurrencyInput } from '../../../shared/utils/currencyUtils';
 
 export const ParqueaderosTab: React.FC = () => {
@@ -457,7 +458,8 @@ export const ParqueaderosTab: React.FC = () => {
 
       {/* MODAL CREAR / EDITAR SEDE */}
       {isEditModalOpen && editingBranch && (
-        <div className="modal-overlay">
+        <ModalPortal>
+          <div className="modal-overlay">
           <div className="modal-content" style={{ maxWidth: '540px' }}>
             <div className="modal-header">
               <h3>{editingBranch.id ? 'Editar Sede' : 'Crear Nueva Sede'}</h3>
@@ -575,11 +577,13 @@ export const ParqueaderosTab: React.FC = () => {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* MODAL DE PARAMETRIZACIÓN POR SEDE (MEDIOS DE PAGO, USUARIOS & TARIFAS) */}
       {isConfigModalOpen && selectedBranch && (
-        <div className="modal-overlay">
+        <ModalPortal>
+          <div className="modal-overlay">
           <div className="modal-content" style={{ maxWidth: '780px' }}>
             <div className="modal-header">
               <div>
@@ -988,11 +992,13 @@ export const ParqueaderosTab: React.FC = () => {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* Modal de Confirmación para Eliminar Tarifa Vehicular */}
       {deletingRate && (
-        <div className="confirm-dialog-overlay" style={{ zIndex: 20000 }}>
+        <ModalPortal>
+          <div className="confirm-dialog-overlay" style={{ zIndex: 20000 }}>
           <div className="confirm-dialog-card">
             <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#fee2e2', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}>
               <AlertTriangle size={24} />
@@ -1031,6 +1037,7 @@ export const ParqueaderosTab: React.FC = () => {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   );

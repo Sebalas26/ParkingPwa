@@ -3,6 +3,7 @@ import { Plus, Edit2, X, Tag, Percent, DollarSign, Trash2, Upload, Image as Imag
 import type { CommercialAgreementDto, SaveCommercialAgreementDto } from '../model/ConveniosContracts';
 import { conveniosService } from '../data/conveniosService';
 import { authService } from '../../auth/data/authService';
+import { ModalPortal } from '../../../shared/ui/ModalPortal';
 
 export const ConveniosTab: React.FC = () => {
   const [convenios, setConvenios] = useState<CommercialAgreementDto[]>([]);
@@ -252,7 +253,8 @@ export const ConveniosTab: React.FC = () => {
       </div>
 
       {isModalOpen && editingConvenio && (
-        <div className="modal-overlay">
+        <ModalPortal>
+          <div className="modal-overlay">
           <div className="modal-content" style={{ maxWidth: '520px' }}>
             <div className="modal-header">
               <h3>{editingConvenio.agreementId ? 'Editar Convenio Comercial' : 'Nuevo Convenio Comercial'}</h3>
@@ -511,6 +513,7 @@ export const ConveniosTab: React.FC = () => {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   );

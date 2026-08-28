@@ -23,6 +23,7 @@ import { novedadesService } from '../data/novedadesService';
 import type { VehicleIncidentDto, SaveVehicleIncidentDto } from '../model/NovedadesContracts';
 import { useParqueaderoContext } from '../../../shared/context/ParqueaderoContext';
 import { authService } from '../../../features/auth/data/authService';
+import { ModalPortal } from '../../../shared/ui/ModalPortal';
 import './Novedades.css';
 
 const COMMON_INCIDENT_TYPES = [
@@ -408,7 +409,8 @@ export const Novedades: React.FC = () => {
 
       {/* Modal Registrar / Editar Novedad */}
       {isModalOpen && editingIncident && (
-        <div className="modal-overlay">
+        <ModalPortal>
+          <div className="modal-overlay">
           <div className="modal-card">
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -658,11 +660,13 @@ export const Novedades: React.FC = () => {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* Modal Resolver Novedad / Desbloquear Placa */}
       {resolvingIncident && (
-        <div className="modal-overlay">
+        <ModalPortal>
+          <div className="modal-overlay">
           <div className="modal-card" style={{ maxWidth: '500px' }}>
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -716,11 +720,13 @@ export const Novedades: React.FC = () => {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* Modal Dialog Detalle */}
       {selectedIncident && (
-        <div className="modal-overlay">
+        <ModalPortal>
+          <div className="modal-overlay">
           <div className="modal-card" style={{ maxWidth: '560px' }}>
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -799,11 +805,13 @@ export const Novedades: React.FC = () => {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* Diálogo de Confirmación de Eliminación */}
       {incidentToDelete && (
-        <div className="modal-overlay">
+        <ModalPortal>
+          <div className="modal-overlay">
           <div className="modal-card" style={{ maxWidth: '440px' }}>
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -834,6 +842,7 @@ export const Novedades: React.FC = () => {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   );

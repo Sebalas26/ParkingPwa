@@ -22,6 +22,7 @@ import {
 import type { RoleDto, SaveRoleDto, ActionDto, ModuleDto } from '../model/RolesContracts';
 import { rolesService } from '../data/rolesService';
 import { authService } from '../../auth/data/authService';
+import { ModalPortal } from '../../../shared/ui/ModalPortal';
 
 type PlatformTab = 'wpf' | 'pwa';
 
@@ -425,7 +426,8 @@ export const RolesTab: React.FC = () => {
 
       {/* Modal Crear / Editar Rol */}
       {isRoleModalOpen && editingRole && (
-        <div className="modal-overlay">
+        <ModalPortal>
+          <div className="modal-overlay">
           <div className="modal-card" style={{ maxWidth: '440px' }}>
             <div className="modal-header">
               <h3>{editingRole.idUserRol ? `Editar Rol (#${editingRole.idUserRol})` : 'Crear Nuevo Rol'}</h3>
@@ -472,11 +474,13 @@ export const RolesTab: React.FC = () => {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* Modal Matriz de Permisos por Rol con Separación de Plataformas */}
       {isPermissionsModalOpen && targetRole && (
-        <div className="modal-overlay" style={{ zIndex: 10000 }}>
+        <ModalPortal>
+          <div className="modal-overlay">
           <div className="modal-card" style={{ maxWidth: '840px', maxHeight: '92vh' }}>
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -846,6 +850,7 @@ export const RolesTab: React.FC = () => {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* Floating Toast Notification */}

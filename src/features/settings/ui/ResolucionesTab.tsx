@@ -3,6 +3,7 @@ import { Plus, Search, Edit2, Trash2, X, FileText, CheckCircle, AlertCircle } fr
 import { resolucionesService } from '../data/resolucionesService';
 import type { BillingResolutionDto, SaveBillingResolutionDto } from '../model/ResolucionesContracts';
 import { authService } from '../../../features/auth/data/authService';
+import { ModalPortal } from '../../../shared/ui/ModalPortal';
 
 const COMMON_DOCUMENT_TYPES = [
   'Documento equivalente electrónico del tiquete de máquina registradora con sistema P.O.S.',
@@ -252,7 +253,8 @@ export const ResolucionesTab: React.FC = () => {
 
       {/* Modal Crear / Editar Resolución */}
       {isModalOpen && editingResolution && (
-        <div className="modal-overlay">
+        <ModalPortal>
+          <div className="modal-overlay">
           <div className="modal-card" style={{ maxWidth: '620px' }}>
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -434,6 +436,7 @@ export const ResolucionesTab: React.FC = () => {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   );

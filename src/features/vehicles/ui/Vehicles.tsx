@@ -5,6 +5,7 @@ import type { TicketDto } from '../model/VehicleContracts';
 import { formatTime, calculateDuration } from '../../../shared/utils/dateUtils';
 import { useParqueaderoContext } from '../../../shared/context/ParqueaderoContext';
 import { authService } from '../../auth/data/authService';
+import { ModalPortal } from '../../../shared/ui/ModalPortal';
 import './Vehicles.css';
 
 export const Vehicles: React.FC = () => {
@@ -185,77 +186,79 @@ export const Vehicles: React.FC = () => {
 
       {/* Modal Registrar Ingreso */}
       {isCheckInModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '440px' }}>
-            <div className="modal-header">
-              <h3>Registrar Ingreso de Vehículo</h3>
-              <button className="btn-close-modal" onClick={() => setIsCheckInModalOpen(false)}>
-                <X size={18} />
-              </button>
+        <ModalPortal>
+          <div className="modal-overlay">
+            <div className="modal-card" style={{ maxWidth: '440px' }}>
+              <div className="modal-header">
+                <h3>Registrar Ingreso de Vehículo</h3>
+                <button className="btn-close-modal" onClick={() => setIsCheckInModalOpen(false)}>
+                  <X size={18} />
+                </button>
+              </div>
+              <form onSubmit={handleCheckIn}>
+                <div className="modal-body">
+                  <div className="form-group">
+                    <label>Placa del Vehículo</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      placeholder="Ej. ABC-123"
+                      value={plateNumber}
+                      onChange={(e) => setPlateNumber(e.target.value.toUpperCase())}
+                      required
+                      autoFocus
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Tipo de Vehículo</label>
+                    <select
+                      className="input-field"
+                      value={vehicleType}
+                      onChange={(e) => setVehicleType(Number(e.target.value))}
+                    >
+                      <option value={0}>Auto / Sedán</option>
+                      <option value={5}>SUV</option>
+                      <option value={1}>Motocicleta</option>
+                      <option value={3}>Camioneta / Van</option>
+                      <option value={2}>Camión / Bus</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Teléfono Cliente (Opcional)</label>
+                    <input
+                      type="tel"
+                      className="input-field"
+                      placeholder="300 123 4567"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Notas / Estado del Vehículo</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      placeholder="Ej. Rayón en puerta derecha"
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn-cancel" onClick={() => setIsCheckInModalOpen(false)}>
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn-primary" style={{ width: 'auto' }}>
+                    Generar Tiquete de Ingreso
+                  </button>
+                </div>
+              </form>
             </div>
-            <form onSubmit={handleCheckIn}>
-              <div className="modal-body">
-                <div className="form-group">
-                  <label>Placa del Vehículo</label>
-                  <input
-                    type="text"
-                    className="input-field"
-                    placeholder="Ej. ABC-123"
-                    value={plateNumber}
-                    onChange={(e) => setPlateNumber(e.target.value.toUpperCase())}
-                    required
-                    autoFocus
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Tipo de Vehículo</label>
-                  <select
-                    className="input-field"
-                    value={vehicleType}
-                    onChange={(e) => setVehicleType(Number(e.target.value))}
-                  >
-                    <option value={0}>Auto / Sedán</option>
-                    <option value={5}>SUV</option>
-                    <option value={1}>Motocicleta</option>
-                    <option value={3}>Camioneta / Van</option>
-                    <option value={2}>Camión / Bus</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Teléfono Cliente (Opcional)</label>
-                  <input
-                    type="tel"
-                    className="input-field"
-                    placeholder="300 123 4567"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Notas / Estado del Vehículo</label>
-                  <input
-                    type="text"
-                    className="input-field"
-                    placeholder="Ej. Rayón en puerta derecha"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button type="button" className="btn-cancel" onClick={() => setIsCheckInModalOpen(false)}>
-                  Cancelar
-                </button>
-                <button type="submit" className="btn-primary" style={{ width: 'auto' }}>
-                  Generar Tiquete de Ingreso
-                </button>
-              </div>
-            </form>
           </div>
-        </div>
+        </ModalPortal>
       )}
     </div>
   );

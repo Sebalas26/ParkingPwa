@@ -7,6 +7,62 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-27 22:23:00] - [BUGFIX] [ARCHITECTURE] [UI/UX] [MOBILE] - Teleportación Global de Modales a document.body mediante React Portal y Eliminación de Atrapamiento de Stacking Context
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"No pero mira que se sigue viendo el cuadro de los dialogs en la parte superior se ve cortado"* (Captura con la barra superior `top-bar` superpuesta sobre la cabecera del modal)
+- **🤖 Resumen Técnico para la IA**:
+  1. **Diagnóstico del Atrapamiento de Stacking Context**:
+     - En `DashboardLayout.tsx`, la barra superior `<header className="top-bar">` posee `position: relative; z-index: 30;`, mientras que el contenido de las vistas se monta dentro de `<main className="main-content">` (dentro de `<div className="content-wrapper">`, configurado con `overflow: hidden; -webkit-overflow-scrolling: touch;`).
+     - En navegadores móviles (especialmente WebKit / iOS Safari), `-webkit-overflow-scrolling: touch` crea un contexto de apilamiento aislado (*isolated stacking context*), haciendo que cualquier elemento `position: fixed` dentro de las vistas hijas quede restringido al nivel 0 de `.main-content`. En consecuencia, la barra superior `.top-bar` (con `z-index: 30`) se pintaba por encima del modal, cubriendo su cabecera y el botón de cierre `X`.
+  2. **Arquitectura React Portal (`ModalPortal.tsx`)**:
+     - Se creó el componente `ModalPortal` en `src/shared/ui/ModalPortal.tsx` utilizando `createPortal(children, document.body)`.
+     - Este componente teleporta el árbol DOM de los modales directamente a la raíz de la página (`<body>`), desvinculándolos de `.content-wrapper`, `.top-bar` y de cualquier contenedor con `overflow` o transformaciones CSS.
+     - Se envolvieron todos los modales del sistema en `ModalPortal`:
+       - `CompaniesPage.tsx` (Crear empresa, Editar empresa, Ver sedes)
+       - `Vehicles.tsx` (Ingreso de vehículo)
+       - `Dashboard.tsx` (Detalle de tiquete activo)
+       - `Novedades.tsx` (Crear novedad, Resolver novedad, Detalle de novedad, Eliminar novedad)
+       - `Caja.tsx` (Apertura de turno, Cierre de turno)
+       - `Settings` tabs: `UsuariosTab.tsx`, `ParqueaderosTab.tsx`, `TarifasTab.tsx`, `MediosPagoTab.tsx`, `ResolucionesTab.tsx`, `ConveniosTab.tsx`, `VehiculosConfigTab.tsx`, `RolesTab.tsx`.
+  3. **Salvaguarda de Stacking Context en CSS (`DashboardLayout.css`)**:
+     - Se añadieron reglas reactivas `.content-wrapper:has(.modal-overlay)` y `.main-content:has(.modal-overlay)` con `z-index: 30000 !important; overflow: visible;`.
+  4. **Bump de Versión**:
+     - Actualizado `.env` a `0.0.21 Dev`.
+- **📦 Componentes Modificados**:
+  - `src/shared/ui/ModalPortal.tsx` (NUEVO)
+  - `src/shared/ui/DashboardLayout.css`
+  - `src/features/companies/ui/CompaniesPage.tsx`
+  - `src/features/vehicles/ui/Vehicles.tsx`
+  - `src/features/dashboard/ui/Dashboard.tsx`
+  - `src/features/novedades/ui/Novedades.tsx`
+  - `src/features/caja/ui/Caja.tsx`
+  - `src/features/settings/ui/UsuariosTab.tsx`
+  - `src/features/settings/ui/ParqueaderosTab.tsx`
+  - `src/features/settings/ui/TarifasTab.tsx`
+  - `src/features/settings/ui/MediosPagoTab.tsx`
+  - `src/features/settings/ui/ResolucionesTab.tsx`
+  - `src/features/settings/ui/ConveniosTab.tsx`
+  - `src/features/settings/ui/VehiculosConfigTab.tsx`
+  - `src/features/settings/ui/RolesTab.tsx`
+  - `.env`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript compilaron en 3.01s).
+
+### [2026-08-27 22:12:00] - [CHORE] [CSS] - Declaración de Propiedad Estándar background-clip para Compatibilidad de Prefijos de Proveedor
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"Also define the standard property 'background-clip' for compatibilitycss(vendorPrefix) en dashboard.css"*
+- **🤖 Resumen Técnico para la IA**:
+  1. Se añadió la propiedad estándar `background-clip: initial;` inmediatamente después de `-webkit-background-clip: initial;` en `.dashboard-hero-title h1` (`src/features/dashboard/ui/Dashboard.css`).
+  2. Esto elimina la advertencia de linting de CSS (`vendorPrefix / compatibilitycss`) y asegura compatibilidad total según los estándares W3C.
+- **📦 Componentes Modificados**:
+  - `src/features/dashboard/ui/Dashboard.css`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript compilaron en 1.21s).
+
 ### [2026-08-27 22:02:00] - [BUGFIX] [UI/UX] [MOBILE] - Corrección Global Responsive de Modales y Diálogos (Solución Flexbox Scroll Loss & Safe-Areas)
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:

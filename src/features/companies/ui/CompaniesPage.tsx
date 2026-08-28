@@ -19,6 +19,7 @@ import {
 import { companyService } from '../data/companyService';
 import { apiClient } from '../../../shared/api/apiClient';
 import { useBranchContext } from '../../../shared/context/ParqueaderoContext';
+import { ModalPortal } from '../../../shared/ui/ModalPortal';
 import type { CompanyDto, CreateCompanyDto, UpdateCompanyDto } from '../model/CompanyContracts';
 import './CompaniesPage.css';
 
@@ -415,7 +416,8 @@ export const CompaniesPage: React.FC = () => {
 
       {/* CREATE MODAL */}
       {isCreateModalOpen && (
-        <div className="modal-overlay" onClick={() => !actionLoading && setIsCreateModalOpen(false)}>
+        <ModalPortal>
+          <div className="modal-overlay" onClick={() => !actionLoading && setIsCreateModalOpen(false)}>
           <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Registrar Nueva Empresa Cliente</h2>
@@ -600,11 +602,13 @@ export const CompaniesPage: React.FC = () => {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* EDIT MODAL */}
       {isEditModalOpen && selectedCompany && (
-        <div className="modal-overlay" onClick={() => !actionLoading && setIsEditModalOpen(false)}>
+        <ModalPortal>
+          <div className="modal-overlay" onClick={() => !actionLoading && setIsEditModalOpen(false)}>
           <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Editar Empresa: {selectedCompany.name}</h2>
@@ -740,11 +744,13 @@ export const CompaniesPage: React.FC = () => {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* VIEW BRANCHES MODAL */}
       {isBranchesModalOpen && selectedCompany && (
-        <div className="modal-overlay" onClick={() => setIsBranchesModalOpen(false)}>
+        <ModalPortal>
+          <div className="modal-overlay" onClick={() => setIsBranchesModalOpen(false)}>
           <div className="modal-container" style={{ width: '760px' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Sedes del Parqueadero: {selectedCompany.name}</h2>
@@ -821,6 +827,7 @@ export const CompaniesPage: React.FC = () => {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   );

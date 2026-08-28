@@ -3,6 +3,7 @@ import { Plus, Edit2, X, CreditCard } from 'lucide-react';
 import type { PaymentMethodDto, SavePaymentMethodDto } from '../model/MediosPagoContracts';
 import { mediosPagoService } from '../data/mediosPagoService';
 import { authService } from '../../auth/data/authService';
+import { ModalPortal } from '../../../shared/ui/ModalPortal';
 
 const PAYMENT_EMOJIS = [
   { emoji: '💵', label: 'Efectivo' },
@@ -206,7 +207,8 @@ export const MediosPagoTab: React.FC = () => {
 
       {/* Modal Crear / Editar Medio de Pago */}
       {isModalOpen && editingMedio && (
-        <div className="modal-overlay">
+        <ModalPortal>
+          <div className="modal-overlay">
           <div className="modal-card" style={{ maxWidth: '500px' }}>
             <div className="modal-header">
               <h3>
@@ -303,6 +305,7 @@ export const MediosPagoTab: React.FC = () => {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   );

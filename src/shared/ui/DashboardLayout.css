@@ -293,6 +293,11 @@ a.nav-item.active {
   position: relative;
 }
 
+.content-wrapper:has(.modal-overlay),
+.content-wrapper:has(.confirm-dialog-overlay) {
+  overflow: visible;
+}
+
 .top-bar {
   display: flex;
   justify-content: space-between;
@@ -314,6 +319,12 @@ a.nav-item.active {
   display: flex;
   flex-direction: column;
   -webkit-overflow-scrolling: touch;
+  position: relative;
+}
+
+.main-content:has(.modal-overlay),
+.main-content:has(.confirm-dialog-overlay) {
+  z-index: 30000 !important;
 }
 
 .top-bar-left {

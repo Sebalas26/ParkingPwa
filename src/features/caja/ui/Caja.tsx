@@ -5,6 +5,7 @@ import { cajaService } from '../data/cajaService';
 import type { WorkShiftDto } from '../model/CajaContracts';
 import { useParqueaderoContext } from '../../../shared/context/ParqueaderoContext';
 import { authService } from '../../auth/data/authService';
+import { ModalPortal } from '../../../shared/ui/ModalPortal';
 import './Caja.css';
 
 export const Caja: React.FC = () => {
@@ -404,7 +405,8 @@ export const Caja: React.FC = () => {
 
       {/* Modal Abrir Turno */}
       {isOpenShiftModalOpen && (
-        <div className="modal-overlay">
+        <ModalPortal>
+          <div className="modal-overlay">
           <div className="modal-card" style={{ maxWidth: '440px' }}>
             <div className="modal-header">
               <h3>Apertura de Turno de Caja</h3>
@@ -448,6 +450,7 @@ export const Caja: React.FC = () => {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* Modal Cerrar Turno */}
@@ -459,7 +462,8 @@ export const Caja: React.FC = () => {
         const targetOperator = target?.operatorName || 'Operador';
 
         return (
-          <div className="modal-overlay">
+          <ModalPortal>
+            <div className="modal-overlay">
             <div className="modal-card" style={{ maxWidth: '440px' }}>
               <div className="modal-header">
                 <h3>Cierre y Liquidación de Turno</h3>
@@ -509,6 +513,7 @@ export const Caja: React.FC = () => {
               </form>
             </div>
           </div>
+          </ModalPortal>
         );
       })()}
     </div>

@@ -3,6 +3,7 @@ import { Edit2, X } from 'lucide-react';
 import type { VehicleRateDto, UpdateVehicleRateDto } from '../model/TarifasContracts';
 import { tarifasService } from '../data/tarifasService';
 import { authService } from '../../auth/data/authService';
+import { ModalPortal } from '../../../shared/ui/ModalPortal';
 
 export const TarifasTab: React.FC = () => {
   const [tarifas, setTarifas] = useState<VehicleRateDto[]>([]);
@@ -142,7 +143,8 @@ export const TarifasTab: React.FC = () => {
 
       {/* Modal Editar Tarifa */}
       {isModalOpen && editingTarifa && (
-        <div className="modal-overlay">
+        <ModalPortal>
+          <div className="modal-overlay">
           <div className="modal-card">
             <div className="modal-header">
               <h3>Editar Tarifa: {getVehicleTypeName(editingTarifa.vehicleType)}</h3>
@@ -217,6 +219,7 @@ export const TarifasTab: React.FC = () => {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   );

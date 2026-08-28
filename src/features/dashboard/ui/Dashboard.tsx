@@ -3,6 +3,7 @@ import { dashboardService } from '../data/dashboardService';
 import type { DailySummaryDto, OccupancyStatsDto, RecentTicketDto } from '../model/DashboardContracts';
 import { formatTime, calculateDuration } from '../../../shared/utils/dateUtils';
 import { useParqueaderoContext } from '../../../shared/context/ParqueaderoContext';
+import { ModalPortal } from '../../../shared/ui/ModalPortal';
 import { cajaService } from '../../caja/data/cajaService';
 import type { WorkShiftDto } from '../../caja/model/CajaContracts';
 import { usuariosService } from '../../settings/data/usuariosService';
@@ -1026,57 +1027,59 @@ export const Dashboard: React.FC = () => {
 
       {/* Modal Vista Rápida de Tiquete */}
       {selectedTicket && (
-        <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '420px' }}>
-            <div className="modal-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span className="plate-badge-styled" style={{ fontSize: '1.2rem' }}>{selectedTicket.plateNumber}</span>
-                <span className="pulse-badge"><span className="dot" /> Activo</span>
-              </div>
-              <button className="btn-close-modal" onClick={() => setSelectedTicket(null)}>
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="modal-body" style={{ gap: '1rem' }}>
-              <div style={{ padding: '12px', background: 'var(--bg-body)', borderRadius: '10px', border: '1px solid var(--border-color)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: 600 }}>Tiquete ID</span>
-                  <p style={{ margin: '2px 0 0 0', fontWeight: 700, fontSize: '0.9rem' }}>{selectedTicket.ticketNumber}</p>
+        <ModalPortal>
+          <div className="modal-overlay">
+            <div className="modal-card" style={{ maxWidth: '420px' }}>
+              <div className="modal-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span className="plate-badge-styled" style={{ fontSize: '1.2rem' }}>{selectedTicket.plateNumber}</span>
+                  <span className="pulse-badge"><span className="dot" /> Activo</span>
                 </div>
-                <div>
-                  <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: 600 }}>Categoría</span>
-                  <p style={{ margin: '2px 0 0 0', fontWeight: 700, fontSize: '0.9rem' }}>{getVehicleTypeLabel(selectedTicket.vehicleType)}</p>
-                </div>
-                <div>
-                  <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: 600 }}>Hora de Ingreso</span>
-                  <p style={{ margin: '2px 0 0 0', fontWeight: 600, fontSize: '0.88rem' }}>
-                    {formatTime(selectedTicket.entryTimeUtc || (selectedTicket as any).entryTime || (selectedTicket as any).createdAtUtc)}
-                  </p>
-                </div>
-                <div>
-                  <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: 600 }}>Tiempo Transcurrido</span>
-                  <p style={{ margin: '2px 0 0 0', fontWeight: 800, fontSize: '0.95rem', color: 'var(--primary-color)' }}>
-                    {calculateDuration(selectedTicket.entryTimeUtc || (selectedTicket as any).entryTime || (selectedTicket as any).createdAtUtc)}
-                  </p>
-                </div>
+                <button className="btn-close-modal" onClick={() => setSelectedTicket(null)}>
+                  <X size={18} />
+                </button>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'rgba(16, 185, 129, 0.08)', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Tarifa Base Configurada</span>
-                <span style={{ fontSize: '1rem', fontWeight: 800, color: '#10b981' }}>
-                  ${(selectedTicket.hourlyRate || 4000).toLocaleString()} /hr
-                </span>
-              </div>
-            </div>
+              <div className="modal-body" style={{ gap: '1rem' }}>
+                <div style={{ padding: '12px', background: 'var(--bg-body)', borderRadius: '10px', border: '1px solid var(--border-color)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: 600 }}>Tiquete ID</span>
+                    <p style={{ margin: '2px 0 0 0', fontWeight: 700, fontSize: '0.9rem' }}>{selectedTicket.ticketNumber}</p>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: 600 }}>Categoría</span>
+                    <p style={{ margin: '2px 0 0 0', fontWeight: 700, fontSize: '0.9rem' }}>{getVehicleTypeLabel(selectedTicket.vehicleType)}</p>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: 600 }}>Hora de Ingreso</span>
+                    <p style={{ margin: '2px 0 0 0', fontWeight: 600, fontSize: '0.88rem' }}>
+                      {formatTime(selectedTicket.entryTimeUtc || (selectedTicket as any).entryTime || (selectedTicket as any).createdAtUtc)}
+                    </p>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: 600 }}>Tiempo Transcurrido</span>
+                    <p style={{ margin: '2px 0 0 0', fontWeight: 800, fontSize: '0.95rem', color: 'var(--primary-color)' }}>
+                      {calculateDuration(selectedTicket.entryTimeUtc || (selectedTicket as any).entryTime || (selectedTicket as any).createdAtUtc)}
+                    </p>
+                  </div>
+                </div>
 
-            <div className="modal-footer">
-              <button className="btn-cancel" onClick={() => setSelectedTicket(null)}>
-                Cerrar
-              </button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'rgba(16, 185, 129, 0.08)', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Tarifa Base Configurada</span>
+                  <span style={{ fontSize: '1rem', fontWeight: 800, color: '#10b981' }}>
+                    ${(selectedTicket.hourlyRate || 4000).toLocaleString()} /hr
+                  </span>
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button className="btn-cancel" onClick={() => setSelectedTicket(null)}>
+                  Cerrar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
     </div>
   );
