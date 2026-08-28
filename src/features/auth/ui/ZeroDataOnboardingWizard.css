@@ -2,8 +2,8 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  right: 0;
+  bottom: 0;
   background: rgba(15, 23, 42, 0.85);
   backdrop-filter: blur(12px);
   display: flex;
@@ -12,6 +12,7 @@
   z-index: 9999;
   padding: 1.5rem;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .onboarding-wizard-card {
@@ -151,13 +152,13 @@
 @media (max-width: 768px) {
   .onboarding-wizard-overlay {
     padding: 1rem;
-    padding-bottom: env(safe-area-inset-bottom, 20px);
+    padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 3rem);
     align-items: flex-start; /* Evitar que se centre verticalmente y oculte la base en pantallas cortas */
   }
 
   .onboarding-wizard-card {
     padding: 1.5rem;
-    margin-bottom: 2rem;
+    margin-bottom: 5rem;
   }
 
   .onboarding-form-grid {
