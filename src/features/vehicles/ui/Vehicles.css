@@ -160,3 +160,19 @@
   text-align: right !important;
 }
 
+/* Responsividad para móviles */
+@media (max-width: 768px) {
+  .vehicles-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .filters-group {
+    flex-wrap: wrap;
+  }
+
+  .search-box {
+    width: 100%;
+  }
+}
