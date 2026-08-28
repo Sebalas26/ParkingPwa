@@ -7,6 +7,7 @@ export interface BranchDto {
   city?: string;
   totalCapacity: number;
   notes?: string;
+  logoBase64?: string;
   isActive: boolean;
   createdAt?: string;
   // Campos auxiliares UI
@@ -24,6 +25,7 @@ export interface CreateBranchDto {
   city?: string;
   totalCapacity: number;
   notes?: string;
+  logoBase64?: string;
 }
 
 export interface UpdateBranchDto {
@@ -34,6 +36,7 @@ export interface UpdateBranchDto {
   city?: string;
   totalCapacity: number;
   notes?: string;
+  logoBase64?: string;
   isActive: boolean;
 }
 

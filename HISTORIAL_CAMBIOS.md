@@ -7,6 +7,25 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-28 09:21:00] - [FEAT] [UI] - Responsive Onboarding y Soporte para Imagen de Sede
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"esta dialog no lo estoy viendo responsive en la parte inferior version mobile, adicional podrias agregarle un campo que diga imagen de la sede..."*
+- **🤖 Resumen Técnico para la IA**:
+  1. **Ajuste Responsive Mobile**: En `ZeroDataOnboardingWizard.css` se añadió una `@media query (max-width: 768px)` que aplica `align-items: flex-start` y espaciados inferiores usando el padding safe area `env(safe-area-inset-bottom)` sobre el `.onboarding-wizard-overlay` para prevenir que la caja del formulario quede centrada y corte los botones finales en dispositivos cortos, forzando así que el contenido superior empiece desde el inicio de la pantalla y todo el flujo se haga scrolleable naturalmente.
+  2. **Imagen de la Sede**:
+     - Se extendieron los contratos `BranchDto`, `CreateBranchDto` y `UpdateBranchDto` en `BranchesContracts.ts` agregando la propiedad opcional `logoBase64?: string`.
+     - En `ZeroDataOnboardingWizard.tsx`, se incluyó la propiedad `logoBase64` al estado inicial del formulario.
+     - Se añadió un `<input type="file" accept="image/*">` y la función `handleImageChange` que invoca a un `FileReader` de JS para convertir instantáneamente el archivo en un string base64.
+     - El componente ahora pre-visualiza la imagen localmente y adjunta la cadena al enviar los datos a la API (`branchesService.create`).
+- **📦 Componentes Modificados**:
+  - `src/features/auth/ui/ZeroDataOnboardingWizard.tsx`
+  - `src/features/auth/ui/ZeroDataOnboardingWizard.css`
+  - `src/features/settings/model/BranchesContracts.ts`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript).
+
 ### [2026-08-28 09:05:00] - [BUGFIX] [SECURITY] [UI] - Protección Inmutable del Rol Super Administrador
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:

@@ -15,6 +15,7 @@ export const ZeroDataOnboardingWizard: React.FC = () => {
     city: string;
     totalCapacity: number | string;
     notes: string;
+    logoBase64: string;
   }>({
     code: '',
     name: '',
@@ -23,6 +24,7 @@ export const ZeroDataOnboardingWizard: React.FC = () => {
     city: '',
     totalCapacity: '',
     notes: '',
+    logoBase64: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -33,6 +35,27 @@ export const ZeroDataOnboardingWizard: React.FC = () => {
       ...prev,
       [name]: name === 'totalCapacity' ? (value === '' ? '' : Number(value)) : value,
     }));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      setErrorMessage('La imagen no puede exceder los 2MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setFormData(prev => ({ ...prev, logoBase64: reader.result as string }));
+      }
+    };
+    reader.onerror = () => {
+      setErrorMessage('Error al leer la imagen.');
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,6 +83,7 @@ export const ZeroDataOnboardingWizard: React.FC = () => {
         city: formData.city.trim() || undefined,
         totalCapacity: capacity,
         notes: formData.notes.trim() || undefined,
+        logoBase64: formData.logoBase64 || undefined,
       };
       const created = await branchesService.create(payload);
       if (created && created.id) {
@@ -184,6 +208,22 @@ export const ZeroDataOnboardingWizard: React.FC = () => {
                 onChange={handleChange}
                 placeholder="Ej: Sede matriz de parqueadero"
               />
+            </div>
+
+            <div className="onboarding-form-group full-width">
+              <label>Imagen de la Sede</label>
+              <input
+                type="file"
+                accept="image/*"
+                className="input-field"
+                onChange={handleImageChange}
+                style={{ cursor: 'pointer' }}
+              />
+              {formData.logoBase64 && (
+                <div style={{ marginTop: '0.75rem', borderRadius: '12px', overflow: 'hidden', border: '1px solid #cbd5e1', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
+                  <img src={formData.logoBase64} alt="Sede preview" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                </div>
+              )}
             </div>
           </div>
 
