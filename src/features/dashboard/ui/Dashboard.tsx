@@ -689,7 +689,7 @@ export const Dashboard: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
               <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
                 <Wallet size={20} style={{ color: 'var(--primary-color)' }} />
-                Cajas por Usuario Operador (Datos de BD API)
+                Cajas por Usuario
               </h2>
 
               {/* Slicers de Filtro por Operador */}

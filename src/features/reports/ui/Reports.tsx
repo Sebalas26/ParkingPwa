@@ -102,154 +102,174 @@ export const Reports: React.FC = () => {
   };
 
   return (
-    <div className="reports-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', height: '100%', overflowY: 'auto', paddingBottom: '2rem' }}>
-      <div className="reports-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <h1>Centro de Reportes Financieros y Operativos</h1>
-            <span className="badge badge-success" style={{ background: 'rgba(37, 99, 235, 0.12)', color: 'var(--primary-color)', fontSize: '0.82rem', padding: '4px 8px' }}>
-              <Building size={12} style={{ marginRight: 4 }} />
+    <div className="reports-container">
+      {/* Encabezado */}
+      <div className="reports-header">
+        <div className="reports-title-group">
+          <div className="reports-title-row">
+            <h1>Centro de Reportes</h1>
+            <span className="reports-branch-badge">
+              <Building size={14} />
               {selectedParqueadero ? selectedParqueadero.name : '🌐 Todos los Parqueaderos'}
             </span>
           </div>
-          <p className="text-muted" style={{ margin: 0, fontSize: '0.9rem' }}>Generación y descarga de métricas consolidadas a partir de transacciones reales.</p>
+          <p className="reports-subtitle">
+            Generación y descarga de métricas consolidadas a partir de transacciones reales.
+          </p>
         </div>
 
         {authService.hasPermission('reports.export') && (
           <button
-            className="btn-primary"
-            style={{ width: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}
+            type="button"
+            className="btn-export-excel"
             onClick={handleExportExcel}
-            disabled={isExporting}
+            disabled={isExporting || filteredTickets.length === 0}
+            title="Descargar reporte en formato Excel"
           >
-            <Download size={16} /> {isExporting ? 'Generando...' : 'Exportar a Excel'}
+            <Download size={16} />
+            <span>{isExporting ? 'Generando...' : 'Exportar a Excel'}</span>
           </button>
         )}
       </div>
 
-      {/* Tarjetas de Resumen */}
-      <div className="reports-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-        <div className="stat-card" style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-          <span className="text-muted" style={{ fontSize: '0.8rem', textTransform: 'uppercase' }}>Total Vehículos Registrados</span>
-          <p style={{ margin: '8px 0 0 0', fontSize: '1.6rem', fontWeight: 'bold' }}>{totalVehiculos}</p>
+      {/* Grilla de Tarjetas de Resumen (2x2 en Móvil) */}
+      <div className="reports-stats-grid">
+        <div className="report-stat-card">
+          <span className="report-stat-label">Total Vehículos</span>
+          <p className="report-stat-value primary">{totalVehiculos}</p>
         </div>
-        <div className="stat-card" style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-          <span className="text-muted" style={{ fontSize: '0.8rem', textTransform: 'uppercase' }}>Ingresos Totales</span>
-          <p style={{ margin: '8px 0 0 0', fontSize: '1.6rem', fontWeight: 'bold', color: 'var(--primary-color)' }}>${totalIngresos.toLocaleString()}</p>
+        <div className="report-stat-card">
+          <span className="report-stat-label">Ingresos Totales</span>
+          <p className="report-stat-value success">${totalIngresos.toLocaleString()}</p>
         </div>
-        <div className="stat-card" style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-          <span className="text-muted" style={{ fontSize: '0.8rem', textTransform: 'uppercase' }}>Descuentos / Convenios</span>
-          <p style={{ margin: '8px 0 0 0', fontSize: '1.6rem', fontWeight: 'bold', color: '#f59e0b' }}>${totalDescuentos.toLocaleString()}</p>
+        <div className="report-stat-card">
+          <span className="report-stat-label">Descuentos / Conv.</span>
+          <p className="report-stat-value warning">${totalDescuentos.toLocaleString()}</p>
         </div>
-        <div className="stat-card" style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-          <span className="text-muted" style={{ fontSize: '0.8rem', textTransform: 'uppercase' }}>Estancia Promedio</span>
-          <p style={{ margin: '8px 0 0 0', fontSize: '1.6rem', fontWeight: 'bold' }}>{tiempoPromedioMin} min</p>
+        <div className="report-stat-card">
+          <span className="report-stat-label">Estancia Promedio</span>
+          <p className="report-stat-value">{tiempoPromedioMin} min</p>
         </div>
       </div>
 
-      {/* Barra de Filtros */}
-      <div className="table-card" style={{ padding: '20px' }}>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', gap: '6px' }}>
+      {/* Barra de Filtros Responsive */}
+      <div className="reports-filters-card">
+        <div className="reports-filters-row">
+          <div className="filter-pills-container">
             <button
+              type="button"
               className={`filter-pill ${filterPeriod === 'todos' ? 'active' : ''}`}
               onClick={() => setFilterPeriod('todos')}
             >
-              Todos los Registros
+              Todos
             </button>
             <button
+              type="button"
               className={`filter-pill ${filterPeriod === 'dia' ? 'active' : ''}`}
               onClick={() => setFilterPeriod('dia')}
             >
               Por Día
             </button>
             <button
+              type="button"
               className={`filter-pill ${filterPeriod === 'personalizado' ? 'active' : ''}`}
               onClick={() => setFilterPeriod('personalizado')}
             >
-              Rango de Fechas
+              Rango Fechas
             </button>
           </div>
 
           {filterPeriod === 'dia' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-body)', padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-              <Calendar size={16} className="text-muted" />
+            <div className="filter-date-box">
+              <Calendar size={16} style={{ color: 'var(--primary-color, #07665e)', flexShrink: 0 }} />
               <input
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                style={{ border: 'none', background: 'transparent', outline: 'none', color: 'var(--text-primary)', fontSize: '0.9rem' }}
+                aria-label="Seleccionar fecha de reporte"
               />
             </div>
           )}
 
           {filterPeriod === 'personalizado' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                className="input-field"
-                style={{ width: 'auto', padding: '6px 12px' }}
-              />
-              <span className="text-muted">hasta</span>
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                className="input-field"
-                style={{ width: 'auto', padding: '6px 12px' }}
-              />
+            <div className="filter-custom-range">
+              <div className="filter-date-box">
+                <Calendar size={15} style={{ color: 'var(--primary-color, #07665e)', flexShrink: 0 }} />
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  aria-label="Fecha inicio"
+                />
+              </div>
+              <span className="filter-range-separator">hasta</span>
+              <div className="filter-date-box">
+                <Calendar size={15} style={{ color: 'var(--primary-color, #07665e)', flexShrink: 0 }} />
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  aria-label="Fecha fin"
+                />
+              </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Tabla de Detalle */}
-      <div className="table-card">
-        <div className="section-header" style={{ padding: '24px 24px 0 24px' }}>
+      {/* Tabla de Detalle con Scroll Horizontal Protegido */}
+      <div className="reports-table-card">
+        <div className="reports-table-header">
           <h2>Transacciones y Tiquetes ({filteredTickets.length})</h2>
         </div>
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>TIQUETE</th>
-              <th>PLACA</th>
-              <th>INGRESO</th>
-              <th>SALIDA</th>
-              <th>DURACIÓN</th>
-              <th className="text-right">BRUTO</th>
-              <th className="text-right">DESCUENTO</th>
-              <th className="text-right">TOTAL PAGADO</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredTickets.length > 0 ? (
-              filteredTickets.map((t) => (
-                <tr key={t.ticketId}>
-                  <td className="font-bold text-muted">{t.ticketNumber}</td>
-                  <td className="font-bold text-primary">{t.plateNumber}</td>
-                  <td className="text-muted">
-                    {formatDateTime(t.entryTimeUtc || (t as any).entryTime || (t as any).createdAtUtc || (t as any).entryDate)}
-                  </td>
-                  <td className="text-muted">
-                    {t.exitTimeUtc ? formatDateTime(t.exitTimeUtc || (t as any).exitTime) : 'En parqueadero'}
-                  </td>
-                  <td>{t.totalDurationMinutes ? `${t.totalDurationMinutes} min` : '--'}</td>
-                  <td className="text-right text-muted">${(t.grossAmount || 0).toLocaleString()}</td>
-                  <td className="text-right text-muted">${(t.discountAmount || 0).toLocaleString()}</td>
-                  <td className="text-right font-bold text-primary">${(t.amountPaid || 0).toLocaleString()}</td>
-                </tr>
-              ))
-            ) : (
+        <div className="reports-table-wrapper">
+          <table className="reports-table">
+            <thead>
               <tr>
-                <td colSpan={8} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
-                  {isLoading ? 'Cargando datos...' : 'No hay registros que coincidan con los filtros seleccionados.'}
-                </td>
+                <th>TIQUETE</th>
+                <th>PLACA</th>
+                <th>INGRESO</th>
+                <th>SALIDA</th>
+                <th>DURACIÓN</th>
+                <th className="text-right">BRUTO</th>
+                <th className="text-right">DESCUENTO</th>
+                <th className="text-right">TOTAL PAGADO</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredTickets.length > 0 ? (
+                filteredTickets.map((t) => (
+                  <tr key={t.ticketId}>
+                    <td style={{ fontWeight: 700, color: 'var(--text-secondary, #64748b)' }}>{t.ticketNumber}</td>
+                    <td style={{ fontWeight: 800, color: 'var(--primary-color, #07665e)' }}>{t.plateNumber}</td>
+                    <td style={{ color: 'var(--text-secondary, #64748b)' }}>
+                      {formatDateTime(t.entryTimeUtc || (t as any).entryTime || (t as any).createdAtUtc || (t as any).entryDate)}
+                    </td>
+                    <td style={{ color: 'var(--text-secondary, #64748b)' }}>
+                      {t.exitTimeUtc ? formatDateTime(t.exitTimeUtc || (t as any).exitTime) : 'En parqueadero'}
+                    </td>
+                    <td>{t.totalDurationMinutes ? `${t.totalDurationMinutes} min` : '--'}</td>
+                    <td className="text-right" style={{ color: 'var(--text-secondary, #64748b)' }}>
+                      ${(t.grossAmount || 0).toLocaleString()}
+                    </td>
+                    <td className="text-right" style={{ color: '#f59e0b', fontWeight: 600 }}>
+                      ${(t.discountAmount || 0).toLocaleString()}
+                    </td>
+                    <td className="text-right" style={{ fontWeight: 800, color: '#10b981' }}>
+                      ${(t.amountPaid || 0).toLocaleString()}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={8} className="reports-empty-state">
+                    {isLoading ? 'Cargando datos...' : 'No hay registros que coincidan con los filtros seleccionados.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

@@ -16,8 +16,7 @@ import {
   User,
   Phone,
   FileText,
-  Loader2,
-  RefreshCw
+  Loader2
 } from 'lucide-react';
 import { novedadesService } from '../data/novedadesService';
 import type { VehicleIncidentDto, SaveVehicleIncidentDto } from '../model/NovedadesContracts';
@@ -224,9 +223,6 @@ export const Novedades: React.FC = () => {
         </div>
 
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <button className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={loadIncidents} disabled={isLoading}>
-            <RefreshCw size={15} className={isLoading ? 'spinner' : ''} /> Actualizar
-          </button>
           <button className="btn-primary" style={{ width: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }} onClick={handleOpenCreate}>
             <Plus size={18} /> Agregar Novedad
           </button>
@@ -322,13 +318,12 @@ export const Novedades: React.FC = () => {
                     </td>
                     <td>
                       <span
-                        className={`badge ${
-                          n.incidentType.includes('No Pago') || n.incidentType.includes('Bloqueo') || n.incidentType.includes('Hurto')
-                            ? 'badge-danger'
-                            : n.incidentType.includes('Daño') || n.incidentType.includes('Conflicto')
+                        className={`badge ${n.incidentType.includes('No Pago') || n.incidentType.includes('Bloqueo') || n.incidentType.includes('Hurto')
+                          ? 'badge-danger'
+                          : n.incidentType.includes('Daño') || n.incidentType.includes('Conflicto')
                             ? 'badge-warning'
                             : 'badge-info'
-                        }`}
+                          }`}
                         style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}
                       >
                         <AlertTriangle size={13} /> {n.incidentType}
@@ -411,255 +406,255 @@ export const Novedades: React.FC = () => {
       {isModalOpen && editingIncident && (
         <ModalPortal>
           <div className="modal-overlay">
-          <div className="modal-card">
-            <div className="modal-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <ShieldAlert size={20} color="#dc2626" />
+            <div className="modal-card">
+              <div className="modal-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <ShieldAlert size={20} color="#dc2626" />
+                  </div>
+                  <h3>{currentId ? `Editar Novedad - ${editingIncident.plateNumber}` : 'Registrar Nueva Novedad / Bloqueo'}</h3>
                 </div>
-                <h3>{currentId ? `Editar Novedad - ${editingIncident.plateNumber}` : 'Registrar Nueva Novedad / Bloqueo'}</h3>
+                <button className="btn-close-modal" onClick={() => setIsModalOpen(false)} disabled={isSaving}>
+                  <X size={18} />
+                </button>
               </div>
-              <button className="btn-close-modal" onClick={() => setIsModalOpen(false)} disabled={isSaving}>
-                <X size={18} />
-              </button>
-            </div>
 
-            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-              <div className="modal-body">
-                {errorMsg && (
-                  <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '10px 14px', borderRadius: '8px', fontSize: '0.85rem', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <AlertTriangle size={16} />
-                    <span>{errorMsg}</span>
-                  </div>
-                )}
+              <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+                <div className="modal-body">
+                  {errorMsg && (
+                    <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '10px 14px', borderRadius: '8px', fontSize: '0.85rem', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <AlertTriangle size={16} />
+                      <span>{errorMsg}</span>
+                    </div>
+                  )}
 
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Placa del Vehículo *</label>
-                    <input
-                      type="text"
-                      className="input-field"
-                      placeholder="Ej. ABC123"
-                      value={editingIncident.plateNumber}
-                      onChange={(e) => setEditingIncident({ ...editingIncident, plateNumber: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })}
-                      required
-                      maxLength={10}
-                      disabled={isSaving}
-                      style={{ fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase' }}
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group" style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '12px', marginBottom: '16px' }}>
-                  <label style={{ fontWeight: 700, color: '#38bdf8', marginBottom: '8px', display: 'block' }}>
-                    Alcance de la Novedad / Bloqueo *
-                  </label>
-                  <div style={{ display: 'flex', gap: '20px', marginBottom: '10px' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 600, color: '#f8fafc' }}>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Placa del Vehículo *</label>
                       <input
-                        type="radio"
-                        name="scopeType"
-                        checked={editingIncident.isGlobal ?? true}
-                        onChange={() => setEditingIncident({ ...editingIncident, isGlobal: true, branchIds: [], branchId: null })}
+                        type="text"
+                        className="input-field"
+                        placeholder="Ej. ABC123"
+                        value={editingIncident.plateNumber}
+                        onChange={(e) => setEditingIncident({ ...editingIncident, plateNumber: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })}
+                        required
+                        maxLength={10}
                         disabled={isSaving}
+                        style={{ fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase' }}
                       />
-                      🌐 Todas las Sedes (Global)
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 600, color: '#f8fafc' }}>
-                      <input
-                        type="radio"
-                        name="scopeType"
-                        checked={!(editingIncident.isGlobal ?? true)}
-                        onChange={() => {
-                          const defaultIds = editingIncident.branchIds && editingIncident.branchIds.length > 0
-                            ? editingIncident.branchIds
-                            : (selectedParqueaderoId ? [Number(selectedParqueaderoId)] : (parqueaderosList.length > 0 ? [parqueaderosList[0].id] : []));
-                          setEditingIncident({ ...editingIncident, isGlobal: false, branchIds: defaultIds, branchId: defaultIds[0] || null });
-                        }}
-                        disabled={isSaving}
-                      />
-                      🏢 Sedes Específicas
-                    </label>
+                    </div>
                   </div>
 
-                  {!(editingIncident.isGlobal ?? true) && (
-                    <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed #334155' }}>
-                      <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginBottom: '8px' }}>
-                        Seleccione las sedes donde tendrá efecto el bloqueo/novedad:
-                      </p>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                        {parqueaderosList.map((b) => {
-                          const isChecked = editingIncident.branchIds?.includes(b.id) || false;
-                          return (
-                            <label
-                              key={b.id}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                background: isChecked ? '#1e293b' : '#090d16',
-                                border: isChecked ? '1px solid #10b981' : '1px solid #334155',
-                                padding: '6px 10px',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                fontSize: '0.82rem',
-                                fontWeight: isChecked ? 700 : 500,
-                                color: isChecked ? '#10b981' : '#cbd5e1',
-                              }}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={isChecked}
-                                onChange={(e) => {
-                                  const currentIds = editingIncident.branchIds || [];
-                                  const updatedIds = e.target.checked
-                                    ? [...currentIds, b.id]
-                                    : currentIds.filter((id) => id !== b.id);
-                                  setEditingIncident({
-                                    ...editingIncident,
-                                    branchIds: updatedIds,
-                                    branchId: updatedIds[0] || null,
-                                  });
+                  <div className="form-group" style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '12px', marginBottom: '16px' }}>
+                    <label style={{ fontWeight: 700, color: '#38bdf8', marginBottom: '8px', display: 'block' }}>
+                      Alcance de la Novedad / Bloqueo *
+                    </label>
+                    <div style={{ display: 'flex', gap: '20px', marginBottom: '10px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 600, color: '#f8fafc' }}>
+                        <input
+                          type="radio"
+                          name="scopeType"
+                          checked={editingIncident.isGlobal ?? true}
+                          onChange={() => setEditingIncident({ ...editingIncident, isGlobal: true, branchIds: [], branchId: null })}
+                          disabled={isSaving}
+                        />
+                        🌐 Todas las Sedes (Global)
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 600, color: '#f8fafc' }}>
+                        <input
+                          type="radio"
+                          name="scopeType"
+                          checked={!(editingIncident.isGlobal ?? true)}
+                          onChange={() => {
+                            const defaultIds = editingIncident.branchIds && editingIncident.branchIds.length > 0
+                              ? editingIncident.branchIds
+                              : (selectedParqueaderoId ? [Number(selectedParqueaderoId)] : (parqueaderosList.length > 0 ? [parqueaderosList[0].id] : []));
+                            setEditingIncident({ ...editingIncident, isGlobal: false, branchIds: defaultIds, branchId: defaultIds[0] || null });
+                          }}
+                          disabled={isSaving}
+                        />
+                        🏢 Sedes Específicas
+                      </label>
+                    </div>
+
+                    {!(editingIncident.isGlobal ?? true) && (
+                      <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed #334155' }}>
+                        <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginBottom: '8px' }}>
+                          Seleccione las sedes donde tendrá efecto el bloqueo/novedad:
+                        </p>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                          {parqueaderosList.map((b) => {
+                            const isChecked = editingIncident.branchIds?.includes(b.id) || false;
+                            return (
+                              <label
+                                key={b.id}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  background: isChecked ? '#1e293b' : '#090d16',
+                                  border: isChecked ? '1px solid #10b981' : '1px solid #334155',
+                                  padding: '6px 10px',
+                                  borderRadius: '6px',
+                                  cursor: 'pointer',
+                                  fontSize: '0.82rem',
+                                  fontWeight: isChecked ? 700 : 500,
+                                  color: isChecked ? '#10b981' : '#cbd5e1',
                                 }}
-                                disabled={isSaving}
-                              />
-                              {b.name}
-                            </label>
-                          );
-                        })}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={(e) => {
+                                    const currentIds = editingIncident.branchIds || [];
+                                    const updatedIds = e.target.checked
+                                      ? [...currentIds, b.id]
+                                      : currentIds.filter((id) => id !== b.id);
+                                    setEditingIncident({
+                                      ...editingIncident,
+                                      branchIds: updatedIds,
+                                      branchId: updatedIds[0] || null,
+                                    });
+                                  }}
+                                  disabled={isSaving}
+                                />
+                                {b.name}
+                              </label>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="form-group">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <label style={{ margin: 0 }}>Tipo de Novedad *</label>
-                    <button
-                      type="button"
-                      style={{ background: 'none', border: 'none', color: 'var(--primary-color)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}
-                      onClick={() => setIsCustomType(!isCustomType)}
-                      disabled={isSaving}
-                    >
-                      {isCustomType ? '← Seleccionar de la lista' : '✎ Escribir personalizado'}
-                    </button>
+                    )}
                   </div>
-                  {isCustomType ? (
-                    <input
-                      type="text"
+
+                  <div className="form-group">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <label style={{ margin: 0 }}>Tipo de Novedad *</label>
+                      <button
+                        type="button"
+                        style={{ background: 'none', border: 'none', color: 'var(--primary-color)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}
+                        onClick={() => setIsCustomType(!isCustomType)}
+                        disabled={isSaving}
+                      >
+                        {isCustomType ? '← Seleccionar de la lista' : '✎ Escribir personalizado'}
+                      </button>
+                    </div>
+                    {isCustomType ? (
+                      <input
+                        type="text"
+                        className="input-field"
+                        placeholder="Escribe el tipo de novedad..."
+                        value={editingIncident.incidentType}
+                        onChange={(e) => setEditingIncident({ ...editingIncident, incidentType: e.target.value })}
+                        required
+                        disabled={isSaving}
+                      />
+                    ) : (
+                      <select
+                        className="input-field"
+                        value={editingIncident.incidentType}
+                        onChange={(e) => setEditingIncident({ ...editingIncident, incidentType: e.target.value })}
+                        required
+                        disabled={isSaving}
+                      >
+                        {COMMON_INCIDENT_TYPES.map((type) => (
+                          <option key={type} value={type}>
+                            {type}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+
+                  {/* Switch de Bloqueo de Ingreso Destacado */}
+                  <div
+                    style={{
+                      background: editingIncident.isBlocked ? 'rgba(239, 68, 68, 0.08)' : 'var(--bg-body)',
+                      border: `1.5px solid ${editingIncident.isBlocked ? '#f87171' : 'var(--border-color)'}`,
+                      borderRadius: '10px',
+                      padding: '12px 14px',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', margin: 0 }}>
+                      <input
+                        type="checkbox"
+                        checked={editingIncident.isBlocked}
+                        onChange={(e) => setEditingIncident({ ...editingIncident, isBlocked: e.target.checked })}
+                        disabled={isSaving}
+                        style={{ width: '18px', height: '18px', accentColor: '#dc2626' }}
+                      />
+                      <div>
+                        <span style={{ fontSize: '0.92rem', fontWeight: 800, color: editingIncident.isBlocked ? '#dc2626' : 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <Lock size={15} /> Bloquear ingreso en Parqueaderos (WPF y PWA)
+                        </span>
+                        <small style={{ display: 'block', color: 'var(--text-secondary)', marginTop: '2px', fontSize: '0.78rem' }}>
+                          Si está marcado, el sistema central impedirá registrar el ingreso de esta placa y emitirá una alerta.
+                        </small>
+                      </div>
+                    </label>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Reportado Por</label>
+                      <input
+                        type="text"
+                        className="input-field"
+                        placeholder="Nombre del operador"
+                        value={editingIncident.reportedBy}
+                        onChange={(e) => setEditingIncident({ ...editingIncident, reportedBy: e.target.value })}
+                        disabled={isSaving}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Teléfono Contacto (Opcional)</label>
+                      <input
+                        type="text"
+                        className="input-field"
+                        placeholder="Ej. 3001234567"
+                        value={editingIncident.contactPhone || ''}
+                        onChange={(e) => setEditingIncident({ ...editingIncident, contactPhone: e.target.value })}
+                        disabled={isSaving}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Descripción y Observaciones *</label>
+                    <textarea
                       className="input-field"
-                      placeholder="Escribe el tipo de novedad..."
-                      value={editingIncident.incidentType}
-                      onChange={(e) => setEditingIncident({ ...editingIncident, incidentType: e.target.value })}
+                      style={{ minHeight: '85px', fontSize: '0.88rem' }}
+                      placeholder="Describe en detalle los hechos ocurridos (ej. monto adeudado, fecha, comportamiento o requerimientos)..."
+                      value={editingIncident.description}
+                      onChange={(e) => setEditingIncident({ ...editingIncident, description: e.target.value })}
                       required
                       disabled={isSaving}
                     />
-                  ) : (
-                    <select
-                      className="input-field"
-                      value={editingIncident.incidentType}
-                      onChange={(e) => setEditingIncident({ ...editingIncident, incidentType: e.target.value })}
-                      required
-                      disabled={isSaving}
-                    >
-                      {COMMON_INCIDENT_TYPES.map((type) => (
-                        <option key={type} value={type}>
-                          {type}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-
-                {/* Switch de Bloqueo de Ingreso Destacado */}
-                <div
-                  style={{
-                    background: editingIncident.isBlocked ? 'rgba(239, 68, 68, 0.08)' : 'var(--bg-body)',
-                    border: `1.5px solid ${editingIncident.isBlocked ? '#f87171' : 'var(--border-color)'}`,
-                    borderRadius: '10px',
-                    padding: '12px 14px',
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', margin: 0 }}>
-                    <input
-                      type="checkbox"
-                      checked={editingIncident.isBlocked}
-                      onChange={(e) => setEditingIncident({ ...editingIncident, isBlocked: e.target.checked })}
-                      disabled={isSaving}
-                      style={{ width: '18px', height: '18px', accentColor: '#dc2626' }}
-                    />
-                    <div>
-                      <span style={{ fontSize: '0.92rem', fontWeight: 800, color: editingIncident.isBlocked ? '#dc2626' : 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <Lock size={15} /> Bloquear ingreso en Parqueaderos (WPF y PWA)
-                      </span>
-                      <small style={{ display: 'block', color: 'var(--text-secondary)', marginTop: '2px', fontSize: '0.78rem' }}>
-                        Si está marcado, el sistema central impedirá registrar el ingreso de esta placa y emitirá una alerta.
-                      </small>
-                    </div>
-                  </label>
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Reportado Por</label>
-                    <input
-                      type="text"
-                      className="input-field"
-                      placeholder="Nombre del operador"
-                      value={editingIncident.reportedBy}
-                      onChange={(e) => setEditingIncident({ ...editingIncident, reportedBy: e.target.value })}
-                      disabled={isSaving}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Teléfono Contacto (Opcional)</label>
-                    <input
-                      type="text"
-                      className="input-field"
-                      placeholder="Ej. 3001234567"
-                      value={editingIncident.contactPhone || ''}
-                      onChange={(e) => setEditingIncident({ ...editingIncident, contactPhone: e.target.value })}
-                      disabled={isSaving}
-                    />
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label>Descripción y Observaciones *</label>
-                  <textarea
-                    className="input-field"
-                    style={{ minHeight: '85px', fontSize: '0.88rem' }}
-                    placeholder="Describe en detalle los hechos ocurridos (ej. monto adeudado, fecha, comportamiento o requerimientos)..."
-                    value={editingIncident.description}
-                    onChange={(e) => setEditingIncident({ ...editingIncident, description: e.target.value })}
-                    required
-                    disabled={isSaving}
-                  />
+                <div className="modal-footer">
+                  <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)} disabled={isSaving}>
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn-primary" style={{ width: 'auto' }} disabled={isSaving}>
+                    {isSaving ? (
+                      <>
+                        <Loader2 size={16} className="spinner" />
+                        {currentId ? 'Actualizando...' : 'Guardando...'}
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle size={16} />
+                        {currentId ? 'Actualizar Novedad' : 'Guardar Novedad'}
+                      </>
+                    )}
+                  </button>
                 </div>
-              </div>
-
-              <div className="modal-footer">
-                <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)} disabled={isSaving}>
-                  Cancelar
-                </button>
-                <button type="submit" className="btn-primary" style={{ width: 'auto' }} disabled={isSaving}>
-                  {isSaving ? (
-                    <>
-                      <Loader2 size={16} className="spinner" />
-                      {currentId ? 'Actualizando...' : 'Guardando...'}
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle size={16} />
-                      {currentId ? 'Actualizar Novedad' : 'Guardar Novedad'}
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
+              </form>
+            </div>
           </div>
-        </div>
         </ModalPortal>
       )}
 
@@ -667,59 +662,59 @@ export const Novedades: React.FC = () => {
       {resolvingIncident && (
         <ModalPortal>
           <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '500px' }}>
-            <div className="modal-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Unlock size={20} color="#10b981" />
+            <div className="modal-card" style={{ maxWidth: '500px' }}>
+              <div className="modal-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Unlock size={20} color="#10b981" />
+                  </div>
+                  <h3>Resolver Novedad ({resolvingIncident.plateNumber})</h3>
                 </div>
-                <h3>Resolver Novedad ({resolvingIncident.plateNumber})</h3>
+                <button className="btn-close-modal" onClick={() => setResolvingIncident(null)} disabled={isResolving}>
+                  <X size={18} />
+                </button>
               </div>
-              <button className="btn-close-modal" onClick={() => setResolvingIncident(null)} disabled={isResolving}>
-                <X size={18} />
-              </button>
+
+              <form onSubmit={handleConfirmResolve} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+                <div className="modal-body">
+                  <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: '14px' }}>
+                    Al resolver esta novedad, <strong>el bloqueo de la placa será levantado de inmediato</strong> y el vehículo podrá volver a ingresar normalmente en todas las sedes.
+                  </p>
+
+                  <div className="form-group">
+                    <label>Justificación / Notas de Resolución</label>
+                    <textarea
+                      className="input-field"
+                      style={{ minHeight: '80px', fontSize: '0.88rem' }}
+                      placeholder="Ej. El cliente canceló el saldo pendiente de $15.000 / Se aclaró el malentendido..."
+                      value={resolveNotes}
+                      onChange={(e) => setResolveNotes(e.target.value)}
+                      required
+                      disabled={isResolving}
+                    />
+                  </div>
+                </div>
+
+                <div className="modal-footer">
+                  <button type="button" className="btn-secondary" onClick={() => setResolvingIncident(null)} disabled={isResolving}>
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn-primary" style={{ width: 'auto', background: '#10b981', borderColor: '#059669' }} disabled={isResolving}>
+                    {isResolving ? (
+                      <>
+                        <Loader2 size={16} className="spinner" />
+                        Desbloqueando...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle size={16} /> Confirmar Desbloqueo
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
             </div>
-
-            <form onSubmit={handleConfirmResolve} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-              <div className="modal-body">
-                <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: '14px' }}>
-                  Al resolver esta novedad, <strong>el bloqueo de la placa será levantado de inmediato</strong> y el vehículo podrá volver a ingresar normalmente en todas las sedes.
-                </p>
-
-                <div className="form-group">
-                  <label>Justificación / Notas de Resolución</label>
-                  <textarea
-                    className="input-field"
-                    style={{ minHeight: '80px', fontSize: '0.88rem' }}
-                    placeholder="Ej. El cliente canceló el saldo pendiente de $15.000 / Se aclaró el malentendido..."
-                    value={resolveNotes}
-                    onChange={(e) => setResolveNotes(e.target.value)}
-                    required
-                    disabled={isResolving}
-                  />
-                </div>
-              </div>
-
-              <div className="modal-footer">
-                <button type="button" className="btn-secondary" onClick={() => setResolvingIncident(null)} disabled={isResolving}>
-                  Cancelar
-                </button>
-                <button type="submit" className="btn-primary" style={{ width: 'auto', background: '#10b981', borderColor: '#059669' }} disabled={isResolving}>
-                  {isResolving ? (
-                    <>
-                      <Loader2 size={16} className="spinner" />
-                      Desbloqueando...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle size={16} /> Confirmar Desbloqueo
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
           </div>
-        </div>
         </ModalPortal>
       )}
 
@@ -727,84 +722,84 @@ export const Novedades: React.FC = () => {
       {selectedIncident && (
         <ModalPortal>
           <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '560px' }}>
-            <div className="modal-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Car size={22} color="var(--primary-color)" />
-                <h3>Detalle de Novedad - {selectedIncident.plateNumber}</h3>
+            <div className="modal-card" style={{ maxWidth: '560px' }}>
+              <div className="modal-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Car size={22} color="var(--primary-color)" />
+                  <h3>Detalle de Novedad - {selectedIncident.plateNumber}</h3>
+                </div>
+                <button className="btn-close-modal" onClick={() => setSelectedIncident(null)}>
+                  <X size={18} />
+                </button>
               </div>
-              <button className="btn-close-modal" onClick={() => setSelectedIncident(null)}>
-                <X size={18} />
-              </button>
-            </div>
 
-            <div className="modal-body">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem', flexWrap: 'wrap' }}>
-                <span className="badge badge-warning" style={{ display: 'inline-flex', gap: '6px', fontSize: '0.88rem', padding: '6px 12px' }}>
-                  <AlertTriangle size={16} /> {selectedIncident.incidentType}
-                </span>
-                {selectedIncident.isBlocked && selectedIncident.status === 'Activa' && (
-                  <span className="badge badge-danger" style={{ display: 'inline-flex', gap: '4px', fontSize: '0.88rem', padding: '6px 12px' }}>
-                    <Lock size={14} /> Vehículo Bloqueado
+              <div className="modal-body">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                  <span className="badge badge-warning" style={{ display: 'inline-flex', gap: '6px', fontSize: '0.88rem', padding: '6px 12px' }}>
+                    <AlertTriangle size={16} /> {selectedIncident.incidentType}
                   </span>
-                )}
-                <span className={`badge ${selectedIncident.status === 'Activa' ? 'badge-warning' : 'badge-success'}`} style={{ fontSize: '0.88rem', padding: '6px 12px' }}>
-                  Estado: {selectedIncident.status}
-                </span>
-              </div>
+                  {selectedIncident.isBlocked && selectedIncident.status === 'Activa' && (
+                    <span className="badge badge-danger" style={{ display: 'inline-flex', gap: '4px', fontSize: '0.88rem', padding: '6px 12px' }}>
+                      <Lock size={14} /> Vehículo Bloqueado
+                    </span>
+                  )}
+                  <span className={`badge ${selectedIncident.status === 'Activa' ? 'badge-warning' : 'badge-success'}`} style={{ fontSize: '0.88rem', padding: '6px 12px' }}>
+                    Estado: {selectedIncident.status}
+                  </span>
+                </div>
 
-              <div className="novedad-details-grid">
-                <div className="detail-group">
-                  <label><User size={13} style={{ display: 'inline', marginRight: 4 }} /> Reportado por</label>
-                  <p>{selectedIncident.reportedBy}</p>
-                </div>
-                <div className="detail-group">
-                  <label><Phone size={13} style={{ display: 'inline', marginRight: 4 }} /> Teléfono de Contacto</label>
-                  <p>{selectedIncident.contactPhone || 'No registrado'}</p>
-                </div>
-                <div className="detail-group">
-                  <label><Building size={13} style={{ display: 'inline', marginRight: 4 }} /> Sede(s) donde aplica</label>
-                  <p>
-                    {selectedIncident.isGlobal || (!selectedIncident.branchId && (!selectedIncident.branchIds || selectedIncident.branchIds.length === 0))
-                      ? '🌐 Todas las Sedes (Global)'
-                      : selectedIncident.branchNames && selectedIncident.branchNames.length > 0
-                      ? selectedIncident.branchNames.join(', ')
-                      : (selectedIncident.branchName || 'Sede asignada')}
-                  </p>
-                </div>
-                <div className="detail-group">
-                  <label>Fecha de Registro</label>
-                  <p>{selectedIncident.createdAtUtc ? selectedIncident.createdAtUtc.slice(0, 10) : '--'} ({selectedIncident.createdAtUtc ? new Date(selectedIncident.createdAtUtc).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''})</p>
-                </div>
-              </div>
-
-              <div className="detail-group" style={{ marginTop: '1rem' }}>
-                <label><FileText size={13} style={{ display: 'inline', marginRight: 4 }} /> Observaciones Registradas</label>
-                <div style={{ background: 'var(--bg-body)', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', marginTop: '6px' }}>
-                  <p style={{ fontSize: '0.92rem', margin: 0, lineHeight: 1.5 }}>{selectedIncident.description}</p>
-                </div>
-              </div>
-
-              {selectedIncident.resolvedNotes && (
-                <div className="detail-group" style={{ marginTop: '1rem' }}>
-                  <label style={{ color: '#10b981', fontWeight: 700 }}>Notas de Resolución / Desbloqueo</label>
-                  <div style={{ background: 'rgba(16, 185, 129, 0.08)', padding: '12px 14px', borderRadius: '8px', border: '1px solid #a7f3d0', marginTop: '6px' }}>
-                    <p style={{ fontSize: '0.9rem', margin: 0, color: '#065f46' }}>{selectedIncident.resolvedNotes}</p>
-                    {selectedIncident.resolvedAtUtc && (
-                      <small style={{ display: 'block', marginTop: '4px', color: '#047857' }}>
-                        Fecha: {selectedIncident.resolvedAtUtc.slice(0, 10)} {new Date(selectedIncident.resolvedAtUtc).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </small>
-                    )}
+                <div className="novedad-details-grid">
+                  <div className="detail-group">
+                    <label><User size={13} style={{ display: 'inline', marginRight: 4 }} /> Reportado por</label>
+                    <p>{selectedIncident.reportedBy}</p>
+                  </div>
+                  <div className="detail-group">
+                    <label><Phone size={13} style={{ display: 'inline', marginRight: 4 }} /> Teléfono de Contacto</label>
+                    <p>{selectedIncident.contactPhone || 'No registrado'}</p>
+                  </div>
+                  <div className="detail-group">
+                    <label><Building size={13} style={{ display: 'inline', marginRight: 4 }} /> Sede(s) donde aplica</label>
+                    <p>
+                      {selectedIncident.isGlobal || (!selectedIncident.branchId && (!selectedIncident.branchIds || selectedIncident.branchIds.length === 0))
+                        ? '🌐 Todas las Sedes (Global)'
+                        : selectedIncident.branchNames && selectedIncident.branchNames.length > 0
+                          ? selectedIncident.branchNames.join(', ')
+                          : (selectedIncident.branchName || 'Sede asignada')}
+                    </p>
+                  </div>
+                  <div className="detail-group">
+                    <label>Fecha de Registro</label>
+                    <p>{selectedIncident.createdAtUtc ? selectedIncident.createdAtUtc.slice(0, 10) : '--'} ({selectedIncident.createdAtUtc ? new Date(selectedIncident.createdAtUtc).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''})</p>
                   </div>
                 </div>
-              )}
-            </div>
 
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setSelectedIncident(null)}>Cerrar</button>
+                <div className="detail-group" style={{ marginTop: '1rem' }}>
+                  <label><FileText size={13} style={{ display: 'inline', marginRight: 4 }} /> Observaciones Registradas</label>
+                  <div style={{ background: 'var(--bg-body)', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', marginTop: '6px' }}>
+                    <p style={{ fontSize: '0.92rem', margin: 0, lineHeight: 1.5 }}>{selectedIncident.description}</p>
+                  </div>
+                </div>
+
+                {selectedIncident.resolvedNotes && (
+                  <div className="detail-group" style={{ marginTop: '1rem' }}>
+                    <label style={{ color: '#10b981', fontWeight: 700 }}>Notas de Resolución / Desbloqueo</label>
+                    <div style={{ background: 'rgba(16, 185, 129, 0.08)', padding: '12px 14px', borderRadius: '8px', border: '1px solid #a7f3d0', marginTop: '6px' }}>
+                      <p style={{ fontSize: '0.9rem', margin: 0, color: '#065f46' }}>{selectedIncident.resolvedNotes}</p>
+                      {selectedIncident.resolvedAtUtc && (
+                        <small style={{ display: 'block', marginTop: '4px', color: '#047857' }}>
+                          Fecha: {selectedIncident.resolvedAtUtc.slice(0, 10)} {new Date(selectedIncident.resolvedAtUtc).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </small>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="modal-footer">
+                <button className="btn-secondary" onClick={() => setSelectedIncident(null)}>Cerrar</button>
+              </div>
             </div>
           </div>
-        </div>
         </ModalPortal>
       )}
 
@@ -812,36 +807,36 @@ export const Novedades: React.FC = () => {
       {incidentToDelete && (
         <ModalPortal>
           <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '440px' }}>
-            <div className="modal-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <AlertTriangle size={20} />
+            <div className="modal-card" style={{ maxWidth: '440px' }}>
+              <div className="modal-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <AlertTriangle size={20} />
+                  </div>
+                  <h3>Confirmar Eliminación</h3>
                 </div>
-                <h3>Confirmar Eliminación</h3>
+                <button className="btn-close-modal" onClick={() => setIncidentToDelete(null)} disabled={isDeleting}>
+                  <X size={18} />
+                </button>
               </div>
-              <button className="btn-close-modal" onClick={() => setIncidentToDelete(null)} disabled={isDeleting}>
-                <X size={18} />
-              </button>
-            </div>
 
-            <div className="modal-body">
-              <p style={{ fontSize: '0.9rem', color: 'var(--text-primary)', margin: 0 }}>
-                ¿Estás seguro de eliminar el registro de novedad para la placa <strong>{incidentToDelete.plate}</strong>? Esta acción no se puede deshacer.
-              </p>
-            </div>
+              <div className="modal-body">
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-primary)', margin: 0 }}>
+                  ¿Estás seguro de eliminar el registro de novedad para la placa <strong>{incidentToDelete.plate}</strong>? Esta acción no se puede deshacer.
+                </p>
+              </div>
 
-            <div className="modal-footer">
-              <button type="button" className="btn-secondary" onClick={() => setIncidentToDelete(null)} disabled={isDeleting}>
-                Cancelar
-              </button>
-              <button type="button" className="btn-danger" onClick={handleConfirmDelete} disabled={isDeleting} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                {isDeleting ? <Loader2 size={16} className="spinner" /> : <Trash2 size={16} />}
-                {isDeleting ? 'Eliminando...' : 'Eliminar Novedad'}
-              </button>
+              <div className="modal-footer">
+                <button type="button" className="btn-secondary" onClick={() => setIncidentToDelete(null)} disabled={isDeleting}>
+                  Cancelar
+                </button>
+                <button type="button" className="btn-danger" onClick={handleConfirmDelete} disabled={isDeleting} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {isDeleting ? <Loader2 size={16} className="spinner" /> : <Trash2 size={16} />}
+                  {isDeleting ? 'Eliminando...' : 'Eliminar Novedad'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
         </ModalPortal>
       )}
     </div>

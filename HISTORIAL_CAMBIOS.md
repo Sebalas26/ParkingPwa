@@ -7,6 +7,31 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-27 22:38:00] - [BUGFIX] [UI/UX] [MOBILE] - Rediseño Responsive y Ajuste Visual del Centro de Reportes Financieros y Operativos
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"perfecto, vamos bien , ahora cuando entro a centro de reportes y financieros y operativos encuentro que lo que envie y señale en rojo no se ve bien , se cortado, ajustalo"* (Captura con los botones de filtro desbordados a la derecha y cortados en el borde inferior)
+- **🤖 Resumen Técnico para la IA**:
+  1. **Solución al Desbordamiento de la Barra de Filtros (`Reports.tsx`, `Reports.css`)**:
+     - Se reemplazó el contenedor rígido por `.reports-filters-card`, `.reports-filters-row`, `.filter-pills-container` y `.filter-pill`.
+     - En pantallas móviles (`<= 768px`), `.filter-pills-container` ocupa el 100% del ancho del card y los botones (`Todos`, `Por Día`, `Rango Fechas`) se distribuyen equitativamente con `flex: 1 1 0; text-align: center;`, eliminando cualquier corte o desbordamiento horizontal.
+     - Los selectores de fecha (`.filter-date-box`, `.filter-custom-range`) se adaptan fluidamente debajo de los botones en pantallas móviles.
+  2. **Grilla 2x2 para Tarjetas de Métricas (`Reports.css`)**:
+     - Se rediseñó `.reports-stats-grid` para que en celulares (`<= 768px`) se organice en una grilla de **2 columnas x 2 filas** (`grid-template-columns: repeat(2, 1fr); gap: 10px;`) con tipografía y paddings optimizados (`.report-stat-card`, `.report-stat-label`, `.report-stat-value`). Esto reduce la altura vertical ocupada y permite ver las 4 métricas de un solo vistazo.
+  3. **Scroll Horizontal Aislado en Tabla de Transacciones (`Reports.tsx`, `Reports.css`)**:
+     - Se encapsuló la tabla de transacciones en `.reports-table-wrapper` con `overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch;` y `min-width: 660px;` en `.reports-table`, protegiendo el layout general de desbordamientos.
+  4. **Eliminación de Doble Scroll Container**:
+     - Se eliminó el `height: 100%; overflow-y: auto;` redundante en `.reports-container`, permitiendo que el scroll del layout principal (`.main-content`) opere de manera uniforme.
+  5. **Bump de Versión**:
+     - Actualizado `.env` a `0.0.22 Dev`.
+- **📦 Componentes Modificados**:
+  - `src/features/reports/ui/Reports.css`
+  - `src/features/reports/ui/Reports.tsx`
+  - `.env`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript compilaron en 1.27s).
+
 ### [2026-08-27 22:23:00] - [BUGFIX] [ARCHITECTURE] [UI/UX] [MOBILE] - Teleportación Global de Modales a document.body mediante React Portal y Eliminación de Atrapamiento de Stacking Context
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:

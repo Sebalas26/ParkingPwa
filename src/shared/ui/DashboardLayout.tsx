@@ -174,8 +174,6 @@ export const DashboardLayout: React.FC = () => {
                   }}
                   title="Volver al catálogo global de empresas SaaS"
                 >
-                  <LogOut size={18} />
-                  <span>🔙 Volver a SaaS</span>
                 </button>
               )}
 
