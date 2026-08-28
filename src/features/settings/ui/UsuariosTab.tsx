@@ -217,6 +217,16 @@ export const UsuariosTab: React.FC = () => {
     }
   };
 
+  const currentUserForFilter = authService.getCurrentUser();
+  const isUserSuperAdmin = currentUserForFilter?.isSuperAdmin === true;
+
+  const displayUsers = usuarios.filter((u) => {
+    const roleTitle = u.userRoleDto?.roleName || u.roleName || u.role || (u.userRoleId === 1 ? 'Administrador' : '');
+    const normRole = roleTitle.trim().toLowerCase();
+    const isTargetSuperAdmin = normRole === 'super administrador' || normRole === 'super admin' || normRole === 'superadmin';
+    return !isTargetSuperAdmin || isUserSuperAdmin;
+  });
+
   return (
     <div className="settings-section-card">
       <div className="section-header">
@@ -244,8 +254,8 @@ export const UsuariosTab: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {usuarios.length > 0 ? (
-              usuarios.map((u) => {
+            {displayUsers.length > 0 ? (
+              displayUsers.map((u) => {
                 const docTypeName = u.identificationTypeDto?.name || u.identificationTypeDto?.identification || 'CC';
                 const roleTitle = u.userRoleDto?.roleName || u.roleName || u.role || (u.userRoleId === 1 ? 'Administrador' : 'Operador');
                 const isActive = u.isActive ?? (u.status === true || u.status === 'Activo' || u.status === 'Active');

@@ -7,6 +7,49 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-28 11:34:00] - [FEAT] [UI] - Reemplazo de Iconos de Inicio y Apple Touch Icon con el Nuevo Logotipo
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"Tambien sigo viendo el mismo logo al agregar la pagina de ininicio de IOS, recuerda que la imagen que quiero es la 2da imagen que te pase"*
+- **🤖 Resumen Técnico para la IA**:
+  1. **Rediseño e Integración del Nuevo Logo**:
+     - Se tomó el logotipo de alta resolución provisto por el usuario en el chat (`media_1787934670603.png`, que contiene la letra "P" verde/blanca estilizada sobre fondo azul oscuro).
+     - Se creó un script de PowerShell (`resize_icons.ps1`) para realizar el redimensionamiento de alta calidad con Interpolación Bicúbica a las resoluciones estándar oficiales.
+     - Se reemplazaron y sobreescribieron los siguientes archivos de recursos PNG en la carpeta `public/`:
+       - `apple-touch-icon.png` (180x180 px - Usado por iOS para la pantalla de inicio "Agregar a Inicio").
+       - `pwa-192x192.png` y `pwa-512x512.png` (Para PWA en Android/Chrome).
+       - `maskable-icon-512x512.png` (Versión adaptativa).
+       - `favicon.png` (Favicon del navegador).
+       - `logo.png` y `logo-new.png` (Resolución original 512x512 px).
+- **📦 Componentes Modificados**:
+  - `public/apple-touch-icon.png`
+  - `public/pwa-192x192.png`
+  - `public/pwa-512x512.png`
+  - `public/maskable-icon-512x512.png`
+  - `public/favicon.png`
+  - `public/logo.png`
+  - `public/logo-new.png`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript).
+
+### [2026-08-28 11:30:00] - [FEAT] [SECURITY] [UI] - Ocultar Usuarios Super Administradores en Gestión de Usuarios
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"no pero corrige lo de los usuarios, que tampoco pueda ver los super administradores, si mi rol es administrador"*
+- **🤖 Resumen Técnico para la IA**:
+  1. **Filtrado de Usuarios Super Administradores**:
+     - En `UsuariosTab.tsx` se definió `displayUsers` aplicando un filtro sobre `usuarios`. Si el usuario logueado en la PWA no es Super Administrador, todos los usuarios que posean el rol de "Super Administrador", "Super Admin" o "Superadmin" son excluidos de la lista que se mapea en el cuerpo de la tabla.
+     - Esto oculta por completo la existencia de los Super Administradores en la tabla a nivel de interfaz para cualquier administrador o usuario estándar.
+  2. **Bump de Versión**:
+     - Se incrementó la versión a `0.0.38 Dev` en `.env` para asegurar la invalidación de caché PWA en producción.
+- **📦 Componentes Modificados**:
+  - `src/features/settings/ui/UsuariosTab.tsx`
+  - `.env`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript).
+
 ### [2026-08-28 11:22:00] - [FEAT] [SECURITY] [UI] - Filtro de SuperAdmin y Protección Flexibilizada de Roles del Sistema
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
