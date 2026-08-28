@@ -7,6 +7,39 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-28 12:18:00] - [FIX] [PWA] - Corrección Integral de Íconos PWA para Android (Chrome WebAPK) e iOS (Safari)
+
+#### 💬 Prompt Original del Usuario
+> "lo digo desde chorme tambi9en pasa lo probamos en android e igual no toma bien entonces reconsidera bien la respuesta completa."
+
+#### 🤖 Resumen Técnico para la IA
+- **Android Maskable Icon (Safe Zone Padding)**:
+  - Se regeneró `public/maskable-icon-512x512.png` aplicando un margen interno de seguridad del 25% (Safe Zone del W3C/Android WebAPK), escalando el logotipo al 75% centrado sobre el fondo institucional `#141f31`. Esto previene que los lanzadores adaptativos de Android (Samsung, Xiaomi, Pixel) recorten el logotipo o apliquen la marca de agua de Chrome.
+- **Configuración de PWA en `vite.config.ts`**:
+  - Se incluyó `apple-touch-icon.png` (180x180) dentro de la matriz `manifest.icons`.
+  - Se habilitó `devOptions: { enabled: true, type: 'module' }` para permitir la prueba directa de PWA en red local bajo desarrollo.
+  - Se expandió `includeAssets` con todos los recursos gráficos institucionales (`favicon.ico`, `favicon.png`, `favicon.svg`, `pwa-192x192.png`, `pwa-512x512.png`, `apple-touch-icon.png`, `maskable-icon-512x512.png`, `logo.png`, `logo-new.png`).
+- **Encabezados en `index.html`**:
+  - Se declaró explícitamente el `<link rel="manifest" href="/manifest.webmanifest" />`.
+  - Se definieron los enlaces `apple-touch-icon` universales (genérico base sin `sizes`, `180x180`, `152x152`, `167x167`, `120x120`, `precomposed`) con parámetro de versión de invalidación de caché `?v=0.0.39`.
+- **Servidores Web (`.htaccess`)**:
+  - Se añadió la directiva `AddType application/manifest+json .webmanifest` para soporte MIME nativo en Apache.
+
+#### 📦 Componentes Modificados
+- `public/maskable-icon-512x512.png` — Regenerado con Safe Zone del 25%
+- `public/apple-touch-icon.png` — 180x180 optimizado
+- `public/pwa-192x192.png` — 192x192
+- `public/pwa-512x512.png` — 512x512
+- `public/favicon.png` — 180x180
+- `index.html` — Enlaces universales a Apple Touch Icons y Manifest
+- `vite.config.ts` — Inclusión de `apple-touch-icon` en manifest, `devOptions` y assets completos
+- `public/.htaccess` — MIME mapping para `.webmanifest`
+- `.env` — Versión `0.0.39 Dev`
+
+#### ✅ Verificación y Compilación
+- `npm run build` → **0 Errores** (Precache: 30 entries generadas limpiamente).
+
+
 ### [2026-08-28 11:47:00] - [FIX] [PWA] - Corrección de Ícono de Pantalla de Inicio iOS (Apple Touch Icon)
 
 #### 💬 Prompt Original del Usuario

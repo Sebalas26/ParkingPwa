@@ -7,13 +7,20 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      injectRegister: 'auto',
+      devOptions: {
+        enabled: true,
+        type: 'module',
+      },
       includeAssets: [
+        'favicon.ico',
+        'favicon.png',
         'favicon.svg',
         'pwa-192x192.png',
         'pwa-512x512.png',
         'apple-touch-icon.png',
         'maskable-icon-512x512.png',
+        'logo.png',
+        'logo-new.png',
       ],
       manifest: {
         name: 'Parking Flow - Sistema de Gestión de Estacionamiento',
@@ -36,6 +43,12 @@ export default defineConfig({
           {
             src: '/pwa-512x512.png',
             sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any',
+          },
+          {
+            src: '/apple-touch-icon.png',
+            sizes: '180x180',
             type: 'image/png',
             purpose: 'any',
           },
