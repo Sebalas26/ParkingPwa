@@ -7,6 +7,31 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-27 22:02:00] - [BUGFIX] [UI/UX] [MOBILE] - Corrección Global Responsive de Modales y Diálogos (Solución Flexbox Scroll Loss & Safe-Areas)
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"Me podrias ayudar a dejar que todos los dialogos de mi pwa como por ejemplo la imagen que mostre se vean reponsive , si te das cuenta siempre entrecortan en la parte superior e inferior"*
+- **🤖 Resumen Técnico para la IA**:
+  1. **Solución Integral al Efecto "Flexbox Scroll Loss" con Formularios (`index.css`, `CompaniesPage.css`, `Settings.css`)**:
+     - Se añadió la regla `.modal-card > form, .modal-content > form, .modal-container > form { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden; height: 100%; width: 100%; }`.
+     - Esto garantiza que el tag `<form>` no actúe como bloque estático sin límite de altura, permitiendo que `.modal-body` gestione su scroll interno (`overflow-y: auto`) mientras que `.modal-header` y `.modal-footer` permanecen siempre fijos, visibles y accesibles en la pantalla.
+  2. **Adaptación a Dynamic Viewport (`100dvh`) y Safe-Areas (`index.css`, `CompaniesPage.css`, `Settings.css`)**:
+     - Se actualizaron todos los `.modal-overlay` a `z-index: 20000; inset: 0; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); overflow: hidden;`.
+     - Se limitaron las tarjetas modales a `max-height: calc(100dvh - max(32px, env(safe-area-inset-top) + env(safe-area-inset-bottom)))` (y `calc(100dvh - max(16px, ...))` en pantallas móviles), asegurando que ningún elemento quede tapado por las barras de navegación ni de herramientas de Safari iOS o Chrome Android.
+  3. **Disposición Fluida en Móvil de Grillas y Botones**:
+     - Se adaptaron `.form-grid-2` y `.form-row` a 1 columna en resoluciones `<= 768px`.
+     - Se configuró `.modal-footer` con `flex-wrap: wrap` y botones adaptables para que no se corten en anchos reducidos.
+  4. **Bump de Versión**:
+     - Actualizado `.env` a `0.0.20 Dev`.
+- **📦 Componentes Modificados**:
+  - `src/index.css`
+  - `src/features/companies/ui/CompaniesPage.css`
+  - `src/features/settings/ui/Settings.css`
+  - `.env`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript compilaron limpiamente en 1.39s).
+
 ### [2026-08-27 21:25:00] - [BUGFIX] [UI/UX] [MOBILE] - Corrección de Desbordamiento y Ajuste Responsive de Tarjetas en Dashboard Móvil
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
