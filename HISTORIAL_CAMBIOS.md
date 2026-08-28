@@ -7,6 +7,30 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-27 23:28:00] - [BUGFIX] [UI/UX] - Corrección de Cálculo Esperado en Caja y Mejora en Diálogo de Cierre de Turno
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"mejorar este dialog , porque no me deja ingresar el dinero y no calcula en las cifras de arriba"* (Captura de pantalla del modal Cierre y Liquidación de Turno con Base Inicial $50.000, Total Recaudado $0 y Esperado en Caja $0)
+- **🤖 Resumen Técnico para la IA**:
+  1. **Corrección de Cálculo de Dinero Esperado (`Caja.tsx`)**:
+     - Se reemplazó la coalescencia nula `0 ?? (base + recaudado)` por la evaluación `(target?.expectedCash && target.expectedCash > 0) ? target.expectedCash : (targetBase + targetCollected)`.
+     - Ahora la tarjeta superior *"TOTAL ESPERADO EN CAJA"* y la fila de resumen dentro del modal reflejan correctamente el valor consolidado de la base inicial más los recaudos en efectivo (ej. `$50.000`).
+  2. **Flexibilidad en Entrada de Efectivo Contado y Base**:
+     - Se ajustaron los estados a `number | string` permitiendo borrar con Backspace y tipear valores con fluidez sin bloqueos de `0`.
+  3. **Indicador de Cuadre de Caja en Tiempo Real**:
+     - Se integró un badge dinámico en el modal que compara reactivamente `Efectivo Físico Contado` vs `Esperado en Caja`, mostrando:
+       - `✓ Cuadre Exacto` ($0)
+       - `↑ Sobrante en Caja` (+monto)
+       - `↓ Faltante en Caja` (-monto)
+  4. **Bump de Versión**:
+     - Actualizado `.env` a `0.0.30 Dev`.
+- **📦 Componentes Modificados**:
+  - `src/features/caja/ui/Caja.tsx`
+  - `.env`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript compilaron en 1.79s).
+
 ### [2026-08-27 23:17:00] - [FEATURE] [API] [INTEGRATION] - Implementación de Salida de Vehículos (Check-Out) con Liquidación y Cobro
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:

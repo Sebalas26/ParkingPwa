@@ -305,7 +305,7 @@ export const Vehicles: React.FC = () => {
                         type="button"
                         className="btn-action primary"
                         style={{
-                          background: '#10b981',
+                          background: '#ef4444',
                           color: '#ffffff',
                           border: 'none',
                           padding: '6px 12px',

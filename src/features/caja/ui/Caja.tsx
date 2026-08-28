@@ -23,8 +23,8 @@ export const Caja: React.FC = () => {
   const [isOpenShiftModalOpen, setIsOpenShiftModalOpen] = useState(false);
   const [isCloseShiftModalOpen, setIsCloseShiftModalOpen] = useState(false);
   const [shiftToClose, setShiftToClose] = useState<WorkShiftDto | null>(null);
-  const [baseAmount, setBaseAmount] = useState(50000);
-  const [actualCashCounted, setActualCashCounted] = useState(0);
+  const [baseAmount, setBaseAmount] = useState<number | string>(50000);
+  const [actualCashCounted, setActualCashCounted] = useState<number | string>(50000);
   const [notes, setNotes] = useState('');
 
   useEffect(() => {
@@ -51,7 +51,7 @@ export const Caja: React.FC = () => {
   const handleOpenShift = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const newShift = await cajaService.openShift({ baseAmount: Number(baseAmount), notes });
+      const newShift = await cajaService.openShift({ baseAmount: Number(baseAmount) || 0, notes });
       setActiveShift(newShift);
       setIsOpenShiftModalOpen(false);
       setNotes('');
@@ -61,10 +61,17 @@ export const Caja: React.FC = () => {
     }
   };
 
+  // Cálculos estadísticos con fallback de propiedades C# y TS
+  const totalRecaudadoTurno = activeShift?.totalCashCollected ?? activeShift?.totalCollected ?? 0;
+  const baseInicialTurno = activeShift?.baseAmount ?? activeShift?.initialCashAmount ?? 0;
+  const totalEnCajaTurno = (activeShift?.expectedCash && activeShift.expectedCash > 0)
+    ? activeShift.expectedCash
+    : (baseInicialTurno + totalRecaudadoTurno);
+
   const handleOpenCloseShift = (shift: WorkShiftDto) => {
     const base = shift.baseAmount ?? shift.initialCashAmount ?? 0;
     const collected = shift.totalCashCollected ?? shift.totalCollected ?? 0;
-    const expected = shift.expectedCash ?? (base + collected);
+    const expected = (shift.expectedCash && shift.expectedCash > 0) ? shift.expectedCash : (base + collected);
 
     setShiftToClose(shift);
     setActualCashCounted(expected);
@@ -76,10 +83,11 @@ export const Caja: React.FC = () => {
     e.preventDefault();
     const target = shiftToClose || activeShift;
     if (!target) return;
+    const countedNumber = typeof actualCashCounted === 'string' ? (parseFloat(actualCashCounted) || 0) : (actualCashCounted || 0);
     try {
       await cajaService.closeShift({
         shiftId: target.shiftId,
-        actualCashCounted: Number(actualCashCounted),
+        actualCashCounted: countedNumber,
         notes,
       });
       if (activeShift?.shiftId === target.shiftId) {
@@ -93,11 +101,6 @@ export const Caja: React.FC = () => {
       alert(err?.message || 'No se pudo cerrar el turno.');
     }
   };
-
-  // Cálculos estadísticos con fallback de propiedades C# y TS
-  const totalRecaudadoTurno = activeShift?.totalCashCollected ?? activeShift?.totalCollected ?? 0;
-  const baseInicialTurno = activeShift?.baseAmount ?? activeShift?.initialCashAmount ?? 0;
-  const totalEnCajaTurno = activeShift?.expectedCash ?? (baseInicialTurno + totalRecaudadoTurno);
 
   // Filtrado de histórico
   const filteredHistorico = shiftHistory.filter((h) => {
@@ -401,8 +404,9 @@ export const Caja: React.FC = () => {
                     min="0"
                     step="1000"
                     className="input-field"
+                    placeholder="Ej. 50000"
                     value={baseAmount}
-                    onChange={(e) => setBaseAmount(Number(e.target.value))}
+                    onChange={(e) => setBaseAmount(e.target.value)}
                     required
                   />
                 </div>
@@ -436,8 +440,10 @@ export const Caja: React.FC = () => {
         const target = shiftToClose || activeShift;
         const targetBase = target ? (target.baseAmount ?? target.initialCashAmount ?? 0) : baseInicialTurno;
         const targetCollected = target ? (target.totalCashCollected ?? target.totalCollected ?? 0) : totalRecaudadoTurno;
-        const targetExpected = target ? (target.expectedCash ?? (targetBase + targetCollected)) : totalEnCajaTurno;
+        const targetExpected = (target?.expectedCash && target.expectedCash > 0) ? target.expectedCash : (targetBase + targetCollected);
         const targetOperator = target?.operatorName || 'Operador';
+        const countedNumber = typeof actualCashCounted === 'string' ? (parseFloat(actualCashCounted) || 0) : (actualCashCounted || 0);
+        const difference = countedNumber - targetExpected;
 
         return (
           <ModalPortal>
@@ -451,25 +457,59 @@ export const Caja: React.FC = () => {
               </div>
               <form onSubmit={handleCloseShift}>
                 <div className="modal-body">
-                  <div style={{ padding: '12px', background: 'var(--bg-body, var(--bg-main))', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.85rem' }}>
-                    <p style={{ margin: '0 0 4px 0' }}>Operador: <strong>{targetOperator}</strong></p>
-                    <p style={{ margin: '0 0 4px 0' }}>Base Inicial: <strong>${targetBase.toLocaleString()}</strong></p>
-                    <p style={{ margin: '0 0 4px 0' }}>Total Recaudado: <strong>${targetCollected.toLocaleString()}</strong></p>
-                    <p style={{ margin: 0, color: 'var(--primary-color)', fontWeight: 'bold' }}>Esperado en Caja: ${targetExpected.toLocaleString()}</p>
+                  <div style={{ padding: '14px', background: 'var(--bg-card, #ffffff)', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.88rem', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Operador:</span>
+                      <strong>{targetOperator}</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Base Inicial:</span>
+                      <strong>${targetBase.toLocaleString()}</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Total Recaudado:</span>
+                      <strong style={{ color: 'var(--primary-color)' }}>${targetCollected.toLocaleString()}</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px dashed var(--border-color)' }}>
+                      <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Esperado en Caja:</span>
+                      <strong style={{ color: '#10b981', fontSize: '1.05rem' }}>${targetExpected.toLocaleString()}</strong>
+                    </div>
                   </div>
 
-                  <div className="form-group" style={{ marginTop: '12px' }}>
-                    <label>Efectivo Físico Contado ($)</label>
+                  <div className="form-group" style={{ marginTop: '14px' }}>
+                    <label>Efectivo Físico Contado ($) *</label>
                     <input
                       type="number"
                       min="0"
+                      step="100"
                       className="input-field"
+                      placeholder="Ej. 50000"
                       value={actualCashCounted}
-                      onChange={(e) => setActualCashCounted(Number(e.target.value))}
+                      onChange={(e) => setActualCashCounted(e.target.value)}
                       required
+                      autoFocus
                     />
                   </div>
-                  <div className="form-group">
+
+                  {/* Indicador reactivo de Cuadre de Caja */}
+                  <div style={{
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    background: difference === 0 ? 'rgba(16, 185, 129, 0.1)' : difference > 0 ? 'rgba(59, 130, 246, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                    border: `1px solid ${difference === 0 ? 'rgba(16, 185, 129, 0.3)' : difference > 0 ? 'rgba(59, 130, 246, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                  }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: difference === 0 ? '#059669' : difference > 0 ? '#2563eb' : '#dc2626' }}>
+                      {difference === 0 ? '✓ Cuadre Exacto' : difference > 0 ? '↑ Sobrante en Caja' : '↓ Faltante en Caja'}:
+                    </span>
+                    <span style={{ fontSize: '1.05rem', fontWeight: 900, color: difference === 0 ? '#059669' : difference > 0 ? '#2563eb' : '#dc2626' }}>
+                      {difference === 0 ? '$0' : `${difference > 0 ? '+' : '-'}$${Math.abs(difference).toLocaleString()}`}
+                    </span>
+                  </div>
+
+                  <div className="form-group" style={{ marginTop: '12px' }}>
                     <label>Notas de Cierre / Novedades</label>
                     <input
                       type="text"
@@ -484,7 +524,7 @@ export const Caja: React.FC = () => {
                   <button type="button" className="btn-cancel" onClick={() => { setIsCloseShiftModalOpen(false); setShiftToClose(null); }}>
                     Cancelar
                   </button>
-                  <button type="submit" className="btn-primary" style={{ width: 'auto', background: 'var(--danger-color)' }}>
+                  <button type="submit" className="btn-primary" style={{ width: 'auto', background: 'var(--danger-color)', borderColor: 'var(--danger-color)' }}>
                     Cerrar y Liquidar Turno
                   </button>
                 </div>
