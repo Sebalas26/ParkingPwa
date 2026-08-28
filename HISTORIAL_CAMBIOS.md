@@ -7,6 +7,50 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-27 21:25:00] - [BUGFIX] [UI/UX] [MOBILE] - Corrección de Desbordamiento y Ajuste Responsive de Tarjetas en Dashboard Móvil
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"ajstuame esa card de ocupacion y capacidad de instalaciones y resumen de heviculos activos de la dashboard en la version mobile, ya que se ve cortada en la derecha"*
+- **🤖 Resumen Técnico para la IA**:
+  1. **Contención Estricta de Anchos y Grids (`Dashboard.css`)**:
+     - Se añadió `width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box;` a `.dashboard-container`, `.dashboard-main-grid` y `.dashboard-card`. Esto previene que el cálculo de `1fr` en el grid padre se expanda debido a anchos intrínsecos de componentes hijos.
+  2. **Scroll Horizontal Aislado en la Tabla de Vehículos Activos (`Dashboard.tsx`, `Dashboard.css`)**:
+     - Se envolvió la tabla `.active-stream-table` en un contenedor dedicado `.stream-table-wrapper` con `overflow-x: auto; width: 100%; max-width: 100%; min-width: 0; -webkit-overflow-scrolling: touch;`.
+     - Se configuró `min-width: 440px` en la tabla para mantener la legibilidad de todas las columnas ("PLACA / TIQUETE", "CATEGORÍA", "INGRESO", "ESTANCIA", "VER") con scroll lateral suave dentro de su tarjeta, evitando que desborde el layout de la pantalla móvil.
+  3. **Optimización de Píldoras de Ocupación y Grilla de Categorías (`Dashboard.css`)**:
+     - En `@media (max-width: 768px)` y `@media (max-width: 480px)`, se optimizó el padding de `.dashboard-card` (`1rem` / `0.85rem`) y `.occupancy-meter-container` (`0.9rem` / `0.75rem`).
+     - Se ajustó `.occupancy-stats-pills` con `gap: 6px`, `min-width: 0`, texto elipsado en etiquetas (`.occ-pill-label`) y valores numéricos adaptativos, evitando que la píldora de "DISPONIBLES" se corte en el extremo derecho.
+     - Se adaptó `.category-breakdown-grid` a `grid-template-columns: repeat(2, 1fr)` con `gap: 8px` para una distribución uniforme de 2x2.
+  4. **Clases CSS Responsivas para Secciones de Consolidado y Cajas (`Dashboard.tsx`, `Dashboard.css`)**:
+     - Se reemplazaron los estilos inline rígidos con `minmax(320px, ...)` por las clases `.consolidated-summary-card`, `.consolidated-summary-grid` y `.operator-shifts-grid`, garantizando que ninguna sección adyacente empuje el ancho del viewport en dispositivos móviles reducidos.
+  5. **Bump de Versión**:
+     - Actualizado `.env` a `0.0.19 Dev`.
+- **📦 Componentes Modificados**:
+  - `src/features/dashboard/ui/Dashboard.css`
+  - `src/features/dashboard/ui/Dashboard.tsx`
+  - `.env`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript compilaron exitosamente en 1.19s).
+
+### [2026-08-27 21:15:00] - [FEAT] [UI/UX] [MOBILE] - Eliminación Definitiva del Menú Inferior Móvil (Bottom Navigation Bar)
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"ayudame para que en el pwa en la version moblie, no se deja en ningun lado de la pwa este menu inferior"*
+- **🤖 Resumen Técnico para la IA**:
+  1. **Eliminación de `<nav className="bottom-nav-bar">` (`DashboardLayout.tsx`)**:
+     - Se removió por completo la barra de navegación inferior fija para móviles.
+     - Toda la navegación en móvil se centraliza de forma limpia y accesible a través del menú lateral tipo drawer (accesible desde el botón de menú hamburguesa `☰` en la cabecera superior).
+  2. **Ajuste de Estilos y Viewport Móvil (`DashboardLayout.css`)**:
+     - Se eliminaron las reglas CSS de `.bottom-nav-bar` y `.bottom-nav-item`.
+     - Se optimizó el `padding-bottom` de `.main-content` en dispositivos móviles (`@media (max-width: 768px)` y `@media (max-width: 480px)`), reemplazando el margen reservado de `calc(76px + env(safe-area-inset-bottom))` por un espaciado limpio `max(16px, env(safe-area-inset-bottom))`, evitando que se desaproveche espacio vertical o queden espacios en blanco innecesarios.
+- **📦 Componentes Modificados**:
+  - `src/shared/ui/DashboardLayout.tsx`
+  - `src/shared/ui/DashboardLayout.css`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript compilaron exitosamente).
+
 ### [2026-08-27 17:46:00] - [FEAT] [UI/UX] - Reemplazo de Logo en Login por logocompleto.jpg
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:

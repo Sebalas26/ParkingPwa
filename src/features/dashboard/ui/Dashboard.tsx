@@ -596,8 +596,8 @@ export const Dashboard: React.FC = () => {
           </span>
         </div>
 
-        <div style={{ background: 'var(--bg-card, #ffffff)', border: '1px solid var(--border-color, #e2e8f0)', borderRadius: '14px', padding: '18px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+        <div className="consolidated-summary-card">
+          <div className="consolidated-summary-grid">
             <div style={{ background: 'var(--bg-secondary, #f8fafc)', padding: '12px 16px', borderRadius: '10px', border: '1px solid var(--border-color, #e2e8f0)' }}>
               <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, display: 'block' }}>OCUPACIÓN GLOBAL</span>
               <strong style={{ fontSize: '1.15rem', color: 'var(--text-primary)' }}>{occupiedSpots} / {totalCapacity}</strong>
@@ -723,7 +723,7 @@ export const Dashboard: React.FC = () => {
                 <small style={{ fontSize: '0.78rem', color: '#64748b' }}>Los turnos de caja se sincronizan automáticamente al abrir o cerrar caja desde el módulo correspondiente.</small>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+              <div className="operator-shifts-grid">
                 {filteredShifts.map((caja) => (
                   <div
                     key={caja.id}
@@ -954,7 +954,7 @@ export const Dashboard: React.FC = () => {
           </div>
 
           {/* Tabla Stream */}
-          <div style={{ overflowX: 'auto', flex: 1 }}>
+          <div className="stream-table-wrapper">
             <table className="active-stream-table">
               <thead>
                 <tr>
