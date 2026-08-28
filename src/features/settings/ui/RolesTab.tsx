@@ -90,11 +90,21 @@ export const RolesTab: React.FC = () => {
     loadData();
   }, []);
 
+  const isSuperAdminRole = (role?: RoleDto | null): boolean => {
+    if (!role) return false;
+    const name = (role.roleName || role.role || role.name || '').trim().toLowerCase();
+    return name === 'super administrador' || name === 'super admin' || name === 'superadmin';
+  };
+
   const isAdminRole = (role?: RoleDto | null): boolean => {
     if (!role) return false;
     const roleId = role.idUserRol ?? role.id;
     const name = (role.roleName || role.role || role.name || '').trim().toLowerCase();
-    return roleId === 1 || name === 'administrador' || name === 'admin';
+    return (roleId === 1 || name === 'administrador' || name === 'admin') && !isSuperAdminRole(role);
+  };
+
+  const isProtectedSystemRole = (role?: RoleDto | null): boolean => {
+    return isSuperAdminRole(role) || isAdminRole(role);
   };
 
   // Clasificador de módulos por plataforma
@@ -121,6 +131,11 @@ export const RolesTab: React.FC = () => {
   };
 
   const handleOpenEditRole = (role: RoleDto) => {
+    if (isSuperAdminRole(role)) {
+      showToast('El rol Super Administrador es inmutable y no se puede editar.', 'warning');
+      return;
+    }
+
     const currentUser = authService.getCurrentUser();
     const isSuperAdmin = currentUser?.isSuperAdmin === true;
 
@@ -140,10 +155,19 @@ export const RolesTab: React.FC = () => {
     e.preventDefault();
     if (!editingRole || !editingRole.roleName?.trim()) return;
 
+    // Check if the edited role is Super Administrador based on current roleName
+    if (isSuperAdminRole({ roleName: editingRole.roleName, idUserRol: editingRole.idUserRol } as RoleDto)) {
+        showToast('No está permitido modificar el rol Super Administrador.', 'warning');
+        return;
+    }
+
     const currentUser = authService.getCurrentUser();
     const isSuperAdmin = currentUser?.isSuperAdmin === true;
 
-    if (editingRole.idUserRol === 1 && !isSuperAdmin) {
+    // We can't rely solely on editingRole.idUserRol === 1 anymore if we separated them.
+    // Let's assume if it was 1, it might have been Admin or SuperAdmin.
+    // If it is the Admin role being edited (and not SuperAdmin which is caught above), only SuperAdmin can save.
+    if ((editingRole.idUserRol === 1 || editingRole.roleName.toLowerCase().includes('admin')) && !isSuperAdmin) {
       showToast('No está permitido modificar el rol Administrador.', 'warning');
       return;
     }
@@ -330,10 +354,17 @@ export const RolesTab: React.FC = () => {
                 const roleId = r.idUserRol ?? r.id ?? 1;
                 const assignedCount = rolePermissionsMap[roleId]?.length || 0;
                 const roleTitle = r.roleName || r.role || r.name || `Rol #${roleId}`;
-                const isSystemAdmin = isAdminRole(r);
+                
+                const isRoleSuperAdmin = isSuperAdminRole(r);
+                const isRoleAdmin = isAdminRole(r);
+                const isProtected = isProtectedSystemRole(r);
+                
                 const currentUser = authService.getCurrentUser();
-                const isSuperAdmin = currentUser?.isSuperAdmin === true;
-                const isLockedForCurrentUser = isSystemAdmin && !isSuperAdmin;
+                const isUserSuperAdmin = currentUser?.isSuperAdmin === true;
+                
+                // El Super Administrador SIEMPRE está bloqueado para edición de permisos o configuración
+                // El Administrador está bloqueado a menos que el usuario logueado sea Super Administrador
+                const isLockedForCurrentUser = isRoleSuperAdmin || (isRoleAdmin && !isUserSuperAdmin);
 
                 return (
                   <tr key={roleId}>
@@ -345,18 +376,18 @@ export const RolesTab: React.FC = () => {
                             width: '32px',
                             height: '32px',
                             borderRadius: '8px',
-                            background: isSystemAdmin ? 'rgba(217, 119, 6, 0.12)' : 'rgba(7, 102, 94, 0.08)',
+                            background: isProtected ? 'rgba(217, 119, 6, 0.12)' : 'rgba(7, 102, 94, 0.08)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            color: isSystemAdmin ? '#d97706' : 'var(--primary-color, #07665e)',
+                            color: isProtected ? '#d97706' : 'var(--primary-color, #07665e)',
                           }}
                         >
-                          {isSystemAdmin ? <ShieldCheck size={16} /> : <Shield size={16} />}
+                          {isProtected ? <ShieldCheck size={16} /> : <Shield size={16} />}
                         </div>
                         <div>
                           <span className="font-bold">{roleTitle}</span>
-                          {isSystemAdmin && (
+                          {isProtected && (
                             <div style={{ fontSize: '0.72rem', color: '#d97706', fontWeight: 600 }}>
                               Rol Principal del Sistema
                             </div>
@@ -365,7 +396,7 @@ export const RolesTab: React.FC = () => {
                       </div>
                     </td>
                     <td style={{ whiteSpace: 'nowrap' }}>
-                      {isLockedForCurrentUser ? (
+                      {isProtected ? (
                         <span
                           className="badge"
                           style={{
