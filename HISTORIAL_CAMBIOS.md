@@ -7,6 +7,25 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-28 15:14:00] - [FEAT] [UI] - Visualización Clara de Transición de Versión en Modal de Actualización (vActual ➔ vNueva)
+
+#### 💬 Prompt Original del Usuario
+> "excelente funciono pero cuando aparece la modal de actualziación aparecea abajo la versión en la quye esta osea ahorita mande 0.0.42 pero me aparecia 0.0.41  entonces no es claro a que versión va a subir si me explico ?"
+
+#### 🤖 Resumen Técnico para la IA
+- **Visualización de Versión Destino (`UpdatePromptModal.tsx`)**:
+  - Se agregó el estado reactivo `serverVersion` que captura la versión reportada por `/version.json`.
+  - En la parte inferior de la modal, se reemplazó la etiqueta estática de versión previa por un indicador claro de progresión:
+    `v0.0.41 Dev ➔ v0.0.42 Dev` (con la versión destino resaltada en verde esmeralda `#10b981`).
+  - Si la versión textual es la misma pero el buildTime es nuevo (un parche/re-compilación), muestra la versión con el identificador del sistema.
+
+#### 📦 Componentes Modificados
+- `src/shared/ui/UpdatePromptModal.tsx` — Captura de `serverVersion` y diseño visual de transición
+
+#### ✅ Verificación y Compilación
+- `npm run build` → **0 Errores** (Precache: 31 entries generadas limpiamente).
+
+
 ### [2026-08-28 15:05:00] - [FIX] [PWA] - Corrección de Sincronización loadEnv en Vite y Criterio Estricto de Timestamp en Modal
 
 #### 💬 Prompt Original del Usuario

@@ -6,6 +6,7 @@ import './UpdatePromptModal.css';
 export const UpdatePromptModal: React.FC = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [hasNewVersion, setHasNewVersion] = useState(false);
+  const [serverVersion, setServerVersion] = useState<string>('');
   const localBuildTimeRef = useRef<number>(
     typeof __APP_BUILD_TIME__ === 'number' ? __APP_BUILD_TIME__ : Date.now()
   );
@@ -50,6 +51,10 @@ export const UpdatePromptModal: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         if (data && typeof data.buildTime === 'number') {
+          if (data.version) {
+            setServerVersion(data.version);
+          }
+
           // Un build es nuevo ÚNICAMENTE si el servidor tiene un timestamp posterior al de la app en memoria
           const isNewerBuild = data.buildTime > (localBuildTimeRef.current + 2000);
           const isNewerVersion = Boolean(
@@ -172,7 +177,15 @@ export const UpdatePromptModal: React.FC = () => {
 
         <div className="update-version-tag">
           <ShieldCheck size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
-          Parking Flow PWA • v{currentAppVersion}
+          {serverVersion && serverVersion !== currentAppVersion ? (
+            <>
+              <span>v{currentAppVersion}</span>
+              <span style={{ margin: '0 6px', color: '#10b981' }}>➔</span>
+              <strong style={{ color: '#10b981', fontWeight: 700 }}>v{serverVersion}</strong>
+            </>
+          ) : (
+            <span>Parking Flow PWA • v{serverVersion || currentAppVersion}</span>
+          )}
         </div>
       </div>
     </div>
