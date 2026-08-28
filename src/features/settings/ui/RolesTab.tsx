@@ -158,7 +158,10 @@ export const RolesTab: React.FC = () => {
   };
 
   const handleOpenPermissionsModal = (role: RoleDto) => {
-    if (isAdminRole(role)) {
+    const currentUser = authService.getCurrentUser();
+    const isSuperAdmin = currentUser?.isSuperAdmin === true;
+
+    if (isAdminRole(role) && !isSuperAdmin) {
       showToast('El rol Administrador cuenta automáticamente con el 100% de los permisos del sistema.', 'warning');
       return;
     }
@@ -226,7 +229,11 @@ export const RolesTab: React.FC = () => {
 
   const handleSavePermissions = async () => {
     if (!targetRole) return;
-    if (isAdminRole(targetRole)) {
+    
+    const currentUser = authService.getCurrentUser();
+    const isSuperAdmin = currentUser?.isSuperAdmin === true;
+
+    if (isAdminRole(targetRole) && !isSuperAdmin) {
       showToast('No está permitido modificar los permisos del Administrador.', 'warning');
       return;
     }

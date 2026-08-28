@@ -7,6 +7,21 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-28 08:52:00] - [FEAT] [SECURITY] - Permiso de Edición del Rol Administrador Exclusivo para SuperAdmin
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"Cuando estoy en el usuario con rol superadministrador, no me permite modificar los permisos del administrador, me lo puedes ajustar para que lo permita , adicional que si ingresa el usuario con el rol administrador, ahi si no permita"*
+- **🤖 Resumen Técnico para la IA**:
+  1. Se modificó [`RolesTab.tsx`](file:///c:/Users/sebastianredondo/Documents/pwa/ParkingPwa/src/features/settings/ui/RolesTab.tsx) para condicionar las restricciones del rol `Administrador`.
+  2. En `handleOpenPermissionsModal` y `handleSavePermissions`, ahora se valida si el usuario autenticado (`authService.getCurrentUser()`) tiene `isSuperAdmin === true`.
+  3. Si es SuperAdmin, se le permite abrir y guardar los permisos asignados al rol `Administrador` (permitiendo su personalización).
+  4. Si es un usuario administrador estándar (u otro rol diferente a SuperAdmin), se mantiene el bloqueo de seguridad impidiéndole alterar los privilegios del rol `Administrador`.
+- **📦 Componentes Modificados**:
+  - `src/features/settings/ui/RolesTab.tsx`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript).
+
 ### [2026-08-28 08:00:00] - [SECURITY] [RBAC] [MULTI-TENANT] - Aislamiento Estricto de SuperAdmin vs Administrador Tenant y Desacoplamiento de Roles Quemados
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
