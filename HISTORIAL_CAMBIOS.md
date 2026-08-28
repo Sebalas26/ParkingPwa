@@ -7,6 +7,35 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-28 11:47:00] - [FIX] [PWA] - Corrección de Ícono de Pantalla de Inicio iOS (Apple Touch Icon)
+
+#### 💬 Prompt Original del Usuario
+> "Ajustame para que cuando mi pwa la agrege al inicio de mi iphone se vea el logo como te muestro en la primera imagen, dejamela con el logo.png"
+
+#### 🤖 Resumen Técnico para la IA
+- El `apple-touch-icon.png` anterior era una imagen diferente al logo oficial (`logo.png`).
+- Se regeneraron **todos** los íconos PWA a partir de `logo.png` usando `sharp-cli resize`:
+  - `apple-touch-icon.png` → 180x180 (ícono que iOS usa para la pantalla de inicio)
+  - `pwa-192x192.png` → 192x192
+  - `pwa-512x512.png` → 512x512
+  - `maskable-icon-512x512.png` → 512x512
+  - `favicon.png` → 180x180
+- Se actualizó `index.html` línea 21: se agregó `sizes="180x180"` al `<link rel="apple-touch-icon">` para que iOS seleccione el ícono correcto.
+- La configuración del manifest en `vite.config.ts` ya estaba correcta apuntando a los archivos correctos.
+
+#### 📦 Componentes Modificados
+- `public/apple-touch-icon.png` — Regenerado desde `logo.png` (180x180)
+- `public/pwa-192x192.png` — Regenerado desde `logo.png` (192x192)
+- `public/pwa-512x512.png` — Regenerado desde `logo.png` (512x512)
+- `public/maskable-icon-512x512.png` — Regenerado desde `logo.png` (512x512)
+- `public/favicon.png` — Regenerado desde `logo.png` (180x180)
+- `index.html` — Agregado `sizes="180x180"` al apple-touch-icon link
+
+#### ✅ Verificación y Compilación
+- `npm run build` → **0 Errores** ✅
+- PWA precache: 26 entries generadas correctamente
+
+
 ### [2026-08-28 11:34:00] - [FEAT] [UI] - Reemplazo de Iconos de Inicio y Apple Touch Icon con el Nuevo Logotipo
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
