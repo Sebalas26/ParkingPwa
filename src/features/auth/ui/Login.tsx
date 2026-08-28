@@ -84,9 +84,6 @@ export const Login: React.FC = () => {
       <div className="login-form-side">
         {/* Barra superior estilo ventana WPF (Desktop) */}
         <div className="form-side-top-bar">
-          <div className="api-online-pill">
-            <span className="api-dot"></span> API Central Online
-          </div>
           <div className="window-controls">
             <button type="button" className="win-btn win-min" tabIndex={-1} aria-label="Minimizar" onClick={() => window.blur()}>
               <svg viewBox="0 0 10 1" width="10" height="1"><rect width="10" height="1" fill="currentColor" /></svg>

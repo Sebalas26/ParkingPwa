@@ -156,27 +156,6 @@ export const DashboardLayout: React.FC = () => {
             </button>
           ) : (
             <>
-              {/* Si es SuperAdmin en modo inspección, botón destacado para salir */}
-              {user?.isSuperAdmin && inspectedCompany && (
-                <button
-                  type="button"
-                  className="nav-item"
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.15)',
-                    color: '#ffffff',
-                    marginBottom: '8px',
-                    border: '1px solid rgba(255, 255, 255, 0.25)',
-                    fontWeight: 700
-                  }}
-                  onClick={() => {
-                    stopInspectingCompany();
-                    handleNavigate('/dashboard/companies');
-                  }}
-                  title="Volver al catálogo global de empresas SaaS"
-                >
-                </button>
-              )}
-
               {authService.hasPermission('dashboard.view') && (
                 <button
                   type="button"

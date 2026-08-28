@@ -138,20 +138,20 @@ export const Caja: React.FC = () => {
   };
 
   return (
-    <div className="caja-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', minHeight: '100%', paddingBottom: '2rem' }}>
-      <div className="caja-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+    <div className="caja-container">
+      <div className="caja-header">
+        <div className="caja-header-info">
+          <div className="caja-header-title-row">
             <h1>Monitoreo y Control de Caja</h1>
-            <span className="badge badge-success" style={{ background: 'rgba(37, 99, 235, 0.12)', color: 'var(--primary-color)', fontSize: '0.82rem', padding: '4px 8px' }}>
-              <Building size={12} style={{ marginRight: 4 }} />
+            <span className="caja-branch-badge">
+              <Building size={14} />
               {selectedParqueadero ? selectedParqueadero.name : '🌐 Todos los Parqueaderos'}
             </span>
           </div>
-          <p className="text-muted" style={{ margin: 0, fontSize: '0.9rem' }}>Gestión en tiempo real de apertura, turnos y recaudación del sistema POS.</p>
+          <p className="caja-subtitle">Gestión en tiempo real de apertura, turnos y recaudación del sistema POS.</p>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div className="caja-header-actions">
           {!activeShift && authService.hasPermission('shift.open') && (
             <button className="btn-primary" style={{ width: 'auto' }} onClick={() => setIsOpenShiftModalOpen(true)}>
               <Plus size={16} /> Abrir Turno de Caja
@@ -174,11 +174,11 @@ export const Caja: React.FC = () => {
         </div>
       )}
 
-      {/* Tarjetas Superiores */}
+      {/* Tarjetas Superiores Elásticas */}
       <div className="caja-stats-grid">
         <div className="caja-stat-card">
           <div className="caja-stat-icon blue">
-            <Users size={24} />
+            <Users size={22} />
           </div>
           <div className="caja-stat-info">
             <h3>Estado Turno Operador</h3>
@@ -194,7 +194,7 @@ export const Caja: React.FC = () => {
 
         <div className="caja-stat-card">
           <div className="caja-stat-icon green">
-            <ArrowUpRight size={24} />
+            <ArrowUpRight size={22} />
           </div>
           <div className="caja-stat-info">
             <h3>Ingresos Recaudados (Turno)</h3>
@@ -204,7 +204,7 @@ export const Caja: React.FC = () => {
 
         <div className="caja-stat-card">
           <div className="caja-stat-icon purple">
-            <Wallet size={24} />
+            <Wallet size={22} />
           </div>
           <div className="caja-stat-info">
             <h3>Total Esperado en Caja</h3>
@@ -213,92 +213,94 @@ export const Caja: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabla de Caja Activa */}
-      <div className="table-card">
-        <div className="section-header" style={{ padding: '24px 24px 0 24px' }}>
+      {/* Tabla de Caja Activa con Scroll Protegido */}
+      <div className="caja-table-card">
+        <div className="caja-table-header">
           <h2>Turno de Caja Activo</h2>
         </div>
-        <table className="data-table" style={{ minWidth: '650px' }}>
-          <thead>
-            <tr>
-              <th>USUARIO (OPERADOR)</th>
-              <th className="text-center">ESTADO</th>
-              <th>HORA APERTURA</th>
-              <th className="text-right">BASE INICIAL</th>
-              <th className="text-right">INGRESOS POS</th>
-              <th className="text-right">TOTAL EN CAJA</th>
-              <th className="text-right">ACCIONES</th>
-            </tr>
-          </thead>
-          <tbody>
-            {activeShift ? (
+        <div className="caja-table-wrapper">
+          <table className="caja-table">
+            <thead>
               <tr>
-                <td className="font-bold">{activeShift.operatorName}</td>
-                <td className="text-center">
-                  <span className="caja-status-badge status-open" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', fontSize: '0.75rem' }}>
-                    <CheckCircle size={12} /> Abierta
-                  </span>
-                </td>
-                <td className="text-muted">
-                  {activeShift.startTimeUtc || activeShift.openedAtUtc
-                    ? new Date(activeShift.startTimeUtc || activeShift.openedAtUtc!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                    : '--'}
-                </td>
-                <td className="text-right text-muted">$ {(activeShift.baseAmount ?? activeShift.initialCashAmount ?? 0).toLocaleString()}</td>
-                <td className="text-right text-muted">$ {(activeShift.totalCashCollected ?? activeShift.totalCollected ?? 0).toLocaleString()}</td>
-                <td className="text-right font-bold text-primary">
-                  $ {totalEnCajaTurno.toLocaleString()}
-                </td>
-                <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
-                  {(authService.hasPermission('shift.close') || authService.hasPermission('shifts.close')) && (
-                    <button
-                      type="button"
-                      className="btn-action"
-                      style={{
-                        background: '#ef4444',
-                        color: '#ffffff',
-                        border: 'none',
-                        padding: '5px 12px',
-                        borderRadius: '6px',
-                        fontSize: '0.78rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                      }}
-                      onClick={() => handleOpenCloseShift(activeShift)}
-                      title="Cerrar este turno"
-                    >
-                      <LogOut size={13} /> Cerrar Caja
-                    </button>
-                  )}
-                </td>
+                <th>USUARIO (OPERADOR)</th>
+                <th className="text-center">ESTADO</th>
+                <th>HORA APERTURA</th>
+                <th className="text-right">BASE INICIAL</th>
+                <th className="text-right">INGRESOS POS</th>
+                <th className="text-right">TOTAL EN CAJA</th>
+                <th className="text-right">ACCIONES</th>
               </tr>
-            ) : (
-              <tr>
-                <td colSpan={7} style={{ textAlign: 'center', padding: '24px', color: 'var(--text-secondary)' }}>
-                  No tienes un turno de caja abierto en este momento. Haz clic en "Abrir Turno de Caja" para comenzar a operar.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {activeShift ? (
+                <tr>
+                  <td style={{ fontWeight: 700 }}>{activeShift.operatorName}</td>
+                  <td className="text-center">
+                    <span className="caja-status-badge status-open">
+                      <CheckCircle size={12} /> Abierta
+                    </span>
+                  </td>
+                  <td style={{ color: 'var(--text-secondary)' }}>
+                    {activeShift.startTimeUtc || activeShift.openedAtUtc
+                      ? new Date(activeShift.startTimeUtc || activeShift.openedAtUtc!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      : '--'}
+                  </td>
+                  <td className="text-right" style={{ color: 'var(--text-secondary)' }}>$ {(activeShift.baseAmount ?? activeShift.initialCashAmount ?? 0).toLocaleString()}</td>
+                  <td className="text-right" style={{ color: 'var(--text-secondary)' }}>$ {(activeShift.totalCashCollected ?? activeShift.totalCollected ?? 0).toLocaleString()}</td>
+                  <td className="text-right" style={{ fontWeight: 800, color: 'var(--primary-color)' }}>
+                    $ {totalEnCajaTurno.toLocaleString()}
+                  </td>
+                  <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
+                    {(authService.hasPermission('shift.close') || authService.hasPermission('shifts.close')) && (
+                      <button
+                        type="button"
+                        className="btn-action"
+                        style={{
+                          background: '#ef4444',
+                          color: '#ffffff',
+                          border: 'none',
+                          padding: '5px 12px',
+                          borderRadius: '6px',
+                          fontSize: '0.78rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}
+                        onClick={() => handleOpenCloseShift(activeShift)}
+                        title="Cerrar este turno"
+                      >
+                        <LogOut size={13} /> Cerrar Caja
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ) : (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: '24px', color: 'var(--text-secondary)' }}>
+                    No tienes un turno de caja abierto en este momento. Haz clic en "Abrir Turno de Caja" para comenzar a operar.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* Sección Histórico y Exportación */}
-      <div className="table-card">
-        <div className="section-header" style={{ padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+      {/* Sección Histórico y Exportación con Scroll Protegido */}
+      <div className="caja-table-card">
+        <div className="caja-table-header">
           <h2>Historial Consolidado de Cajas</h2>
 
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div className="caja-filters-group">
             {/* Filtros */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-body, var(--bg-main))', padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-              <User size={16} className="text-muted" />
+            <div className="caja-filter-box">
+              <User size={15} style={{ color: 'var(--text-secondary)' }} />
               <select
                 value={filterUser}
                 onChange={(e) => setFilterUser(e.target.value)}
-                style={{ border: 'none', background: 'transparent', outline: 'none', color: 'var(--text-primary)', fontSize: '0.9rem' }}
+                aria-label="Filtrar por operador"
               >
                 <option value="Todos">Todos los operadores</option>
                 {uniqueOperators.map((op) => (
@@ -307,100 +309,102 @@ export const Caja: React.FC = () => {
               </select>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-body, var(--bg-main))', padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-              <Calendar size={16} className="text-muted" />
+            <div className="caja-filter-box">
+              <Calendar size={15} style={{ color: 'var(--text-secondary)' }} />
               <input
                 type="date"
                 value={filterDate}
                 onChange={(e) => setFilterDate(e.target.value)}
-                style={{ border: 'none', background: 'transparent', outline: 'none', color: 'var(--text-primary)', fontSize: '0.9rem' }}
+                aria-label="Filtrar por fecha"
               />
             </div>
 
             {/* Botón Exportar */}
             {authService.hasPermission('shift.history') && (
-              <button className="btn-action primary" onClick={exportToExcel} style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Download size={16} /> Exportar Excel
+              <button className="btn-action primary" onClick={exportToExcel} style={{ padding: '7px 14px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Download size={15} /> Exportar Excel
               </button>
             )}
           </div>
         </div>
 
-        <table className="data-table" style={{ minWidth: '700px' }}>
-          <thead>
-            <tr>
-              <th>FECHA APERTURA</th>
-              <th>OPERADOR</th>
-              <th>HORARIO</th>
-              <th className="text-right">BASE INICIAL</th>
-              <th className="text-right">TOTAL RECAUDADO</th>
-              <th className="text-center">ESTADO</th>
-              <th className="text-right">ACCIONES</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredHistorico.length > 0 ? (
-              filteredHistorico.map((h) => {
-                const start = h.startTimeUtc || h.openedAtUtc || h.createdAtUtc;
-                const end = h.endTimeUtc || h.closedAtUtc;
-                const base = h.baseAmount ?? h.initialCashAmount ?? 0;
-                const collected = h.totalCashCollected ?? h.totalCollected ?? 0;
-                const isClosed = Boolean(end) || h.status === 1 || h.status === 'Closed';
-
-                return (
-                  <tr key={h.shiftId}>
-                    <td className="font-bold text-muted" style={{ whiteSpace: 'nowrap' }}>
-                      {start ? new Date(start).toLocaleDateString() : '--'}
-                    </td>
-                    <td className="font-bold" style={{ whiteSpace: 'nowrap' }}>{h.operatorName}</td>
-                    <td className="text-muted" style={{ whiteSpace: 'nowrap' }}>
-                      {start ? new Date(start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'} -{' '}
-                      {end ? new Date(end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Abierto'}
-                    </td>
-                    <td className="text-right text-muted" style={{ whiteSpace: 'nowrap' }}>$ {base.toLocaleString()}</td>
-                    <td className="text-right font-bold text-primary" style={{ whiteSpace: 'nowrap' }}>$ {collected.toLocaleString()}</td>
-                    <td className="text-center" style={{ whiteSpace: 'nowrap' }}>
-                      <span className={`caja-status-badge ${isClosed ? 'status-closed' : 'status-open'}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', fontSize: '0.75rem' }}>
-                        {isClosed ? <XCircle size={12} /> : <CheckCircle size={12} />} {isClosed ? 'Cerrado' : 'Abierto'}
-                      </span>
-                    </td>
-                    <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
-                      {!isClosed && (authService.hasPermission('shift.close') || authService.hasPermission('shifts.close')) && (
-                        <button
-                          type="button"
-                          className="btn-action"
-                          style={{
-                            background: '#ef4444',
-                            color: '#ffffff',
-                            border: 'none',
-                            padding: '5px 10px',
-                            borderRadius: '6px',
-                            fontSize: '0.78rem',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                          }}
-                          onClick={() => handleOpenCloseShift(h)}
-                          title="Cerrar esta caja"
-                        >
-                          <LogOut size={13} /> Cerrar Caja
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
+        <div className="caja-table-wrapper">
+          <table className="caja-table">
+            <thead>
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
-                  {isLoading ? 'Cargando historial...' : 'No hay registros históricos para los filtros seleccionados.'}
-                </td>
+                <th>FECHA APERTURA</th>
+                <th>OPERADOR</th>
+                <th>HORARIO</th>
+                <th className="text-right">BASE INICIAL</th>
+                <th className="text-right">TOTAL RECAUDADO</th>
+                <th className="text-center">ESTADO</th>
+                <th className="text-right">ACCIONES</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredHistorico.length > 0 ? (
+                filteredHistorico.map((h) => {
+                  const start = h.startTimeUtc || h.openedAtUtc || h.createdAtUtc;
+                  const end = h.endTimeUtc || h.closedAtUtc;
+                  const base = h.baseAmount ?? h.initialCashAmount ?? 0;
+                  const collected = h.totalCashCollected ?? h.totalCollected ?? 0;
+                  const isClosed = Boolean(end) || h.status === 1 || h.status === 'Closed';
+
+                  return (
+                    <tr key={h.shiftId}>
+                      <td style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>
+                        {start ? new Date(start).toLocaleDateString() : '--'}
+                      </td>
+                      <td style={{ fontWeight: 700 }}>{h.operatorName}</td>
+                      <td style={{ color: 'var(--text-secondary)' }}>
+                        {start ? new Date(start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'} -{' '}
+                        {end ? new Date(end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Abierto'}
+                      </td>
+                      <td className="text-right" style={{ color: 'var(--text-secondary)' }}>$ {base.toLocaleString()}</td>
+                      <td className="text-right" style={{ fontWeight: 800, color: 'var(--primary-color)' }}>$ {collected.toLocaleString()}</td>
+                      <td className="text-center">
+                        <span className={`caja-status-badge ${isClosed ? 'status-closed' : 'status-open'}`}>
+                          {isClosed ? <XCircle size={12} /> : <CheckCircle size={12} />} {isClosed ? 'Cerrado' : 'Abierto'}
+                        </span>
+                      </td>
+                      <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
+                        {!isClosed && (authService.hasPermission('shift.close') || authService.hasPermission('shifts.close')) && (
+                          <button
+                            type="button"
+                            className="btn-action"
+                            style={{
+                              background: '#ef4444',
+                              color: '#ffffff',
+                              border: 'none',
+                              padding: '5px 10px',
+                              borderRadius: '6px',
+                              fontSize: '0.78rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                            onClick={() => handleOpenCloseShift(h)}
+                            title="Cerrar esta caja"
+                          >
+                            <LogOut size={13} /> Cerrar Caja
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
+                    {isLoading ? 'Cargando historial...' : 'No hay registros históricos para los filtros seleccionados.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Modal Abrir Turno */}

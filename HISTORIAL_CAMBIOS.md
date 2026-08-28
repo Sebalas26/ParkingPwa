@@ -7,6 +7,87 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-27 22:58:00] - [UI/UX] - Centrado de Encabezado de Login y Eliminación de Píldora API Central Online
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"eleimina el boton de API Central Online , tambien requiero que el logo-new y Iniciar Sesión queden gravity central"*
+- **🤖 Resumen Técnico para la IA**:
+  1. **Eliminación de Elemento API Central Online (`Login.tsx`, `Login.css`)**:
+     - Se removió la píldora `<div className="api-online-pill">` de la barra superior.
+     - Se ajustó `.form-side-top-bar` con `justify-content: flex-end;` para mantener los controles de ventana situados en la esquina superior derecha.
+  2. **Centrado del Encabezado (*Gravity Central*) (`Login.css`)**:
+     - Se configuró `.form-header-box` con alineación flexible centrada (`display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;`).
+     - Se centraron geométricamente `.form-top-logo`, `.form-title` y `.form-subtitle` con `margin: 0 auto; text-align: center;`.
+  3. **Bump de Versión**:
+     - Actualizado `.env` a `0.0.26 Dev`.
+- **📦 Componentes Modificados**:
+  - `src/features/auth/ui/Login.tsx`
+  - `src/features/auth/ui/Login.css`
+  - `.env`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript compilaron en 1.87s).
+
+### [2026-08-27 22:55:00] - [UI/UX] [THEME] - Actualización del Color del Menú Lateral a #2a2b2c
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"quiero que ese menu lateral tenga por color #2a2b2c"*
+- **🤖 Resumen Técnico para la IA**:
+  1. **Actualización de Variables de Color del Sidebar (`index.css`, `DashboardLayout.css`)**:
+     - Se actualizó `--bg-sidebar: #2a2b2c;` en `:root` y en `.dashboard-layout` dentro de `src/index.css`.
+     - Se actualizó el fallback de `.sidebar` en `src/shared/ui/DashboardLayout.css` a `background: var(--bg-sidebar, #2a2b2c);`.
+     - La marca de agua vectorial y los contrastes de navegación heredan reactivamente la variable `--bg-sidebar`.
+  2. **Bump de Versión**:
+     - Actualizado `.env` a `0.0.25 Dev`.
+- **📦 Componentes Modificados**:
+  - `src/index.css`
+  - `src/shared/ui/DashboardLayout.css`
+  - `.env`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript compilaron en 1.69s).
+
+### [2026-08-27 22:51:00] - [BUGFIX] [UI/UX] - Eliminación del Botón Invisible en el Menú Lateral
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"en el menu desplegable veo que queda un boton invisible , te lo señale en rojo , eliminalo"* (Captura con el recuadro vacío/invisible sobre el botón de Dashboard)
+- **🤖 Resumen Técnico para la IA**:
+  1. **Diagnóstico y Corrección en `DashboardLayout.tsx`**:
+     - Existía un condicional `{user?.isSuperAdmin && inspectedCompany && (<button className="nav-item" ...></button>)}` sin texto ni icono dentro de `<nav className="nav-menu">`.
+     - Esto generaba un botón fantasma/invisible con borde y fondo translúcido antes del botón de *Dashboard*.
+     - Se eliminó dicho bloque de código, dado que la salida del modo inspección se gestiona de forma oficial y destacada en el banner superior `.impersonation-bar`.
+  2. **Bump de Versión**:
+     - Actualizado `.env` a `0.0.24 Dev`.
+- **📦 Componentes Modificados**:
+  - `src/shared/ui/DashboardLayout.tsx`
+  - `.env`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript compilaron en 1.69s).
+
+### [2026-08-27 22:49:00] - [BUGFIX] [UI/UX] [MOBILE] - Adaptación Elástica, Wrap-Content y Scroll Aislado en Monitoreo y Control de Caja
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"en monitoreo y control de caja veo que las cards que te señale en amarillo tienen un tamaño fijo y no son wrap content , adicional en la version mobile no se ven lo que te señale en amarillo"*
+- **🤖 Resumen Técnico para la IA**:
+  1. **Cards Elásticas con Auto-Ajuste / Wrap Content (`Caja.tsx`, `Caja.css`)**:
+     - Se rediseñó `.caja-stats-grid` como grilla elástica (`repeat(auto-fit, minmax(220px, 1fr))` y `1fr` en pantallas móviles) con `width: 100%`, `min-width: 0` y `box-sizing: border-box`.
+     - Las tarjetas `.caja-stat-card` ahora ajustan su contenido fluidamente con `.caja-stat-info` elástica (`word-break: break-word;` y padding compacto de 12px 14px en móvil), previniendo cualquier desbordamiento o tamaño rígido.
+  2. **Scroll Lateral Aislado en Tablas de Caja (`.caja-table-wrapper`)**:
+     - Se encapsularon ambas tablas (*Turno de Caja Activo* e *Historial Consolidado de Cajas*) dentro de `<div className="caja-table-wrapper">` con `overflow-x: auto; -webkit-overflow-scrolling: touch;`.
+     - Esto evita que los `min-width: 640px` de las tablas expandan el contenedor maestro a más de 700px, protegiendo las columnas derechas (Totales en Caja, Botones Cerrar Turno, Estado, Acciones) de quedar cortadas u ocultas fuera de la pantalla en dispositivos móviles.
+  3. **Barra de Filtros y Header Adaptables**:
+     - Se reorganizó la barra de filtros con `.caja-filters-group` y `.caja-filter-box` para que los selectores de operador, fecha y el botón de exportación a Excel se alineen y se ajusten al ancho de pantalla en smartphones sin desbordar.
+  4. **Bump de Versión**:
+     - Actualizado `.env` a `0.0.23 Dev`.
+- **📦 Componentes Modificados**:
+  - `src/features/caja/ui/Caja.css`
+  - `src/features/caja/ui/Caja.tsx`
+  - `.env`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript compilaron en 10.77s).
+
 ### [2026-08-27 22:38:00] - [BUGFIX] [UI/UX] [MOBILE] - Rediseño Responsive y Ajuste Visual del Centro de Reportes Financieros y Operativos
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:
