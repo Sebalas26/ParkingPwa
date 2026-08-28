@@ -25,15 +25,25 @@ const getAuthHeaders = (): HeadersInit => {
   return headers;
 };
 
-const handleResponse = async <T>(response: Response): Promise<T> => {
-  if (response.status === 401) {
-    // Si recibimos un 401, limpiamos la sesión y redirigimos al login con aviso
+const handleResponse = async <T>(response: Response, endpoint: string = ''): Promise<T> => {
+  const isLoginEndpoint = endpoint.toLowerCase().includes('/auth/login');
+  const hadActiveSession = Boolean(localStorage.getItem('auth_token'));
+
+  if (response.status === 401 && !isLoginEndpoint) {
+    // Si recibimos un 401 en una petición protegida, limpiamos la sesión
     localStorage.removeItem('auth_token');
     localStorage.removeItem('auth_user');
-    sessionStorage.setItem('session_terminated_reason', 'Tu sesión fue cerrada automáticamente porque se inició sesión con esta cuenta desde otro dispositivo o estación de trabajo.');
-    
-    if (window.location.pathname !== '/' || !window.location.search.includes('expired=concurrent')) {
-      window.location.href = '/?expired=concurrent';
+
+    // Solo si el usuario tenía una sesión autenticada activa, mostramos el aviso de concurrencia/expiración
+    if (hadActiveSession) {
+      sessionStorage.setItem(
+        'session_terminated_reason',
+        'Tu sesión fue cerrada automáticamente porque se inició sesión con esta cuenta desde otro dispositivo o estación de trabajo.'
+      );
+
+      if (window.location.pathname !== '/' || !window.location.search.includes('expired=concurrent')) {
+        window.location.href = '/?expired=concurrent';
+      }
     }
   }
 
@@ -76,7 +86,7 @@ export const apiClient = {
       headers: getAuthHeaders(),
     });
 
-    return handleResponse<T>(response);
+    return handleResponse<T>(response, endpoint);
   },
 
   post: async <T>(endpoint: string, body?: any): Promise<T> => {
@@ -87,7 +97,7 @@ export const apiClient = {
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
 
-    return handleResponse<T>(response);
+    return handleResponse<T>(response, endpoint);
   },
 
   put: async <T>(endpoint: string, body?: any): Promise<T> => {
@@ -98,7 +108,7 @@ export const apiClient = {
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
 
-    return handleResponse<T>(response);
+    return handleResponse<T>(response, endpoint);
   },
 
   patch: async <T>(endpoint: string, body?: any): Promise<T> => {
@@ -109,7 +119,7 @@ export const apiClient = {
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
 
-    return handleResponse<T>(response);
+    return handleResponse<T>(response, endpoint);
   },
 
   delete: async <T>(endpoint: string): Promise<T> => {
@@ -119,6 +129,6 @@ export const apiClient = {
       headers: getAuthHeaders(),
     });
 
-    return handleResponse<T>(response);
+    return handleResponse<T>(response, endpoint);
   },
 };

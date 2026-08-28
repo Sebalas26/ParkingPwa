@@ -7,6 +7,26 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-28 15:32:00] - [FIX] [AUTH] - Corrección de Error 401 en Login (Diferenciación de Credenciales Inválidas vs Concurrencia)
+
+#### 💬 Prompt Original del Usuario
+> "otra cosa si coloco mal la contraseña o algo siempre sale el mensaje arriba de usuario  Tu sesion fue cerrada por que inicio sesion con esta cuenta desde otro dispositivo o estacion de trabajo eos no tiene nada que ver con escribir mal la cuenta ese mensaje es solo cuadno de verdad se cierre por que alguien accedio si me explico  ? analisa eso."
+
+#### 🤖 Resumen Técnico para la IA
+1. **Diferenciación de Rutas en `handleResponse` (`src/shared/api/apiClient.ts`)**:
+   - Anteriormente, cualquier respuesta `HTTP 401 Unauthorized` interceptada por el cliente HTTP guardaba en `sessionStorage` el mensaje `Tu sesión fue cerrada automáticamente porque se inició sesión con esta cuenta desde otro dispositivo...` y redirigía a `/?expired=concurrent`.
+   - Como `POST /Auth/login` con contraseña incorrecta devuelve un 401, el usuario recibía falsamente el banner de concurrencia al equivocarse al digitar su clave.
+   - Se modificó `handleResponse` para recibir el parámetro `endpoint` y verificar si la petición es hacia `/Auth/login` o si el usuario carecía de una sesión activa (`!localStorage.getItem('auth_token')`).
+   - Si el 401 proviene de `/Auth/login`, se propaga únicamente el mensaje de credenciales incorrectas a nivel de formulario sin registrar la alerta de concurrencia.
+   - El banner de concurrencia queda estrictamente reservado para cuando un usuario ya autenticado con token activo recibe un 401 en peticiones protegidas.
+
+#### 📦 Componentes Modificados
+- `src/shared/api/apiClient.ts` — Detección de endpoint de login y validación de sesión previa en `handleResponse`
+
+#### ✅ Verificación y Compilación
+- `npm run build` → **0 Errores** (Precache: 31 entries generadas limpiamente).
+
+
 ### [2026-08-28 15:26:00] - [FIX] [PWA] - Eliminación de Recargas Espontáneas en Bucle mediante registerType: 'prompt'
 
 #### 💬 Prompt Original del Usuario
