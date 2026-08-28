@@ -10,47 +10,40 @@ export const authService = {
       throw new Error(response?.errorMessage || response?.message || 'No se pudo obtener el token de autenticación.');
     }
 
-    const userId = response.idUser ?? response.userId ?? 1;
-    const roleId = response.idRoleUser ?? response.userRoleId ?? (credentials.username.toLowerCase() === 'admin' ? 1 : 2);
+    const userId = response.idUser ?? response.userId ?? 0;
+    const roleId = response.idRoleUser ?? response.userRoleId ?? 0;
     const fullName = response.fullname || response.fullName || credentials.username;
     const username = response.username || credentials.username;
 
-    const isSuperAdmin = Boolean(
-      response.isSuperAdmin ??
-      (response.roleName === 'Super Administrador' || !response.companyId || username.toLowerCase() === 'admin')
-    );
+    // SuperAdmin solo si el backend expresamente lo indica
+    const isSuperAdmin = Boolean(response.isSuperAdmin);
+    const isAdminUser = Boolean(response.isAdmin || isSuperAdmin);
+    const roleName = response.roleName || (isSuperAdmin ? 'Super Administrador' : (isAdminUser ? 'Administrador' : 'Usuario'));
 
-    const isAdminUser = isSuperAdmin ||
-      roleId === 1 ||
-      username.toLowerCase() === 'admin' ||
-      credentials.username.toLowerCase() === 'admin' ||
-      response.roleName === 'Administrador' ||
-      Boolean(response.isAdmin);
-
-    const roleName = response.roleName || (isSuperAdmin ? 'Super Administrador' : isAdminUser ? 'Administrador' : roleId === 2 ? 'Operador' : 'Usuario');
-
-    // Guardar temporalmente el token para poder llamar a RoleActions
+    // Guardar temporalmente el token para poder llamar a RoleActions si hace falta
     localStorage.setItem('auth_token', response.token);
 
-    // Consultar permisos reales del rol desde la API
-    let dynamicPermissions: string[] = [];
-    try {
-      const roleActions = await apiClient.get<ActionRoleDto[]>(`/RoleActions/PermissionRole/${roleId}`);
-      if (roleActions && Array.isArray(roleActions) && roleActions.length > 0) {
-        dynamicPermissions = roleActions
-          .filter((ra) => ra.isActive)
-          .map((ra) => ra.actionName)
-          .filter(Boolean);
+    // Consultar permisos reales del rol desde la API si la respuesta no traía permisos
+    let dynamicPermissions: string[] = response.permissions || [];
+    if (!isSuperAdmin && (!dynamicPermissions || dynamicPermissions.length === 0) && roleId > 0) {
+      try {
+        const roleActions = await apiClient.get<ActionRoleDto[]>(`/RoleActions/PermissionRole/${roleId}`);
+        if (roleActions && Array.isArray(roleActions) && roleActions.length > 0) {
+          dynamicPermissions = roleActions
+            .filter((ra) => ra.isActive)
+            .map((ra) => ra.actionName)
+            .filter(Boolean);
+        }
+      } catch (err) {
+        console.warn('No se pudieron consultar los permisos del rol desde la API:', err);
       }
-    } catch (err) {
-      console.warn('No se pudieron consultar los permisos del rol desde la API:', err);
     }
 
-    const userPermissions = isAdminUser
+    const userPermissions = isSuperAdmin
       ? ALL_PWA_PERMISSIONS_LIST
-      : (dynamicPermissions.length > 0 ? dynamicPermissions : (response.permissions || []));
+      : (dynamicPermissions.length > 0 ? dynamicPermissions : []);
 
-    const userModules = isAdminUser
+    const userModules = isSuperAdmin
       ? ALL_PWA_MODULES_LIST
       : (response.modules || []);
 
@@ -59,7 +52,7 @@ export const authService = {
       userRoleId: roleId,
       username,
       fullName,
-      roleName: isSuperAdmin ? 'Super Administrador' : roleName,
+      roleName,
       isAdmin: isAdminUser,
       isSuperAdmin,
       companyId: response.companyId,
@@ -92,29 +85,17 @@ export const authService = {
     if (!userJson) return null;
     try {
       const user = JSON.parse(userJson) as UserSession;
-      const isSuperAdmin = Boolean(
-        user.isSuperAdmin ||
-        user.roleName === 'Super Administrador' ||
-        (!user.companyId && (user.username?.toLowerCase() === 'admin' || user.userRoleId === 1))
-      );
-
-      const isAdmin = isSuperAdmin ||
-        user.isAdmin ||
-        user.userRoleId === 1 ||
-        user.roleName === 'Administrador' ||
-        user.username?.toLowerCase() === 'admin';
+      const isSuperAdmin = Boolean(user.isSuperAdmin);
+      const isAdmin = Boolean(user.isAdmin || isSuperAdmin);
 
       if (isSuperAdmin) {
         user.isSuperAdmin = true;
         user.isAdmin = true;
-        user.roleName = 'Super Administrador';
         user.permissions = ALL_PWA_PERMISSIONS_LIST;
         user.modules = ALL_PWA_MODULES_LIST;
-      } else if (isAdmin) {
-        user.isAdmin = true;
-        user.roleName = user.roleName || 'Administrador';
-        user.permissions = ALL_PWA_PERMISSIONS_LIST;
-        user.modules = ALL_PWA_MODULES_LIST;
+      } else {
+        user.isSuperAdmin = false;
+        user.isAdmin = isAdmin;
       }
       return user;
     } catch {
@@ -129,7 +110,7 @@ export const authService = {
   hasPermission: (permissionSlug: string): boolean => {
     const user = authService.getCurrentUser();
     if (!user) return false;
-    if (user.isAdmin || user.userRoleId === 1 || user.roleName === 'Administrador' || user.username?.toLowerCase() === 'admin') {
+    if (user.isSuperAdmin) {
       return true;
     }
     if (!user.permissions || !Array.isArray(user.permissions)) return false;
@@ -138,7 +119,7 @@ export const authService = {
 
     // Aliases bidireccionales de compatibilidad entre UI y base de datos
     const aliases: Record<string, string[]> = {
-      'dashboard.view': ['analytics.view', 'analytics.metrics'],
+      'dashboard.view': ['analytics.view', 'analytics.metrics', 'analytics.view_dashboard'],
       'settings.parqueaderos.view': ['branches.view'],
       'settings.parqueaderos.manage': ['branches.create', 'branches.edit', 'branches.delete', 'branches.assign_users'],
       'settings.usuarios.view': ['users.view'],
@@ -151,7 +132,7 @@ export const authService = {
       'settings.convenios.manage': ['agreements.create', 'agreements.edit', 'agreements.delete'],
       'settings.medios_pago.view': ['payment_methods.view'],
       'settings.medios_pago.manage': ['payment_methods.create', 'payment_methods.edit', 'payment_methods.delete'],
-      'reports.view': ['analytics.view', 'analytics.export', 'shift.export'],
+      'reports.view': ['analytics.view', 'analytics.export', 'shift.export', 'analytics.income_reports', 'analytics.occupancy_reports', 'analytics.audit_reports'],
       'novedades.view': ['recent_entries.view'],
     };
 
@@ -166,7 +147,7 @@ export const authService = {
   hasModule: (moduleSlug: string): boolean => {
     const user = authService.getCurrentUser();
     if (!user) return false;
-    if (user.isAdmin || user.userRoleId === 1 || user.roleName === 'Administrador' || user.username?.toLowerCase() === 'admin') {
+    if (user.isSuperAdmin) {
       return true;
     }
     return user.modules ? user.modules.includes(moduleSlug) : false;

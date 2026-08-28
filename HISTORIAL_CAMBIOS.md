@@ -7,6 +7,31 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-28 08:00:00] - [SECURITY] [RBAC] [MULTI-TENANT] - Aislamiento Estricto de SuperAdmin vs Administrador Tenant y Desacoplamiento de Roles Quemados
+- **Autor**: Antigravity AI Assistant & Frontend Software Architect
+- **💬 Prompt Original del Usuario**:
+  > *"Listo sucede que el superadmin accede y super bien accede al perfil de eso pero cree un administrador y tambien accede al portal del superadmin y eso no deberia ser así creo que esta algo quemado en codigo que sea administrador aparte necesito que revises todo el codigo de todos los 3 proyectos que no tenga cosas quemadas que no deberian estar . analiza completamente todo el desarrollo"*
+- **🤖 Resumen Técnico para la IA**:
+  1. **Aislamiento de SuperAdmin y Erradicación de Fallbacks Quemados (`authService.ts`)**:
+     - Eliminados chequeos basados en cadenas como `username.toLowerCase() === 'admin'`, `roleName === 'Super Administrador'` o `!response.companyId`.
+     - `isSuperAdmin` se rige exclusivamente por `Boolean(response.isSuperAdmin)` emitido por la API central.
+     - En `getCurrentUser()`, se eliminó la sobreescritura que asignaba `ALL_PWA_PERMISSIONS_LIST` a cualquier usuario con `isAdmin` o rol de Administrador. Ahora solo el `isSuperAdmin` global recibe la lista total. Los administradores e inquilinos reciben la matriz de permisos persistida en base de datos (`user.permissions`).
+     - En `hasPermission` y `hasModule`, el bypass total opera únicamente para `user.isSuperAdmin`. Para todos los demás roles (incluyendo administradores de parqueaderos), los accesos se evalúan contra la matriz de permisos y sus alias oficiales.
+  2. **Propagación de `companyId` en Gestión de Usuarios (`UsuariosContracts.ts`, `UsuariosTab.tsx`)**:
+     - Se añadió `companyId?: number` a `UserDto` y `SaveUserDto`.
+     - Al crear o editar un usuario desde el panel del Administrador, se inyecta automáticamente el `companyId` de la sesión activa (`authService.getCurrentUser()?.companyId`), evitando que los nuevos usuarios se creen huérfanos sin empresa.
+     - Se reemplazó la validación rígida `userRoleId === 1` por comprobación dinámica de administradores de sede/empresa.
+  3. **Desacoplamiento en Layout Principal (`DashboardLayout.tsx`)**:
+     - `ZeroDataOnboardingWizard` ahora evalúa `(user?.isAdmin || authService.hasPermission('branches.create')) && !user?.isSuperAdmin` sin depender de IDs de rol quemados.
+- **📦 Componentes Modificados**:
+  - `src/features/auth/data/authService.ts`
+  - `src/features/settings/model/UsuariosContracts.ts`
+  - `src/features/settings/ui/UsuariosTab.tsx`
+  - `src/shared/ui/DashboardLayout.tsx`
+  - `HISTORIAL_CAMBIOS.md`
+- **✅ Verificación y Compilación**:
+  - `npm run build`: **0 Errores** (Vite + TypeScript compilaron en 744ms).
+
 ### [2026-08-27 23:28:00] - [BUGFIX] [UI/UX] - Corrección de Cálculo Esperado en Caja y Mejora en Diálogo de Cierre de Turno
 - **Autor**: Antigravity AI Assistant & Frontend Software Architect
 - **💬 Prompt Original del Usuario**:

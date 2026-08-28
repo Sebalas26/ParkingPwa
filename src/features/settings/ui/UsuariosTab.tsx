@@ -74,10 +74,12 @@ export const UsuariosTab: React.FC = () => {
   };
 
   const handleOpenCreate = () => {
+    const currentUser = authService.getCurrentUser();
     const defaultTypeId = identTypes.length > 0 ? (identTypes[0].id || 1) : 1;
     const defaultRoleId = allUserRoles.length > 0 ? (allUserRoles[0].idUserRol ?? allUserRoles[0].id ?? 2) : 2;
 
     setEditingUsuario({
+      companyId: currentUser?.companyId,
       identificationTypeId: defaultTypeId,
       identificationNumber: '',
       firstName: '',
@@ -98,10 +100,12 @@ export const UsuariosTab: React.FC = () => {
   };
 
   const handleOpenEdit = async (u: UserDto) => {
+    const currentUser = authService.getCurrentUser();
     const isUserActive = u.isActive ?? (u.status === true || u.status === 'Activo' || u.status === 'Active');
     const roleId = u.userRoleId || u.userRoleDto?.idUserRol || u.userRoleDto?.id || 2;
     setEditingUsuario({
       id: u.id,
+      companyId: u.companyId || currentUser?.companyId,
       identificationTypeId: u.identificationTypeId || 1,
       identificationNumber: u.identificationNumber || '',
       firstName: u.firstName || '',
@@ -135,6 +139,7 @@ export const UsuariosTab: React.FC = () => {
     e.preventDefault();
     if (!editingUsuario) return;
 
+    const currentUser = authService.getCurrentUser();
     const computedFullName = editingUsuario.fullName.trim() ||
       `${editingUsuario.firstName} ${editingUsuario.middleName || ''} ${editingUsuario.firstSurname} ${editingUsuario.secondLastName || ''}`.replace(/\s+/g, ' ').trim();
 
@@ -142,6 +147,7 @@ export const UsuariosTab: React.FC = () => {
     try {
       const payload: SaveUserDto = {
         ...editingUsuario,
+        companyId: editingUsuario.companyId || currentUser?.companyId,
         fullName: computedFullName,
         username: editingUsuario.username.trim() || editingUsuario.email.trim(),
       };
@@ -149,8 +155,11 @@ export const UsuariosTab: React.FC = () => {
       const savedUser = await usuariosService.saveOrEditUser(payload);
       const targetUserId = savedUser?.id || editingUsuario.id;
 
+      const selectedRole = allUserRoles.find((r) => (r.idUserRol ?? r.id) === editingUsuario.userRoleId);
+      const isRoleAdmin = selectedRole?.roleName?.toLowerCase().includes('admin') || editingUsuario.userRoleId === 1;
+
       // Si el rol NO es Administrador, sincronizar asignaciones de sedes
-      if (targetUserId && editingUsuario.userRoleId !== 1) {
+      if (targetUserId && !isRoleAdmin) {
         // Sedes a asignar
         const toAssign = selectedBranchIds.filter((bId) => !initialAssignedBranchIds.includes(bId));
         // Sedes a desasignar
@@ -481,14 +490,17 @@ export const UsuariosTab: React.FC = () => {
                   4. Sedes Autorizadas (Parqueaderos)
                 </h4>
 
-                {editingUsuario.userRoleId === 1 ? (
-                  <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '10px', padding: '10px 14px', fontSize: '0.84rem', color: '#166534', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Shield size={16} color="#16a34a" />
-                    <span>
-                      <strong>Acceso Global:</strong> Los usuarios con rol <strong>Administrador</strong> tienen acceso automático a todas las sedes del sistema.
-                    </span>
-                  </div>
-                ) : (
+                {(() => {
+                  const selectedRole = allUserRoles.find((r) => (r.idUserRol ?? r.id) === editingUsuario.userRoleId);
+                  const isRoleAdmin = selectedRole?.roleName?.toLowerCase().includes('admin') || editingUsuario.userRoleId === 1;
+                  return isRoleAdmin ? (
+                    <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '10px', padding: '10px 14px', fontSize: '0.84rem', color: '#166534', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Shield size={16} color="#16a34a" />
+                      <span>
+                        <strong>Acceso Global a la Empresa:</strong> Los usuarios con rol <strong>Administrador</strong> tienen acceso automático a todas las sedes de la empresa.
+                      </span>
+                    </div>
+                  ) : (
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
                       <p style={{ fontSize: '0.8rem', color: '#64748b', margin: 0 }}>
@@ -606,7 +618,8 @@ export const UsuariosTab: React.FC = () => {
                       );
                     })()}
                   </div>
-                )}
+                );
+              })()}
               </div>
 
               <div className="modal-footer">

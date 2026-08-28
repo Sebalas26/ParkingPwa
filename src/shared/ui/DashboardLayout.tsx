@@ -100,7 +100,7 @@ export const DashboardLayout: React.FC = () => {
 
   return (
     <div className="dashboard-layout">
-      {hasZeroBranches && (user?.isAdmin || user?.userRoleId === 1) && !user?.isSuperAdmin && (
+      {hasZeroBranches && (user?.isAdmin || authService.hasPermission('branches.create')) && !user?.isSuperAdmin && (
         <ZeroDataOnboardingWizard />
       )}
 

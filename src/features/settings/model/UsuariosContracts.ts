@@ -20,6 +20,7 @@ export interface GetUserRoleDto {
 
 export interface UserDto {
   id: number;
+  companyId?: number;
   userRoleId: number;
   identificationTypeId: number;
   identificationNumber: string;
@@ -50,6 +51,7 @@ export interface UserDto {
 
 export interface SaveUserDto {
   id?: number;
+  companyId?: number;
   userRoleId: number;
   identificationTypeId: number;
   identificationNumber: string;
