@@ -273,8 +273,11 @@ export const DashboardLayout: React.FC = () => {
               {isDesktopSidebarCollapsed ? <PanelLeft size={20} /> : <Menu size={20} />}
             </button>
             <div className="header-brand-info">
-              <img src="/logo-new.png" alt="Parking Flow" className="header-brand-logo-img" />
-              <span className="header-brand-title">Parking Flow</span>
+              <span className="header-brand-title">
+                {user?.isSuperAdmin
+                  ? (inspectedCompany ? inspectedCompany.name : 'Plataforma SaaS Global')
+                  : (user?.companyName || 'Parking Flow')}
+              </span>
             </div>
           </div>
 

@@ -7,6 +7,29 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-29 11:14:00] - [FEATURE] [UI/UX] - Personalización de Marca en Cabecera de Dashboard (Nombre de Compañía)
+
+#### 💬 Prompt Original del Usuario
+> "Ayudame con que en esta pantalla se elimine el logo y en el nombre, muestre el nombre de la compañia que previamente desde el super administrador se creo y se enucuentra asignado al usuario administrador" (acompañado de una captura del header con el logotipo genérico y el nombre de la aplicación).
+
+#### 🤖 Resumen Técnico para la IA
+1. **Personalización del Branding de Cabecera (`DashboardLayout.tsx`)**:
+   - Se removió el logotipo genérico `<img src="/logo-new.png" ... />` de la barra de navegación superior `.top-bar-left` en [DashboardLayout.tsx](file:///c:/Users/sebalas/Documents/ParkingPwa/src/shared/ui/DashboardLayout.tsx).
+   - Se modificó el `<span>` con clase `header-brand-title` para renderizar dinámicamente el nombre de la compañía asociada.
+   - El nombre a mostrar se evalúa de la siguiente forma:
+     - Si es un Super Administrador: muestra el nombre de la compañía inspeccionada (o `'Plataforma SaaS Global'` si está en modo global).
+     - Si es un usuario/administrador regular de una sede: muestra el nombre de la compañía asignado en su sesión (`user?.companyName`), cayendo en un fallback a `'Parking Flow'` si este no se encuentra definido.
+2. **Bump de Versión**:
+   - Actualizado `.env` a `0.0.53 Dev` para propagar el cambio invalidando el Service Worker.
+
+#### 📦 Componentes Modificados
+- `src/shared/ui/DashboardLayout.tsx` — Remoción de logo y nombre dinámico de compañía
+- `.env` — Bump a la versión `0.0.53 Dev`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` → **0 Errores** (build en 1.31s).
+
 ### [2026-08-29 10:24:00] - [FEATURE/FIX] [UI/UX] - Ajuste de Colores de Alcance de Novedad a Tema Claro
 
 #### 💬 Prompt Original del Usuario
