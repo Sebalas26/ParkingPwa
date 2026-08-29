@@ -441,12 +441,12 @@ export const Novedades: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="form-group" style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '12px', marginBottom: '16px' }}>
-                    <label style={{ fontWeight: 700, color: '#38bdf8', marginBottom: '8px', display: 'block' }}>
+                  <div className="form-group" style={{ background: 'var(--bg-secondary, #f8fafc)', border: '1px solid var(--border-color, #cbd5e1)', borderRadius: '8px', padding: '12px', marginBottom: '16px' }}>
+                    <label style={{ fontWeight: 700, color: 'var(--primary-color, #07665e)', marginBottom: '8px', display: 'block' }}>
                       Alcance de la Novedad / Bloqueo *
                     </label>
                     <div style={{ display: 'flex', gap: '20px', marginBottom: '10px' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 600, color: '#f8fafc' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary, #1e293b)' }}>
                         <input
                           type="radio"
                           name="scopeType"
@@ -456,7 +456,7 @@ export const Novedades: React.FC = () => {
                         />
                         🌐 Todas las Sedes (Global)
                       </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 600, color: '#f8fafc' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary, #1e293b)' }}>
                         <input
                           type="radio"
                           name="scopeType"
@@ -474,8 +474,8 @@ export const Novedades: React.FC = () => {
                     </div>
 
                     {!(editingIncident.isGlobal ?? true) && (
-                      <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed #334155' }}>
-                        <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginBottom: '8px' }}>
+                      <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed var(--border-color, #cbd5e1)' }}>
+                        <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary, #64748b)', marginBottom: '8px' }}>
                           Seleccione las sedes donde tendrá efecto el bloqueo/novedad:
                         </p>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
@@ -488,14 +488,14 @@ export const Novedades: React.FC = () => {
                                   display: 'inline-flex',
                                   alignItems: 'center',
                                   gap: '6px',
-                                  background: isChecked ? '#1e293b' : '#090d16',
-                                  border: isChecked ? '1px solid #10b981' : '1px solid #334155',
+                                  background: isChecked ? 'rgba(7, 102, 94, 0.08)' : 'var(--bg-card, #ffffff)',
+                                  border: isChecked ? '1px solid var(--primary-color, #07665e)' : '1px solid var(--border-color, #cbd5e1)',
                                   padding: '6px 10px',
                                   borderRadius: '6px',
                                   cursor: 'pointer',
                                   fontSize: '0.82rem',
                                   fontWeight: isChecked ? 700 : 500,
-                                  color: isChecked ? '#10b981' : '#cbd5e1',
+                                  color: isChecked ? 'var(--primary-color, #07665e)' : 'var(--text-primary, #1e293b)',
                                 }}
                               >
                                 <input

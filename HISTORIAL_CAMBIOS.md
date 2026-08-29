@@ -7,6 +7,54 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-29 10:24:00] - [FEATURE/FIX] [UI/UX] - Ajuste de Colores de Alcance de Novedad a Tema Claro
+
+#### 💬 Prompt Original del Usuario
+> "ajustame el color de este campo" (acompañado de una captura de pantalla del contenedor de "Alcance de la Novedad / Bloqueo" en el modal de registro de novedades, el cual tenía un fondo oscuro e incompatible con el tema claro).
+
+#### 🤖 Resumen Técnico para la IA
+1. **Ajuste de Colores en Alcance de Novedades (`Novedades.tsx`)**:
+   - Se removió el fondo oscuro hardcoded (`#0f172a`, `#090d16`, `#1e293b`) y bordes oscuros en la sección "Alcance de la Novedad / Bloqueo".
+   - Se adaptaron los elementos utilizando las variables oficiales del tema claro:
+     - Contenedor principal: fondo `var(--bg-secondary, #f8fafc)`, borde `1px solid var(--border-color, #e2e8f0)`.
+     - Título del campo: color `var(--primary-color, #07665e)`.
+     - Texto de los radio buttons: color `var(--text-primary, #1e293b)`.
+     - Línea discontinua interna: `1px dashed var(--border-color, #e2e8f0)`.
+     - Subdescripción de sedes: color `var(--text-secondary, #64748b)`.
+     - Badges de selección de sede: fondo cuando está marcado `rgba(7, 102, 94, 0.08)`, borde `var(--primary-color)`, color `var(--primary-color)`. Fondo al estar desmarcado `var(--bg-card, #ffffff)`, borde y color de texto normales.
+2. **Bump de Versión**:
+   - Actualizado `.env` a `0.0.52 Dev` para invalidar y refrescar el Service Worker.
+
+#### 📦 Componentes Modificados
+- `src/features/novedades/ui/Novedades.tsx` — Ajuste de estilos inline en el campo de Alcance
+- `.env` — Bump a la versión `0.0.52 Dev`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` → **0 Errores** (build en 1.88s).
+
+### [2026-08-29 09:37:00] - [FEATURE/FIX] [AGREEMENTS] - Reemplazo de Acción Inactivar por Eliminar en Convenios Comerciales
+
+#### 💬 Prompt Original del Usuario
+> "Estoy viendo que en el modulo de convenios, cambiame el boton de inactivar el convenio, por eliminar"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Reemplazo de Inactivar por Eliminar en Convenios (`ConveniosTab.tsx`)**:
+   - Se renombró el manejador `handleDeactivate` a `handleDelete` en [ConveniosTab.tsx](file:///c:/Users/sebalas/Documents/ParkingPwa/src/features/settings/ui/ConveniosTab.tsx).
+   - Se modificó el mensaje de confirmación para indicar la eliminación permanente del convenio: `¿Deseas eliminar este convenio comercial de forma permanente?`.
+   - Se removió la condición de visibilidad reactiva a `c.isActive` tanto en la tabla desktop como en el acordeón móvil, de modo que el botón de eliminar esté disponible incondicionalmente para roles autorizados.
+   - En la vista móvil, se cambió el texto de la acción de `"Inactivar"` a `"Eliminar"`.
+2. **Bump de Versión**:
+   - Actualizado `.env` a `0.0.51 Dev` para invalidar y refrescar el Service Worker en producción/móviles.
+
+#### 📦 Componentes Modificados
+- `src/features/settings/ui/ConveniosTab.tsx` — Reemplazo de manejadores y textos de Inactivar a Eliminar
+- `.env` — Bump a la versión `0.0.51 Dev`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` → **0 Errores** (build en 1.57s).
+
 ### [2026-08-29 09:24:00] - [FEATURE/FIX] [UI/UX] - Ajuste de Carga de Tipos de Vehículo y Remoción de Botón Cerrar (X) de Modales
 
 #### 💬 Prompt Original del Usuario
