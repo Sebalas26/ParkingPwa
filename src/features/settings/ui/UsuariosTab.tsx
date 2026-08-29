@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, X, Shield, Trash2, IdCard, Search, Loader2, AlertTriangle, ChevronDown } from 'lucide-react';
+import { Plus, Edit2, Shield, Trash2, IdCard, Search, Loader2, AlertTriangle, ChevronDown } from 'lucide-react';
 import type { UserDto, SaveUserDto, GetIdentificationTypeDto, GetUserRoleDto } from '../model/UsuariosContracts';
 import type { BranchDto } from '../model/BranchesContracts';
 import { usuariosService } from '../data/usuariosService';
@@ -450,9 +450,6 @@ export const UsuariosTab: React.FC = () => {
           <div className="modal-content" style={{ maxWidth: '640px' }}>
             <div className="modal-header">
               <h3>{editingUsuario.id ? 'Editar Usuario' : 'Crear Nuevo Usuario'}</h3>
-              <button className="btn-close" onClick={() => !isSavingUser && setIsModalOpen(false)} disabled={isSavingUser}>
-                <X size={18} />
-              </button>
             </div>
 
             <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', flex: 1, minHeight: 0 }}>

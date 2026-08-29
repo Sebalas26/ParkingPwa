@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Car, Bike, Truck, Plus, CheckCircle, Search, X, Building, LogOut, Receipt } from 'lucide-react';
+import { Car, Bike, Truck, Plus, CheckCircle, Search, Building, LogOut, Receipt } from 'lucide-react';
 import { vehicleService } from '../data/vehicleService';
 import { vehiculosConfigService } from '../../settings/data/vehiculosConfigService';
 import { mediosPagoService } from '../../settings/data/mediosPagoService';
@@ -18,6 +18,7 @@ export const Vehicles: React.FC = () => {
   const [vehicleTypesList, setVehicleTypesList] = useState<VehiculoConfigDto[]>([]);
   const [mediosPagoList, setMediosPagoList] = useState<PaymentMethodDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingVehicleTypes, setIsLoadingVehicleTypes] = useState(true);
   const [filterType, setFilterType] = useState('Todos');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -43,6 +44,7 @@ export const Vehicles: React.FC = () => {
   }, [selectedParqueaderoId]);
 
   const loadVehicleTypes = async () => {
+    setIsLoadingVehicleTypes(true);
     try {
       const data = await vehiculosConfigService.getConfigs(selectedParqueaderoId);
       const active = (data || []).filter((t) => t.isActive ?? true);
@@ -55,6 +57,8 @@ export const Vehicles: React.FC = () => {
       }
     } catch (err) {
       console.error('Error al cargar tipos de vehículos configurados:', err);
+    } finally {
+      setIsLoadingVehicleTypes(false);
     }
   };
 
@@ -360,9 +364,6 @@ export const Vehicles: React.FC = () => {
             <div className="modal-card" style={{ maxWidth: '440px' }}>
               <div className="modal-header">
                 <h3>Registrar Ingreso de Vehículo</h3>
-                <button className="btn-close-modal" onClick={() => setIsCheckInModalOpen(false)}>
-                  <X size={18} />
-                </button>
               </div>
               <form onSubmit={handleCheckIn}>
                 <div className="modal-body">
@@ -386,8 +387,13 @@ export const Vehicles: React.FC = () => {
                       value={vehicleType}
                       onChange={(e) => setVehicleType(Number(e.target.value))}
                       required
+                      disabled={isLoadingVehicleTypes || vehicleTypesList.length === 0}
                     >
-                      {vehicleTypesList.length > 0 ? (
+                      {isLoadingVehicleTypes ? (
+                        <option value="" disabled>
+                          Cargando tipos de vehículos desde la base de datos...
+                        </option>
+                      ) : vehicleTypesList.length > 0 ? (
                         vehicleTypesList.map((vt) => (
                           <option key={vt.rateId || `${vt.vehicleType}-${vt.category}`} value={vt.vehicleType}>
                             {vt.category}
@@ -395,7 +401,7 @@ export const Vehicles: React.FC = () => {
                         ))
                       ) : (
                         <option value="" disabled>
-                          Cargando tipos de vehículos desde la base de datos...
+                          No hay tipos de vehículos registrados
                         </option>
                       )}
                     </select>
@@ -447,9 +453,6 @@ export const Vehicles: React.FC = () => {
                   <LogOut size={20} color="#10b981" />
                   <h3 style={{ margin: 0 }}>Registrar Salida de Vehículo</h3>
                 </div>
-                <button className="btn-close-modal" onClick={() => setIsCheckOutModalOpen(false)}>
-                  <X size={18} />
-                </button>
               </div>
 
               <form onSubmit={handleConfirmCheckOut}>

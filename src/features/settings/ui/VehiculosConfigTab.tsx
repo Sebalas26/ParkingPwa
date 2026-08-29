@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, AlertTriangle, Loader2, X, Car, Bike, Truck, ChevronDown } from 'lucide-react';
+import { Plus, Edit2, Trash2, AlertTriangle, Loader2, Car, Bike, Truck, ChevronDown } from 'lucide-react';
 import type { VehiculoConfigDto, SaveVehiculoConfigDto } from '../model/VehiculosConfigContracts';
 import { vehiculosConfigService } from '../data/vehiculosConfigService';
 import { authService } from '../../auth/data/authService';
@@ -276,9 +276,6 @@ export const VehiculosConfigTab: React.FC = () => {
           <div className="modal-content" style={{ maxWidth: '440px' }}>
             <div className="modal-header">
               <h3>{editingConfig.rateId ? 'Editar Tipo de Vehículo' : 'Nuevo Tipo de Vehículo'}</h3>
-              <button className="btn-close" onClick={() => setIsModalOpen(false)}>
-                <X size={18} />
-              </button>
             </div>
 
             <form onSubmit={handleSave}>

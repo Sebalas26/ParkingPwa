@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, X, CreditCard, ChevronDown } from 'lucide-react';
+import { Plus, Edit2, CreditCard, ChevronDown } from 'lucide-react';
 import type { PaymentMethodDto, SavePaymentMethodDto } from '../model/MediosPagoContracts';
 import { mediosPagoService } from '../data/mediosPagoService';
 import { authService } from '../../auth/data/authService';
@@ -297,9 +297,6 @@ export const MediosPagoTab: React.FC = () => {
               <h3>
                 {editingMedio.id ? `Editar Medio de Pago (#${editingMedio.id})` : 'Crear Medio de Pago'}
               </h3>
-              <button className="btn-close-modal" onClick={() => setIsModalOpen(false)}>
-                <X size={18} />
-              </button>
             </div>
 
             <form onSubmit={handleSave}>

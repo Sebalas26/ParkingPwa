@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Edit2, X, Tag, Percent, DollarSign, Trash2, Upload, Image as ImageIcon, ChevronDown } from 'lucide-react';
+import { Plus, Edit2, Tag, Percent, DollarSign, Trash2, Upload, Image as ImageIcon, ChevronDown } from 'lucide-react';
 import type { CommercialAgreementDto, SaveCommercialAgreementDto } from '../model/ConveniosContracts';
 import { conveniosService } from '../data/conveniosService';
 import { authService } from '../../auth/data/authService';
@@ -370,9 +370,6 @@ export const ConveniosTab: React.FC = () => {
           <div className="modal-content" style={{ maxWidth: '520px' }}>
             <div className="modal-header">
               <h3>{editingConvenio.agreementId ? 'Editar Convenio Comercial' : 'Nuevo Convenio Comercial'}</h3>
-              <button className="btn-close" onClick={() => setIsModalOpen(false)}>
-                <X size={18} />
-              </button>
             </div>
 
             <form onSubmit={handleSave}>

@@ -5,7 +5,6 @@ import {
   Trash2,
   AlertTriangle,
   Loader2,
-  X,
   CreditCard,
   Users,
   CheckSquare,
@@ -475,9 +474,6 @@ export const ParqueaderosTab: React.FC = () => {
           <div className="modal-content" style={{ maxWidth: '540px' }}>
             <div className="modal-header">
               <h3>{editingBranch.id ? 'Editar Sede' : 'Crear Nueva Sede'}</h3>
-              <button className="btn-close" onClick={() => setIsEditModalOpen(false)}>
-                <X size={18} />
-              </button>
             </div>
 
             <form onSubmit={handleSaveBranch}>
@@ -604,9 +600,6 @@ export const ParqueaderosTab: React.FC = () => {
                   📍 {selectedBranch.code} — {selectedBranch.name} ({selectedBranch.totalCapacity} plazas)
                 </span>
               </div>
-              <button className="btn-close" onClick={() => setIsConfigModalOpen(false)}>
-                <X size={18} />
-              </button>
             </div>
 
             {/* Segmented Control Subtabs */}
@@ -783,9 +776,6 @@ export const ParqueaderosTab: React.FC = () => {
                         <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: '#0f172a' }}>
                           {editingRate.rateId ? 'Editar Tarifa Vehicular' : 'Nueva Tarifa para esta Sede'}
                         </h4>
-                        <button type="button" className="btn-close" onClick={() => setIsEditingRateModal(false)}>
-                          <X size={16} />
-                        </button>
                       </div>
 
                       <div className="form-group" style={{ marginBottom: '14px' }}>

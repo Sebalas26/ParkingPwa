@@ -7,6 +7,43 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-29 09:24:00] - [FEATURE/FIX] [UI/UX] - Ajuste de Carga de Tipos de Vehículo y Remoción de Botón Cerrar (X) de Modales
+
+#### 💬 Prompt Original del Usuario
+> "estoy notando que cuando no tengo tipos de vehiculos creados y estoy en esta pantalla, me muestra este mensaje Cargando tipos de vehículos desde la base de datos... , ajustalo para que no se quede pegado ese mensaje, si el consumio el servicio y no le retorna ningun tipo vehiculo dejame la lista desplegable en gris y bloqueada, la unica forma para que el usuario pueda refrescar el consmo de traer los tipos de vehiculos es saliendo y volviendo
+> Adicional ayudame con otra cosa, veo que todos mis dialogs fragment cuentan con una x en la esquina, pero tambien ya cuento con el btn de cancelar , asi que me podrias eliminar la X de la esquina de todos los dialog de mi pwa"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Control de Carga de Tipos de Vehículo (`Vehicles.tsx`)**:
+   - Se introdujo el estado local `isLoadingVehicleTypes` en `Vehicles.tsx` para distinguir entre el estado de carga inicial y el estado final vacío.
+   - Se modificó la lista desplegable (`<select>`) del tipo de vehículo en el registro de ingresos para quedar deshabilitada (`disabled`) e inactiva cuando se está cargando o cuando no hay tipos de vehículos disponibles.
+   - Si finaliza la consulta a la base de datos y la lista está vacía, se visualiza el texto `"No hay tipos de vehículos registrados"` y permanece deshabilitada. Cerrar el modal y volverlo a abrir reintenta el consumo del servicio.
+2. **Remoción del Botón Cerrar (X) de los Modales**:
+   - Se eliminaron todos los elementos de botón de cierre superior derecho (`X` de `lucide-react` con `className="btn-close"` o `className="btn-close-modal"` o `className="btn-icon-action"`) en todos los componentes de modal de la PWA.
+   - Se limpiaron los imports no utilizados de `X` en cada uno de estos archivos para evitar advertencias y errores estrictos de TypeScript (`TS6133`).
+3. **Bump de Versión**:
+   - Actualizado `.env` a `0.0.50 Dev` para propagar de inmediato la actualización y limpiar el caché local.
+
+#### 📦 Componentes Modificados
+- `src/features/vehicles/ui/Vehicles.tsx` — Ajuste de select de tipos de vehículo y remoción de botón cerrar X
+- `src/features/settings/ui/ParqueaderosTab.tsx` — Remoción de botón cerrar X en modales
+- `src/features/settings/ui/TarifasTab.tsx` — Remoción de botón cerrar X
+- `src/features/settings/ui/UsuariosTab.tsx` — Remoción de botón cerrar X
+- `src/features/settings/ui/RolesTab.tsx` — Remoción de botón cerrar X
+- `src/features/settings/ui/ResolucionesTab.tsx` — Remoción de botón cerrar X
+- `src/features/settings/ui/MediosPagoTab.tsx` — Remoción de botón cerrar X
+- `src/features/settings/ui/ConveniosTab.tsx` — Remoción de botón cerrar X
+- `src/features/settings/ui/VehiculosConfigTab.tsx` — Remoción de botón cerrar X
+- `src/features/novedades/ui/Novedades.tsx` — Remoción de botón cerrar X en todos los modales
+- `src/features/companies/ui/CompaniesPage.tsx` — Remoción de botón cerrar X
+- `src/features/dashboard/ui/Dashboard.tsx` — Remoción de botón cerrar X
+- `src/features/caja/ui/Caja.tsx` — Remoción de botón cerrar X
+- `.env` — Versión `0.0.50 Dev`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` → **0 Errores** tras limpiar imports huérfanos de `X`.
+
 ### [2026-08-28 17:00:00] - [FEATURE] [MULTI-TENANT] [SECURITY] - Propagación Explícita de CompanyId en Gestión de Sedes y Usuarios
 
 #### 💬 Prompt Original del Usuario

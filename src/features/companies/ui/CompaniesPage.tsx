@@ -11,7 +11,6 @@ import {
   Power,
   Phone,
   Mail,
-  X,
   Loader2,
   Building,
   Sliders
@@ -421,14 +420,6 @@ export const CompaniesPage: React.FC = () => {
           <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Registrar Nueva Empresa Cliente</h2>
-              <button
-                type="button"
-                className="btn-icon-action"
-                onClick={() => setIsCreateModalOpen(false)}
-                disabled={actionLoading}
-              >
-                <X size={18} />
-              </button>
             </div>
 
             <form onSubmit={handleCreateCompany}>
@@ -612,14 +603,6 @@ export const CompaniesPage: React.FC = () => {
           <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Editar Empresa: {selectedCompany.name}</h2>
-              <button
-                type="button"
-                className="btn-icon-action"
-                onClick={() => setIsEditModalOpen(false)}
-                disabled={actionLoading}
-              >
-                <X size={18} />
-              </button>
             </div>
 
             <form onSubmit={handleUpdateCompany}>
@@ -754,13 +737,6 @@ export const CompaniesPage: React.FC = () => {
           <div className="modal-container" style={{ width: '760px' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Sedes del Parqueadero: {selectedCompany.name}</h2>
-              <button
-                type="button"
-                className="btn-icon-action"
-                onClick={() => setIsBranchesModalOpen(false)}
-              >
-                <X size={18} />
-              </button>
             </div>
 
             <div className="modal-body">

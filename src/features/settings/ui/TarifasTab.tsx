@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Edit2, X } from 'lucide-react';
+import { Edit2 } from 'lucide-react';
 import type { VehicleRateDto, UpdateVehicleRateDto } from '../model/TarifasContracts';
 import { tarifasService } from '../data/tarifasService';
 import { authService } from '../../auth/data/authService';
@@ -148,9 +148,6 @@ export const TarifasTab: React.FC = () => {
           <div className="modal-card">
             <div className="modal-header">
               <h3>Editar Tarifa: {getVehicleTypeName(editingTarifa.vehicleType)}</h3>
-              <button className="btn-close-modal" onClick={() => setIsModalOpen(false)}>
-                <X size={18} />
-              </button>
             </div>
 
             <form onSubmit={handleSave}>

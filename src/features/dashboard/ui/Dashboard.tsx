@@ -24,7 +24,6 @@ import {
   TrendingUp,
   ShieldCheck,
   Eye,
-  X,
   CreditCard,
   Wallet,
   QrCode,
@@ -1040,9 +1039,6 @@ export const Dashboard: React.FC = () => {
                   <span className="plate-badge-styled" style={{ fontSize: '1.2rem' }}>{selectedTicket.plateNumber}</span>
                   <span className="pulse-badge"><span className="dot" /> Activo</span>
                 </div>
-                <button className="btn-close-modal" onClick={() => setSelectedTicket(null)}>
-                  <X size={18} />
-                </button>
               </div>
 
               <div className="modal-body" style={{ gap: '1rem' }}>

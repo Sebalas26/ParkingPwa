@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Search, Edit2, Trash2, X, FileText, CheckCircle, AlertCircle, ChevronDown } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, FileText, CheckCircle, AlertCircle, ChevronDown } from 'lucide-react';
 import { resolucionesService } from '../data/resolucionesService';
 import type { BillingResolutionDto, SaveBillingResolutionDto } from '../model/ResolucionesContracts';
 import { authService } from '../../../features/auth/data/authService';
@@ -361,9 +361,6 @@ export const ResolucionesTab: React.FC = () => {
                 </div>
                 <h3>{currentId ? `Editar Resolución (${editingResolution.name})` : 'Nueva Resolución de Facturación'}</h3>
               </div>
-              <button className="btn-close-modal" onClick={() => setIsModalOpen(false)}>
-                <X size={18} />
-              </button>
             </div>
 
             <form onSubmit={handleSave}>

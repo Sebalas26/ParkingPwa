@@ -4,7 +4,6 @@ import {
   Eye,
   AlertTriangle,
   Car,
-  X,
   Plus,
   ShieldAlert,
   CheckCircle,
@@ -414,9 +413,6 @@ export const Novedades: React.FC = () => {
                   </div>
                   <h3>{currentId ? `Editar Novedad - ${editingIncident.plateNumber}` : 'Registrar Nueva Novedad / Bloqueo'}</h3>
                 </div>
-                <button className="btn-close-modal" onClick={() => setIsModalOpen(false)} disabled={isSaving}>
-                  <X size={18} />
-                </button>
               </div>
 
               <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
@@ -670,9 +666,6 @@ export const Novedades: React.FC = () => {
                   </div>
                   <h3>Resolver Novedad ({resolvingIncident.plateNumber})</h3>
                 </div>
-                <button className="btn-close-modal" onClick={() => setResolvingIncident(null)} disabled={isResolving}>
-                  <X size={18} />
-                </button>
               </div>
 
               <form onSubmit={handleConfirmResolve} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
@@ -728,9 +721,6 @@ export const Novedades: React.FC = () => {
                   <Car size={22} color="var(--primary-color)" />
                   <h3>Detalle de Novedad - {selectedIncident.plateNumber}</h3>
                 </div>
-                <button className="btn-close-modal" onClick={() => setSelectedIncident(null)}>
-                  <X size={18} />
-                </button>
               </div>
 
               <div className="modal-body">
@@ -815,9 +805,6 @@ export const Novedades: React.FC = () => {
                   </div>
                   <h3>Confirmar Eliminación</h3>
                 </div>
-                <button className="btn-close-modal" onClick={() => setIncidentToDelete(null)} disabled={isDeleting}>
-                  <X size={18} />
-                </button>
               </div>
 
               <div className="modal-body">

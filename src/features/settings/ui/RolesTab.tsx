@@ -639,9 +639,6 @@ export const RolesTab: React.FC = () => {
           <div className="modal-card" style={{ maxWidth: '440px' }}>
             <div className="modal-header">
               <h3>{editingRole.idUserRol ? `Editar Rol (#${editingRole.idUserRol})` : 'Crear Nuevo Rol'}</h3>
-              <button className="btn-close-modal" onClick={() => setIsRoleModalOpen(false)}>
-                <X size={18} />
-              </button>
             </div>
 
             <form onSubmit={handleSaveRole}>
@@ -702,9 +699,6 @@ export const RolesTab: React.FC = () => {
                   </span>
                 </div>
               </div>
-              <button className="btn-close-modal" onClick={() => setIsPermissionsModalOpen(false)}>
-                <X size={18} />
-              </button>
             </div>
 
             <div className="modal-body" style={{ overflowY: 'auto', gap: '1rem', paddingBottom: '1.5rem' }}>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, Users, ArrowUpRight, CheckCircle, XCircle, Download, Calendar, User, Plus, LogOut, X, Building } from 'lucide-react';
+import { Wallet, Users, ArrowUpRight, CheckCircle, XCircle, Download, Calendar, User, Plus, LogOut, Building } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { cajaService } from '../data/cajaService';
 import type { WorkShiftDto } from '../model/CajaContracts';
@@ -391,9 +391,6 @@ export const Caja: React.FC = () => {
           <div className="modal-card" style={{ maxWidth: '440px' }}>
             <div className="modal-header">
               <h3>Apertura de Turno de Caja</h3>
-              <button className="btn-close-modal" onClick={() => setIsOpenShiftModalOpen(false)}>
-                <X size={18} />
-              </button>
             </div>
             <form onSubmit={handleOpenShift}>
               <div className="modal-body">
@@ -451,9 +448,6 @@ export const Caja: React.FC = () => {
             <div className="modal-card" style={{ maxWidth: '440px' }}>
               <div className="modal-header">
                 <h3>Cierre y Liquidación de Turno</h3>
-                <button className="btn-close-modal" onClick={() => { setIsCloseShiftModalOpen(false); setShiftToClose(null); }}>
-                  <X size={18} />
-                </button>
               </div>
               <form onSubmit={handleCloseShift}>
                 <div className="modal-body">
