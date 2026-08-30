@@ -616,6 +616,13 @@
   min-width: 0;
 }
 
+.slicers-pills-row {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .slicer-label {
   font-size: 0.78rem;
   font-weight: 700;
@@ -836,11 +843,11 @@
   }
 
   .slicers-bar-container {
-    padding: 10px 12px;
+    padding: 12px 14px;
     border-radius: 12px;
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
+    gap: 12px;
     width: 100%;
     max-width: 100%;
     min-width: 0;
@@ -852,31 +859,40 @@
     max-width: 100%;
     min-width: 0;
     display: flex;
-    align-items: center;
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    padding-bottom: 4px;
+    flex-direction: column;
+    align-items: flex-start;
     gap: 6px;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
+    overflow: visible;
   }
 
-  .slicers-group::-webkit-scrollbar {
-    display: none;
+  .slicers-pills-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
   }
 
   .slicer-label {
     font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
     flex-shrink: 0;
-    white-space: nowrap;
   }
 
   .slicer-pill {
-    flex-shrink: 0;
-    white-space: nowrap;
+    white-space: normal;
+    word-break: break-word;
     font-size: 0.75rem;
     padding: 5px 10px;
     border-radius: 8px;
+    line-height: 1.2;
+    text-align: center;
   }
 
   .quick-search-box {

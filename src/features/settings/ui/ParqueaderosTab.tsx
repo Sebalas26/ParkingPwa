@@ -9,8 +9,6 @@ import {
   Users,
   CheckSquare,
   Square,
-  MapPin,
-  Phone,
   Car,
   Bike,
   Truck,
@@ -18,6 +16,9 @@ import {
   UserCheck,
   UserX,
   CheckCircle2,
+  Building2,
+  Search,
+  ChevronDown,
 } from 'lucide-react';
 import type {
   BranchDto,
@@ -37,10 +38,26 @@ import { authService } from '../../auth/data/authService';
 import { ModalPortal } from '../../../shared/ui/ModalPortal';
 import { formatCurrencyInput, parseCurrencyInput } from '../../../shared/utils/currencyUtils';
 
+const AVATAR_COLORS = [
+  { bg: '#e0f2fe', text: '#0369a1' },
+  { bg: '#dcfce7', text: '#15803d' },
+  { bg: '#fef3c7', text: '#b45309' },
+  { bg: '#f3e8ff', text: '#7e22ce' },
+  { bg: '#fee2e2', text: '#b91c1c' },
+  { bg: '#ccfbf1', text: '#0f766e' },
+  { bg: '#ffedd5', text: '#c2410c' },
+];
+
+const getAvatarStyle = (index: number) => {
+  return AVATAR_COLORS[index % AVATAR_COLORS.length];
+};
+
 export const ParqueaderosTab: React.FC = () => {
-  const { refreshBranches, activeBranchId } = useBranchContext();
+  const { refreshBranches } = useBranchContext();
   const [branches, setBranches] = useState<BranchDto[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [expandedBranchId, setExpandedBranchId] = useState<number | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
   // Modal Crear / Editar Sede
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -363,6 +380,17 @@ export const ParqueaderosTab: React.FC = () => {
     }
   };
 
+  const filteredBranches = branches.filter((b) => {
+    const term = searchTerm.toLowerCase().trim();
+    if (!term) return true;
+    return (
+      (b.name || '').toLowerCase().includes(term) ||
+      (b.code || '').toLowerCase().includes(term) ||
+      (b.city || '').toLowerCase().includes(term) ||
+      (b.address || '').toLowerCase().includes(term)
+    );
+  });
+
   return (
     <div className="settings-section-card">
       <div className="section-header">
@@ -377,92 +405,223 @@ export const ParqueaderosTab: React.FC = () => {
         )}
       </div>
 
-      {/* Grid de Sedes Físicas */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem', marginTop: '1rem' }}>
-        {branches.length > 0 ? (
-          branches.map((b) => {
+      {/* Barra de Búsqueda */}
+      <div className="section-toolbar">
+        <div className="search-box">
+          <Search size={16} className="search-icon" />
+          <input
+            type="text"
+            className="input-field"
+            placeholder="Buscar sede por nombre, código, ciudad o dirección..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* 1. VISTA DESKTOP - TABLA DE DATOS */}
+      <div className="desktop-table-container">
+        <div className="table-responsive">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Sede / Parqueadero</th>
+                <th>Ubicación</th>
+                <th>Teléfono</th>
+                <th>Capacidad</th>
+                <th>Estado</th>
+                <th className="text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredBranches.length > 0 ? (
+                filteredBranches.map((b) => {
+                  const isActive = b.isActive ?? true;
+                  return (
+                    <tr key={b.id}>
+                      <td>
+                        <span className="badge" style={{ background: '#f1f5f9', color: '#07665e', fontWeight: 800 }}>
+                          {b.code}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div
+                            style={{
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '8px',
+                              background: '#e6f4f1',
+                              color: '#07665e',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <Building2 size={16} />
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{b.name}</div>
+                            {b.notes && <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{b.notes}</div>}
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ fontSize: '0.82rem' }}>
+                          {b.city ? <strong>{b.city}</strong> : null}
+                          {b.city && b.address ? ' — ' : ''}
+                          {b.address || 'N/A'}
+                        </div>
+                      </td>
+                      <td>{b.phone || 'N/A'}</td>
+                      <td>
+                        <span className="badge badge-info">
+                          <Car size={12} style={{ marginRight: 4 }} />
+                          {b.totalCapacity} plazas
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`badge ${isActive ? 'badge-success' : 'badge-danger'}`}>
+                          {isActive ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </td>
+                      <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                          <button
+                            className="btn-action primary"
+                            onClick={() => handleOpenConfig(b)}
+                            title="Parametrizar Medios de Pago, Usuarios y Tarifas"
+                          >
+                            <Settings2 size={14} style={{ marginRight: 4 }} /> Parametrizar
+                          </button>
+                          {authService.hasPermission('branches.edit') && (
+                            <button
+                              className="btn-action secondary"
+                              onClick={() => handleOpenEdit(b)}
+                              title="Editar Sede"
+                            >
+                              <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
+                    {isLoading ? 'Cargando sedes...' : 'No se encontraron sedes registradas.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 2. VISTA MOBILE - LISTA DE TARJETAS EXPANDIBLES (ACCORDION) */}
+      <div className="mobile-card-list">
+        {filteredBranches.length > 0 ? (
+          filteredBranches.map((b, idx) => {
             const isActive = b.isActive ?? true;
+            const isExpanded = expandedBranchId === b.id;
+            const avatarColor = getAvatarStyle(idx);
+            const initials = b.code || (b.name ? b.name.substring(0, 2).toUpperCase() : 'SD');
+
             return (
-              <div
-                key={b.id}
-                style={{
-                  background: '#ffffff',
-                  border: activeBranchId === b.id ? '2px solid #07665e' : '1px solid #e2e8f0',
-                  borderRadius: '14px',
-                  padding: '1.25rem',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  position: 'relative',
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                    <span className="badge" style={{ background: '#f1f5f9', color: '#07665e', fontWeight: 800 }}>
-                      {b.code}
-                    </span>
-                    <span className={`badge ${isActive ? 'badge-success' : 'badge-danger'}`}>
-                      {isActive ? 'Activo' : 'Inactivo'}
-                    </span>
-                  </div>
-
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1e293b', marginBottom: '8px' }}>
-                    {b.name}
-                  </h3>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.84rem', color: '#64748b', marginBottom: '10px' }}>
-                    {b.city && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <MapPin size={14} color="#64748b" />
-                        <span>{b.city} {b.address ? `— ${b.address}` : ''}</span>
-                      </div>
-                    )}
-                    {b.phone && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <Phone size={14} color="#64748b" />
-                        <span>{b.phone}</span>
-                      </div>
-                    )}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Car size={14} color="#64748b" />
-                      <span>Capacidad: <strong>{b.totalCapacity} plazas</strong></span>
+              <div key={b.id} className={`expandable-card ${isExpanded ? 'expanded' : ''}`}>
+                <div
+                  className="expandable-card-header"
+                  onClick={() => setExpandedBranchId(isExpanded ? null : b.id)}
+                >
+                  <div className="expandable-card-main">
+                    <div
+                      className="expandable-card-avatar"
+                      style={{ background: avatarColor.bg, color: avatarColor.text }}
+                    >
+                      {initials}
+                      <span className={`avatar-status-dot ${isActive ? 'active' : 'inactive'}`} />
+                    </div>
+                    <div className="expandable-card-info">
+                      <span className="expandable-card-title">{b.name}</span>
+                      <span className="expandable-card-subtitle">
+                        {b.code} • {b.city || 'Sede'} • {b.totalCapacity} plazas
+                      </span>
                     </div>
                   </div>
-
-                  {b.notes && (
-                    <p style={{ fontSize: '0.8rem', color: '#64748b', fontStyle: 'italic', background: '#f8fafc', padding: '6px 10px', borderRadius: '8px', margin: '8px 0' }}>
-                      "{b.notes}"
-                    </p>
-                  )}
+                  <div className={`expandable-card-chevron ${isExpanded ? 'expanded' : ''}`}>
+                    <ChevronDown size={18} />
+                  </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '8px', marginTop: '14px', paddingTop: '12px', borderTop: '1px solid #f1f5f9' }}>
-                  <button
-                    className="btn-secondary"
-                    style={{ flex: 1, padding: '8px 10px', fontSize: '0.82rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-                    onClick={() => handleOpenConfig(b)}
-                    title="Parametrizar Medios de Pago, Usuarios y Tarifas"
-                  >
-                    <Settings2 size={14} color="#07665e" />
-                    <span>Parametrizar</span>
-                  </button>
+                {isExpanded && (
+                  <div className="expandable-card-body">
+                    <div className="card-details-panel">
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Código:</span>
+                        <span className="card-detail-value">{b.code}</span>
+                      </div>
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Nombre de Sede:</span>
+                        <span className="card-detail-value">{b.name}</span>
+                      </div>
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Ubicación / Dirección:</span>
+                        <span className="card-detail-value">
+                          {b.city ? `${b.city} — ` : ''}{b.address || 'N/A'}
+                        </span>
+                      </div>
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Teléfono de Contacto:</span>
+                        <span className="card-detail-value">{b.phone || 'N/A'}</span>
+                      </div>
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Capacidad Total:</span>
+                        <span className="card-detail-value"><strong>{b.totalCapacity} plazas</strong></span>
+                      </div>
+                      {b.notes && (
+                        <div className="card-detail-row">
+                          <span className="card-detail-label">Observaciones:</span>
+                          <span className="card-detail-value" style={{ fontStyle: 'italic' }}>"{b.notes}"</span>
+                        </div>
+                      )}
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Estado:</span>
+                        <span className={`badge ${isActive ? 'badge-success' : 'badge-danger'}`}>
+                          {isActive ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </div>
+                    </div>
 
-                  <button
-                    className="btn-icon"
-                    style={{ padding: '8px', border: '1px solid #cbd5e1', borderRadius: '8px' }}
-                    onClick={() => handleOpenEdit(b)}
-                    title="Editar Sede"
-                  >
-                    <Edit2 size={15} />
-                  </button>
-                </div>
+                    <div className="expandable-card-actions">
+                      <button
+                        type="button"
+                        className="card-action-btn card-action-btn-primary"
+                        onClick={() => handleOpenConfig(b)}
+                      >
+                        <Settings2 size={14} /> Parametrizar
+                      </button>
+                      {authService.hasPermission('branches.edit') && (
+                        <button
+                          type="button"
+                          className="card-action-btn card-action-btn-outline"
+                          onClick={() => handleOpenEdit(b)}
+                        >
+                          <Edit2 size={14} /> Editar
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })
         ) : (
-          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: '#64748b', background: '#f8fafc', borderRadius: '16px' }}>
-            {isLoading ? 'Cargando sedes registradas...' : 'No hay sedes registradas en la base de datos. Haz clic en "Crear Sede" para registrar tu primer parqueadero.'}
+          <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b', background: '#f8fafc', borderRadius: '14px' }}>
+            {isLoading ? 'Cargando sedes...' : 'No hay sedes registradas.'}
           </div>
         )}
       </div>

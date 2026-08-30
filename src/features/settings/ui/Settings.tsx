@@ -13,15 +13,26 @@ import './Settings.css';
 type ActiveTab = 'parqueaderos' | 'usuarios' | 'roles' | 'convenios' | 'vehiculos' | 'mediosPago' | 'resoluciones';
 
 export const Settings: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('parqueaderos');
-
   const canViewBranches = authService.hasPermission('branches.view') || authService.hasPermission('settings.parqueaderos.view');
   const canViewUsers = authService.hasPermission('users.view') || authService.hasPermission('settings.usuarios.view');
-  const canViewRoles = authService.hasPermission('roles.view') || authService.hasPermission('settings.roles.view') || authService.hasPermission('security.view');
+  const canViewRoles = authService.hasPermission('roles.view') || authService.hasPermission('settings.roles.view');
   const canViewAgreements = authService.hasPermission('agreements.view') || authService.hasPermission('settings.convenios.view');
   const canViewRates = authService.hasPermission('rates.view') || authService.hasPermission('settings.vehiculos.view') || authService.hasPermission('settings.tarifas.view');
   const canViewPaymentMethods = authService.hasPermission('payment_methods.view') || authService.hasPermission('settings.medios_pago.view');
-  const canViewResolutions = authService.hasPermission('resolutions.view') || authService.hasPermission('settings.resoluciones.view') || authService.hasPermission('settings.roles.view') || authService.hasPermission('security.view');
+  const canViewResolutions = authService.hasPermission('resolutions.view') || authService.hasPermission('settings.resoluciones.view');
+
+  const getInitialTab = (): ActiveTab => {
+    if (canViewBranches) return 'parqueaderos';
+    if (canViewUsers) return 'usuarios';
+    if (canViewRoles) return 'roles';
+    if (canViewAgreements) return 'convenios';
+    if (canViewRates) return 'vehiculos';
+    if (canViewPaymentMethods) return 'mediosPago';
+    if (canViewResolutions) return 'resoluciones';
+    return 'parqueaderos';
+  };
+
+  const [activeTab, setActiveTab] = useState<ActiveTab>(getInitialTab);
 
   return (
     <div className="settings-container">

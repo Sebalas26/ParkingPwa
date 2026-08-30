@@ -7,6 +7,120 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-29 23:23:00] - [FEATURE/UI/UX] - Unificación de Estilo Visual de Sedes (Desktop Table y Mobile Expandable Cards)
+
+#### 💬 Prompt Original del Usuario
+> "Te acabo de anexar 2 imagenes, las cuales quiero que veas que la gestion de sedes tiene un estilo de cards diferentes a las demas como la del usuario, podrias dejarme la gestion de sedes con el mismo estilo como las demas de configuracion , basate en la de usuarios"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Rediseño Completo de Sedes (`ParqueaderosTab.tsx`) Homologado con Usuarios (`UsuariosTab.tsx`)**:
+   - **Vista Móvil (`mobile-card-list`)**: Se implementaron tarjetas colapsables interactivas (`.expandable-card`) con paleta de avatares (`AVATAR_COLORS` y `getAvatarStyle`), indicador de estado activo (`.avatar-status-dot`), iniciales/código de sede, chevron de animación (`ChevronDown`), y panel expandible con detalles organizados (`.card-details-panel`) y botones de acción (`Parametrizar` y `Editar`).
+   - **Vista de Escritorio (`desktop-table-container`)**: Se reemplazó el grid por una tabla de datos responsiva (`.data-table`) con columnas de Código, Sede / Parqueadero, Ubicación, Teléfono, Capacidad, Estado y Acciones.
+   - **Barra de Búsqueda Integrada**: Se incorporó un campo de búsqueda en tiempo real por nombre de sede, código, ciudad o dirección.
+2. **Bump de Versión**:
+   - Actualizado `.env` a `0.0.57 Dev` para propagar el cambio invalidando el Service Worker.
+
+#### 📦 Componentes Modificados
+- `src/features/settings/ui/ParqueaderosTab.tsx` — Tabla desktop y tarjetas móviles expandibles
+- `.env` — Bump a la versión `0.0.57 Dev`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `cmd.exe /c "npm run build"` → **0 Errores** (build en 1.40s).
+
+
+
+### [2026-08-29 23:20:00] - [FEATURE/FIX] [RBAC/UI/UX] - Visibilidad de Módulo Activos en Administrador y Slicers Responsivos en Móvil
+
+#### 💬 Prompts Originales del Usuario
+1. *"en la version mobile ,al mostrar las sedes se ven cortadas, ajustalas responsive"*
+2. *"En el usuario administrador no se ve el modulo de activos y eso que desde el super administrador se configuro que el rol administrador de esa compañia tuviese todos los permisos, valida y veras que es cierto, recerda que todo va por api y bd"*
+
+#### 🤖 Resumen Técnico para la IA
+1. **Visibilidad y Acceso al Módulo Activos (`DashboardLayout.tsx`, `authService.ts`)**:
+   - En la base de datos relacional (`Action` / `02_Init_RBAC_Seed.sql`), las acciones para la gestión vehicular y patio tienen los slugs `'monitoring.view_occupancy'`, `'monitoring.search_vehicles'`, `'checkin.view'`, y `'checkin.create'`.
+   - Se actualizaron las validaciones en `DashboardLayout.tsx` (`(authService.hasPermission('recent_entries.view') || authService.hasPermission('monitoring.view_occupancy') || authService.hasPermission('checkin.view'))`) y los alias de compatibilidad en `authService.ts` para que cualquier usuario con permisos de ingreso, patio o monitoreo en la BD visualice y acceda de inmediato al módulo **Activos**.
+2. **Slicers y Selector de Sedes Totalmente Responsivo en Móvil (`Dashboard.tsx`, `Dashboard.css`)**:
+   - Se reestructuró el JSX envolviendo las pastillas de sedes y períodos dentro de `<div className="slicers-pills-row">...</div>`.
+   - En la media query móvil (`max-width: 768px`), `.slicers-group` se configuró como columna (`flex-direction: column; align-items: flex-start;`) y `.slicers-pills-row` como envolvente fluido (`flex-wrap: wrap; width: 100%;`), eliminando los desbordamientos y cortes de texto en pantallas pequeñas.
+3. **Bump de Versión**:
+   - Actualizado `.env` a `0.0.56 Dev` para invalidar y forzar la actualización del Service Worker.
+
+#### 📦 Componentes Modificados
+- `src/features/auth/data/authService.ts` — Alias completos para permisos de patio y monitoreo
+- `src/shared/ui/DashboardLayout.tsx` — Validación multicriterio para el botón Activos
+- `src/features/dashboard/ui/Dashboard.tsx` — Envoltorio `slicers-pills-row` para pastillas
+- `src/features/dashboard/ui/Dashboard.css` — Estilos responsivos de slicers
+- `.env` — Bump a la versión `0.0.56 Dev`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `cmd.exe /c "npm run build"` → **0 Errores** (build en 1.56s).
+
+
+
+### [2026-08-29 23:16:00] - [FEATURE/FIX] [RBAC/UI/UX] - Nombre de Compañía en Cabecera, RBAC Estricto en Menú/Rutas, Ojo de Contraseña y Dashboard Dinámico
+
+#### 💬 Prompts Originales del Usuario
+1. *"en la dashboard , este reporte no esta conectado con la BD y la api, porque muestra tipos de vehiculos que no estan creados para esa compañia, ajustalo"*
+2. *"en la creacion de un usuario, no tengo el icono del ojo para ver la clave , agregalo"*
+3. *"cuando un usuario no es administrador e ingresa a la pwa ve todos los modulos apesar de que el rol no los tuviese asociado desde la BD , ajustalo"*
+4. *"Esto ya te lo habia solicitado pero volvioa fallar, y es que un usarui pertenece a una comañia, quiero que aca me muestre el nombre la compañia"*
+
+#### 🤖 Resumen Técnico para la IA
+1. **Nombre de Compañía Dinámico en Cabecera y Menú (`DashboardLayout.tsx`)**:
+   - Se implementó la resolución inteligente `displayCompanyName` evaluando en cascada: `user?.companyName || activeBranch?.companyName || branchesList[0]?.companyName || (user?.companyId ? 'Empresa #' + user.companyId : 'Parking Flow')`.
+   - Se muestra tanto en la cabecera móvil/escritorio (`header-brand-title`) como en el subtítulo del menú lateral (`app-subtitle`).
+2. **Control de Acceso y Visibilidad RBAC 100% Basado en Base de Datos (`authService.ts`, `DashboardLayout.tsx`, `App.tsx`, `Settings.tsx`)**:
+   - `authService.ts`: Se depuraron los alias de compatibilidad para mapear de forma exacta contra los slugs relacionales de la BD (`02_Init_RBAC_Seed.sql`), eliminando el alias erróneo `'novedades.view': ['recent_entries.view']` que otorgaba acceso indebido a Novedades y separando los permisos de reportes y dashboard.
+   - `DashboardLayout.tsx`: Se condicionó cada enlace de navegación lateral (`Dashboard`, `Caja`, `Activos`, `Reportes`, `Novedades`, `Configuración`) a la evaluación estricta de permisos (`authService.hasPermission`).
+   - `App.tsx`: Se implementó el componente `<GuardedRoute>` en todas las subrutas de `/dashboard` y se añadió `getDefaultLandingPath()` para redirigir tras el login directamente al primer módulo autorizado si el rol no tiene permiso para el Dashboard general.
+   - `Settings.tsx`: Se inicializa la pestaña activa en la primera sección permitida según los permisos del usuario.
+3. **Visibilidad de Contraseña con Ícono de Ojo (`UsuariosTab.tsx`)**:
+   - Se integraron los íconos `Eye` / `EyeOff` de `lucide-react` con estado `showPassword` en el modal de Crear/Editar Usuario para alternar el campo de clave entre oculto y legible.
+4. **Conexión Dinámica de Distribución de Vehículos en Dashboard (`Dashboard.tsx`)**:
+   - Se integró `vehiculosConfigService.getConfigs(selectedParqueaderoId)` en el `Promise.all` de `loadData()`.
+   - Se sustituyeron las 4 tarjetas hardcoded por el renderizado dinámico de `activeDistribution` basado exclusivamente en los tipos de vehículos activos en la BD para esa compañía/sede, asignando íconos y conteos reales.
+5. **Bump de Versión**:
+   - Actualizado `.env` a `0.0.55 Dev` para invalidar y forzar la actualización del Service Worker.
+
+#### 📦 Componentes Modificados
+- `src/features/auth/data/authService.ts` — Normalización estricta de alias de permisos RBAC
+- `src/shared/ui/DashboardLayout.tsx` — Nombre dinámico de compañía y menú filtrado por permisos
+- `src/App.tsx` — Rutas protegidas con `GuardedRoute` y aterrizaje dinámico
+- `src/features/settings/ui/Settings.tsx` — Pestaña inicial dinámica según permisos
+- `src/features/settings/ui/UsuariosTab.tsx` — Alternar visibilidad de contraseña con icono de ojo
+- `src/features/dashboard/ui/Dashboard.tsx` — Conexión dinámica con tipos de vehículos de la BD/API
+- `.env` — Bump a la versión `0.0.55 Dev`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `cmd.exe /c "npm run build"` → **0 Errores** (build en 1.19s).
+
+
+
+### [2026-08-29 23:05:00] - [FIX] [UI/UX] - Corrección de Ícono Duplicado en Tarjetas Móviles de Medios de Pago
+
+#### 💬 Prompt Original del Usuario
+> "Ayudame con algo, necesito que me en la version mobile no se vea duplicado el icono" (acompañado de una captura de pantalla mostrando la sección "Ícono Representativo: 💵 (💵)" en el detalle expandido de la tarjeta de medio de pago).
+
+#### 🤖 Resumen Técnico para la IA
+1. **Limpieza de Renderizado de Ícono en Detalle Móvil (`MediosPagoTab.tsx`)**:
+   - En el contenedor de detalles de la tarjeta móvil expandible (`card-details-panel`), se eliminó la interpolación de texto redundante `({mp.icon || 'Predeterminado'})` que se ejecutaba junto a `{getIconComponent(mp.icon || mp.name)}`.
+   - Ahora se muestra de forma limpia y consistente únicamente el ícono representativo (`{getIconComponent(mp.icon || mp.name)}`), evitando que los emojis o nombres de íconos aparezcan repetidos entre paréntesis.
+2. **Bump de Versión**:
+   - Actualizado `.env` a `0.0.54 Dev` para propagar el cambio invalidando el Service Worker.
+
+#### 📦 Componentes Modificados
+- `src/features/settings/ui/MediosPagoTab.tsx` — Renderizado limpio de ícono en vista móvil
+- `.env` — Bump a la versión `0.0.54 Dev`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `cmd.exe /c "npm run build"` → **0 Errores** (build en 2.58s).
+
+
+
 ### [2026-08-29 11:14:00] - [FEATURE] [UI/UX] - Personalización de Marca en Cabecera de Dashboard (Nombre de Compañía)
 
 #### 💬 Prompt Original del Usuario

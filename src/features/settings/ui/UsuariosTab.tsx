@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Shield, Trash2, IdCard, Search, Loader2, AlertTriangle, ChevronDown } from 'lucide-react';
+import { Plus, Edit2, Shield, Trash2, IdCard, Search, Loader2, AlertTriangle, ChevronDown, Eye, EyeOff } from 'lucide-react';
 import type { UserDto, SaveUserDto, GetIdentificationTypeDto, GetUserRoleDto } from '../model/UsuariosContracts';
 import type { BranchDto } from '../model/BranchesContracts';
 import { usuariosService } from '../data/usuariosService';
@@ -65,6 +65,7 @@ export const UsuariosTab: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingUser, setIsSavingUser] = useState(false);
   const [expandedUserId, setExpandedUserId] = useState<number | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Estado para el modal de confirmación de eliminación con loader
   const [userToDelete, setUserToDelete] = useState<UserDto | null>(null);
@@ -128,6 +129,7 @@ export const UsuariosTab: React.FC = () => {
     setSelectedBranchIds([]);
     setInitialAssignedBranchIds([]);
     setBranchSearch('');
+    setShowPassword(false);
     setIsModalOpen(true);
   };
 
@@ -152,6 +154,7 @@ export const UsuariosTab: React.FC = () => {
       isActive: isUserActive,
     });
     setBranchSearch('');
+    setShowPassword(false);
 
     // Cargar sedes asignadas al usuario
     try {
@@ -578,15 +581,38 @@ export const UsuariosTab: React.FC = () => {
                 <div className="form-row">
                   <div className="form-group">
                     <label>{editingUsuario.id ? 'Nueva Contraseña (Opcional)' : 'Contraseña Inicial *'}</label>
-                    <input
-                      type="password"
-                      className="input-field"
-                      placeholder="••••••••••••"
-                      value={editingUsuario.password || ''}
-                      onChange={(e) => setEditingUsuario({ ...editingUsuario, password: e.target.value })}
-                      required={!editingUsuario.id}
-                      disabled={isSavingUser}
-                    />
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '100%' }}>
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        className="input-field"
+                        placeholder="••••••••••••"
+                        style={{ paddingRight: '40px' }}
+                        value={editingUsuario.password || ''}
+                        onChange={(e) => setEditingUsuario({ ...editingUsuario, password: e.target.value })}
+                        required={!editingUsuario.id}
+                        disabled={isSavingUser}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        tabIndex={-1}
+                        aria-label={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
+                        style={{
+                          position: 'absolute',
+                          right: '10px',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: '#64748b',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '4px',
+                        }}
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                   </div>
                   <div className="form-group">
                     <label>Rol del Sistema *</label>

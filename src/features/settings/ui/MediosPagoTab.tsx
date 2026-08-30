@@ -255,7 +255,7 @@ export const MediosPagoTab: React.FC = () => {
                       </div>
                       <div className="card-detail-row">
                         <span className="card-detail-label">Ícono Representativo:</span>
-                        <span className="card-detail-value">{getIconComponent(mp.icon || mp.name)} ({mp.icon || 'Predeterminado'})</span>
+                        <span className="card-detail-value">{getIconComponent(mp.icon || mp.name)}</span>
                       </div>
                       <div className="card-detail-row">
                         <span className="card-detail-label">Estado en Cajas:</span>

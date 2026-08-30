@@ -12,6 +12,8 @@ import { mediosPagoService } from '../../settings/data/mediosPagoService';
 import type { PaymentMethodDto } from '../../settings/model/MediosPagoContracts';
 import { resolucionesService } from '../../settings/data/resolucionesService';
 import type { BillingResolutionDto } from '../../settings/model/ResolucionesContracts';
+import { vehiculosConfigService } from '../../settings/data/vehiculosConfigService';
+import type { VehiculoConfigDto } from '../../settings/model/VehiculosConfigContracts';
 import {
   Car,
   Bike,
@@ -126,6 +128,7 @@ export const Dashboard: React.FC = () => {
   const [realUsers, setRealUsers] = useState<UserDto[]>([]);
   const [mediosPagoList, setMediosPagoList] = useState<PaymentMethodDto[]>([]);
   const [resolutionsList, setResolutionsList] = useState<BillingResolutionDto[]>([]);
+  const [vehicleTypesList, setVehicleTypesList] = useState<VehiculoConfigDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<string>('');
   const [selectedTicket, setSelectedTicket] = useState<RecentTicketDto | null>(null);
@@ -137,7 +140,7 @@ export const Dashboard: React.FC = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [sum, occ, tickets, shifts, users, paymentMethods, resolutions] = await Promise.all([
+      const [sum, occ, tickets, shifts, users, paymentMethods, resolutions, vehicleTypes] = await Promise.all([
         dashboardService.getDailySummary(),
         dashboardService.getOccupancyStats(),
         dashboardService.getActiveTickets(),
@@ -145,6 +148,7 @@ export const Dashboard: React.FC = () => {
         usuariosService.getUsers(),
         mediosPagoService.getPaymentMethods(),
         resolucionesService.getAllResolutions(),
+        vehiculosConfigService.getConfigs(selectedParqueaderoId),
       ]);
       setSummary(sum);
       setOccupancy(occ);
@@ -153,6 +157,7 @@ export const Dashboard: React.FC = () => {
       setRealUsers(users || []);
       setMediosPagoList(paymentMethods || []);
       setResolutionsList(resolutions || []);
+      setVehicleTypesList(vehicleTypes || []);
       setLastUpdated(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
     } catch (err) {
       console.error('Error al cargar datos del dashboard:', err);
@@ -165,7 +170,7 @@ export const Dashboard: React.FC = () => {
     loadData();
     const interval = setInterval(loadData, 20000);
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedParqueaderoId]);
 
   // Métricas reales provenientes estrictamente de la BD y la API
   const totalCapacity = occupancy?.totalCapacity || (parqueaderosList.length > 0 ? parqueaderosList.length * 120 : 100);
@@ -277,48 +282,95 @@ export const Dashboard: React.FC = () => {
 
   const totalDocumentsIssued = resolutionsDonutData.reduce((acc, curr) => acc + curr.value, 0);
 
-  // Clasificación de vehículos activos
-  const countByCategory = activeTickets.reduce<Record<string, number>>((acc, t) => {
-    const typeStr = String(t.vehicleType);
-    let key = 'Auto';
-    if (typeStr === '1' || typeStr === 'Motorcycle' || typeStr === 'Moto') key = 'Moto';
-    else if (typeStr === '2' || typeStr === 'Truck' || typeStr === 'Camión') key = 'Camión';
-    else if (typeStr === '3' || typeStr === 'Van' || typeStr === 'Camioneta') key = 'Camioneta';
-    else if (typeStr === '5' || typeStr === 'Suv' || typeStr === 'SUV') key = 'SUV';
+  // Tipos de vehículos activos en la BD
+  const activeVehicleTypes = (vehicleTypesList || []).filter((v) => v.isActive !== false);
 
-    acc[key] = (acc[key] || 0) + 1;
-    return acc;
-  }, {});
+  const normalizeType = (t: string | number | undefined): string => {
+    const str = String(t ?? '').toLowerCase().trim();
+    if (str === '0' || str === 'car' || str === 'auto' || str === 'automovil' || str === 'automóvil') return '0';
+    if (str === '1' || str === 'motorcycle' || str === 'moto' || str === 'motocicleta') return '1';
+    if (str === '2' || str === 'truck' || str === 'camion' || str === 'camión' || str === 'pesado') return '2';
+    if (str === '3' || str === 'van' || str === 'furgon' || str === 'furgón') return '3';
+    if (str === '4' || str === 'bicycle' || str === 'bici' || str === 'bicicleta') return '4';
+    if (str === '5' || str === 'suv' || str === 'camioneta') return '5';
+    return str;
+  };
 
-  const getVehicleTypeLabel = (type: string | number) => {
-    switch (String(type)) {
-      case '1':
-      case 'Motorcycle':
-      case 'Moto':
-        return 'Motocicleta';
-      case '2':
-      case 'Truck':
-      case 'Camión':
-        return 'Camión Pesado';
-      case '3':
-      case 'Van':
-      case 'Camioneta':
-        return 'Furgón / Van';
-      case '5':
-      case 'Suv':
-      case 'SUV':
-        return 'Camioneta / SUV';
-      default:
-        return 'Automóvil / Sedán';
+  const findMatchingConfig = (type: string | number | undefined): VehiculoConfigDto | undefined => {
+    const norm = normalizeType(type);
+    return activeVehicleTypes.find((v) => {
+      const vNorm = normalizeType(v.vehicleType);
+      if (vNorm === norm) return true;
+      const catLower = (v.category || '').toLowerCase();
+      if (catLower.includes('moto') && norm === '1') return true;
+      if ((catLower.includes('camion') || catLower.includes('pesado')) && norm === '2') return true;
+      if ((catLower.includes('furgon') || catLower.includes('van')) && norm === '3') return true;
+      if ((catLower.includes('bici') || catLower.includes('cicla')) && norm === '4') return true;
+      if ((catLower.includes('suv') || catLower.includes('camioneta')) && norm === '5') return true;
+      if ((catLower.includes('auto') || catLower.includes('car')) && norm === '0') return true;
+      return false;
+    });
+  };
+
+  const getVehicleTypeLabel = (type: string | number | undefined) => {
+    const match = findMatchingConfig(type);
+    if (match && match.category) return match.category;
+
+    const norm = normalizeType(type);
+    switch (norm) {
+      case '1': return 'Motocicleta';
+      case '2': return 'Vehículo Pesado / Camión';
+      case '3': return 'Furgón / Van';
+      case '4': return 'Bicicleta';
+      case '5': return 'Camioneta / SUV';
+      case '0': return 'Automóvil / Sedán';
+      default: return String(type || 'Automóvil / Sedán');
     }
   };
 
-  const renderVehicleIcon = (type: string | number, size = 16) => {
-    const label = getVehicleTypeLabel(type);
-    if (label.includes('Motocicleta')) return <Bike size={size} style={{ color: '#3b82f6' }} />;
-    if (label.includes('Camión') || label.includes('Furgón')) return <Truck size={size} style={{ color: '#8b5cf6' }} />;
-    return <Car size={size} style={{ color: '#10b981' }} />;
+  const getVehicleIconMeta = (type: string | number | undefined, categoryName?: string) => {
+    const match = findMatchingConfig(type);
+    const label = (categoryName || match?.category || getVehicleTypeLabel(type)).toLowerCase();
+    const iconKey = (match?.iconKey || '').toLowerCase();
+
+    if (iconKey.includes('moto') || iconKey.includes('bike') || label.includes('moto') || label.includes('bici') || label.includes('cicla')) {
+      return { Icon: Bike, color: '#3b82f6' };
+    }
+    if (iconKey.includes('truck') || iconKey.includes('van') || label.includes('camion') || label.includes('camión') || label.includes('pesado') || label.includes('furgon') || label.includes('van')) {
+      return { Icon: Truck, color: '#8b5cf6' };
+    }
+    if (label.includes('suv') || label.includes('camioneta')) {
+      return { Icon: Truck, color: '#f59e0b' };
+    }
+    return { Icon: Car, color: '#10b981' };
   };
+
+  const renderVehicleIcon = (type: string | number | undefined, size = 16) => {
+    const { Icon, color } = getVehicleIconMeta(type);
+    return <Icon size={size} style={{ color }} />;
+  };
+
+  // Conteo dinámico de vehículos activos por cada tipo configurado en la BD
+  const activeDistribution = activeVehicleTypes.map((vType) => {
+    const count = activeTickets.filter((t) => {
+      const match = findMatchingConfig(t.vehicleType);
+      if (match) {
+        return match.rateId === vType.rateId || normalizeType(match.vehicleType) === normalizeType(vType.vehicleType);
+      }
+      return normalizeType(t.vehicleType) === normalizeType(vType.vehicleType);
+    }).length;
+
+    const { Icon, color } = getVehicleIconMeta(vType.vehicleType, vType.category);
+
+    return {
+      rateId: vType.rateId || String(vType.vehicleType),
+      category: vType.category,
+      vehicleType: vType.vehicleType,
+      count,
+      Icon,
+      color,
+    };
+  });
 
   const recentActiveTickets = activeTickets.slice(0, 7);
 
@@ -353,45 +405,49 @@ export const Dashboard: React.FC = () => {
           <span className="slicer-label">
             <Building size={14} /> Punto / Parqueadero:
           </span>
-          <button
-            className={`slicer-pill ${selectedParqueaderoId === null ? 'active' : ''}`}
-            onClick={() => setSelectedParqueaderoId(null)}
-          >
-            🌐 Todos los Puntos
-          </button>
-          {parqueaderosList.map((p) => (
+          <div className="slicers-pills-row">
             <button
-              key={p.id}
-              className={`slicer-pill ${selectedParqueaderoId === p.id ? 'active' : ''}`}
-              onClick={() => setSelectedParqueaderoId(p.id)}
+              className={`slicer-pill ${selectedParqueaderoId === null ? 'active' : ''}`}
+              onClick={() => setSelectedParqueaderoId(null)}
             >
-              📍 {p.name}
+              🌐 Todos los Puntos
             </button>
-          ))}
+            {parqueaderosList.map((p) => (
+              <button
+                key={p.id}
+                className={`slicer-pill ${selectedParqueaderoId === p.id ? 'active' : ''}`}
+                onClick={() => setSelectedParqueaderoId(p.id)}
+              >
+                📍 {p.name}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="slicers-group">
           <span className="slicer-label">
             <Calendar size={14} /> Período:
           </span>
-          <button
-            className={`slicer-pill ${periodFilter === 'hoy' ? 'active' : ''}`}
-            onClick={() => setPeriodFilter('hoy')}
-          >
-            Hoy
-          </button>
-          <button
-            className={`slicer-pill ${periodFilter === 'ayer' ? 'active' : ''}`}
-            onClick={() => setPeriodFilter('ayer')}
-          >
-            Ayer
-          </button>
-          <button
-            className={`slicer-pill ${periodFilter === 'mes' ? 'active' : ''}`}
-            onClick={() => setPeriodFilter('mes')}
-          >
-            Este Mes
-          </button>
+          <div className="slicers-pills-row">
+            <button
+              className={`slicer-pill ${periodFilter === 'hoy' ? 'active' : ''}`}
+              onClick={() => setPeriodFilter('hoy')}
+            >
+              Hoy
+            </button>
+            <button
+              className={`slicer-pill ${periodFilter === 'ayer' ? 'active' : ''}`}
+              onClick={() => setPeriodFilter('ayer')}
+            >
+              Ayer
+            </button>
+            <button
+              className={`slicer-pill ${periodFilter === 'mes' ? 'active' : ''}`}
+              onClick={() => setPeriodFilter('mes')}
+            >
+              Este Mes
+            </button>
+          </div>
         </div>
       </div>
 
@@ -905,39 +961,25 @@ export const Dashboard: React.FC = () => {
             <h4 style={{ margin: '0 0 10px 0', fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
               DISTRIBUCIÓN DE VEHÍCULOS ACTIVOS EN SITIO
             </h4>
-            <div className="category-breakdown-grid">
-              <div className="category-mini-card">
-                <div className="category-mini-header">
-                  <span>Autos / Sedán</span>
-                  <Car size={14} style={{ color: '#10b981' }} />
-                </div>
-                <div className="category-mini-count">{countByCategory['Auto'] || 0}</div>
+            {activeDistribution.length > 0 ? (
+              <div className="category-breakdown-grid">
+                {activeDistribution.map((item) => (
+                  <div key={item.rateId} className="category-mini-card">
+                    <div className="category-mini-header">
+                      <span title={item.category} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {item.category}
+                      </span>
+                      <item.Icon size={14} style={{ color: item.color, flexShrink: 0 }} />
+                    </div>
+                    <div className="category-mini-count">{item.count}</div>
+                  </div>
+                ))}
               </div>
-
-              <div className="category-mini-card">
-                <div className="category-mini-header">
-                  <span>Motocicletas</span>
-                  <Bike size={14} style={{ color: '#3b82f6' }} />
-                </div>
-                <div className="category-mini-count">{countByCategory['Moto'] || 0}</div>
+            ) : (
+              <div style={{ padding: '14px', background: '#f8fafc', borderRadius: '8px', fontSize: '0.82rem', color: '#64748b', textAlign: 'center' }}>
+                No hay tipos de vehículos configurados para esta compañía.
               </div>
-
-              <div className="category-mini-card">
-                <div className="category-mini-header">
-                  <span>Camionetas / SUV</span>
-                  <Truck size={14} style={{ color: '#f59e0b' }} />
-                </div>
-                <div className="category-mini-count">{(countByCategory['Camioneta'] || 0) + (countByCategory['SUV'] || 0)}</div>
-              </div>
-
-              <div className="category-mini-card">
-                <div className="category-mini-header">
-                  <span>Camiones / Pesado</span>
-                  <Truck size={14} style={{ color: '#8b5cf6' }} />
-                </div>
-                <div className="category-mini-count">{countByCategory['Camión'] || 0}</div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
 

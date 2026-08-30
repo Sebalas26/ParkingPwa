@@ -41,6 +41,10 @@ export const DashboardLayout: React.FC = () => {
 
   const isSuperAdminGlobal = Boolean(user?.isSuperAdmin && !inspectedCompany);
 
+  const displayCompanyName = user?.isSuperAdmin
+    ? (inspectedCompany ? inspectedCompany.name : 'Plataforma SaaS Global')
+    : (user?.companyName || activeBranch?.companyName || (branchesList.length > 0 ? branchesList[0]?.companyName : null) || 'Parking Flow');
+
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] = useState(false);
@@ -98,6 +102,15 @@ export const DashboardLayout: React.FC = () => {
     second: '2-digit',
   });
 
+  const canAccessSettings =
+    authService.hasPermission('settings.parqueaderos.view') ||
+    authService.hasPermission('settings.usuarios.view') ||
+    authService.hasPermission('settings.roles.view') ||
+    authService.hasPermission('settings.tarifas.view') ||
+    authService.hasPermission('settings.medios_pago.view') ||
+    authService.hasPermission('settings.convenios.view') ||
+    authService.hasPermission('settings.resoluciones.view');
+
   return (
     <div className="dashboard-layout">
       {hasZeroBranches && (user?.isAdmin || authService.hasPermission('branches.create')) && !user?.isSuperAdmin && (
@@ -120,7 +133,7 @@ export const DashboardLayout: React.FC = () => {
           </div>
           <div className="app-title-group">
             <span className="app-name">Parking Flow</span>
-            <span className="app-subtitle">{user?.isSuperAdmin ? (inspectedCompany ? `Admin: ${inspectedCompany.name}` : 'Plataforma SaaS Global') : 'Gestión Multi-Sede'}</span>
+            <span className="app-subtitle">{user?.isSuperAdmin ? (inspectedCompany ? `Admin: ${inspectedCompany.name}` : 'Plataforma SaaS Global') : displayCompanyName}</span>
           </div>
           <button
             type="button"
@@ -166,7 +179,7 @@ export const DashboardLayout: React.FC = () => {
                   <span>Dashboard</span>
                 </button>
               )}
-              {authService.hasPermission('checkout.view') && (
+              {(authService.hasPermission('checkout.view') || authService.hasPermission('shift.view')) && (
                 <button
                   type="button"
                   className={`nav-item ${location.pathname.startsWith('/dashboard/caja') ? 'active' : ''}`}
@@ -176,7 +189,7 @@ export const DashboardLayout: React.FC = () => {
                   <span>Caja</span>
                 </button>
               )}
-              {authService.hasPermission('recent_entries.view') && (
+              {(authService.hasPermission('recent_entries.view') || authService.hasPermission('monitoring.view_occupancy') || authService.hasPermission('checkin.view')) && (
                 <button
                   type="button"
                   className={`nav-item ${location.pathname.startsWith('/dashboard/vehicles') ? 'active' : ''}`}
@@ -206,7 +219,7 @@ export const DashboardLayout: React.FC = () => {
                   <span>Novedades</span>
                 </button>
               )}
-              {(authService.hasPermission('settings.parqueaderos.view') || authService.hasPermission('branches.view') || authService.hasPermission('users.view') || authService.hasPermission('rates.view') || authService.hasPermission('payment_methods.view') || authService.hasPermission('agreements.view')) && (
+              {canAccessSettings && (
                 <button
                   type="button"
                   className={`nav-item ${location.pathname.startsWith('/dashboard/settings') ? 'active' : ''}`}
@@ -274,9 +287,7 @@ export const DashboardLayout: React.FC = () => {
             </button>
             <div className="header-brand-info">
               <span className="header-brand-title">
-                {user?.isSuperAdmin
-                  ? (inspectedCompany ? inspectedCompany.name : 'Plataforma SaaS Global')
-                  : (user?.companyName || 'Parking Flow')}
+                {displayCompanyName}
               </span>
             </div>
           </div>

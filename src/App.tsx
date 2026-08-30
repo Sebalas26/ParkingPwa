@@ -43,6 +43,30 @@ const SessionHeartbeat: React.FC = () => {
   return null;
 };
 
+const getDefaultLandingPath = (): string => {
+  const user = authService.getCurrentUser();
+  if (user?.isSuperAdmin) return '/dashboard/companies';
+
+  if (authService.hasPermission('dashboard.view')) return '/dashboard';
+  if (authService.hasPermission('checkout.view') || authService.hasPermission('shift.view')) return '/dashboard/caja';
+  if (authService.hasPermission('recent_entries.view')) return '/dashboard/vehicles';
+  if (authService.hasPermission('reports.view')) return '/dashboard/reports';
+  if (authService.hasPermission('novedades.view')) return '/dashboard/novedades';
+
+  const canAccessSettings =
+    authService.hasPermission('settings.parqueaderos.view') ||
+    authService.hasPermission('settings.usuarios.view') ||
+    authService.hasPermission('settings.roles.view') ||
+    authService.hasPermission('settings.tarifas.view') ||
+    authService.hasPermission('settings.medios_pago.view') ||
+    authService.hasPermission('settings.convenios.view') ||
+    authService.hasPermission('settings.resoluciones.view');
+
+  if (canAccessSettings) return '/dashboard/settings';
+
+  return '/dashboard';
+};
+
 const RootAuthHandler: React.FC = () => {
   const isExpiredParam = window.location.search.includes('expired=');
   if (isExpiredParam) {
@@ -50,11 +74,8 @@ const RootAuthHandler: React.FC = () => {
   }
 
   if (authService.isAuthenticated()) {
-    const user = authService.getCurrentUser();
-    if (user?.isSuperAdmin) {
-      return <Navigate to="/dashboard/companies" replace />;
-    }
-    return <Navigate to="/dashboard" replace />;
+    const landing = getDefaultLandingPath();
+    return <Navigate to={landing} replace />;
   }
   return <Login />;
 };
@@ -69,6 +90,25 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
       {children}
     </>
   );
+};
+
+const GuardedRoute: React.FC<{
+  permission?: string | string[];
+  element: React.ReactElement;
+}> = ({ permission, element }) => {
+  const user = authService.getCurrentUser();
+  if (user?.isSuperAdmin) return element;
+  if (!permission) return element;
+
+  const permissions = Array.isArray(permission) ? permission : [permission];
+  const isAllowed = permissions.some((p) => authService.hasPermission(p));
+
+  if (!isAllowed) {
+    const fallbackPath = getDefaultLandingPath();
+    return <Navigate to={fallbackPath} replace />;
+  }
+
+  return element;
 };
 
 function App() {
@@ -92,13 +132,77 @@ function App() {
               </ProtectedRoute>
             }
           >
-            <Route index element={<Dashboard />} />
-            <Route path="caja" element={<Caja />} />
-            <Route path="vehicles" element={<Vehicles />} />
-            <Route path="reports" element={<Reports />} />
-            <Route path="novedades" element={<Novedades />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="companies" element={<CompaniesPage />} />
+            <Route
+              index
+              element={
+                <GuardedRoute
+                  permission="dashboard.view"
+                  element={<Dashboard />}
+                />
+              }
+            />
+            <Route
+              path="caja"
+              element={
+                <GuardedRoute
+                  permission={['checkout.view', 'shift.view']}
+                  element={<Caja />}
+                />
+              }
+            />
+            <Route
+              path="vehicles"
+              element={
+                <GuardedRoute
+                  permission="recent_entries.view"
+                  element={<Vehicles />}
+                />
+              }
+            />
+            <Route
+              path="reports"
+              element={
+                <GuardedRoute
+                  permission="reports.view"
+                  element={<Reports />}
+                />
+              }
+            />
+            <Route
+              path="novedades"
+              element={
+                <GuardedRoute
+                  permission="novedades.view"
+                  element={<Novedades />}
+                />
+              }
+            />
+            <Route
+              path="settings"
+              element={
+                <GuardedRoute
+                  permission={[
+                    'settings.parqueaderos.view',
+                    'settings.usuarios.view',
+                    'settings.roles.view',
+                    'settings.tarifas.view',
+                    'settings.medios_pago.view',
+                    'settings.convenios.view',
+                    'settings.resoluciones.view',
+                  ]}
+                  element={<Settings />}
+                />
+              }
+            />
+            <Route
+              path="companies"
+              element={
+                <GuardedRoute
+                  permission="companies.view"
+                  element={<CompaniesPage />}
+                />
+              }
+            />
           </Route>
 
           {/* Fallback general de rutas desconocidas hacia la raíz */}

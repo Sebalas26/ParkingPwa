@@ -117,23 +117,69 @@ export const authService = {
 
     if (user.permissions.includes(permissionSlug)) return true;
 
-    // Aliases bidireccionales de compatibilidad entre UI y base de datos
+    // Aliases bidireccionales de compatibilidad entre UI y base de datos (02_Init_RBAC_Seed.sql)
     const aliases: Record<string, string[]> = {
-      'dashboard.view': ['analytics.view', 'analytics.metrics', 'analytics.view_dashboard'],
+      // 1. Dashboard (Módulo 6 - analytics.view_dashboard)
+      'dashboard.view': ['analytics.view_dashboard', 'analytics.metrics'],
+      'analytics.view_dashboard': ['dashboard.view'],
+
+      // 2. Cobro / Caja / Turnos (Módulos 2 & 5 - checkout.view, shifts.view_current)
+      'checkout.view': ['checkout.process_payment'],
+      'shift.view': ['shifts.view_current', 'shifts.view_history', 'shifts.open'],
+      'shifts.view_current': ['shift.view'],
+
+      // 3. Activos / Patio / Ingreso (Módulos 1 & 4 - monitoring.view_occupancy, checkin.view, checkin.create)
+      'recent_entries.view': ['monitoring.view_occupancy', 'monitoring.search_vehicles', 'checkin.view', 'checkin.create', 'monitoring.force_exit', 'monitoring.export'],
+      'monitoring.view_occupancy': ['recent_entries.view', 'checkin.view'],
+      'monitoring.search_vehicles': ['recent_entries.view', 'checkin.view'],
+      'checkin.view': ['recent_entries.view', 'monitoring.view_occupancy'],
+      'checkin.create': ['recent_entries.view', 'checkin.view'],
+
+      // 4. Reportes (Módulo 6 - analytics.income_reports, analytics.occupancy_reports, analytics.audit_reports, analytics.export)
+      'reports.view': ['analytics.income_reports', 'analytics.occupancy_reports', 'analytics.audit_reports', 'analytics.export'],
+      'analytics.income_reports': ['reports.view'],
+      'analytics.occupancy_reports': ['reports.view'],
+      'analytics.audit_reports': ['reports.view'],
+      'analytics.export': ['reports.view'],
+
+      // 5. Novedades (Módulo 15 - novedades.view)
+      'novedades.view': ['novedades.create', 'novedades.edit', 'novedades.resolve'],
+
+      // 6. Sedes / Parqueaderos (Módulo 7 - branches.view)
       'settings.parqueaderos.view': ['branches.view'],
+      'branches.view': ['settings.parqueaderos.view'],
       'settings.parqueaderos.manage': ['branches.create', 'branches.edit', 'branches.delete', 'branches.assign_users'],
+
+      // 7. Tarifas y Tipos de Vehículos (Módulo 8 - rates.view)
+      'settings.tarifas.view': ['rates.view'],
+      'settings.vehiculos.view': ['rates.view'],
+      'rates.view': ['settings.tarifas.view', 'settings.vehiculos.view'],
+      'settings.tarifas.manage': ['rates.create', 'rates.edit', 'rates.delete'],
+      'settings.vehiculos.manage': ['rates.create', 'rates.edit', 'rates.delete'],
+
+      // 8. Medios de Pago (Módulo 9 - payment_methods.view)
+      'settings.medios_pago.view': ['payment_methods.view'],
+      'payment_methods.view': ['settings.medios_pago.view'],
+      'settings.medios_pago.manage': ['payment_methods.create', 'payment_methods.edit', 'payment_methods.delete'],
+
+      // 9. Convenios (Módulo 10 - agreements.view)
+      'settings.convenios.view': ['agreements.view'],
+      'agreements.view': ['settings.convenios.view'],
+      'settings.convenios.manage': ['agreements.create', 'agreements.edit', 'agreements.delete'],
+
+      // 10. Usuarios y Roles (Módulos 11 & 12 - users.view, roles.view, permissions.view)
       'settings.usuarios.view': ['users.view'],
+      'users.view': ['settings.usuarios.view'],
       'settings.usuarios.manage': ['users.create', 'users.edit', 'users.delete'],
       'settings.roles.view': ['roles.view', 'permissions.view'],
+      'roles.view': ['settings.roles.view'],
+      'permissions.view': ['settings.roles.view'],
       'settings.roles.manage': ['roles.create', 'roles.edit', 'permissions.assign'],
-      'settings.tarifas.view': ['rates.view'],
-      'settings.tarifas.manage': ['rates.create', 'rates.edit', 'rates.delete'],
-      'settings.convenios.view': ['agreements.view'],
-      'settings.convenios.manage': ['agreements.create', 'agreements.edit', 'agreements.delete'],
-      'settings.medios_pago.view': ['payment_methods.view'],
-      'settings.medios_pago.manage': ['payment_methods.create', 'payment_methods.edit', 'payment_methods.delete'],
-      'reports.view': ['analytics.view', 'analytics.export', 'shift.export', 'analytics.income_reports', 'analytics.occupancy_reports', 'analytics.audit_reports'],
-      'novedades.view': ['recent_entries.view'],
+
+      // 11. Resoluciones (Módulo 14 - resolutions.view)
+      'settings.resoluciones.view': ['resolutions.view'],
+      'resolutions.view': ['settings.resoluciones.view'],
+      'settings.resoluciones.manage': ['resolutions.create', 'resolutions.edit', 'resolutions.delete'],
     };
 
     const targetAliases = aliases[permissionSlug];
