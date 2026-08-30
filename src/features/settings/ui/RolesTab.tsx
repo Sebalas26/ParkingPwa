@@ -28,7 +28,10 @@ import { useParqueaderoContext } from '../../../shared/context/ParqueaderoContex
 type PlatformTab = 'all' | 'pwa' | 'wpf';
 
 export const RolesTab: React.FC = () => {
-  const { selectedParqueaderoId } = useParqueaderoContext();
+  const { selectedParqueaderoId, inspectedCompany } = useParqueaderoContext();
+  const currentUser = authService.getCurrentUser();
+  const targetCompanyId = inspectedCompany?.id || currentUser?.companyId || undefined;
+
   const [roles, setRoles] = useState<RoleDto[]>([]);
   const [allModules, setAllModules] = useState<ModuleDto[]>([]);
   const [allActions, setAllActions] = useState<ActionDto[]>([]);
@@ -63,7 +66,7 @@ export const RolesTab: React.FC = () => {
     setIsLoading(true);
     try {
       const [rolesData, modulesData, actionsData] = await Promise.all([
-        rolesService.getRoles(selectedParqueaderoId ?? undefined),
+        rolesService.getRoles(targetCompanyId),
         rolesService.getModules(),
         rolesService.getActions(),
       ]);
@@ -91,7 +94,7 @@ export const RolesTab: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, [selectedParqueaderoId]);
+  }, [selectedParqueaderoId, inspectedCompany?.id]);
 
   const isSuperAdminRole = (role?: RoleDto | null): boolean => {
     if (!role) return false;
@@ -192,7 +195,7 @@ export const RolesTab: React.FC = () => {
         idUserRol: editingRole.idUserRol,
         roleName: editingRole.roleName.trim(),
         isActive: editingRole.isActive ?? true,
-        companyId: selectedParqueaderoId ?? undefined,
+        companyId: targetCompanyId,
       });
       setIsRoleModalOpen(false);
       setEditingRole(null);

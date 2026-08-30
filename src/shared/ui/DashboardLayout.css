@@ -63,8 +63,8 @@
 .sidebar-watermark {
   position: absolute;
   top: 50%;
-  left: -25px;
-  transform: translateY(-50%);
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: 230px;
   height: 230px;
   color: rgba(255, 255, 255, 0.06);

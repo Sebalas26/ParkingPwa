@@ -53,7 +53,10 @@ const getInitials = (name?: string, username?: string) => {
 };
 
 export const UsuariosTab: React.FC = () => {
-  const { selectedParqueaderoId } = useParqueaderoContext();
+  const { selectedParqueaderoId, inspectedCompany } = useParqueaderoContext();
+  const currentUser = authService.getCurrentUser();
+  const targetCompanyId = inspectedCompany?.id || currentUser?.companyId || undefined;
+
   const [usuarios, setUsuarios] = useState<UserDto[]>([]);
   const [identTypes, setIdentTypes] = useState<GetIdentificationTypeDto[]>([]);
   const [allUserRoles, setAllUserRoles] = useState<GetUserRoleDto[]>([]);
@@ -75,21 +78,20 @@ export const UsuariosTab: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, [selectedParqueaderoId]);
+  }, [selectedParqueaderoId, inspectedCompany?.id]);
 
   const loadData = async () => {
     setIsLoading(true);
     try {
       const [usersData, typesData, rolesData, branchesData] = await Promise.all([
-        usuariosService.getUsers(selectedParqueaderoId ?? undefined),
+        usuariosService.getUsers(targetCompanyId),
         usuariosService.getIdentificationTypes(),
-        usuariosService.getUserRoles(selectedParqueaderoId ?? undefined),
+        usuariosService.getUserRoles(targetCompanyId),
         branchesService.getAll(),
       ]);
       setUsuarios(usersData || []);
       setIdentTypes(typesData || []);
 
-      const currentUser = authService.getCurrentUser();
       const isUserSuperAdmin = currentUser?.isSuperAdmin === true;
 
       const filteredRoles = (rolesData || []).filter((r) => {
@@ -109,12 +111,11 @@ export const UsuariosTab: React.FC = () => {
   };
 
   const handleOpenCreate = () => {
-    const currentUser = authService.getCurrentUser();
     const defaultTypeId = identTypes.length > 0 ? (identTypes[0].id || 1) : 1;
     const defaultRoleId = allUserRoles.length > 0 ? (allUserRoles[0].idUserRol ?? allUserRoles[0].id ?? 2) : 2;
 
     setEditingUsuario({
-      companyId: (selectedParqueaderoId ?? currentUser?.companyId) || undefined,
+      companyId: targetCompanyId,
       identificationTypeId: defaultTypeId,
       identificationNumber: '',
       firstName: '',
@@ -136,39 +137,35 @@ export const UsuariosTab: React.FC = () => {
   };
 
   const handleOpenEdit = async (u: UserDto) => {
-    const currentUser = authService.getCurrentUser();
-    const isUserActive = u.isActive ?? (u.status === true || u.status === 'Activo' || u.status === 'Active');
-    const roleId = u.userRoleId || u.userRoleDto?.idUserRol || u.userRoleDto?.id || 2;
+    let assignedBranchIds: number[] = [];
+    try {
+      const userBranches = await branchesService.getByUser(u.id);
+      assignedBranchIds = (userBranches || []).map((b: BranchDto) => b.id);
+    } catch (err) {
+      console.error('Error al cargar sedes del usuario:', err);
+    }
+
     setEditingUsuario({
       id: u.id,
-      companyId: u.companyId || currentUser?.companyId,
+      companyId: u.companyId || targetCompanyId,
       identificationTypeId: u.identificationTypeId || 1,
       identificationNumber: u.identificationNumber || '',
       firstName: u.firstName || '',
       middleName: u.middleName || '',
       firstSurname: u.firstSurname || '',
       secondLastName: u.secondLastName || '',
-      fullName: u.fullName || u.name || `${u.firstName || ''} ${u.firstSurname || ''}`.trim(),
-      username: u.username || u.email || '',
+      fullName: u.fullName || '',
+      username: u.username || '',
       email: u.email || '',
-      password: '', // Dejar vacío para no sobreescribir si no se cambia
-      userRoleId: roleId,
-      isActive: isUserActive,
+      password: '', // Contraseña en blanco para edición
+      userRoleId: u.userRoleId || 2,
+      isActive: u.isActive ?? true,
     });
+
+    setSelectedBranchIds(assignedBranchIds);
+    setInitialAssignedBranchIds(assignedBranchIds);
     setBranchSearch('');
     setShowPassword(false);
-
-    // Cargar sedes asignadas al usuario
-    try {
-      const userBranches = await branchesService.getByUser(u.id);
-      const branchIds = (userBranches || []).map((b) => b.id);
-      setSelectedBranchIds(branchIds);
-      setInitialAssignedBranchIds(branchIds);
-    } catch {
-      setSelectedBranchIds([]);
-      setInitialAssignedBranchIds([]);
-    }
-
     setIsModalOpen(true);
   };
 
@@ -176,7 +173,11 @@ export const UsuariosTab: React.FC = () => {
     e.preventDefault();
     if (!editingUsuario) return;
 
-    const currentUser = authService.getCurrentUser();
+    if (!editingUsuario.id && !editingUsuario.password?.trim()) {
+      alert('La contraseña es requerida para nuevos usuarios.');
+      return;
+    }
+
     const computedFullName = editingUsuario.fullName.trim() ||
       `${editingUsuario.firstName} ${editingUsuario.middleName || ''} ${editingUsuario.firstSurname} ${editingUsuario.secondLastName || ''}`.replace(/\s+/g, ' ').trim();
 
@@ -184,7 +185,7 @@ export const UsuariosTab: React.FC = () => {
     try {
       const payload: SaveUserDto = {
         ...editingUsuario,
-        companyId: (editingUsuario.companyId || selectedParqueaderoId || currentUser?.companyId) || undefined,
+        companyId: targetCompanyId || editingUsuario.companyId,
         fullName: computedFullName,
         username: editingUsuario.username.trim() || editingUsuario.email.trim(),
       };
@@ -214,7 +215,7 @@ export const UsuariosTab: React.FC = () => {
 
       setIsModalOpen(false);
       setEditingUsuario(null);
-      const freshUsers = await usuariosService.getUsers(selectedParqueaderoId ?? undefined);
+      const freshUsers = await usuariosService.getUsers(targetCompanyId);
       setUsuarios(freshUsers || []);
     } catch (err: any) {
       alert(err?.message || 'Error al guardar el usuario en la base de datos.');
@@ -233,7 +234,7 @@ export const UsuariosTab: React.FC = () => {
 
     try {
       await usuariosService.deleteUser(targetId);
-      const freshUsers = await usuariosService.getUsers(selectedParqueaderoId ?? undefined);
+      const freshUsers = await usuariosService.getUsers(targetCompanyId);
       setUsuarios(freshUsers || []);
       setUserToDelete(null);
     } catch (err: any) {

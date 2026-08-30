@@ -7,6 +7,49 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 09:18:00] - [BUGFIX] [MULTI-TENANT / USERS] - Corrección de Filtro por Empresa en UsuariosTab y RolesTab para SuperAdmin
+
+#### 💬 Prompt Original del Usuario
+> "Ayudame con validar que paso cuando ingreso a la administracion de una empresa desde el super administrador , voy a configuracion - usuarios y no veo ninguno, se desconecto de la BD?"
+> "Recuerda que debes filtrar los usuarios por la compañia elegida, es decir solo mostrarme los usuarios que se encuentra creados para esa compañia"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Resolución de `targetCompanyId` (CompanyId vs BranchId)**:
+   - Se corrigió el problema en `UsuariosTab.tsx` y `RolesTab.tsx` donde se pasaba `selectedParqueaderoId` (ID de Sede/Branch) como parámetro `companyId` a la API (`/Users/GetUsers?companyId=X` y `/UserRole/GetUserRoles?companyId=X`).
+   - Se implementó la resolución dinámica: `targetCompanyId = inspectedCompany?.id || currentUser?.companyId || undefined`.
+   - Cuando el SuperAdmin impresiona/administra una empresa (`inspectedCompany`), se filtran y listan **exclusivamente los usuarios y roles pertenecientes a esa empresa (`CompanyId`)**.
+   - Se actualizaron las llamadas de creación, edición, eliminación y refresco para asociar y consultar de forma estricta por `targetCompanyId`.
+2. **Cero Errores**:
+   - Compilación verificada con `npm run build` (**0 errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/settings/ui/UsuariosTab.tsx`
+- `src/features/settings/ui/RolesTab.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores**
+
+### [2026-08-30 09:13:00] - [UI / UX] - Centrado de Marca de Agua (Logo de Fondo) en Sidebar
+
+#### 💬 Prompt Original del Usuario
+> "Podrias centrar esta imagen, es decir moverla hacia la derecha un poco"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Centrado Horizontal y Vertical de Marca de Agua (Sidebar)**:
+   - Se actualizó el selector `.sidebar-watermark` en `DashboardLayout.css`.
+   - Se reemplazó `left: -25px; transform: translateY(-50%);` por `left: 50%; transform: translate(-50%, -50%);`.
+   - Esto ubica la imagen de marca de agua de fondo perfectamente centrada dentro del contenedor `.sidebar` (ancho 250px) tanto en el eje X como en el eje Y.
+2. **Cero Errores**:
+   - Compilación verificada con `npm run build` (**0 errores**).
+
+#### 📦 Componentes Modificados
+- `src/shared/ui/DashboardLayout.css`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores**
+
 ### [2026-08-30 08:52:00] - [BUGFIX] [UX / CHECK-IN] - Corrección de Marca de Agua Sidebar y Fix Error 400 vehicleType en Ingreso de Vehículo
 
 #### 💬 Prompt Original del Usuario
