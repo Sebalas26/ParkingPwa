@@ -7,6 +7,25 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 12:33:00] - [UI / UX] - Cobertura Fija Oscura de Pantalla Completa (#0b0f19) en NoPermissionsView
+
+#### 💬 Prompt Original del Usuario
+> "no pero lo requiero en la pantalla, lo señale en rojo , no solo donde esta negro"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Superposición de Pantalla Completa Oscura (`NoPermissionsView.tsx`)**:
+   - Se actualizó el contenedor de `NoPermissionsView.tsx` aplicando `position: fixed; inset: 0; z-index: 9999; background: #0b0f19`.
+   - Cubre por completo la barra superior (`.top-bar`) y los bordes blancos alrededor del área de trabajo, logrando una vista totalmente oscura y uniforme que brinda el 100% de foco visual a la tarjeta de alerta.
+2. **Cero Errores**:
+   - Compilación limpia con `npm run build` (**0 errores**).
+
+#### 📦 Componentes Modificados
+- `src/shared/ui/NoPermissionsView.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores**
+
 ### [2026-08-30 12:25:00] - [UI / UX] - Estilo Dark Glassmorphism y Fondo Oscuro (#0b0f19) en Vista de Acceso Restringido (`NoPermissionsView`)
 
 #### 💬 Prompt Original del Usuario

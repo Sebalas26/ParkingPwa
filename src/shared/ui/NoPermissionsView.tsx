@@ -23,14 +23,19 @@ export const NoPermissionsView: React.FC<NoPermissionsViewProps> = ({ moduleName
   return (
     <div
       style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 9999,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: '100vh',
-        width: '100%',
         background: '#0b0f19',
         padding: '24px 16px',
         boxSizing: 'border-box',
+        overflowY: 'auto',
       }}
     >
       <div
@@ -93,7 +98,7 @@ export const NoPermissionsView: React.FC<NoPermissionsViewProps> = ({ moduleName
         >
           <KeyRound size={20} style={{ flexShrink: 0, marginTop: '2px', color: '#f59e0b' }} />
           <span>
-            <strong style={{ color: '#fbbf24' }}>¿Cómo solicitar acceso?</strong> Contacta al Administrador de tu empresa para que asigne los permisos operativos a tu rol desde la sección de <em>Configuración → Roles y Permisos</em>.
+            <strong style={{ color: '#fbbf24' }}>¿Cómo solicitar acceso?</strong> Contacta al Administrador de tu empresa para que asigne los permisos operativos a tu rol.
           </span>
         </div>
 
@@ -143,7 +148,7 @@ export const NoPermissionsView: React.FC<NoPermissionsViewProps> = ({ moduleName
             }}
           >
             <RefreshCw size={16} />
-            Actualizar Permisos
+            Refrescar pantalla
           </button>
         </div>
       </div>
