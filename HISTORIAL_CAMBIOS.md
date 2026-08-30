@@ -7,6 +7,28 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 18:41:00] - [FEATURE / RBAC] - Aprovisionamiento Automático de Roles Base (Administrador, Supervisor, Operador) y Roles Dinámicos por Empresa
+
+#### 💬 Prompt Original del Usuario
+> "Pero me sigue faltndo otros roles ,por ejmplo en ParkPoint Global SaaS me hace falta el supervisor" (con aclaración de que cualquier rol creado para la empresa debe mostrarse dinámicamente)
+
+#### 🤖 Resumen Técnico para la IA
+1. **Garantía de Roles Base y Roles Dinámicos (`UserRoleRepository.cs`)**:
+   - Se reemplazó el aprovisionamiento únicamente de Administrador por `EnsureCompanyDefaultRolesAsync(targetCompanyId)`.
+   - El sistema verifica y auto-crea la plantilla de roles base de la empresa (**Administrador**, **Supervisor** y **Operador**) vinculados a su `CompanyId` si alguno hiciera falta.
+   - Retorna de forma completamente dinámica **todos** los roles pertenecientes a ese `CompanyId` (incluyendo cualquier rol personalizado creado por la empresa como "Cajera Noche", "Auxiliar Patio", etc.).
+2. **Cero Errores**:
+   - Compilación limpia de Backend con `dotnet build` (**0 errores**).
+   - Compilación limpia de Frontend con `npm run build` (**0 errores**).
+
+#### 📦 Componentes Modificados
+- `ParkingApi/ParkingApi.Infrastructure/Data/Repositories/UserRoles/UserRoleRepository.cs`
+- `ParkingPwa/HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `dotnet build` -> **0 Errores**
+- `npm run build` -> **0 Errores**
+
 ### [2026-08-30 18:31:00] - [FEATURE / RBAC] - Aislamiento Estricto 100% Multi-Tenant por Parqueadero y Auto-aprovisionamiento
 
 #### 💬 Prompt Original del Usuario
