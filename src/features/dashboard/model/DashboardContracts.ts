@@ -11,6 +11,7 @@ export interface DailySummaryDto {
   revenueByVehicleType?: Record<string, number>;
   countByVehicleType?: Record<string, number>;
   revenueByPaymentMethod?: Record<string, number>;
+  countByPaymentMethod?: Record<string, number>;
   countByResolution?: Record<string, number>;
   revenueByResolution?: Record<string, number>;
   // Fallbacks legacy

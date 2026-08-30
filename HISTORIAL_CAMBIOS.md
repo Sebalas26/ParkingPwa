@@ -7,6 +7,33 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 16:27:00] - [FEATURE / UI] - Reemplazo por Cantidad de Vehículos y Eliminación de Reporte Duplicado en Dashboard
+
+#### 💬 Prompt Original del Usuario
+> "reemplazame estos textos por la cantidad , ademas veo que en la dashboard hay un reporte similiar (2da foto), eliminamelo"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Retorno de Conteo por Medio de Pago (`AnalyticsService.cs` y `FinancialSummaryDto.cs`)**:
+   - Se agregó la propiedad `CountByPaymentMethod` al contrato `FinancialSummaryDto` y se pobló en `GetDailySummaryAsync` de `AnalyticsService.cs` para enviar el conteo exacto de vehículos/transacciones por cada medio de pago.
+2. **Subtexto con Cantidad de Vehículos (`Dashboard.tsx`)**:
+   - En la leyenda de **Distribución por Métodos de Pago**, se reemplazó el texto `X% del total` por el conteo real de vehículos procesados (ej. `1 vehículo`, `6 vehículos`, `1 vehículo`).
+3. **Eliminación del Reporte Duplicado (`Dashboard.tsx`)**:
+   - Se removió por completo la sección **"MEDIOS DE PAGO UTILIZADOS HOY"** del panel izquierdo del Dashboard para evitar redundancias.
+4. **Cero Errores**:
+   - Compilación limpia de Backend con `dotnet build` (**0 errores**).
+   - Compilación limpia de Frontend con `npm run build` (**0 errores**).
+
+#### 📦 Componentes Modificados
+- `ParkingApi/ParkingApi.Domain/Dtos/Analytics/FinancialSummaryDto.cs`
+- `ParkingApi/ParkingApi.Core/Services/Analytics/AnalyticsService.cs`
+- `ParkingPwa/src/features/dashboard/model/DashboardContracts.ts`
+- `ParkingPwa/src/features/dashboard/ui/Dashboard.tsx`
+- `ParkingPwa/HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `dotnet build` -> **0 Errores**
+- `npm run build` -> **0 Errores**
+
 ### [2026-08-30 16:14:00] - [FEATURE / UI] - Porcentajes (%) Renderizados Sobre las Porciones de la Dona del Dashboard
 
 #### 💬 Prompt Original del Usuario

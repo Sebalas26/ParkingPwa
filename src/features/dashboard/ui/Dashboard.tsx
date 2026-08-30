@@ -30,7 +30,6 @@ import {
   Eye,
   CreditCard,
   Wallet,
-  QrCode,
   Building,
   Tag,
   Receipt,
@@ -300,31 +299,14 @@ export const Dashboard: React.FC = () => {
 
   const PAYMENT_COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ec4899', '#06b6d4', '#14b8a6', '#6366f1'];
 
-  const renderPaymentIcon = (iconName?: string, name?: string) => {
-    const icon = iconName || name || '💳';
-    const hasEmoji = /\p{Extended_Pictographic}/u.test(icon);
-    if (hasEmoji) {
-      return <span style={{ fontSize: '1.05rem', lineHeight: 1 }}>{icon}</span>;
-    }
-    switch (icon.toLowerCase()) {
-      case 'efectivo':
-      case 'cash':
-      case 'banknote':
-        return <Wallet size={15} style={{ color: '#10b981' }} />;
-      case 'tarjeta':
-      case 'tarjeta debito':
-      case 'tarjeta credito':
-      case 'creditcard':
-      case 'debitcard':
-        return <CreditCard size={15} style={{ color: '#3b82f6' }} />;
-      default:
-        return <QrCode size={15} style={{ color: '#8b5cf6' }} />;
-    }
-  };
+
+
+  const countBreakdown = summary?.countByPaymentMethod || {};
 
   // Generación de datos reales para Gráfica de Torta 1: Métodos de Pago
   const paymentDonutData = activeMediosPago.map((pm, index) => {
     let val = 0;
+    let cnt = 0;
     const nameLower = (pm.name || '').toLowerCase();
 
     const pmIdStr = String(pm.id);
@@ -342,6 +324,16 @@ export const Dashboard: React.FC = () => {
       val = transferAmount;
     }
 
+    if (countBreakdown[pm.name] !== undefined) {
+      cnt = Number(countBreakdown[pm.name]);
+    } else if (countBreakdown[pmIdStr] !== undefined) {
+      cnt = Number(countBreakdown[pmIdStr]);
+    } else if (countBreakdown[String(pm.id - 1)] !== undefined && pm.id > 0) {
+      cnt = Number(countBreakdown[String(pm.id - 1)]);
+    } else if (val > 0) {
+      cnt = 1;
+    }
+
     if (val === 0 && activeMediosPago.length === 1 && totalRevenueToday > 0) {
       val = totalRevenueToday;
     }
@@ -350,6 +342,7 @@ export const Dashboard: React.FC = () => {
       label: pm.name,
       icon: pm.icon,
       value: val,
+      count: cnt,
       color: PAYMENT_COLORS[index % PAYMENT_COLORS.length],
     };
   });
@@ -650,8 +643,6 @@ export const Dashboard: React.FC = () => {
 
                 <div className="pie-legend-list">
                   {paymentDonutData.map((item, index) => {
-                    const totalDonutSum = paymentDonutData.reduce((acc, curr) => acc + curr.value, 0);
-                    const pct = totalDonutSum > 0 ? Math.round((item.value / totalDonutSum) * 100) : 0;
                     return (
                       <div key={index} className="pie-legend-item">
                         <div className="pie-legend-left">
@@ -671,7 +662,7 @@ export const Dashboard: React.FC = () => {
                         <div style={{ textAlign: 'right' }}>
                           <span className="pie-legend-val">$ {item.value.toLocaleString()}</span>
                           <small style={{ display: 'block', fontSize: '0.74rem', color: 'var(--text-secondary)', fontWeight: 700 }}>
-                            {pct}% del total
+                            {item.count} {item.count === 1 ? 'vehículo' : 'vehículos'}
                           </small>
                         </div>
                       </div>
@@ -1028,43 +1019,7 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Desglose de Medios de Pago del Día */}
-          <div>
-            <h4 style={{ margin: '0 0 10px 0', fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
-              MEDIOS DE PAGO UTILIZADOS HOY
-            </h4>
-            {paymentDonutData.length > 0 ? (
-              <div className="revenue-breakdown-list">
-                {paymentDonutData.map((item, index) => {
-                  const pct = totalRevenueToday > 0 ? Math.round((item.value * 100) / totalRevenueToday) : 0;
-                  return (
-                    <div key={index} className="revenue-item">
-                      <div className="revenue-item-header">
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          {renderPaymentIcon(item.icon, item.label)}
-                          {item.label}
-                        </span>
-                        <span style={{ fontWeight: 700 }}>$ {item.value.toLocaleString()} ({pct}%)</span>
-                      </div>
-                      <div className="revenue-item-bar">
-                        <div
-                          className="revenue-item-fill"
-                          style={{
-                            width: `${Math.min(pct, 100)}%`,
-                            background: item.color,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div style={{ padding: '14px', background: '#f8fafc', borderRadius: '8px', fontSize: '0.82rem', color: '#64748b', textAlign: 'center' }}>
-                No hay medios de pago registrados en el sistema.
-              </div>
-            )}
-          </div>
+
 
           {/* Distribución por Categoría de Vehículo */}
           <div style={{ marginTop: '0.5rem' }}>
