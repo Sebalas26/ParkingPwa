@@ -7,6 +7,27 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 18:20:00] - [FEATURE / UI] - Modal Personalizada Dark Glassmorphism para Confirmación de Eliminación de Empresa
+
+#### 💬 Prompt Original del Usuario
+> "Ajustame el diseño de la confirmacion de la eliminacion de una empesa" (con captura adjunta del cuadro flotante nativo del navegador `window.confirm`)
+
+#### 🤖 Resumen Técnico para la IA
+1. **Reemplazo de `window.confirm` (`CompaniesPage.tsx`)**:
+   - Se removieron los llamados flotantes nativos del navegador `window.confirm` al hacer clic en el botón de eliminar (🗑️) de una empresa en **Parqueaderos SaaS**.
+   - Se creó el estado `companyToDelete` para activar una modal de confirmación personalizada utilizando `ModalPortal`.
+2. **Diseño Dark Glassmorphism**:
+   - La nueva modal cuenta con fondo traslúcido (`rgba(11, 15, 25, 0.85)` con `backdropFilter: blur(6px)`), gradiente oscuro (`#18181b` - `#27272a`), ícono de advertencia `Trash2` con resplandor rojo, el nombre de la empresa resaltado (`"Parking 2"`), advertencia de acción **IRREVERSIBLE** y botones de acción **Cancelar** y **Sí, Eliminar Empresa** (`#ef4444` / `#dc2626`) con spinner de carga.
+3. **Cero Errores**:
+   - Compilación limpia de Frontend con `npm run build` (**0 errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/companies/ui/CompaniesPage.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores**
+
 ### [2026-08-30 18:16:00] - [BUGFIX / RBAC] - Restauración de Roles Base del Sistema y Desduplicación Inteligente por Nombre
 
 #### 💬 Prompt Original del Usuario

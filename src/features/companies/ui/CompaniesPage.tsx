@@ -33,6 +33,7 @@ export const CompaniesPage: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [isBranchesModalOpen, setIsBranchesModalOpen] = useState<boolean>(false);
+  const [companyToDelete, setCompanyToDelete] = useState<CompanyDto | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<CompanyDto | null>(null);
   const [companyBranches, setCompanyBranches] = useState<any[]>([]);
   const [loadingBranches, setLoadingBranches] = useState<boolean>(false);
@@ -182,16 +183,16 @@ export const CompaniesPage: React.FC = () => {
     }
   };
 
-  const handleDeleteCompany = async (company: CompanyDto) => {
-    const firstConfirm = window.confirm(`¿Estás seguro de que deseas eliminar permanentemente la empresa "${company.name}"?`);
-    if (!firstConfirm) return;
-    
-    const secondConfirm = window.confirm(`¡ADVERTENCIA CRÍTICA! Esto borrará permanentemente la empresa "${company.name}" y TODOS sus datos asociados (sedes, usuarios, transacciones, tarifas, convenios, etc.). Esta acción es IRREVERSIBLE.\n\n¿Estás absolutamente seguro de continuar?`);
-    if (!secondConfirm) return;
+  const handleDeleteCompany = (company: CompanyDto) => {
+    setCompanyToDelete(company);
+  };
 
+  const confirmDeleteCompany = async () => {
+    if (!companyToDelete) return;
     try {
       setActionLoading(true);
-      await companyService.delete(company.id);
+      await companyService.delete(companyToDelete.id);
+      setCompanyToDelete(null);
       await loadCompanies();
     } catch (err: any) {
       alert(err?.response?.data?.message || err?.message || 'Error al eliminar la empresa.');
@@ -872,6 +873,129 @@ export const CompaniesPage: React.FC = () => {
             </div>
           </div>
         </div>
+        </ModalPortal>
+      )}
+
+      {/* Modal Confirmación de Eliminación de Empresa */}
+      {companyToDelete && (
+        <ModalPortal>
+          <div className="modal-overlay" style={{ background: 'rgba(11, 15, 25, 0.85)', backdropFilter: 'blur(6px)', zIndex: 9999 }}>
+            <div
+              className="modal-container"
+              style={{
+                maxWidth: '480px',
+                width: '90%',
+                background: 'linear-gradient(145deg, #18181b 0%, #27272a 100%)',
+                border: '1px solid rgba(239, 68, 68, 0.35)',
+                borderRadius: '16px',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
+                overflow: 'hidden',
+                color: '#f4f4f5',
+              }}
+            >
+              <div style={{ padding: '28px 28px 20px 28px', textAlign: 'center' }}>
+                <div
+                  style={{
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: '50%',
+                    background: 'rgba(239, 68, 68, 0.15)',
+                    border: '1px solid rgba(239, 68, 68, 0.4)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 16px auto',
+                    boxShadow: '0 0 20px rgba(239, 68, 68, 0.25)',
+                  }}
+                >
+                  <Trash2 size={30} style={{ color: '#ef4444' }} />
+                </div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', margin: '0 0 10px 0' }}>
+                  ¿Eliminar Empresa Permanentemente?
+                </h3>
+                <p style={{ fontSize: '0.92rem', color: '#a1a1aa', lineHeight: 1.5, margin: '0 0 16px 0' }}>
+                  ¿Estás seguro de que deseas eliminar permanentemente la empresa{' '}
+                  <strong style={{ color: '#ef4444', fontWeight: 800 }}>"{companyToDelete.name}"</strong>?
+                </p>
+                <div
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    borderRadius: '10px',
+                    padding: '12px 14px',
+                    textAlign: 'left',
+                    fontSize: '0.82rem',
+                    color: '#fca5a5',
+                    lineHeight: 1.45,
+                  }}
+                >
+                  <strong>⚠️ ADVERTENCIA CRÍTICA:</strong> Esta acción es <strong>IRREVERSIBLE</strong>. Se borrarán permanentemente sus sedes, usuarios, transacciones, tarifas, convenios y configuraciones asociadas.
+                </div>
+              </div>
+
+              <div
+                style={{
+                  padding: '16px 24px',
+                  background: 'rgba(0, 0, 0, 0.25)',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '12px',
+                }}
+              >
+                <button
+                  type="button"
+                  style={{
+                    padding: '10px 18px',
+                    borderRadius: '8px',
+                    background: 'transparent',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    color: '#e4e4e7',
+                    fontWeight: 600,
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onClick={() => setCompanyToDelete(null)}
+                  disabled={actionLoading}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: '8px',
+                    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                    border: 'none',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 14px rgba(239, 68, 68, 0.4)',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onClick={confirmDeleteCompany}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? (
+                    <>
+                      <div className="btn-spinner" style={{ width: '16px', height: '16px', borderTopColor: '#fff' }} />
+                      <span>Eliminando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 size={16} />
+                      <span>Sí, Eliminar Empresa</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         </ModalPortal>
       )}
     </div>
