@@ -7,6 +7,26 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 15:29:00] - [BUGFIX] [DASHBOARD / MEDIOS DE PAGO] - Mapeo Directo de Medios de Pago por Sede en el Dashboard
+
+#### 💬 Prompt Original del Usuario
+> "bien pero ahora marque tarjeta de credito y no se ve en la dashbard , pero si elijo efectivo si sirve, el desmarca y quita, marco y se ve...."
+
+#### 🤖 Resumen Técnico para la IA
+1. **Mapeo Directo de `branchPm` en `Dashboard.tsx`**:
+   - Se actualizó la carga en `loadData()` para mapear directamente los objetos devueltos por `branchesService.getBranchPaymentMethods(selectedParqueaderoId)`.
+   - Se extraen de forma nativa los campos `paymentMethodId`, `paymentMethodName` y `paymentMethodIcon` sin requerir cruzamientos indirectos por ID.
+   - Cualquier combinación de medios habilitados en la sede (ej. solo "Tarjeta de Crédito", solo "Efectivo", o ambos) se proyecta inmediatamente en el Dashboard de esa sede.
+2. **Cero Errores**:
+   - Compilación limpia con `npm run build` (**0 errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/dashboard/ui/Dashboard.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores**
+
 ### [2026-08-30 15:11:00] - [BUGFIX] [DASHBOARD / PARÁMETROS SEDE] - Corrección de Validación de Medios Vacíos por Sede en el Dashboard
 
 #### 💬 Prompt Original del Usuario

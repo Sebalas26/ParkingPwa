@@ -150,18 +150,30 @@ export const Dashboard: React.FC = () => {
         mediosPagoService.getPaymentMethods(targetCompanyId),
       ]);
 
-      // Cargar medios de pago dinámicos de la BD y filtrar por sede si hay restricciones
+      // Cargar medios de pago dinámicos de la BD y mapear según la sede seleccionada
       let paymentMethods: PaymentMethodDto[] = [];
 
       if (selectedParqueaderoId) {
         try {
           const branchPm = await branchesService.getBranchPaymentMethods(selectedParqueaderoId);
-          const enabledPmIds = new Set(
-            (branchPm || [])
-              .filter((bpm) => bpm.isActive !== false && bpm.isEnabled !== false)
-              .map((bpm) => bpm.paymentMethodId)
-          );
-          paymentMethods = (globalPaymentMethods || []).filter((pm) => enabledPmIds.has(pm.id));
+          if (Array.isArray(branchPm)) {
+            paymentMethods = branchPm
+              .filter((bpm: any) => bpm.isActive !== false && bpm.isEnabled !== false)
+              .map((bpm: any) => {
+                const name = bpm.paymentMethodName || bpm.paymentMethod?.name || bpm.name || 'Medio de Pago';
+                const icon = bpm.paymentMethodIcon || bpm.paymentMethod?.icon || bpm.icon || '💳';
+                return {
+                  id: bpm.paymentMethodId || bpm.id,
+                  name: name,
+                  code: name,
+                  icon: icon,
+                  requiresReference: false,
+                  isActive: bpm.isActive !== false,
+                };
+              });
+          } else {
+            paymentMethods = globalPaymentMethods || [];
+          }
         } catch {
           paymentMethods = globalPaymentMethods || [];
         }
