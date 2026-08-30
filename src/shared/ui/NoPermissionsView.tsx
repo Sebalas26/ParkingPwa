@@ -26,66 +26,74 @@ export const NoPermissionsView: React.FC<NoPermissionsViewProps> = ({ moduleName
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: '70vh',
+        minHeight: '100vh',
+        width: '100%',
+        background: '#0b0f19',
         padding: '24px 16px',
+        boxSizing: 'border-box',
       }}
     >
       <div
         style={{
-          maxWidth: '520px',
+          maxWidth: '500px',
           width: '100%',
-          background: '#ffffff',
-          borderRadius: '16px',
-          padding: '36px 28px',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04)',
-          border: '1px solid #e2e8f0',
+          background: 'linear-gradient(145deg, #111827 0%, #1e293b 100%)',
+          borderRadius: '20px',
+          padding: '40px 32px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 40px rgba(217, 119, 6, 0.1)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
           textAlign: 'center',
+          backdropFilter: 'blur(16px)',
         }}
       >
         <div
           style={{
-            margin: '0 auto 20px auto',
-            width: '64px',
-            height: '64px',
+            margin: '0 auto 22px auto',
+            width: '68px',
+            height: '68px',
             borderRadius: '50%',
-            background: 'rgba(217, 119, 6, 0.12)',
-            color: '#d97706',
+            background: 'rgba(217, 119, 6, 0.15)',
+            color: '#f59e0b',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            border: '1px solid rgba(217, 119, 6, 0.3)',
+            border: '1px solid rgba(245, 158, 11, 0.35)',
+            boxShadow: '0 0 20px rgba(245, 158, 11, 0.2)',
           }}
         >
-          <ShieldAlert size={34} />
+          <ShieldAlert size={36} />
         </div>
 
-        <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', margin: '0 0 8px 0' }}>
+        <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#ffffff', margin: '0 0 10px 0', letterSpacing: '-0.02em' }}>
           Acceso Restringido
         </h2>
 
-        <p style={{ fontSize: '0.92rem', color: '#64748b', margin: '0 0 20px 0', lineHeight: 1.5 }}>
-          Hola, <strong style={{ color: '#0f172a' }}>{user?.fullName || user?.username || 'Usuario'}</strong>. Tu rol de{' '}
-          <span style={{ color: '#07665e', fontWeight: 700 }}>{user?.roleName || 'Usuario'}</span> no cuenta con los permisos necesarios para acceder {moduleName ? `al módulo de ${moduleName}` : 'a esta sección'}.
+        <p style={{ fontSize: '0.94rem', color: '#94a3b8', margin: '0 0 24px 0', lineHeight: 1.6 }}>
+          Hola, <strong style={{ color: '#f8fafc' }}>{user?.fullName || user?.username || 'Usuario'}</strong>. Tu usuario con el rol de{' '}
+          <span style={{ color: '#10b981', fontWeight: 700, background: 'rgba(16, 185, 129, 0.12)', padding: '2px 8px', borderRadius: '6px', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
+            {user?.roleName || 'Usuario'}
+          </span> no cuenta con permisos asignados para acceder {moduleName ? `al módulo de ${moduleName}` : 'a esta sección del sistema'}.
         </p>
 
         <div
           style={{
-            background: '#fffbe6',
-            border: '1px solid #ffe58f',
+            background: 'rgba(217, 119, 6, 0.1)',
+            border: '1px solid rgba(245, 158, 11, 0.25)',
             borderRadius: '12px',
             padding: '14px 16px',
             textAlign: 'left',
             fontSize: '0.84rem',
-            color: '#873800',
-            marginBottom: '24px',
+            color: '#fef3c7',
+            marginBottom: '28px',
             display: 'flex',
-            gap: '10px',
+            gap: '12px',
             alignItems: 'flex-start',
+            lineHeight: 1.5,
           }}
         >
-          <KeyRound size={18} style={{ flexShrink: 0, marginTop: '2px', color: '#d97706' }} />
+          <KeyRound size={20} style={{ flexShrink: 0, marginTop: '2px', color: '#f59e0b' }} />
           <span>
-            <strong>¿Cómo solicitar acceso?</strong> Contacta al Administrador de tu empresa para que asigne los permisos operativos correspondientes a tu rol desde la pestaña de <em>Configuración → Roles y Permisos</em>.
+            <strong style={{ color: '#fbbf24' }}>¿Cómo solicitar acceso?</strong> Contacta al Administrador de tu empresa para que asigne los permisos operativos a tu rol desde la sección de <em>Configuración → Roles y Permisos</em>.
           </span>
         </div>
 
@@ -98,14 +106,16 @@ export const NoPermissionsView: React.FC<NoPermissionsViewProps> = ({ moduleName
               background: '#ef4444',
               color: '#ffffff',
               border: 'none',
-              padding: '10px 18px',
-              borderRadius: '8px',
-              fontWeight: 600,
+              padding: '12px 20px',
+              borderRadius: '10px',
+              fontWeight: 700,
               fontSize: '0.88rem',
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '8px',
+              boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)',
+              transition: 'transform 0.15s, background-color 0.15s',
             }}
           >
             <LogOut size={16} />
@@ -117,17 +127,19 @@ export const NoPermissionsView: React.FC<NoPermissionsViewProps> = ({ moduleName
             className="btn-action primary"
             onClick={handleReload}
             style={{
-              background: '#07665e',
+              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
               color: '#ffffff',
               border: 'none',
-              padding: '10px 18px',
-              borderRadius: '8px',
-              fontWeight: 600,
+              padding: '12px 20px',
+              borderRadius: '10px',
+              fontWeight: 700,
               fontSize: '0.88rem',
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '8px',
+              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+              transition: 'transform 0.15s',
             }}
           >
             <RefreshCw size={16} />

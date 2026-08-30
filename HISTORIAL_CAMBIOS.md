@@ -7,6 +7,25 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 12:25:00] - [UI / UX] - Estilo Dark Glassmorphism y Fondo Oscuro (#0b0f19) en Vista de Acceso Restringido (`NoPermissionsView`)
+
+#### 💬 Prompt Original del Usuario
+> "perfecto, pero dejame el fondo oscuro negro , que el foco lo tenga la alerta"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Fondo Oscuro y Foco Visual (`NoPermissionsView.tsx`)**:
+   - Se actualizó la vista `src/shared/ui/NoPermissionsView.tsx` aplicando un contenedor de pantalla completa con el color oscuro oficial `#0b0f19`.
+   - Se rediseñó la tarjeta de alerta con degradado Dark Glassmorphism (`linear-gradient(145deg, #111827 0%, #1e293b 100%)`), resplandor ámbar sutil (`0 0 40px rgba(217, 119, 6, 0.1)`), bordes semitransparentes y tipografía brillante para máxima legibilidad y contraste.
+2. **Cero Errores**:
+   - Compilación limpia con `npm run build` (**0 errores**).
+
+#### 📦 Componentes Modificados
+- `src/shared/ui/NoPermissionsView.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores**
+
 ### [2026-08-30 12:15:00] - [FEATURE] [SECURITY / RBAC] - Alerta y Vista Elegante de Acceso Restringido por Falta de Permisos (`NoPermissionsView`)
 
 #### 💬 Prompt Original del Usuario
