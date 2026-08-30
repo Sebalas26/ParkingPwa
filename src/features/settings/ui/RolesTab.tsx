@@ -18,6 +18,8 @@ import {
   CheckCircle2,
   AlertTriangle,
   AlertCircle,
+  Trash2,
+  Loader2,
 } from 'lucide-react';
 import type { RoleDto, SaveRoleDto, ActionDto, ModuleDto } from '../model/RolesContracts';
 import { rolesService } from '../data/rolesService';
@@ -96,6 +98,10 @@ export const RolesTab: React.FC = () => {
     loadData();
   }, [selectedParqueaderoId, inspectedCompany?.id]);
 
+  // Modal de confirmación de eliminación de rol
+  const [roleToDelete, setRoleToDelete] = useState<RoleDto | null>(null);
+  const [isDeletingRole, setIsDeletingRole] = useState(false);
+
   const isSuperAdminRole = (role?: RoleDto | null): boolean => {
     if (!role) return false;
     const name = (role.roleName || role.role || role.name || '').trim().toLowerCase();
@@ -111,6 +117,34 @@ export const RolesTab: React.FC = () => {
 
   const isProtectedSystemRole = (role?: RoleDto | null): boolean => {
     return isSuperAdminRole(role) || isAdminRole(role);
+  };
+
+  const currentUserForPerms = authService.getCurrentUser();
+  const isUserSuperAdmin = currentUserForPerms?.isSuperAdmin === true;
+
+  const canDeleteRole = (role?: RoleDto | null): boolean => {
+    if (!role) return false;
+    if (isSuperAdminRole(role)) return false; // NUNCA se permite eliminar el rol Super Administrador
+    if (isAdminRole(role) && !isUserSuperAdmin) return false; // Un usuario Administrador NO puede eliminar el rol Administrador
+    return true;
+  };
+
+  const handleConfirmDeleteRole = async () => {
+    if (!roleToDelete) return;
+    const roleId = roleToDelete.idUserRol ?? roleToDelete.id;
+    if (!roleId) return;
+
+    setIsDeletingRole(true);
+    try {
+      await rolesService.deleteRole(roleId);
+      showToast('Rol eliminado exitosamente.', 'success');
+      setRoleToDelete(null);
+      await loadData();
+    } catch (err: any) {
+      showToast(err?.message || 'Error al eliminar el rol de la base de datos.', 'error');
+    } finally {
+      setIsDeletingRole(false);
+    }
   };
 
   // Clasificador de módulos por plataforma
@@ -345,9 +379,6 @@ export const RolesTab: React.FC = () => {
       ? pwaGrouped
       : wpfGrouped;
 
-  const currentUserForFilter = authService.getCurrentUser();
-  const isUserSuperAdmin = currentUserForFilter?.isSuperAdmin === true;
-
   const displayRoles = roles.filter((r) => {
     if (isSuperAdminRole(r) && !isUserSuperAdmin) {
       return false;
@@ -488,6 +519,24 @@ export const RolesTab: React.FC = () => {
                             <button className="btn-action primary" onClick={() => handleOpenEditRole(r)}>
                               <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
                             </button>
+                            {canDeleteRole(r) && (
+                              <button
+                                className="btn-action danger"
+                                style={{
+                                  background: 'rgba(239, 68, 68, 0.1)',
+                                  color: '#ef4444',
+                                  border: '1px solid rgba(239, 68, 68, 0.25)',
+                                  padding: '6px 12px',
+                                  borderRadius: '6px',
+                                  cursor: 'pointer',
+                                  fontWeight: 600,
+                                  fontSize: '0.8rem',
+                                }}
+                                onClick={() => setRoleToDelete(r)}
+                              >
+                                <Trash2 size={14} style={{ marginRight: 4 }} /> Eliminar
+                              </button>
+                            )}
                           </div>
                         )}
                       </td>
@@ -626,6 +675,16 @@ export const RolesTab: React.FC = () => {
                           >
                             <Edit2 size={14} /> Editar
                           </button>
+                          {canDeleteRole(r) && (
+                            <button
+                              type="button"
+                              className="card-action-btn card-action-btn-outline"
+                              style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+                              onClick={() => setRoleToDelete(r)}
+                            >
+                              <Trash2 size={14} /> Eliminar
+                            </button>
+                          )}
                         </>
                       )}
                     </div>
@@ -1106,6 +1165,89 @@ export const RolesTab: React.FC = () => {
             </div>
           </div>
         </div>
+        </ModalPortal>
+      )}
+
+      {/* Modal de Confirmación de Eliminación de Rol */}
+      {roleToDelete && (
+        <ModalPortal>
+          <div className="modal-backdrop" onClick={() => !isDeletingRole && setRoleToDelete(null)}>
+            <div
+              className="modal-container modal-md"
+              onClick={(e) => e.stopPropagation()}
+              style={{ maxWidth: '440px', padding: '24px' }}
+            >
+              <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                <div
+                  style={{
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: '50%',
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    color: '#ef4444',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 16px',
+                  }}
+                >
+                  <AlertTriangle size={28} />
+                </div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0 0 8px', color: 'var(--text-primary)' }}>
+                  ¿Eliminar Rol del Sistema?
+                </h3>
+                <p style={{ fontSize: '0.9rem', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
+                  ¿Estás seguro de que deseas eliminar permanentemente el rol{' '}
+                  <strong style={{ color: 'var(--text-primary)' }}>
+                    "{roleToDelete.roleName || roleToDelete.role || roleToDelete.name}"
+                  </strong>
+                  ? Esta acción no se puede deshacer.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  disabled={isDeletingRole}
+                  onClick={() => setRoleToDelete(null)}
+                  style={{ flex: 1 }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="btn-danger"
+                  disabled={isDeletingRole}
+                  onClick={handleConfirmDeleteRole}
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    background: '#ef4444',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    padding: '10px 16px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {isDeletingRole ? (
+                    <>
+                      <Loader2 size={16} className="spinner" /> Eliminando...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 size={16} /> Confirmar Eliminación
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         </ModalPortal>
       )}
 

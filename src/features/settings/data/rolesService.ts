@@ -126,4 +126,18 @@ export const rolesService = {
     });
     return true;
   },
+
+  deleteRole: async (roleId: number): Promise<boolean> => {
+    try {
+      await apiClient.delete(`/UserRole/DeleteUserRole/${roleId}`);
+      return true;
+    } catch {
+      try {
+        await apiClient.delete(`/UserRole/${roleId}`);
+        return true;
+      } catch (err: any) {
+        throw new Error(err?.message || 'Error al eliminar el rol.');
+      }
+    }
+  },
 };

@@ -7,6 +7,44 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 09:44:00] - [FEATURE] [SECURITY / RBAC] - Eliminación de Roles y Reglas Estrictas de Protección de Administrador
+
+#### 💬 Prompt Original del Usuario
+> "agregale la opcion para que me permita eliminar los roles sin perder la logica de que no se pueda el superadministrador y que un rol administrador cuando se logee tampoco pueda eliminar su rol administrador"
+> "Tambien un usuario super administrador puede eliminar administrador, solo el que no puede eliminar administrador y que le debe salir bloqueado es a un mismo usuario administrador"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Endpoint Backend (`ParkingApi`)**:
+   - Se agregó `DeleteUserRole` en `IUserRoleRepository`, `UserRoleRepository`, `IUserRoleService` y `UserRoleService`.
+   - Se agregó el endpoint `[HttpDelete("DeleteUserRole/{id}")]` en `UserRoleController.cs` validando que no se pueda eliminar el rol ID 1 ("Super Administrador").
+2. **Servicio Frontend (`rolesService.ts`)**:
+   - Se agregó el método `deleteRole(roleId)` realizando la llamada HTTP DELETE a `/UserRole/DeleteUserRole/${roleId}`.
+3. **Reglas de Protección en UI (`RolesTab.tsx`)**:
+   - `Super Administrador`: Se mantiene **100% Protegido** (bloqueado para todos).
+   - `Administrador`:
+     - Si el usuario logueado es **Super Administrador**, se habilita la opción de eliminar el rol Administrador de la empresa.
+     - Si el usuario logueado es un **Administrador regular**, la opción de eliminar el rol Administrador se muestra bloqueada (`Protegido`), previniendo que elimine su propio rol.
+   - Roles operativos/personalizados ("Supervisor", "Cajero", etc.): Permiten eliminación previa confirmación modal.
+4. **Modal de Confirmación y UX**:
+   - Se implementó `ModalPortal` con advertencia `¿Eliminar Rol del Sistema?`, spinner de carga `isDeletingRole` y notificaciones Toast al completar.
+5. **Cero Errores**:
+   - Backend `dotnet build` (**0 errores**).
+   - Frontend `npm run build` (**0 errores**).
+
+#### 📦 Componentes Modificados
+- `ParkingApi/Controllers/UserRoleController.cs`
+- `ParkingApi.Core/Services/UserRoles/UserRoleService.cs`
+- `ParkingApi.Domain/Interfaces/Services/UserRoles/IUserRoleService.cs`
+- `ParkingApi.Infrastructure/Data/Repositories/UserRoles/UserRoleRepository.cs`
+- `ParkingApi.Domain/Interfaces/Repositories/UserRoles/IUserRoleRepository.cs`
+- `src/features/settings/data/rolesService.ts`
+- `src/features/settings/ui/RolesTab.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `dotnet build` -> **0 Errores**
+- `npm run build` -> **0 Errores**
+
 ### [2026-08-30 09:18:00] - [BUGFIX] [MULTI-TENANT / USERS] - Corrección de Filtro por Empresa en UsuariosTab y RolesTab para SuperAdmin
 
 #### 💬 Prompt Original del Usuario
