@@ -7,6 +7,25 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 16:14:00] - [FEATURE / UI] - Porcentajes (%) Renderizados Sobre las Porciones de la Dona del Dashboard
+
+#### 💬 Prompt Original del Usuario
+> "excelente, pero no se podria poner el % aca" (con flechas rojas apuntando sobre cada porción del gráfico de dona)
+
+#### 🤖 Resumen Técnico para la IA
+1. **Etiquetas de Porcentaje Directas en SVG (`Dashboard.tsx` -> `SvgDonutChart`)**:
+   - Se calculan las coordenadas geométricas radiales (`midAngle`, `x`, `y`) del centro de cada porción coloreada de la dona.
+   - Se renderizan elementos SVG `<text>` con estilo blanco en negrita (`fill="#ffffff" fontWeight="900" textShadow="..."`) directamente sobre las tajadas de color (ej. `13%`, `75%`, `13%`), coincidiendo exactamente con la indicación del usuario.
+2. **Cero Errores**:
+   - Compilación limpia de Frontend con `npm run build` (**0 errores**).
+
+#### 📦 Componentes Modificados
+- `ParkingPwa/src/features/dashboard/ui/Dashboard.tsx`
+- `ParkingPwa/HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores**
+
 ### [2026-08-30 16:08:00] - [FEATURE / UI] - Medios Personalizados (Nequi, Daviplata), Círculos de Color y Porcentajes (% del Total) en Dashboard
 
 #### 💬 Prompt Original del Usuario

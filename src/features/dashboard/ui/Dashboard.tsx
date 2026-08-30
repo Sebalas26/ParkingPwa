@@ -51,10 +51,13 @@ const SvgDonutChart: React.FC<{
   const r = 38;
   const c = 2 * Math.PI * r; // ~238.76
   let cumulativeOffset = 0;
+  let currentAngleDeg = -90;
+
+  const textLabels: { x: number; y: number; text: string; pct: number }[] = [];
 
   return (
     <div style={{ position: 'relative', width: size, height: size, margin: '0 auto' }}>
-      <svg width={size} height={size} viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
+      <svg width={size} height={size} viewBox="0 0 100 100">
         {total === 0 ? (
           <circle
             cx="50"
@@ -65,27 +68,66 @@ const SvgDonutChart: React.FC<{
             strokeWidth="14"
           />
         ) : (
-          data.map((item, i) => {
-            const pct = item.value / total;
-            const strokeLength = pct * c;
-            const strokeOffset = -cumulativeOffset;
-            cumulativeOffset += strokeLength;
+          <>
+            <g style={{ transform: 'rotate(-90deg)', transformOrigin: '50px 50px' }}>
+              {data.map((item, i) => {
+                const pct = item.value / total;
+                const strokeLength = pct * c;
+                const strokeOffset = -cumulativeOffset;
+                cumulativeOffset += strokeLength;
 
-            return (
-              <circle
-                key={i}
-                cx="50"
-                cy="50"
-                r={r}
-                fill="none"
-                stroke={item.color}
-                strokeWidth="14"
-                strokeDasharray={`${strokeLength} ${c - strokeLength}`}
-                strokeDashoffset={strokeOffset}
-                style={{ transition: 'all 0.6s ease' }}
-              />
-            );
-          })
+                const sliceAngle = pct * 360;
+                const midAngle = currentAngleDeg + sliceAngle / 2;
+                currentAngleDeg += sliceAngle;
+
+                if (pct >= 0.03) {
+                  const rad = (midAngle * Math.PI) / 180;
+                  const x = 50 + r * Math.cos(rad);
+                  const y = 50 + r * Math.sin(rad);
+                  textLabels.push({
+                    x,
+                    y,
+                    text: `${Math.round(pct * 100)}%`,
+                    pct,
+                  });
+                }
+
+                return (
+                  <circle
+                    key={i}
+                    cx="50"
+                    cy="50"
+                    r={r}
+                    fill="none"
+                    stroke={item.color}
+                    strokeWidth="14"
+                    strokeDasharray={`${strokeLength} ${c - strokeLength}`}
+                    strokeDashoffset={strokeOffset}
+                    style={{ transition: 'all 0.6s ease' }}
+                  />
+                );
+              })}
+            </g>
+            {textLabels.map((lbl, idx) => (
+              <text
+                key={idx}
+                x={lbl.x}
+                y={lbl.y}
+                fill="#ffffff"
+                fontSize={lbl.pct < 0.08 ? '3.8' : '4.5'}
+                fontWeight="900"
+                textAnchor="middle"
+                dominantBaseline="central"
+                style={{
+                  textShadow: '0px 1px 3px rgba(0,0,0,0.6)',
+                  pointerEvents: 'none',
+                  userSelect: 'none',
+                }}
+              >
+                {lbl.text}
+              </text>
+            ))}
+          </>
         )}
       </svg>
       <div
