@@ -7,6 +7,25 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 15:11:00] - [BUGFIX] [DASHBOARD / PARÁMETROS SEDE] - Corrección de Validación de Medios Vacíos por Sede en el Dashboard
+
+#### 💬 Prompt Original del Usuario
+> "sigue igual"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Eliminación de la Validación `branchPm.length > 0` (`Dashboard.tsx`)**:
+   - Se removió el condicional `branchPm.length > 0` que provocaba que un arreglo de medios vacíos `[]` en la sede seleccionada cayera erróneamente en el bloque de medios por defecto global (que forzaba "Efectivo").
+   - Ahora, al seleccionar una sede, el conjunto `enabledPmIds` filtra de forma incondicional sobre `globalPaymentMethods`. Si la sede tiene 0 medios de pago habilitados, la lista queda limpia en `[]` y despliega la notificación *"Sin medios de pago habilitados"*.
+2. **Cero Errores**:
+   - Compilación limpia con `npm run build` (**0 errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/dashboard/ui/Dashboard.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores**
+
 ### [2026-08-30 14:25:00] - [BUGFIX] [DASHBOARD / PARÁMETROS SEDE] - Control Estricto de Medios de Pago Habilitados por Sede en el Dashboard
 
 #### 💬 Prompt Original del Usuario

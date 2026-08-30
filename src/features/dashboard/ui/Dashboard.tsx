@@ -152,26 +152,20 @@ export const Dashboard: React.FC = () => {
 
       // Cargar medios de pago dinámicos de la BD y filtrar por sede si hay restricciones
       let paymentMethods: PaymentMethodDto[] = [];
-      let isBranchConfigured = false;
 
       if (selectedParqueaderoId) {
         try {
           const branchPm = await branchesService.getBranchPaymentMethods(selectedParqueaderoId);
-          if (Array.isArray(branchPm) && branchPm.length > 0) {
-            isBranchConfigured = true;
-            const enabledPmIds = new Set(
-              branchPm
-                .filter((bpm) => bpm.isActive !== false && bpm.isEnabled !== false)
-                .map((bpm) => bpm.paymentMethodId)
-            );
-            paymentMethods = (globalPaymentMethods || []).filter((pm) => enabledPmIds.has(pm.id));
-          }
+          const enabledPmIds = new Set(
+            (branchPm || [])
+              .filter((bpm) => bpm.isActive !== false && bpm.isEnabled !== false)
+              .map((bpm) => bpm.paymentMethodId)
+          );
+          paymentMethods = (globalPaymentMethods || []).filter((pm) => enabledPmIds.has(pm.id));
         } catch {
-          // Sin restricción de sede
+          paymentMethods = globalPaymentMethods || [];
         }
-      }
-
-      if (!selectedParqueaderoId || !isBranchConfigured) {
+      } else {
         paymentMethods = globalPaymentMethods || [];
       }
 
