@@ -7,6 +7,52 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 18:02:00] - [BUGFIX / RBAC] - Corrección de Duplicidad de Rol Administrador por Empresa
+
+#### 💬 Prompt Original del Usuario
+> "estoy notando que cuando ingreso administrar un parqueadero - confifuracion - roles me estan saliendo duplicado el rol administrador, pero eso me esta pasando 2 en parqueaderos , en el de ParkPoint Global SaaS porque?"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Filtrado Estricto por Empresa en `UserRoleRepository.cs`**:
+   - Se actualizó `GetUserRoles(companyId)` para filtrar estrictamente por `x.CompanyId == companyId.Value` cuando se consulta para un parqueadero/empresa específica.
+   - Esto evita que la consulta retorne conjuntamente el Rol 1 Global (`CompanyId = NULL`) y el Rol propio de la empresa cliente (`CompanyId = 2`), eliminando las filas duplicadas.
+   - Se mapeó automáticamente el Rol ID 1 a `"Super Administrador"` para prevenir colisiones de nombres con los administradores de inquilino.
+2. **Desduplicación en `RolesTab.tsx`**:
+   - Se incorporó en `loadData()` de la PWA la desduplicación por `idUserRol` como salvaguarda visual.
+3. **Cero Errores**:
+   - Compilación limpia de Backend con `dotnet build` (**0 errores**).
+   - Compilación limpia de Frontend con `npm run build` (**0 errores**).
+
+#### 📦 Componentes Modificados
+- `ParkingApi/ParkingApi.Infrastructure/Data/Repositories/UserRoles/UserRoleRepository.cs`
+- `ParkingApi/ParkingApi.Infrastructure/Data/DatabaseSeeder.cs`
+- `ParkingPwa/src/features/settings/ui/RolesTab.tsx`
+- `ParkingPwa/HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `dotnet build` -> **0 Errores**
+- `npm run build` -> **0 Errores**
+
+### [2026-08-30 17:52:00] - [BUGFIX / UI] - Ocultar Ícono de Ojo Nativo del Navegador en Login
+
+#### 💬 Prompt Original del Usuario
+> "en login cuando estoy ecribiendo , me sale un icono de un ojo en el circulo rojo" (con imagen adjunta señalando el botón nativo del navegador en el campo de contraseña)
+
+#### 🤖 Resumen Técnico para la IA
+1. **Supresión de Pseudo-clases CSS (`Login.css` e `index.css`)**:
+   - Se agregaron las reglas de supresión `::-ms-reveal` y `::-ms-clear` con `display: none !important` para eliminar el botón de revelado de contraseña nativo que Microsoft Edge/Chromium coloca automáticamente dentro de los campos `<input type="password">`.
+   - Se adicionaron reglas `::-webkit-contacts-auto-fill-button` e `::-webkit-credentials-auto-fill-button` para evitar superposiciones con el botón personalizado de visibilidad de contraseña de la PWA.
+2. **Cero Errores**:
+   - Compilación limpia de Frontend con `npm run build` (**0 errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/auth/ui/Login.css`
+- `src/index.css`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores**
+
 ### [2026-08-30 16:27:00] - [FEATURE / UI] - Reemplazo por Cantidad de Vehículos y Eliminación de Reporte Duplicado en Dashboard
 
 #### 💬 Prompt Original del Usuario

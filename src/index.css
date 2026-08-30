@@ -24,6 +24,22 @@
   --card-shadow: 0 4px 6px -1px rgba(7, 102, 94, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
 }
 
+/* Ocultar el botón nativo de revelar contraseña de navegadores (Microsoft Edge, IE, Chrome) */
+input[type='password']::-ms-reveal,
+input[type='password']::-ms-clear {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+input[type='password']::-webkit-contacts-auto-fill-button,
+input[type='password']::-webkit-credentials-auto-fill-button {
+  visibility: hidden !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  right: 0 !important;
+}
+
 .dashboard-layout {
   --bg-main: #f4f7f6;
   --bg-sidebar: #2a2b2c;

@@ -73,7 +73,17 @@ export const RolesTab: React.FC = () => {
         rolesService.getActions(),
       ]);
 
-      setRoles(rolesData || []);
+      // Deduplicar roles por ID único (idUserRol) como salvaguarda
+      const uniqueRolesMap = new Map<number, RoleDto>();
+      (rolesData || []).forEach((r) => {
+        const id = r.idUserRol ?? r.id ?? 1;
+        if (!uniqueRolesMap.has(id)) {
+          uniqueRolesMap.set(id, r);
+        }
+      });
+      const uniqueRoles = Array.from(uniqueRolesMap.values());
+
+      setRoles(uniqueRoles);
       setAllModules(modulesData || []);
       setAllActions(actionsData || []);
 
