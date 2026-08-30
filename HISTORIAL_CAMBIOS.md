@@ -7,6 +7,27 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 06:20:00] - [BUGFIX] [MULTI-TENANT] - Corrección de CompanyId en Creación de Sedes para SuperAdministrador Impersonado
+
+#### 💬 Prompt Original del Usuario
+> "no ya, ya me dejo logear, pero sale esto cuando cuando quiero crear nueva sede" (Error de falta de CompanyId)
+
+#### 🤖 Resumen Técnico para la IA
+1. **Asociación de CompanyId en Modo Impersonación**:
+   - En [`ParqueaderosTab.tsx`](file:///c:/Users/sebalas/Documents/ParkingPwa/src/features/settings/ui/ParqueaderosTab.tsx), al crear una sede se utilizaba directamente `currentUser?.companyId`.
+   - Como el SuperAdministrador tiene `companyId` nulo en su sesión global, el backend retornaba `BadRequest` solicitando el identificador de empresa.
+   - Se modificó el handler `handleSaveBranch` para recuperar `inspectedCompany` desde `useBranchContext()` y evaluar: `companyId: (inspectedCompany?.id || currentUser?.companyId) || undefined`.
+   - De esta forma, las nuevas sedes quedan correctamente asociadas a la compañía que está siendo administrada por el SuperAdministrador.
+2. **Cero Errores**:
+   - Compilación limpia con `npm run build`.
+
+#### 📦 Componentes Modificados
+- `src/features/settings/ui/ParqueaderosTab.tsx` — Consumo de `inspectedCompany` para calcular el `companyId` al crear sedes.
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores**
+
 ### [2026-08-30 06:10:00] - [FEATURE/SECURITY] [MULTI-TENANT] - Aislamiento Multi-Tenant de Configuración y Corrección del Dashboard
 
 #### 💬 Prompt Original del Usuario

@@ -53,7 +53,7 @@ const getAvatarStyle = (index: number) => {
 };
 
 export const ParqueaderosTab: React.FC = () => {
-  const { refreshBranches } = useBranchContext();
+  const { refreshBranches, inspectedCompany } = useBranchContext();
   const [branches, setBranches] = useState<BranchDto[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [expandedBranchId, setExpandedBranchId] = useState<number | null>(null);
@@ -160,7 +160,7 @@ export const ParqueaderosTab: React.FC = () => {
           totalCapacity: editingBranch.totalCapacity || 100,
           notes: editingBranch.notes?.trim(),
           logoBase64: editingBranch.logoBase64?.trim(),
-          companyId: currentUser?.companyId || undefined,
+          companyId: (inspectedCompany?.id || currentUser?.companyId) || undefined,
         };
         await branchesService.create(payload);
       }
