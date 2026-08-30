@@ -15,6 +15,7 @@ import type { BillingResolutionDto } from '../../settings/model/ResolucionesCont
 import { vehiculosConfigService } from '../../settings/data/vehiculosConfigService';
 import type { VehiculoConfigDto } from '../../settings/model/VehiculosConfigContracts';
 import { branchesService } from '../../settings/data/branchesService';
+import { authService } from '../../auth/data/authService';
 import {
   Car,
   Bike,
@@ -115,7 +116,7 @@ const SvgDonutChart: React.FC<{
 };
 
 export const Dashboard: React.FC = () => {
-  const { parqueaderosList, selectedParqueaderoId, setSelectedParqueaderoId } = useParqueaderoContext();
+  const { parqueaderosList, selectedParqueaderoId, setSelectedParqueaderoId, inspectedCompany } = useParqueaderoContext();
   const [summary, setSummary] = useState<DailySummaryDto | null>(null);
   const [occupancy, setOccupancy] = useState<OccupancyStatsDto | null>(null);
   const [activeTickets, setActiveTickets] = useState<RecentTicketDto[]>([]);
@@ -135,47 +136,40 @@ export const Dashboard: React.FC = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [sum, occ, tickets, shifts, users, resolutions, vehicleTypes] = await Promise.all([
+      const currentUser = authService.getCurrentUser();
+      const targetCompanyId = inspectedCompany?.id || currentUser?.companyId || undefined;
+
+      const [sum, occ, tickets, shifts, users, resolutions, vehicleTypes, globalPaymentMethods] = await Promise.all([
         dashboardService.getDailySummary(),
         dashboardService.getOccupancyStats(),
         dashboardService.getActiveTickets(),
         cajaService.getHistory(),
-        usuariosService.getUsers(),
+        usuariosService.getUsers(targetCompanyId),
         resolucionesService.getAllResolutions(),
         vehiculosConfigService.getConfigs(selectedParqueaderoId),
+        mediosPagoService.getPaymentMethods(targetCompanyId),
       ]);
 
-      // Cargar medios de pago específicos de la sede activa (solo los que estén en BD)
+      // Cargar medios de pago dinámicos de la BD y filtrar por sede si hay restricciones
       let paymentMethods: PaymentMethodDto[] = [];
       if (selectedParqueaderoId) {
         try {
           const branchPm = await branchesService.getBranchPaymentMethods(selectedParqueaderoId);
           if (branchPm && branchPm.length > 0) {
-            paymentMethods = branchPm
-              .filter((bpm) => {
-                const realName = bpm.paymentMethodName || bpm.paymentMethod?.name || bpm.name || '';
-                return realName.trim().length > 0;
-              })
-              .map((bpm) => {
-                const name = bpm.paymentMethodName || bpm.paymentMethod?.name || bpm.name || '';
-                const icon = bpm.paymentMethodIcon || bpm.paymentMethod?.icon || bpm.icon || '💳';
-                return {
-                  id: bpm.paymentMethodId,
-                  name: name,
-                  code: name,
-                  icon: icon,
-                  requiresReference: false,
-                  isActive: bpm.isActive !== false && bpm.isEnabled !== false,
-                };
-              });
+            const enabledPmIds = new Set(
+              branchPm
+                .filter((bpm) => bpm.isActive !== false && bpm.isEnabled !== false)
+                .map((bpm) => bpm.paymentMethodId)
+            );
+            paymentMethods = (globalPaymentMethods || []).filter((pm) => enabledPmIds.has(pm.id));
           }
         } catch {
-          // Sin medios de pago configurados para esta sede
+          // Sin restricción de sede
         }
       }
-      // Solo cargar medios globales si no estamos en modo sede específica
-      if ((!paymentMethods || paymentMethods.length === 0) && !selectedParqueaderoId) {
-        paymentMethods = await mediosPagoService.getPaymentMethods();
+
+      if (!paymentMethods || paymentMethods.length === 0) {
+        paymentMethods = globalPaymentMethods || [];
       }
 
       setSummary(sum);

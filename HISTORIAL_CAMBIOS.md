@@ -7,6 +7,45 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 12:43:00] - [BUGFIX] [DASHBOARD / MEDIOS DE PAGO] - Sincronización Completa de Medios de Pago Creados en Gráfica del Dashboard
+
+#### 💬 Prompt Original del Usuario
+> "Cree un tipo de medio pero en la dashboard no la muestra en la grafica que te muestor en la segunda imagen , revisa que es, no cambies diseño dejalo igual"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Carga Dinámica de Medios de Pago en `Dashboard.tsx`**:
+   - En `loadData()`, se actualizó la carga para invocar `mediosPagoService.getPaymentMethods(targetCompanyId)`, obteniendo todos los medios de pago activos de la empresa creados desde la sección de configuración.
+   - Si existe una sede activa seleccionada, la lista se filtra dinámicamente con los IDs asignados a dicha sede. Si no existen restricciones explícitas por sede, se cargan todos los medios globales activos.
+   - Preserva al 100% el diseño visual de la gráfica de torta e ítems de medios de pago.
+2. **Cero Errores**:
+   - Compilación limpia con `npm run build` (**0 errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/dashboard/ui/Dashboard.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores**
+
+### [2026-08-30 12:38:00] - [UI / UX] - Cambio a Gris Oscuro Neutro (#18181b - #27272a) en la Tarjeta de Alerta `NoPermissionsView`
+
+#### 💬 Prompt Original del Usuario
+> "ahora dejame este cuadro gris oscuro , no azul oscuro"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Fondo Gris Oscuro Neutro (`NoPermissionsView.tsx`)**:
+   - Se modificó la tarjeta central en `src/shared/ui/NoPermissionsView.tsx` pasando del degradado azul marino a un gris oscuro carbón neutro (`linear-gradient(145deg, #18181b 0%, #27272a 100%)`).
+   - Se aplicó borde de contraste `border: 1px solid rgba(255, 255, 255, 0.12)`.
+2. **Cero Errores**:
+   - Compilación limpia con `npm run build` (**0 errores**).
+
+#### 📦 Componentes Modificados
+- `src/shared/ui/NoPermissionsView.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores**
+
 ### [2026-08-30 12:33:00] - [UI / UX] - Cobertura Fija Oscura de Pantalla Completa (#0b0f19) en NoPermissionsView
 
 #### 💬 Prompt Original del Usuario

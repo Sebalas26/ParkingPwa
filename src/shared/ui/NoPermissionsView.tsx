@@ -42,11 +42,11 @@ export const NoPermissionsView: React.FC<NoPermissionsViewProps> = ({ moduleName
         style={{
           maxWidth: '500px',
           width: '100%',
-          background: 'linear-gradient(145deg, #111827 0%, #1e293b 100%)',
+          background: 'linear-gradient(145deg, #18181b 0%, #27272a 100%)',
           borderRadius: '20px',
           padding: '40px 32px',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 40px rgba(217, 119, 6, 0.1)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 40px rgba(217, 119, 6, 0.1)',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
           textAlign: 'center',
           backdropFilter: 'blur(16px)',
         }}
