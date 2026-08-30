@@ -7,6 +7,28 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 18:16:00] - [BUGFIX / RBAC] - Restauración de Roles Base del Sistema y Desduplicación Inteligente por Nombre
+
+#### 💬 Prompt Original del Usuario
+> "pero estoy viendo que en un parqueadero que ya tengo roles ya no me salen , que cambio?" (con captura adjunta de Configuración ➔ Roles vacía)
+
+#### 🤖 Resumen Técnico para la IA
+1. **Restauración de Inclusión de Roles Globales (`UserRoleRepository.cs`)**:
+   - Se ajustó `GetUserRoles(companyId)` para consultar `x.CompanyId == companyId.Value || x.CompanyId == null`.
+   - Se incorporó la desduplicación inteligente por nombre de rol (`r.Role`), priorizando los roles específicos de la empresa cliente (`CompanyId == companyId`) sobre los globales (`CompanyId = NULL`).
+   - Resultado: Todos los roles del sistema y del parqueadero vuelven a desplegarse perfectamente y "Administrador" no sale duplicado.
+2. **Cero Errores**:
+   - Compilación limpia de Backend con `dotnet build` (**0 errores**).
+   - Compilación limpia de Frontend con `npm run build` (**0 errores**).
+
+#### 📦 Componentes Modificados
+- `ParkingApi/ParkingApi.Infrastructure/Data/Repositories/UserRoles/UserRoleRepository.cs`
+- `ParkingPwa/HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `dotnet build` -> **0 Errores**
+- `npm run build` -> **0 Errores**
+
 ### [2026-08-30 18:02:00] - [BUGFIX / RBAC] - Corrección de Duplicidad de Rol Administrador por Empresa
 
 #### 💬 Prompt Original del Usuario
