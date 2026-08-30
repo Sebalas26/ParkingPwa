@@ -152,10 +152,13 @@ export const Dashboard: React.FC = () => {
 
       // Cargar medios de pago dinámicos de la BD y filtrar por sede si hay restricciones
       let paymentMethods: PaymentMethodDto[] = [];
+      let isBranchConfigured = false;
+
       if (selectedParqueaderoId) {
         try {
           const branchPm = await branchesService.getBranchPaymentMethods(selectedParqueaderoId);
-          if (branchPm && branchPm.length > 0) {
+          if (Array.isArray(branchPm) && branchPm.length > 0) {
+            isBranchConfigured = true;
             const enabledPmIds = new Set(
               branchPm
                 .filter((bpm) => bpm.isActive !== false && bpm.isEnabled !== false)
@@ -168,7 +171,7 @@ export const Dashboard: React.FC = () => {
         }
       }
 
-      if (!paymentMethods || paymentMethods.length === 0) {
+      if (!selectedParqueaderoId || !isBranchConfigured) {
         paymentMethods = globalPaymentMethods || [];
       }
 
@@ -618,10 +621,10 @@ export const Dashboard: React.FC = () => {
               <div style={{ width: '100%', textAlign: 'center', padding: '24px 16px', color: '#64748b' }}>
                 <CreditCard size={28} style={{ color: '#94a3b8', margin: '0 auto 8px auto', display: 'block' }} />
                 <p style={{ fontWeight: 600, fontSize: '0.88rem', margin: '0 0 4px 0', color: '#334155' }}>
-                  Sin medios de pago registrados
+                  Sin medios de pago habilitados
                 </p>
                 <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                  Crea los medios de pago en <strong>Configuración &gt; Medios de Pago</strong> para visualizar su recaudación aquí.
+                  Habilita los medios de pago para esta sede en <strong>Configuración &gt; Sedes &gt; Parametrización por Sede</strong>.
                 </span>
               </div>
             )}

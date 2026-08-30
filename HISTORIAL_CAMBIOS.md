@@ -7,6 +7,26 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 14:25:00] - [BUGFIX] [DASHBOARD / PARÁMETROS SEDE] - Control Estricto de Medios de Pago Habilitados por Sede en el Dashboard
+
+#### 💬 Prompt Original del Usuario
+> "Ayudame con algo, ya quedo la configuracion de los medios de pago en la dashboard, sin embargo ingrese a otro parqueaero y veo que trae efectivo (primera foto) pero entro a la configuracion (2da foto) y no tiene medios de pago asociados a esa sede)"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Respeto a la Parametrización por Sede (`Dashboard.tsx`)**:
+   - Se corrigió `loadData()` en `Dashboard.tsx` para evaluar si la sede activa cuenta con configuración en `BranchPaymentMethods`.
+   - Cuando una sede tiene 0 medios de pago habilitados (ambos desmarcados en la modal de parametrización), el Dashboard respeta estrictamente este estado y no realiza la reasignación forzada a "Efectivo".
+   - Muestra el estado informativo limpio: *"Sin medios de pago habilitados"*.
+2. **Cero Errores**:
+   - Compilación limpia con `npm run build` (**0 errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/dashboard/ui/Dashboard.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores**
+
 ### [2026-08-30 12:43:00] - [BUGFIX] [DASHBOARD / MEDIOS DE PAGO] - Sincronización Completa de Medios de Pago Creados en Gráfica del Dashboard
 
 #### 💬 Prompt Original del Usuario
