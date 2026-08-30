@@ -7,6 +7,28 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 10:52:00] - [BUGFIX] [MULTI-TENANT / BRANCHES] - Carga y Marcación de Usuarios Asignados por Sede en Parametrización
+
+#### 💬 Prompt Original del Usuario
+> "perfecto, todo bien , ahora ayudame cuando este en el superadministrador que cuando entre a administrar un parqueaero - configuracion - parametrizacion de sede - asignacion de usuarios que me muestre los usuarios ya asignados a esa sede, actualmente ya tengo asignado usuariios y no em los muestra como asignados"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Endpoint `getBranchUsers` en `branchesService.ts`**:
+   - Se agregó `branchesService.getBranchUsers(branchId)` realizando la consulta HTTP GET a `/api/branches/${branchId}/users`.
+2. **Carga y Resaltado en `ParqueaderosTab.tsx`**:
+   - En `handleOpenConfig(branch)`, se reemplazó la invocación a `branchesService.getById` por `branchesService.getBranchUsers(branch.id)` y `usuariosService.getUsers(targetCompanyId)`.
+   - Se puebla `setAssignedUserIds` con los IDs de los usuarios devueltos por el endpoint, permitiendo que la interfaz muestre el estado verde `Asignado / Desasignar de Sede` para cada usuario que ya pertenezca a la sede.
+3. **Cero Errores**:
+   - Compilación limpia con `npm run build` (**0 errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/settings/data/branchesService.ts`
+- `src/features/settings/ui/ParqueaderosTab.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores**
+
 ### [2026-08-30 10:39:00] - [BUGFIX] [MULTI-TENANT / USERS] - Consulta Completa de Usuarios por Empresa y Visibilidad del Administrador Logueado
 
 #### 💬 Prompt Original del Usuario

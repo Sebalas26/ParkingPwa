@@ -213,16 +213,16 @@ export const ParqueaderosTab: React.FC = () => {
     // Cargar usuarios (solo operadores / no administradores)
     setIsLoadingUsers(true);
     try {
-      const [users, branchDetails] = await Promise.all([
-        usuariosService.getUsers(),
-        branchesService.getById(branch.id),
+      const [users, assignedBranchUsers] = await Promise.all([
+        usuariosService.getUsers(targetCompanyId),
+        branchesService.getBranchUsers(branch.id),
       ]);
       const operatorsOnly = (users || []).filter((u: any) => {
-        const role = (u.roleName || u.role || '').toLowerCase();
+        const role = (u.roleName || u.role || u.userRoleDto?.roleName || '').toLowerCase();
         return u.userRoleId !== 1 && role !== 'administrador' && role !== 'admin';
       });
       setAllUsers(operatorsOnly);
-      const assignedIds = (branchDetails?.userBranches || []).map((ub: any) => ub.userId);
+      const assignedIds = (assignedBranchUsers || []).map((u: any) => u.id);
       setAssignedUserIds(assignedIds);
     } catch (err) {
       console.error('Error cargando usuarios asignados:', err);

@@ -88,4 +88,14 @@ export const branchesService = {
   configurePaymentMethods: async (dto: ConfigureBranchPaymentMethodsDto): Promise<{ message: string }> => {
     return await apiClient.post<{ message: string }>('/branches/configure-payment-methods', dto);
   },
+
+  getBranchUsers: async (branchId: number): Promise<any[]> => {
+    try {
+      const data = await apiClient.get<any[]>(`/branches/${branchId}/users`);
+      return data || [];
+    } catch (err) {
+      console.warn(`Error al consultar /api/branches/${branchId}/users:`, err);
+      return [];
+    }
+  },
 };
