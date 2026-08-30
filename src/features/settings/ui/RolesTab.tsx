@@ -379,12 +379,35 @@ export const RolesTab: React.FC = () => {
       ? pwaGrouped
       : wpfGrouped;
 
-  const displayRoles = roles.filter((r) => {
-    if (isSuperAdminRole(r) && !isUserSuperAdmin) {
-      return false;
-    }
-    return true;
-  });
+  const currentUserRoleMatch = (r: RoleDto): boolean => {
+    const roleId = r.idUserRol ?? r.id;
+    if (isUserSuperAdmin && isSuperAdminRole(r)) return true;
+    if (currentUser?.userRoleId && roleId === currentUser.userRoleId) return true;
+    const currentRoleName = (currentUser?.roleName || '').trim().toLowerCase();
+    const rName = (r.roleName || r.role || r.name || '').trim().toLowerCase();
+    return Boolean(currentRoleName && rName && currentRoleName === rName);
+  };
+
+  const displayRoles = roles
+    .filter((r) => {
+      if (isSuperAdminRole(r) && !isUserSuperAdmin) {
+        return false;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      const aIsCurrent = currentUserRoleMatch(a);
+      const bIsCurrent = currentUserRoleMatch(b);
+      if (aIsCurrent && !bIsCurrent) return -1;
+      if (!aIsCurrent && bIsCurrent) return 1;
+
+      const aProtected = isProtectedSystemRole(a);
+      const bProtected = isProtectedSystemRole(b);
+      if (aProtected && !bProtected) return -1;
+      if (!aProtected && bProtected) return 1;
+
+      return (a.idUserRol ?? a.id ?? 0) - (b.idUserRol ?? b.id ?? 0);
+    });
 
   return (
     <div className="settings-section-card">
@@ -406,7 +429,6 @@ export const RolesTab: React.FC = () => {
           <table className="data-table" style={{ minWidth: '580px' }}>
             <thead>
               <tr>
-                <th>ID</th>
                 <th>NOMBRE DEL ROL</th>
                 <th>PERMISOS ASIGNADOS</th>
                 <th>ESTADO</th>
@@ -433,7 +455,6 @@ export const RolesTab: React.FC = () => {
 
                   return (
                     <tr key={roleId}>
-                      <td className="font-bold text-muted">#{roleId}</td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
                           <div
@@ -545,7 +566,7 @@ export const RolesTab: React.FC = () => {
                 })
               ) : (
                 <tr>
-                  <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
+                  <td colSpan={4} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
                     {isLoading ? (
                       <div className="loader-container">
                         <div className="spinner"></div>

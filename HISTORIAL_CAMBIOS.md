@@ -7,6 +7,29 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 10:02:00] - [UI / UX] - Remoción de Columna ID y Priorización del Rol del Usuario Logueado en Tabla de Roles
+
+#### 💬 Prompt Original del Usuario
+> "Bien, asi se encuentra bien y ya no quiero a futuro me desajustes esta logica, ahora ayudame con algo, eliminame esos id y siempre dejame el rol de primeras del usuario que esta logeado"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Priorización del Rol Autenticado (`displayRoles.sort`)**:
+   - En `RolesTab.tsx`, se creó la función matcher `currentUserRoleMatch(r)` que evalúa si un rol coincide con el usuario autenticado en la sesión (`currentUser.userRoleId`, `currentUser.roleName` o `isUserSuperAdmin`).
+   - Se ordenó `displayRoles` de manera que el rol del usuario actualmente autenticado siempre aparezca en la **primera posición (al inicio de la tabla/lista)**.
+2. **Remoción de la Columna ID**:
+   - Se eliminó el encabezado `<th>ID</th>` de la tabla desktop.
+   - Se eliminó la celda `<td className="font-bold text-muted">#{roleId}</td>` de cada fila.
+   - Se ajustó el `colSpan` del mensaje de tabla vacía a `4`.
+3. **Cero Errores**:
+   - Compilación limpia con `npm run build` (**0 errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/settings/ui/RolesTab.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores**
+
 ### [2026-08-30 09:44:00] - [FEATURE] [SECURITY / RBAC] - Eliminación de Roles y Reglas Estrictas de Protección de Administrador
 
 #### 💬 Prompt Original del Usuario
