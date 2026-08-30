@@ -7,6 +7,31 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 16:08:00] - [FEATURE / UI] - Medios Personalizados (Nequi, Daviplata), Círculos de Color y Porcentajes (% del Total) en Dashboard
+
+#### 💬 Prompt Original del Usuario
+> "hice la prueba y sirve con efectivo, como te dije, agregure un nuevo tipo de medio y le di salida con ese medio de pago y no me lo sumo, valida que cualquier medio de pago que elija al darle salida a un vehiculo me lo sume en mi grafica ademas quiero que para que se mas facil de entender, en vez de iconos me ponga un circulo de color al que me pintas en lagrafica, ademas si psobile agregar un text que indique el % de cada uno"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Preservación de IDs Personalizados (`ParkingTicketService.cs`)**:
+   - Se ajustó la asignación en `CheckOutAsync` para preservar el ID de base de datos `(PaymentMethod)rawMethod` de cualquier medio personalizado (ej. Nequi, Daviplata, PSE) sin desviarlo hacia enumeraciones fijas.
+2. **Círculos de Color y Porcentajes (`Dashboard.tsx`)**:
+   - Se reemplazaron los íconos (💵, 💳) por un **círculo de color sólido (`border-radius: 50%`)** que coincide exactamente con el color de la tajada correspondiente en la gráfica de torta (`item.color`).
+   - Se actualizó el cálculo de porcentaje dinámico `{pct}% del total` calculado sobre el total acumulado de la gráfica para todos los medios activos.
+   - Se expandió la búsqueda de recaudos en `paymentDonutData` por nombre de medio (`pm.name`), ID (`pm.id`), e ID relativo (`pm.id - 1`).
+3. **Cero Errores**:
+   - Compilación limpia de Backend con `dotnet build` (**0 errores**).
+   - Compilación limpia de Frontend con `npm run build` (**0 errores**).
+
+#### 📦 Componentes Modificados
+- `ParkingApi/ParkingApi.Core/Services/Tickets/ParkingTicketService.cs`
+- `ParkingPwa/src/features/dashboard/ui/Dashboard.tsx`
+- `ParkingPwa/HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `dotnet build` -> **0 Errores**
+- `npm run build` -> **0 Errores**
+
 ### [2026-08-30 15:55:00] - [BUGFIX] [DASHBOARD / LIQUIDACIÓN] - Mapeo Correcto de Todos los Medios de Pago (Efectivo, Tarjeta, Transferencia)
 
 #### 💬 Prompt Original del Usuario

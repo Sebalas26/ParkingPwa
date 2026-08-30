@@ -285,10 +285,13 @@ export const Dashboard: React.FC = () => {
     let val = 0;
     const nameLower = (pm.name || '').toLowerCase();
 
+    const pmIdStr = String(pm.id);
     if (paymentBreakdown[pm.name] !== undefined) {
       val = Number(paymentBreakdown[pm.name]);
-    } else if (paymentBreakdown[String(pm.id)] !== undefined) {
-      val = Number(paymentBreakdown[String(pm.id)]);
+    } else if (paymentBreakdown[pmIdStr] !== undefined) {
+      val = Number(paymentBreakdown[pmIdStr]);
+    } else if (paymentBreakdown[String(pm.id - 1)] !== undefined && pm.id > 0) {
+      val = Number(paymentBreakdown[String(pm.id - 1)]);
     } else if (nameLower.includes('efectivo') || nameLower === 'cash') {
       val = cashAmount;
     } else if (nameLower.includes('tarjeta') || nameLower.includes('card') || nameLower.includes('debito') || nameLower.includes('credito')) {
@@ -605,16 +608,27 @@ export const Dashboard: React.FC = () => {
 
                 <div className="pie-legend-list">
                   {paymentDonutData.map((item, index) => {
-                    const pct = totalRevenueToday > 0 ? Math.round((item.value / totalRevenueToday) * 100) : 0;
+                    const totalDonutSum = paymentDonutData.reduce((acc, curr) => acc + curr.value, 0);
+                    const pct = totalDonutSum > 0 ? Math.round((item.value / totalDonutSum) * 100) : 0;
                     return (
                       <div key={index} className="pie-legend-item">
                         <div className="pie-legend-left">
-                          {renderPaymentIcon(item.icon, item.label)}
+                          <span
+                            style={{
+                              width: '12px',
+                              height: '12px',
+                              borderRadius: '50%',
+                              backgroundColor: item.color,
+                              display: 'inline-block',
+                              flexShrink: 0,
+                              boxShadow: `0 0 6px ${item.color}66`,
+                            }}
+                          />
                           <span className="pie-legend-label">{item.label}</span>
                         </div>
                         <div style={{ textAlign: 'right' }}>
                           <span className="pie-legend-val">$ {item.value.toLocaleString()}</span>
-                          <small style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                          <small style={{ display: 'block', fontSize: '0.74rem', color: 'var(--text-secondary)', fontWeight: 700 }}>
                             {pct}% del total
                           </small>
                         </div>
