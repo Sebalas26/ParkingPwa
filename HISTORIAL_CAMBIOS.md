@@ -7,6 +7,29 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 10:12:00] - [BUGFIX] [MULTI-TENANT / BRANCHES] - Filtrado Estricto de Sedes por Empresa en ParqueaderosTab
+
+#### 💬 Prompt Original del Usuario
+> "Cuando creo un parqueadero e ingreso a administrar - configuracion de sedes, ahi estoy viendo todas las sedes que estan creadas y esta mal, lo que deseo es que salgan solamente las sedes creadas para ese parqueadero"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Método `getByCompany` en `branchesService.ts`**:
+   - Se agregó `branchesService.getByCompany(companyId)` para consultar de forma específica `/api/branches/company/${companyId}`.
+2. **Filtrado por Empresa en `ParqueaderosTab.tsx`**:
+   - Se determinó `targetCompanyId = inspectedCompany?.id || currentUser?.companyId || undefined`.
+   - En `loadBranches()`, al administrar/inspeccionar un parqueadero/empresa, se invoca `branchesService.getByCompany(targetCompanyId)`, garantizando que **únicamente se carguen y muestren en la tabla las sedes pertenecientes a ese parqueadero (`CompanyId`)**.
+   - Se actualizó el `useEffect` para reaccionar al cambio de `inspectedCompany?.id`.
+3. **Cero Errores**:
+   - Compilación limpia con `npm run build` (**0 errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/settings/data/branchesService.ts`
+- `src/features/settings/ui/ParqueaderosTab.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores**
+
 ### [2026-08-30 10:02:00] - [UI / UX] - Remoción de Columna ID y Priorización del Rol del Usuario Logueado en Tabla de Roles
 
 #### 💬 Prompt Original del Usuario

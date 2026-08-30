@@ -19,6 +19,16 @@ export const branchesService = {
     }
   },
 
+  getByCompany: async (companyId: number): Promise<BranchDto[]> => {
+    try {
+      const data = await apiClient.get<BranchDto[]>(`/branches/company/${companyId}`);
+      return data || [];
+    } catch (err) {
+      console.warn(`Error al consultar /api/branches/company/${companyId}:`, err);
+      return [];
+    }
+  },
+
   getActive: async (): Promise<BranchDto[]> => {
     try {
       const data = await apiClient.get<BranchDto[]>('/branches/active');

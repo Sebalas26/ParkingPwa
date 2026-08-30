@@ -54,6 +54,9 @@ const getAvatarStyle = (index: number) => {
 
 export const ParqueaderosTab: React.FC = () => {
   const { refreshBranches, inspectedCompany } = useBranchContext();
+  const currentUser = authService.getCurrentUser();
+  const targetCompanyId = inspectedCompany?.id || currentUser?.companyId || undefined;
+
   const [branches, setBranches] = useState<BranchDto[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [expandedBranchId, setExpandedBranchId] = useState<number | null>(null);
@@ -95,12 +98,17 @@ export const ParqueaderosTab: React.FC = () => {
 
   useEffect(() => {
     loadBranches();
-  }, []);
+  }, [inspectedCompany?.id]);
 
   const loadBranches = async () => {
     setIsLoading(true);
     try {
-      const data = await branchesService.getAll();
+      let data: BranchDto[] = [];
+      if (targetCompanyId) {
+        data = await branchesService.getByCompany(targetCompanyId);
+      } else {
+        data = await branchesService.getAll();
+      }
       setBranches(data || []);
     } catch (err) {
       console.error('Error al cargar sedes:', err);
@@ -150,7 +158,6 @@ export const ParqueaderosTab: React.FC = () => {
       if (editingBranch.id) {
         await branchesService.update(editingBranch.id, editingBranch as UpdateBranchDto);
       } else {
-        const currentUser = authService.getCurrentUser();
         const payload: CreateBranchDto = {
           code: editingBranch.code.trim().toUpperCase(),
           name: editingBranch.name.trim(),
@@ -160,7 +167,7 @@ export const ParqueaderosTab: React.FC = () => {
           totalCapacity: editingBranch.totalCapacity || 100,
           notes: editingBranch.notes?.trim(),
           logoBase64: editingBranch.logoBase64?.trim(),
-          companyId: (inspectedCompany?.id || currentUser?.companyId) || undefined,
+          companyId: targetCompanyId,
         };
         await branchesService.create(payload);
       }
