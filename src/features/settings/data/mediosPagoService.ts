@@ -5,11 +5,13 @@ export const mediosPagoService = {
   getPaymentMethods: async (): Promise<PaymentMethodDto[]> => {
     try {
       const data = await apiClient.get<PaymentMethodDto[]>('/PaymentMethod/GetPaymentMethods');
-      return data || [];
+      const active = (data || []).filter((m) => m.isActive ?? true);
+      return active;
     } catch {
       try {
         const fallback = await apiClient.get<PaymentMethodDto[]>('/PaymentMethod');
-        return fallback || [];
+        const active = (fallback || []).filter((m) => m.isActive ?? true);
+        return active;
       } catch {
         return [];
       }

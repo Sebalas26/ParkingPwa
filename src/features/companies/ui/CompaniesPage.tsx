@@ -133,7 +133,11 @@ export const CompaniesPage: React.FC = () => {
     try {
       setActionLoading(true);
       setErrorMessage('');
-      await companyService.create(createForm);
+      const payload = {
+        ...createForm,
+        maxBranches: Math.max(1, Number(createForm.maxBranches) || 1),
+      };
+      await companyService.create(payload);
       setIsCreateModalOpen(false);
       await loadCompanies();
     } catch (err: any) {
@@ -149,7 +153,11 @@ export const CompaniesPage: React.FC = () => {
     try {
       setActionLoading(true);
       setErrorMessage('');
-      await companyService.update(selectedCompany.id, editForm);
+      const payload = {
+        ...editForm,
+        maxBranches: Math.max(1, Number(editForm.maxBranches) || 1),
+      };
+      await companyService.update(selectedCompany.id, payload);
       setIsEditModalOpen(false);
       await loadCompanies();
     } catch (err: any) {
@@ -502,7 +510,14 @@ export const CompaniesPage: React.FC = () => {
                     <label>Plan SaaS Contratado *</label>
                     <select
                       value={createForm.planType}
-                      onChange={(e) => setCreateForm({ ...createForm, planType: e.target.value })}
+                      onChange={(e) => {
+                        const newPlan = e.target.value;
+                        let defaultBranches = createForm.maxBranches;
+                        if (newPlan === 'Basic') defaultBranches = 1;
+                        else if (newPlan === 'Pro') defaultBranches = 5;
+                        else if (newPlan === 'Enterprise') defaultBranches = 20;
+                        setCreateForm({ ...createForm, planType: newPlan, maxBranches: defaultBranches });
+                      }}
                     >
                       <option value="Basic">Plan Básico (1 Sede)</option>
                       <option value="Pro">Plan Profesional (Hasta 5 Sedes)</option>
@@ -516,8 +531,17 @@ export const CompaniesPage: React.FC = () => {
                       min={1}
                       max={999}
                       required
-                      value={createForm.maxBranches}
-                      onChange={(e) => setCreateForm({ ...createForm, maxBranches: parseInt(e.target.value) || 1 })}
+                      value={createForm.maxBranches === 0 ? '' : createForm.maxBranches}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        const num = raw === '' ? 0 : parseInt(raw, 10);
+                        setCreateForm({ ...createForm, maxBranches: isNaN(num) ? 0 : num });
+                      }}
+                      onBlur={() => {
+                        if (!createForm.maxBranches || createForm.maxBranches < 1) {
+                          setCreateForm((prev) => ({ ...prev, maxBranches: 1 }));
+                        }
+                      }}
                     />
                   </div>
                 </div>
@@ -678,7 +702,14 @@ export const CompaniesPage: React.FC = () => {
                     <label>Plan SaaS Contratado</label>
                     <select
                       value={editForm.planType}
-                      onChange={(e) => setEditForm({ ...editForm, planType: e.target.value })}
+                      onChange={(e) => {
+                        const newPlan = e.target.value;
+                        let defaultBranches = editForm.maxBranches;
+                        if (newPlan === 'Basic') defaultBranches = 1;
+                        else if (newPlan === 'Pro') defaultBranches = 5;
+                        else if (newPlan === 'Enterprise') defaultBranches = 20;
+                        setEditForm({ ...editForm, planType: newPlan, maxBranches: defaultBranches });
+                      }}
                     >
                       <option value="Basic">Plan Básico</option>
                       <option value="Pro">Plan Profesional</option>
@@ -692,8 +723,17 @@ export const CompaniesPage: React.FC = () => {
                       min={1}
                       max={999}
                       required
-                      value={editForm.maxBranches}
-                      onChange={(e) => setEditForm({ ...editForm, maxBranches: parseInt(e.target.value) || 1 })}
+                      value={editForm.maxBranches === 0 ? '' : editForm.maxBranches}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        const num = raw === '' ? 0 : parseInt(raw, 10);
+                        setEditForm({ ...editForm, maxBranches: isNaN(num) ? 0 : num });
+                      }}
+                      onBlur={() => {
+                        if (!editForm.maxBranches || editForm.maxBranches < 1) {
+                          setEditForm((prev) => ({ ...prev, maxBranches: 1 }));
+                        }
+                      }}
                     />
                   </div>
                 </div>

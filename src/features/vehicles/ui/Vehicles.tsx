@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Car, Bike, Truck, Plus, CheckCircle, Search, Building, LogOut, Receipt } from 'lucide-react';
+import { Car, Bike, Truck, Plus, CheckCircle, Search, Building, LogOut, Receipt, ChevronDown } from 'lucide-react';
 import { vehicleService } from '../data/vehicleService';
 import { vehiculosConfigService } from '../../settings/data/vehiculosConfigService';
 import { mediosPagoService } from '../../settings/data/mediosPagoService';
@@ -21,6 +21,7 @@ export const Vehicles: React.FC = () => {
   const [isLoadingVehicleTypes, setIsLoadingVehicleTypes] = useState(true);
   const [filterType, setFilterType] = useState('Todos');
   const [searchTerm, setSearchTerm] = useState('');
+  const [expandedTicketId, setExpandedTicketId] = useState<string | null>(null);
 
   // Modal Ingreso Rápido
   const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
@@ -359,73 +360,100 @@ export const Vehicles: React.FC = () => {
         </div>
       </div>
 
-      {/* Mobile Card View */}
+      {/* Mobile Card View (Accordion style matching UsuariosTab) */}
       <div className="mobile-card-list">
         {displayedVehicles.length > 0 ? (
           displayedVehicles.map((v) => {
             const typeName = getVehicleTypeName(v.vehicleType);
+            const isExpanded = expandedTicketId === v.ticketId;
+            const isMoto = typeName.toLowerCase().includes('moto');
+            const isTruck = typeName.toLowerCase().includes('camion') || typeName.toLowerCase().includes('camión') || typeName.toLowerCase().includes('truck');
+            const entryFormatted = formatTime(v.entryTimeUtc || (v as any).entryTime || (v as any).createdAtUtc || (v as any).entryDate);
+            const duration = calculateDuration(v.entryTimeUtc || (v as any).entryTime || (v as any).createdAtUtc || (v as any).entryDate);
+
             return (
-              <div key={v.ticketId} className="expandable-card">
-                <div className="expandable-card-header" style={{ paddingBottom: '12px', borderBottom: '1px solid var(--border-color)', marginBottom: '12px' }}>
-                  <div className="expandable-card-title">
-                    <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--primary-color)' }}>{v.plateNumber}</span>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginLeft: '8px' }}>{v.ticketNumber}</span>
-                  </div>
-                  <span className="badge badge-success" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem' }}>
-                    <CheckCircle size={12} /> Activo
-                  </span>
-                </div>
-                <div className="expandable-card-content" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>Tipo:</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
-                      {typeName.toLowerCase().includes('moto') ? <Bike size={14} /> : typeName.toLowerCase().includes('camion') || typeName.toLowerCase().includes('camión') || typeName.toLowerCase().includes('truck') ? <Truck size={14} /> : <Car size={14} />}
-                      {typeName}
+              <div key={v.ticketId} className={`expandable-card ${isExpanded ? 'expanded' : ''}`}>
+                <div
+                  className="expandable-card-header"
+                  onClick={() => setExpandedTicketId(isExpanded ? null : v.ticketId)}
+                >
+                  <div className="expandable-card-main">
+                    <div
+                      className="expandable-card-avatar"
+                      style={{ background: isMoto ? '#e0f2fe' : isTruck ? '#fef3c7' : '#e6f4f1', color: isMoto ? '#0284c7' : isTruck ? '#d97706' : '#07665e' }}
+                    >
+                      {isMoto ? <Bike size={20} /> : isTruck ? <Truck size={20} /> : <Car size={20} />}
+                      <span className="avatar-status-dot active" />
+                    </div>
+                    <div className="expandable-card-info">
+                      <span className="expandable-card-title">{v.plateNumber}</span>
+                      <span className="expandable-card-subtitle">
+                        {v.ticketNumber} • {typeName} • {entryFormatted}
+                      </span>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>Ingreso:</span>
-                    <span style={{ fontWeight: 600 }}>{formatTime(v.entryTimeUtc || (v as any).entryTime || (v as any).createdAtUtc || (v as any).entryDate)}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>Tiempo en Sitio:</span>
-                    <span style={{ fontWeight: 600 }}>{calculateDuration(v.entryTimeUtc || (v as any).entryTime || (v as any).createdAtUtc || (v as any).entryDate)}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>Tarifa Base:</span>
-                    <span style={{ fontWeight: 600 }}>${(v.hourlyRate || 0).toLocaleString()} /hr</span>
-                  </div>
-                  
-                  <div style={{ marginTop: '8px', paddingTop: '12px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end' }}>
-                    <button
-                      type="button"
-                      style={{
-                        background: '#ef4444',
-                        color: '#ffffff',
-                        border: 'none',
-                        padding: '10px 16px',
-                        borderRadius: '8px',
-                        fontSize: '0.9rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        width: '100%'
-                      }}
-                      onClick={() => handleOpenCheckOut(v)}
-                    >
-                      <LogOut size={16} /> Dar Salida
-                    </button>
+                  <div className={`expandable-card-chevron ${isExpanded ? 'expanded' : ''}`}>
+                    <ChevronDown size={18} />
                   </div>
                 </div>
+
+                {isExpanded && (
+                  <div className="expandable-card-body">
+                    <div className="card-details-panel">
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Tiquete:</span>
+                        <span className="card-detail-value">{v.ticketNumber}</span>
+                      </div>
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Tipo Vehículo:</span>
+                        <span className="card-detail-value">{typeName}</span>
+                      </div>
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Hora Ingreso:</span>
+                        <span className="card-detail-value">{entryFormatted}</span>
+                      </div>
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Tiempo Transcurrido:</span>
+                        <span className="card-detail-value">{duration}</span>
+                      </div>
+                      <div className="card-detail-row">
+                        <span className="card-detail-label">Tarifa Base:</span>
+                        <span className="card-detail-value">${(v.hourlyRate || 0).toLocaleString()} /hr</span>
+                      </div>
+                      
+                      <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #e2e8f0' }}>
+                        <button
+                          type="button"
+                          className="btn-action primary"
+                          style={{
+                            background: '#ef4444',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '10px 16px',
+                            borderRadius: '10px',
+                            fontSize: '0.88rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            width: '100%'
+                          }}
+                          onClick={() => handleOpenCheckOut(v)}
+                        >
+                          <LogOut size={16} /> Dar Salida y Cobrar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })
         ) : (
-          <div className="empty-state-message" style={{ textAlign: 'center', padding: '32px 16px', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
-            {isLoading ? 'Cargando vehículos activos...' : 'No hay vehículos activos que coincidan con la búsqueda.'}
+          <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+            {isLoading ? 'Cargando vehículos activos...' : 'No hay vehículos activos.'}
           </div>
         )}
       </div>
@@ -623,6 +651,7 @@ export const Vehicles: React.FC = () => {
                       value={paymentMethodId}
                       onChange={(e) => setPaymentMethodId(Number(e.target.value))}
                       required
+                      disabled={mediosPagoList.length === 0}
                     >
                       {mediosPagoList.length > 0 ? (
                         mediosPagoList.map((m) => (
@@ -631,12 +660,7 @@ export const Vehicles: React.FC = () => {
                           </option>
                         ))
                       ) : (
-                        <>
-                          <option value={0}>Efectivo</option>
-                          <option value={1}>Tarjeta Débito / Crédito</option>
-                          <option value={2}>Transferencia / QR</option>
-                          <option value={3}>Nequi / Daviplata</option>
-                        </>
+                        <option disabled>No hay medios de pago configurados</option>
                       )}
                     </select>
                   </div>
@@ -681,14 +705,14 @@ export const Vehicles: React.FC = () => {
                     Cancelar
                   </button>
                   <button
-                    type="submit"
-                    className="btn-primary"
-                    disabled={isSubmittingCheckOut}
-                    style={{ width: 'auto', background: '#10b981', borderColor: '#10b981', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                  >
-                    <CheckCircle size={16} />
-                    {isSubmittingCheckOut ? 'Procesando Salida...' : 'Cobrar y Registrar Salida'}
-                  </button>
+  type="submit"
+  className="btn-primary"
+  disabled={isSubmittingCheckOut || mediosPagoList.length===0}
+  style={{ width: 'auto', background: '#10b981', borderColor: '#10b981', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+>
+  <CheckCircle size={16} />
+  {isSubmittingCheckOut ? 'Procesando Salida...' : 'Cobrar y Registrar Salida'}
+</button>
                 </div>
               </form>
             </div>

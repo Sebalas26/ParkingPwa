@@ -7,6 +7,47 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 00:30:00] - [UI/UX] [RESPONSIVE] - Unificación de Listas Móvil (Accordion Cards)
+
+#### 💬 Prompt Original del Usuario
+> "quiero que la listas que te comparti queden como el mismo ejemplo que se ven en la primer imagen (gestion de usuarios), esto solo aplica para version mobile"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Ocultamiento de Encabezados de Tabla en Móvil (`src/index.css`)**:
+   - Se declararon reglas globales `@media (max-width: 768px)` con `display: none !important` para `.desktop-table-container` y `.desktop-table-view`.
+   - Se habilitó `display: flex !important` en `.mobile-card-list` exclusivamente para pantallas móviles (<= 768px).
+2. **Reestructuración de Tarjetas Expandibles**:
+   - `Vehicles.tsx` (Vehículos Activos): Migrado al patrón `expandable-card` con avatar circular (ícono Auto/Moto/Camión con dot de estado activo), placa en negrita, subtítulo con tiquete e ingreso, indicador `ChevronDown` interactivo y panel desplegable con detalle y botón rojo **"Dar Salida y Cobrar"**.
+   - `Reports.tsx` (Transacciones y Tiquetes): Migrado al patrón `expandable-card` con avatar circular verde (recibo), placa, tiquete y monto pagado, `ChevronDown` desplegable y desglose de bruto, descuento y total.
+   - `ParqueaderosTab.tsx` (Sedes): Ocultado de vista de tabla desktop en móvil y afinamiento de las tarjetas acorde al estándar de `UsuariosTab.tsx`.
+
+#### 📦 Componentes Modificados
+- `src/index.css` — Estilos globales responsivos y tarjetas expandibles.
+- `src/features/vehicles/ui/Vehicles.tsx` — Implementación de acordeón `expandable-card`.
+- `src/features/reports/ui/Reports.tsx` — Implementación de acordeón `expandable-card`.
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` → **0 Errores** (build en 1.15s).
+
+### [2026-08-30 00:25:00] - [BUGFIX] [COMPANIES] - Corrección de Edición de Límite de Sedes
+
+#### 💬 Prompt Original del Usuario
+> "cuando intento registrar un nuevo parqueadero me sale como en la segunda imagen, adicinal que en la primera imsgen te muestro que cuando intento modificar ese 1 que te señale no me deja, pues no deja borrarse"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Corrección de comportamiento del Input `maxBranches` (`CompaniesPage.tsx`)**:
+   - Se ajustó el evento `onChange` y el renderizado de `value` del input de número de sedes para permitir valor temporal `0`/vacío `""` al presionar retroceso (backspace), evitando que resetease inmediatamente a `1`.
+   - Se añadió la propiedad `onBlur` y sanitización en los handlers de envío (`handleCreateCompany` y `handleUpdateCompany`) con `Math.max(1, ...)` para asegurar que al guardar nunca se envíe un valor menor a `1`.
+   - Se enlazó el selector de Plan SaaS (`planType`) para sugerir automáticamente límites acordes al plan (Básico: 1, Pro: 5, Enterprise: 20).
+
+#### 📦 Componentes Modificados
+- `src/features/companies/ui/CompaniesPage.tsx` — Ajustes a `createForm` y `editForm` para `maxBranches`.
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` → **0 Errores**.
+
 ### [2026-08-30 00:04:00] - [UI/UX] [TABLES] - Diseño Responsivo para Tablas de Vehículos y Reportes
 
 #### 💬 Prompt Original del Usuario
