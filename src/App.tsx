@@ -14,6 +14,8 @@ import { authService } from './features/auth/data/authService';
 import { apiClient } from './shared/api/apiClient';
 import { UpdatePromptModal } from './shared/ui/UpdatePromptModal';
 
+import { NoPermissionsView } from './shared/ui/NoPermissionsView';
+
 const SessionHeartbeat: React.FC = () => {
   useEffect(() => {
     if (!authService.isAuthenticated()) return;
@@ -43,6 +45,28 @@ const SessionHeartbeat: React.FC = () => {
   return null;
 };
 
+const hasUserAnyModulePermission = (): boolean => {
+  const user = authService.getCurrentUser();
+  if (user?.isSuperAdmin) return true;
+
+  if (authService.hasPermission('dashboard.view')) return true;
+  if (authService.hasPermission('checkout.view') || authService.hasPermission('shift.view')) return true;
+  if (authService.hasPermission('recent_entries.view')) return true;
+  if (authService.hasPermission('reports.view')) return true;
+  if (authService.hasPermission('novedades.view')) return true;
+
+  const canAccessSettings =
+    authService.hasPermission('settings.parqueaderos.view') ||
+    authService.hasPermission('settings.usuarios.view') ||
+    authService.hasPermission('settings.roles.view') ||
+    authService.hasPermission('settings.tarifas.view') ||
+    authService.hasPermission('settings.medios_pago.view') ||
+    authService.hasPermission('settings.convenios.view') ||
+    authService.hasPermission('settings.resoluciones.view');
+
+  return canAccessSettings;
+};
+
 const getDefaultLandingPath = (): string => {
   const user = authService.getCurrentUser();
   if (user?.isSuperAdmin) return '/dashboard/companies';
@@ -64,7 +88,7 @@ const getDefaultLandingPath = (): string => {
 
   if (canAccessSettings) return '/dashboard/settings';
 
-  return '/dashboard';
+  return '/dashboard/no-permissions';
 };
 
 const RootAuthHandler: React.FC = () => {
@@ -94,10 +118,16 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 const GuardedRoute: React.FC<{
   permission?: string | string[];
+  moduleName?: string;
   element: React.ReactElement;
-}> = ({ permission, element }) => {
+}> = ({ permission, moduleName, element }) => {
   const user = authService.getCurrentUser();
   if (user?.isSuperAdmin) return element;
+
+  if (!hasUserAnyModulePermission()) {
+    return <NoPermissionsView moduleName={moduleName} />;
+  }
+
   if (!permission) return element;
 
   const permissions = Array.isArray(permission) ? permission : [permission];
@@ -105,6 +135,9 @@ const GuardedRoute: React.FC<{
 
   if (!isAllowed) {
     const fallbackPath = getDefaultLandingPath();
+    if (fallbackPath === '/dashboard/no-permissions') {
+      return <NoPermissionsView moduleName={moduleName} />;
+    }
     return <Navigate to={fallbackPath} replace />;
   }
 
@@ -203,6 +236,7 @@ function App() {
                 />
               }
             />
+            <Route path="no-permissions" element={<NoPermissionsView />} />
           </Route>
 
           {/* Fallback general de rutas desconocidas hacia la raíz */}

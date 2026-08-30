@@ -7,6 +7,32 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 12:15:00] - [FEATURE] [SECURITY / RBAC] - Alerta y Vista Elegante de Acceso Restringido por Falta de Permisos (`NoPermissionsView`)
+
+#### 💬 Prompt Original del Usuario
+> "Ayudame que cuando un usuario no cuente con permisos en su rol e ingrese, muestre una alerta que no cuenta con permisos y no lo deje ingresar, evitando que vea la pantalla vacia como te estoy mostrnado"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Nuevo Componente `NoPermissionsView.tsx`**:
+   - Creado en `src/shared/ui/NoPermissionsView.tsx` con diseño Dark Glassmorphism.
+   - Presenta al usuario (nombre completo y rol) la advertencia explícita `Acceso Restringido: Tu rol no cuenta con permisos asignados para acceder a este módulo ni al sistema`.
+   - Incluye botones directos para **Cerrar Sesión** (`LogOut`) y **Actualizar Permisos** (`RefreshCw`).
+2. **Guardián de Enrutamiento en `App.tsx`**:
+   - Se agregó la ruta `/dashboard/no-permissions`.
+   - Se implementó la función auxiliar `hasUserAnyModulePermission()` que verifica si el usuario posee permiso sobre al menos un módulo del sistema.
+   - `getDefaultLandingPath()` redirige a `/dashboard/no-permissions` cuando el usuario tiene 0 permisos.
+   - `GuardedRoute` detecta a usuarios sin permisos y renderiza `<NoPermissionsView />` en lugar de mostrar pantallas en blanco o generar bucles de redirección.
+3. **Cero Errores**:
+   - Compilación limpia con `npm run build` (**0 errores**).
+
+#### 📦 Componentes Modificados
+- `src/shared/ui/NoPermissionsView.tsx` (Nuevo)
+- `src/App.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores**
+
 ### [2026-08-30 10:52:00] - [BUGFIX] [MULTI-TENANT / BRANCHES] - Carga y Marcación de Usuarios Asignados por Sede en Parametrización
 
 #### 💬 Prompt Original del Usuario
