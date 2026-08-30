@@ -7,6 +7,33 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 18:31:00] - [FEATURE / RBAC] - Aislamiento Estricto 100% Multi-Tenant por Parqueadero y Auto-aprovisionamiento
+
+#### 💬 Prompt Original del Usuario
+> "tengo un problema , ya con el ajuste que hiciste, me deja ver los roles, sin embargo, no me esta filtrando los roles que se encuentran creados para cada parqueadero, requiero es que cuando sea superadministrador me permita administrar los roles de cada parqueadero, recuerda filttar porque no esta bien mostrar los roles de un parqueadero en otro , no olvides no afectar el flujo de que si ingreso con el usuario administradir de ese parqueadero, solo deben sairme los roles de esa empresa" (con captura adjunta)
+
+#### 🤖 Resumen Técnico para la IA
+1. **Aislamiento 100% Estricto por Parqueadero (`UserRoleRepository.cs`)**:
+   - Se modificó `GetUserRoles(companyId)` para filtrar estrictamente por `x.CompanyId == companyId.Value` al consultar para un parqueadero/empresa específica.
+   - Se removió la inclusión de roles con `CompanyId = NULL` (Rol Super Administrador de la plataforma global SaaS) en las consultas de parqueaderos clientes, evitando que la plataforma SaaS o roles de otras empresas contaminen la pantalla del parqueadero.
+2. **Auto-Aprovisionamiento de Rol Administrador de Empresa (`AutoProvisionCompanyAdminRoleAsync`)**:
+   - Si un parqueadero cliente no posee roles propios en la base de datos, el backend aprovisiona automáticamente su rol propio `'Administrador'` con `CompanyId = companyId` y permisos operacionales completos.
+3. **Propagación de `CompanyId` (`GetUserRoleDto.cs` & `UserRoleService.cs`)**:
+   - Se agregó `CompanyId` a `GetUserRoleDto` y se aseguró su propagación al guardar o crear nuevos roles desde la PWA.
+4. **Cero Errores**:
+   - Compilación limpia de Backend con `dotnet build` (**0 errores**).
+   - Compilación limpia de Frontend con `npm run build` (**0 errores**).
+
+#### 📦 Componentes Modificados
+- `ParkingApi/ParkingApi.Domain/Dtos/UserRoles/GetUserRoleDto.cs`
+- `ParkingApi/ParkingApi.Infrastructure/Data/Repositories/UserRoles/UserRoleRepository.cs`
+- `ParkingApi/ParkingApi.Core/Services/UserRoles/UserRoleService.cs`
+- `ParkingPwa/HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `dotnet build` -> **0 Errores**
+- `npm run build` -> **0 Errores**
+
 ### [2026-08-30 18:20:00] - [FEATURE / UI] - Modal Personalizada Dark Glassmorphism para Confirmación de Eliminación de Empresa
 
 #### 💬 Prompt Original del Usuario
