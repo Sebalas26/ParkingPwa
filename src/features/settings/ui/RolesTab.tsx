@@ -24,7 +24,7 @@ import { rolesService } from '../data/rolesService';
 import { authService } from '../../auth/data/authService';
 import { ModalPortal } from '../../../shared/ui/ModalPortal';
 
-type PlatformTab = 'wpf' | 'pwa';
+type PlatformTab = 'all' | 'pwa' | 'wpf';
 
 export const RolesTab: React.FC = () => {
   const [roles, setRoles] = useState<RoleDto[]>([]);
@@ -52,7 +52,7 @@ export const RolesTab: React.FC = () => {
   const [targetRole, setTargetRole] = useState<RoleDto | null>(null);
   const [selectedActionIds, setSelectedActionIds] = useState<number[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activePlatform, setActivePlatform] = useState<PlatformTab>('wpf');
+  const [activePlatform, setActivePlatform] = useState<PlatformTab>('all');
   const [expandedModuleId, setExpandedModuleId] = useState<number | null>(null);
   const [isSavingPermissions, setIsSavingPermissions] = useState(false);
   const [expandedRoleId, setExpandedRoleId] = useState<number | null>(null);
@@ -109,18 +109,18 @@ export const RolesTab: React.FC = () => {
   };
 
   // Clasificador de módulos por plataforma
-  const isDesktopModule = (mod: ModuleDto): boolean => {
-    if ([1, 2, 4, 5, 13].includes(mod.id)) return true;
-    const n = (mod.name || '').toLowerCase();
-    return (
-      n.includes('checkin') ||
-      n.includes('checkout') ||
-      n.includes('ingreso') ||
-      n.includes('salida') ||
-      n.includes('patio') ||
-      n.includes('turnos') ||
-      (n.includes('sistema') && !n.includes('web'))
-    );
+  const isModuleInPlatform = (mod: ModuleDto, platform: PlatformTab): boolean => {
+    if (platform === 'all') return true;
+    if (platform === 'pwa') {
+      // Módulos Web PWA: incluye operativos (Ingreso, Caja, Patio/Activos, Turnos) y administrativos
+      // Módulo 13 (Hardware / Periféricos locales de escritorio) es exclusivo de WPF
+      return mod.id !== 13;
+    }
+    if (platform === 'wpf') {
+      // Terminal POS WPF (Ingreso, Cobro, Patio, Turnos, Sistema, Tarifas, Resoluciones, Medios Pago)
+      return [1, 2, 4, 5, 8, 9, 13, 14].includes(mod.id);
+    }
+    return true;
   };
 
   const handleOpenCreateRole = () => {
@@ -212,20 +212,16 @@ export const RolesTab: React.FC = () => {
     setTargetRole(role);
     setSelectedActionIds(rolePermissionsMap[roleId] || []);
     setSearchTerm('');
-    setActivePlatform('wpf');
+    setActivePlatform('all');
 
-    // Identificar y abrir el primer módulo de escritorio
-    const desktopMods = allModules.filter(isDesktopModule);
-    const firstDesktopId = desktopMods.length > 0 ? desktopMods[0].id : allModules[0]?.id ?? null;
-    setExpandedModuleId(firstDesktopId);
+    // Abrir el primer módulo
+    setExpandedModuleId(allModules.length > 0 ? allModules[0].id : null);
     setIsPermissionsModalOpen(true);
   };
 
   const handleSwitchPlatform = (platform: PlatformTab) => {
     setActivePlatform(platform);
-    const targetMods = allModules.filter((m) =>
-      platform === 'wpf' ? isDesktopModule(m) : !isDesktopModule(m)
-    );
+    const targetMods = allModules.filter((m) => isModuleInPlatform(m, platform));
     setExpandedModuleId(targetMods.length > 0 ? targetMods[0].id : null);
   };
 
@@ -247,7 +243,7 @@ export const RolesTab: React.FC = () => {
   const handlePlatformSelectAll = (platform: PlatformTab, selectAll: boolean) => {
     const platformActions = allActions.filter((a) => {
       const mod = allModules.find((m) => m.id === (a.moduleId ?? a.module?.id));
-      return mod ? (platform === 'wpf' ? isDesktopModule(mod) : !isDesktopModule(mod)) : false;
+      return mod ? isModuleInPlatform(mod, platform) : true;
     });
     const platformActionIds = platformActions.map((a) => a.id);
 
@@ -319,22 +315,29 @@ export const RolesTab: React.FC = () => {
     .filter((g) => g.actions.length > 0);
 
   // Separación por plataforma
-  const desktopGrouped = groupedModules.filter((g) => isDesktopModule(g.module));
-  const webGrouped = groupedModules.filter((g) => !isDesktopModule(g.module));
+  const allGrouped = groupedModules;
+  const pwaGrouped = groupedModules.filter((g) => isModuleInPlatform(g.module, 'pwa'));
+  const wpfGrouped = groupedModules.filter((g) => isModuleInPlatform(g.module, 'wpf'));
 
-  const desktopTotalActions = allActions.filter((a) => {
+  const pwaTotalActions = allActions.filter((a) => {
     const mod = allModules.find((m) => m.id === (a.moduleId ?? a.module?.id));
-    return mod ? isDesktopModule(mod) : false;
+    return mod ? isModuleInPlatform(mod, 'pwa') : true;
   });
-  const webTotalActions = allActions.filter((a) => {
+  const wpfTotalActions = allActions.filter((a) => {
     const mod = allModules.find((m) => m.id === (a.moduleId ?? a.module?.id));
-    return mod ? !isDesktopModule(mod) : true;
+    return mod ? isModuleInPlatform(mod, 'wpf') : false;
   });
 
-  const desktopSelectedCount = desktopTotalActions.filter((a) => selectedActionIds.includes(a.id)).length;
-  const webSelectedCount = webTotalActions.filter((a) => selectedActionIds.includes(a.id)).length;
+  const allSelectedCount = selectedActionIds.length;
+  const pwaSelectedCount = pwaTotalActions.filter((a) => selectedActionIds.includes(a.id)).length;
+  const wpfSelectedCount = wpfTotalActions.filter((a) => selectedActionIds.includes(a.id)).length;
 
-  const currentGroupedModules = activePlatform === 'wpf' ? desktopGrouped : webGrouped;
+  const currentGroupedModules =
+    activePlatform === 'all'
+      ? allGrouped
+      : activePlatform === 'pwa'
+      ? pwaGrouped
+      : wpfGrouped;
 
   const currentUserForFilter = authService.getCurrentUser();
   const isUserSuperAdmin = currentUserForFilter?.isSuperAdmin === true;
@@ -711,39 +714,41 @@ export const RolesTab: React.FC = () => {
                   borderRadius: '10px',
                   gap: '6px',
                   border: '1px solid var(--border-color, #cbd5e1)',
+                  flexWrap: 'wrap',
                 }}
               >
                 <button
                   type="button"
-                  onClick={() => handleSwitchPlatform('wpf')}
+                  onClick={() => handleSwitchPlatform('all')}
                   style={{
                     flex: 1,
+                    minWidth: '140px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '8px',
-                    padding: '9px 16px',
+                    padding: '8px 12px',
                     borderRadius: '8px',
                     border: 'none',
-                    background: activePlatform === 'wpf' ? '#ffffff' : 'transparent',
-                    color: activePlatform === 'wpf' ? 'var(--primary-color, #07665e)' : '#64748b',
-                    fontWeight: activePlatform === 'wpf' ? 700 : 500,
-                    boxShadow: activePlatform === 'wpf' ? '0 2px 4px rgba(0,0,0,0.06)' : 'none',
+                    background: activePlatform === 'all' ? '#ffffff' : 'transparent',
+                    color: activePlatform === 'all' ? 'var(--primary-color, #07665e)' : '#64748b',
+                    fontWeight: activePlatform === 'all' ? 700 : 500,
+                    boxShadow: activePlatform === 'all' ? '0 2px 4px rgba(0,0,0,0.06)' : 'none',
                     cursor: 'pointer',
                     transition: 'all 0.15s ease',
                   }}
                 >
-                  <Monitor size={17} />
-                  <span>🖥️ Módulos Escritorio</span>
+                  <Globe size={16} />
+                  <span>🌐 Todos los Módulos</span>
                   <span
                     className="badge"
                     style={{
                       fontSize: '0.72rem',
-                      background: activePlatform === 'wpf' ? 'rgba(7, 102, 94, 0.12)' : 'rgba(100, 116, 139, 0.1)',
-                      color: activePlatform === 'wpf' ? '#07665e' : '#64748b',
+                      background: activePlatform === 'all' ? 'rgba(7, 102, 94, 0.12)' : 'rgba(100, 116, 139, 0.1)',
+                      color: activePlatform === 'all' ? '#07665e' : '#64748b',
                     }}
                   >
-                    {desktopSelectedCount} / {desktopTotalActions.length}
+                    {allSelectedCount} / {allActions.length}
                   </span>
                 </button>
 
@@ -752,11 +757,12 @@ export const RolesTab: React.FC = () => {
                   onClick={() => handleSwitchPlatform('pwa')}
                   style={{
                     flex: 1,
+                    minWidth: '140px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '8px',
-                    padding: '9px 16px',
+                    padding: '8px 12px',
                     borderRadius: '8px',
                     border: 'none',
                     background: activePlatform === 'pwa' ? '#ffffff' : 'transparent',
@@ -767,8 +773,8 @@ export const RolesTab: React.FC = () => {
                     transition: 'all 0.15s ease',
                   }}
                 >
-                  <Globe size={17} />
-                  <span>🌐 Módulos Web</span>
+                  <Globe size={16} />
+                  <span>📱 Módulos Web (PWA)</span>
                   <span
                     className="badge"
                     style={{
@@ -777,7 +783,42 @@ export const RolesTab: React.FC = () => {
                       color: activePlatform === 'pwa' ? '#07665e' : '#64748b',
                     }}
                   >
-                    {webSelectedCount} / {webTotalActions.length}
+                    {pwaSelectedCount} / {pwaTotalActions.length}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSwitchPlatform('wpf')}
+                  style={{
+                    flex: 1,
+                    minWidth: '140px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: activePlatform === 'wpf' ? '#ffffff' : 'transparent',
+                    color: activePlatform === 'wpf' ? 'var(--primary-color, #07665e)' : '#64748b',
+                    fontWeight: activePlatform === 'wpf' ? 700 : 500,
+                    boxShadow: activePlatform === 'wpf' ? '0 2px 4px rgba(0,0,0,0.06)' : 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <Monitor size={16} />
+                  <span>🖥️ Terminal POS (WPF)</span>
+                  <span
+                    className="badge"
+                    style={{
+                      fontSize: '0.72rem',
+                      background: activePlatform === 'wpf' ? 'rgba(7, 102, 94, 0.12)' : 'rgba(100, 116, 139, 0.1)',
+                      color: activePlatform === 'wpf' ? '#07665e' : '#64748b',
+                    }}
+                  >
+                    {wpfSelectedCount} / {wpfTotalActions.length}
                   </span>
                 </button>
               </div>
@@ -861,7 +902,14 @@ export const RolesTab: React.FC = () => {
               >
                 <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                    Plataforma activa: <strong>{activePlatform === 'wpf' ? '🖥️ Terminal WPF' : '🌐 Portal Web PWA'}</strong>
+                    Filtro activo:{' '}
+                    <strong>
+                      {activePlatform === 'all'
+                        ? '🌐 Todos los Módulos'
+                        : activePlatform === 'pwa'
+                        ? '📱 Módulos Web (PWA)'
+                        : '🖥️ Terminal POS (WPF)'}
+                    </strong>
                   </span>
                   <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
                     Total Global: <strong>{selectedActionIds.length} / {allActions.length}</strong> permisos
@@ -940,7 +988,7 @@ export const RolesTab: React.FC = () => {
                           >
                             {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                             <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
-                              {activePlatform === 'wpf' ? '🖥️' : '🌐'} {mod.name}
+                              {mod.name}
                             </span>
                             <span
                               className="badge badge-success"

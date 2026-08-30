@@ -7,6 +7,58 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-29 23:42:00] - [FEATURE/FIX] [DASHBOARD/ANALYTICS/UI] - Optimización y Sincronización en Tiempo Real del Reporte de Métodos de Pago
+
+#### 💬 Prompt Original del Usuario
+> "Noto qe este reporte de la dashboard no muestra info real, revisa si es que no se enuccunetra conectada a la api y bd"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Optimización de Gráfica Donut (`Dashboard.tsx`)**:
+   - Se rediseñó `SvgDonutChart` para que cuando el total recaudado del período sea `$0` (ej: al inicio del día antes de cerrar liquidaciones con valor cobrado), el gráfico muestre un anillo elegante punteado con el valor central `$ 0` y el subtítulo *"Total Recaudado"*, eliminando el estado confuso "Sin datos".
+   - El desglose inferior muestra todos los métodos de pago activos configurados en la base de datos con su valor real recaudado y porcentaje.
+2. **Carga Inteligente por Sede Activa (`branchesService.getBranchPaymentMethods`)**:
+   - Al seleccionar una sede, el Dashboard consulta los medios de pago parametrizados específicamente para dicha sede (`/api/branches/{branchId}/payment-methods`), con fallback a la lista global.
+3. **Consolidación Híbrida de Recaudación (Tiquetes + Turnos de Caja)**:
+   - Se integraron las ventas registradas en los turnos de caja (`realShifts`) y los tiquetes de la API (`summary.revenueByPaymentMethod`), filtrados dinámicamente por la sede activa y el período seleccionado (*Hoy*, *Ayer*, *Este Mes*).
+4. **Bump de Versión**:
+   - Actualizado `.env` a `0.0.59 Dev` para forzar la actualización del Service Worker.
+
+#### 📦 Componentes Modificados
+- `src/features/dashboard/ui/Dashboard.tsx` — SvgDonutChart, integración de medios de pago por sede y turnos
+- `.env` — Bump a la versión `0.0.59 Dev`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `cmd.exe /c "npm run build"` → **0 Errores** (build en 1.54s).
+
+
+
+### [2026-08-29 23:37:00] - [FEATURE/FIX] [RBAC/UI/UX] - Matriz Unificada de Permisos RBAC y Control Total de Módulos Web/POS
+
+#### 💬 Prompt Original del Usuario
+> "noto que sigue mostrando modulos en un rol donde yo ya le quite todos los permisos web, valida si es que hace falta que se guarden esos modulos en la base de datos para que cuando se configuren por el rol, llleguen a la bd y haga la validacion para no mostrarlos"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Solución a la Causa Raíz de Permisos Ocultos (`RolesTab.tsx`)**:
+   - Anteriormente, la función `isDesktopModule` clasificaba los módulos operativos **1 (Ingreso de Vehículos)**, **2 (Salida y Cobro / Caja)**, **4 (Vehículos en Patio / Activos)** y **5 (Control de Turnos y Caja)** como *"Exclusivos de Escritorio (WPF)"*.
+   - Esto provocaba que en la pestaña *"🌐 Módulos Web"* dichos módulos estuviesen ocultos, impidiendo al administrador desmarcarlos, por lo que sus permisos permanecían activos en la tabla `RoleActions` de la base de datos.
+   - Se redefinió la lógica (`isModuleInPlatform` y `PlatformTab = 'all' | 'pwa' | 'wpf'`) para que:
+     - La vista **"📱 Módulos Web (PWA)"** incluya todos los módulos operativos y administrativos del portal web.
+     - La nueva vista **"🌐 Todos los Módulos"** permita visualizar, marcar y desmarcar el 100% de los 15 módulos del sistema en un solo lugar.
+   - Al desmarcar los módulos de Caja y Activos para cualquier rol y hacer clic en *"Guardar Permisos"*, la API actualiza de inmediato la base de datos (`RoleActions`) y la PWA oculta estrictamente dichos módulos al evaluar `authService.hasPermission`.
+2. **Bump de Versión**:
+   - Actualizado `.env` a `0.0.58 Dev` para propagar el cambio invalidando el Service Worker.
+
+#### 📦 Componentes Modificados
+- `src/features/settings/ui/RolesTab.tsx` — Selector unificado de 3 plataformas y matriz completa de módulos
+- `.env` — Bump a la versión `0.0.58 Dev`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `cmd.exe /c "npm run build"` → **0 Errores** (build en 2.07s).
+
+
+
 ### [2026-08-29 23:23:00] - [FEATURE/UI/UX] - Unificación de Estilo Visual de Sedes (Desktop Table y Mobile Expandable Cards)
 
 #### 💬 Prompt Original del Usuario

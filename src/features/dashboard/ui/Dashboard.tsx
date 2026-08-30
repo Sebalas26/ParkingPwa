@@ -14,6 +14,7 @@ import { resolucionesService } from '../../settings/data/resolucionesService';
 import type { BillingResolutionDto } from '../../settings/model/ResolucionesContracts';
 import { vehiculosConfigService } from '../../settings/data/vehiculosConfigService';
 import type { VehiculoConfigDto } from '../../settings/model/VehiculosConfigContracts';
+import { branchesService } from '../../settings/data/branchesService';
 import {
   Car,
   Bike,
@@ -50,71 +51,66 @@ const SvgDonutChart: React.FC<{
   const c = 2 * Math.PI * r; // ~238.76
   let cumulativeOffset = 0;
 
-  if (total === 0) {
-    return (
-      <div style={{ position: 'relative', width: size, height: size, margin: '0 auto' }}>
-        <svg width={size} height={size} viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r={r} fill="none" stroke="var(--border-color, #e2e8f0)" strokeWidth="14" />
-          <text x="50" y="52" textAnchor="middle" fontSize="9" fill="var(--text-secondary)" fontWeight="600">Sin datos</text>
-        </svg>
-      </div>
-    );
-  }
-
   return (
     <div style={{ position: 'relative', width: size, height: size, margin: '0 auto' }}>
       <svg width={size} height={size} viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
-        {data.map((item, i) => {
-          const pct = item.value / total;
-          const strokeLength = pct * c;
-          const strokeOffset = -cumulativeOffset;
-          cumulativeOffset += strokeLength;
+        {total === 0 ? (
+          <circle
+            cx="50"
+            cy="50"
+            r={r}
+            fill="none"
+            stroke="rgba(100, 116, 139, 0.2)"
+            strokeWidth="14"
+            strokeDasharray="6 4"
+          />
+        ) : (
+          data.map((item, i) => {
+            const pct = item.value / total;
+            const strokeLength = pct * c;
+            const strokeOffset = -cumulativeOffset;
+            cumulativeOffset += strokeLength;
 
-          return (
-            <circle
-              key={i}
-              cx="50"
-              cy="50"
-              r={r}
-              fill="none"
-              stroke={item.color}
-              strokeWidth="14"
-              strokeDasharray={`${strokeLength} ${c - strokeLength}`}
-              strokeDashoffset={strokeOffset}
-              style={{ transition: 'all 0.6s ease' }}
-            />
-          );
-        })}
+            return (
+              <circle
+                key={i}
+                cx="50"
+                cy="50"
+                r={r}
+                fill="none"
+                stroke={item.color}
+                strokeWidth="14"
+                strokeDasharray={`${strokeLength} ${c - strokeLength}`}
+                strokeDashoffset={strokeOffset}
+                style={{ transition: 'all 0.6s ease' }}
+              />
+            );
+          })
+        )}
       </svg>
-      {(centerLabel || centerSublabel) && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            pointerEvents: 'none',
-            textAlign: 'center',
-            padding: '0 10px',
-          }}
-        >
-          {centerLabel && (
-            <span style={{ fontWeight: 800, fontSize: '0.98rem', color: 'var(--text-primary)', lineHeight: 1.1 }}>
-              {centerLabel}
-            </span>
-          )}
-          {centerSublabel && (
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 600, marginTop: '2px' }}>
-              {centerSublabel}
-            </span>
-          )}
-        </div>
-      )}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          pointerEvents: 'none',
+          textAlign: 'center',
+          padding: '0 10px',
+        }}
+      >
+        <span style={{ fontWeight: 800, fontSize: total === 0 ? '1.05rem' : '0.98rem', color: 'var(--text-primary)', lineHeight: 1.1 }}>
+          {centerLabel || (total === 0 ? '$0' : '')}
+        </span>
+        <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 600, marginTop: '2px' }}>
+          {centerSublabel || (total === 0 ? 'Sin recaudos' : 'Total')}
+        </span>
+      </div>
     </div>
   );
 };
@@ -140,16 +136,39 @@ export const Dashboard: React.FC = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [sum, occ, tickets, shifts, users, paymentMethods, resolutions, vehicleTypes] = await Promise.all([
+      const [sum, occ, tickets, shifts, users, resolutions, vehicleTypes] = await Promise.all([
         dashboardService.getDailySummary(),
         dashboardService.getOccupancyStats(),
         dashboardService.getActiveTickets(),
         cajaService.getHistory(),
         usuariosService.getUsers(),
-        mediosPagoService.getPaymentMethods(),
         resolucionesService.getAllResolutions(),
         vehiculosConfigService.getConfigs(selectedParqueaderoId),
       ]);
+
+      // Cargar medios de pago específicos de la sede o globales
+      let paymentMethods: PaymentMethodDto[] = [];
+      if (selectedParqueaderoId) {
+        try {
+          const branchPm = await branchesService.getBranchPaymentMethods(selectedParqueaderoId);
+          if (branchPm && branchPm.length > 0) {
+            paymentMethods = branchPm.map((bpm) => ({
+              id: bpm.paymentMethodId,
+              name: bpm.paymentMethod?.name || bpm.name || 'Medio de Pago',
+              code: bpm.paymentMethod?.name || 'CUSTOM',
+              icon: bpm.paymentMethod?.icon || bpm.icon || '💳',
+              requiresReference: false,
+              isActive: bpm.isEnabled ?? true,
+            }));
+          }
+        } catch {
+          // Fallback a métodos globales
+        }
+      }
+      if (!paymentMethods || paymentMethods.length === 0) {
+        paymentMethods = await mediosPagoService.getPaymentMethods();
+      }
+
       setSummary(sum);
       setOccupancy(occ);
       setActiveTickets(tickets || []);
@@ -181,8 +200,31 @@ export const Dashboard: React.FC = () => {
   const activeVehiclesCount = summary?.activeVehiclesCount ?? activeTickets.length;
   const completedCount = summary?.completedTransactionsToday ?? 0;
 
-  // Venta del Día y N° Autos (Strict API/DB Data)
-  const totalRevenueToday = summary?.totalRevenueToday || summary?.totalRevenue || 0;
+  // Filtrado de turnos de caja por sede y período
+  const filteredShifts = (realShifts || []).filter((s) => {
+    const shiftTime = s.startTimeUtc || s.openedAtUtc || s.createdAtUtc;
+    if (!shiftTime) return true;
+    const shiftDate = new Date(shiftTime);
+    const now = new Date();
+    if (periodFilter === 'hoy') {
+      return shiftDate.toDateString() === now.toDateString();
+    } else if (periodFilter === 'ayer') {
+      const yesterday = new Date();
+      yesterday.setDate(now.getDate() - 1);
+      return shiftDate.toDateString() === yesterday.toDateString();
+    } else if (periodFilter === 'mes') {
+      return shiftDate.getMonth() === now.getMonth() && shiftDate.getFullYear() === now.getFullYear();
+    }
+    return true;
+  });
+
+  const shiftsCash = filteredShifts.reduce((acc, s) => acc + (s.totalCashCollected || s.initialCashAmount || 0), 0);
+  const shiftsCard = filteredShifts.reduce((acc, s) => acc + (s.totalCardCollected || 0), 0);
+  const shiftsTransfer = filteredShifts.reduce((acc, s) => acc + (s.totalTransferCollected || 0), 0);
+  const shiftsTotalRevenue = filteredShifts.reduce((acc, s) => acc + (s.totalCollected || ((s.totalCashCollected || 0) + (s.totalCardCollected || 0) + (s.totalTransferCollected || 0))), 0);
+
+  // Venta del Día y N° Autos (Strict API/DB Data con respaldo de turnos de caja)
+  const totalRevenueToday = (summary?.totalRevenueToday || summary?.totalRevenue || 0) || shiftsTotalRevenue;
   const totalVehiclesEnteredToday = summary?.totalTickets || (activeVehiclesCount + completedCount);
 
   // Ticket Promedio
@@ -192,11 +234,15 @@ export const Dashboard: React.FC = () => {
   const conveniosCount = summary?.conveniosCount || 0;
   const conveniosRevenue = summary?.conveniosRevenue || 0;
 
+  const activeMediosPago = (mediosPagoList || []).filter(
+    (pm) => pm.isActive !== false && (pm.status === undefined || pm.status === true || pm.status === 'Activo' || pm.status === 'Active')
+  );
+
   // Medios de Pago Dinámicos de la BD y la API
   const paymentBreakdown = summary?.revenueByPaymentMethod || {};
-  const cashAmount = paymentBreakdown['Cash'] ?? paymentBreakdown['0'] ?? paymentBreakdown['Efectivo'] ?? (totalRevenueToday > 0 ? totalRevenueToday : 0);
-  const cardAmount = (paymentBreakdown['CreditCard'] || 0) + (paymentBreakdown['DebitCard'] || 0) + (paymentBreakdown['1'] || 0) + (paymentBreakdown['2'] || 0);
-  const transferAmount = paymentBreakdown['Transfer'] || paymentBreakdown['3'] || 0;
+  const cashAmount = (paymentBreakdown['Cash'] ?? paymentBreakdown['0'] ?? paymentBreakdown['Efectivo']) || shiftsCash || (totalRevenueToday > 0 && activeMediosPago.length === 1 ? totalRevenueToday : 0);
+  const cardAmount = (paymentBreakdown['CreditCard'] || 0) + (paymentBreakdown['DebitCard'] || 0) + (paymentBreakdown['1'] || 0) + (paymentBreakdown['2'] || 0) || shiftsCard;
+  const transferAmount = paymentBreakdown['Transfer'] || paymentBreakdown['3'] || shiftsTransfer || 0;
 
   const PAYMENT_COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ec4899', '#06b6d4', '#14b8a6', '#6366f1'];
 
@@ -221,10 +267,6 @@ export const Dashboard: React.FC = () => {
         return <QrCode size={15} style={{ color: '#8b5cf6' }} />;
     }
   };
-
-  const activeMediosPago = (mediosPagoList || []).filter(
-    (pm) => pm.isActive !== false && (pm.status === undefined || pm.status === true || pm.status === 'Activo' || pm.status === 'Active')
-  );
 
   // Generación de datos reales para Gráfica de Torta 1: Métodos de Pago
   const paymentDonutData = activeMediosPago.map((pm, index) => {
@@ -544,8 +586,8 @@ export const Dashboard: React.FC = () => {
               <>
                 <SvgDonutChart
                   data={paymentDonutData}
-                  centerLabel={`$ ${(totalRevenueToday / 1000000).toFixed(1)}M`}
-                  centerSublabel="Total Ventas"
+                  centerLabel={totalRevenueToday >= 1000000 ? `$ ${(totalRevenueToday / 1000000).toFixed(1)}M` : `$ ${totalRevenueToday.toLocaleString()}`}
+                  centerSublabel="Total Recaudado"
                   size={170}
                 />
 
