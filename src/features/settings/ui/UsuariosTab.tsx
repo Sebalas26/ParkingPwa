@@ -249,7 +249,12 @@ export const UsuariosTab: React.FC = () => {
   const isUserSuperAdmin = currentUserForFilter?.isSuperAdmin === true;
 
   const displayUsers = usuarios.filter((u) => {
-    const roleTitle = u.userRoleDto?.roleName || u.roleName || u.role || (u.userRoleId === 1 ? 'Administrador' : '');
+    // Si el usuario es el propio usuario autenticado (el Admin logueado), SIEMPRE se incluye
+    if (currentUserForFilter?.userId && String(u.id) === String(currentUserForFilter.userId)) {
+      return true;
+    }
+
+    const roleTitle = u.userRoleDto?.roleName || u.roleName || u.role || '';
     const normRole = roleTitle.trim().toLowerCase();
     const isTargetSuperAdmin = normRole === 'super administrador' || normRole === 'super admin' || normRole === 'superadmin';
     return !isTargetSuperAdmin || isUserSuperAdmin;

@@ -7,6 +7,31 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 10:39:00] - [BUGFIX] [MULTI-TENANT / USERS] - Consulta Completa de Usuarios por Empresa y Visibilidad del Administrador Logueado
+
+#### 💬 Prompt Original del Usuario
+> "Perfecto, dejame esa logica asi y no me la modifiques , ahora estoy notando que cuando ingreso con un usuario administrador, en el apartado de usuarios no se ve el de el para modificarse, te lo digo porque el admin deberia de ver todos los usuarios del parqueadero al que se encuentra creado incluyendose el mismo"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Consulta LINQ Extendida Backend (`UserRepository.cs`)**:
+   - Se actualizó el método `GetUsers(companyId)` para consultar usuarios con `x.CompanyId == cid || x.UserBranches.Any(ub => ub.Branch.CompanyId == cid)`.
+   - Esto resuelve la omisión de usuarios pertenecientes a la empresa que estén asociados mediante sedes (`UserBranches`) o asignación directa de empresa.
+2. **Inclusión del Usuario Autenticado (`UsuariosTab.tsx`)**:
+   - En el filtro de renderizado `displayUsers`, se agregó la condición explícita `String(u.id) === String(currentUserForFilter.userId)`.
+   - Garantiza que el usuario Administrador que haya iniciado sesión aparezca siempre en el listado para poder consultar o editar su perfil.
+3. **Cero Errores**:
+   - Backend `dotnet build` (**0 errores**).
+   - Frontend `npm run build` (**0 errores**).
+
+#### 📦 Componentes Modificados
+- `ParkingApi/ParkingApi.Infrastructure/Data/Repositories/Users/UserRepository.cs`
+- `src/features/settings/ui/UsuariosTab.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `dotnet build` -> **0 Errores**
+- `npm run build` -> **0 Errores**
+
 ### [2026-08-30 10:12:00] - [BUGFIX] [MULTI-TENANT / BRANCHES] - Filtrado Estricto de Sedes por Empresa en ParqueaderosTab
 
 #### 💬 Prompt Original del Usuario
