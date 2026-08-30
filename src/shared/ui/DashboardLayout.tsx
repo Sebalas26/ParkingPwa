@@ -11,13 +11,13 @@ import './DashboardLayout.css';
 const WatermarkLogo = () => (
   <div className="sidebar-watermark">
     <img 
-      src="/watermark-logo.png" 
+      src="/marcaAgua.png" 
       alt="Watermark" 
       style={{ 
         width: '100%', 
         height: '100%', 
         objectFit: 'contain', 
-        opacity: 0.12
+        opacity: 0.15
       }} 
     />
   </div>
