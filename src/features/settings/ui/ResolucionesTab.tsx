@@ -4,6 +4,7 @@ import { resolucionesService } from '../data/resolucionesService';
 import type { BillingResolutionDto, SaveBillingResolutionDto } from '../model/ResolucionesContracts';
 import { authService } from '../../../features/auth/data/authService';
 import { ModalPortal } from '../../../shared/ui/ModalPortal';
+import { useParqueaderoContext } from '../../../shared/context/ParqueaderoContext';
 
 const COMMON_DOCUMENT_TYPES = [
   'Documento equivalente electrónico del tiquete de máquina registradora con sistema P.O.S.',
@@ -15,6 +16,7 @@ const COMMON_DOCUMENT_TYPES = [
 ];
 
 export const ResolucionesTab: React.FC = () => {
+  const { selectedParqueaderoId } = useParqueaderoContext();
   const [resolutions, setResolutions] = useState<BillingResolutionDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,7 +30,7 @@ export const ResolucionesTab: React.FC = () => {
   const loadResolutions = async () => {
     setIsLoading(true);
     try {
-      const data = await resolucionesService.getAllResolutions();
+      const data = await resolucionesService.getAllResolutions(undefined, selectedParqueaderoId ?? undefined);
       setResolutions(data);
     } catch (err) {
       console.error('Error al cargar resoluciones:', err);
@@ -39,7 +41,7 @@ export const ResolucionesTab: React.FC = () => {
 
   useEffect(() => {
     loadResolutions();
-  }, []);
+  }, [selectedParqueaderoId]);
 
   const handleOpenCreate = () => {
     const today = new Date().toISOString().split('T')[0];
@@ -48,6 +50,7 @@ export const ResolucionesTab: React.FC = () => {
     const nextYearStr = nextYear.toISOString().split('T')[0];
 
     setEditingResolution({
+      companyId: selectedParqueaderoId ?? undefined,
       name: '',
       documentType: COMMON_DOCUMENT_TYPES[0],
       prefix: '',
@@ -71,6 +74,7 @@ export const ResolucionesTab: React.FC = () => {
     setIsCustomDocType(isCustom);
     setEditingResolution({
       resolutionId: res.resolutionId,
+      companyId: res.companyId || selectedParqueaderoId || undefined,
       branchId: res.branchId,
       name: res.name,
       documentType: res.documentType,
@@ -104,10 +108,14 @@ export const ResolucionesTab: React.FC = () => {
     }
 
     try {
+      const payload: SaveBillingResolutionDto = {
+        ...editingResolution,
+        companyId: editingResolution.companyId || selectedParqueaderoId || undefined,
+      };
       if (currentId) {
-        await resolucionesService.updateResolution(currentId, editingResolution);
+        await resolucionesService.updateResolution(currentId, payload);
       } else {
-        await resolucionesService.createResolution(editingResolution);
+        await resolucionesService.createResolution(payload);
       }
       setIsModalOpen(false);
       setEditingResolution(null);

@@ -2,9 +2,10 @@ import { apiClient } from '../../../shared/api/apiClient';
 import type { RoleDto, SaveRoleDto, ActionDto, ModuleDto, RoleActionPermissionDto } from '../model/RolesContracts';
 
 export const rolesService = {
-  getRoles: async (): Promise<RoleDto[]> => {
+  getRoles: async (companyId?: number): Promise<RoleDto[]> => {
     try {
-      const data = await apiClient.get<any[]>('/UserRole/GetUsersRoles');
+      const url = companyId ? `/UserRole/GetUsersRoles?companyId=${companyId}` : '/UserRole/GetUsersRoles';
+      const data = await apiClient.get<any[]>(url);
       if (data && Array.isArray(data) && data.length > 0) {
         return data.map((r) => {
           const roleId = r.idUserRol ?? r.IdUserRol ?? r.id ?? r.Id ?? 1;
@@ -50,11 +51,12 @@ export const rolesService = {
     }
   },
 
-  saveOrEditRole: async (role: SaveRoleDto): Promise<boolean> => {
+  saveOrEditRole: async (role: SaveRoleDto & { companyId?: number }): Promise<boolean> => {
     const payload = {
       idUserRol: role.idUserRol,
       roleName: role.roleName,
       isActive: role.isActive,
+      companyId: role.companyId,
     };
     await apiClient.post('/UserRole/SaveOrEditUserRole', payload);
     return true;

@@ -194,7 +194,7 @@ export const ParqueaderosTab: React.FC = () => {
       ]);
       setAllPaymentMethods(methods || []);
       const enabledIds = (configured || [])
-        .filter((bpm: BranchPaymentMethodDto) => bpm.isEnabled)
+        .filter((bpm: BranchPaymentMethodDto) => bpm.isActive !== false && bpm.isEnabled !== false)
         .map((bpm: BranchPaymentMethodDto) => bpm.paymentMethodId);
       setEnabledPaymentMethodIds(enabledIds);
     } catch (err) {

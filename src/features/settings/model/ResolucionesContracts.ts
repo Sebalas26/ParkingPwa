@@ -1,5 +1,6 @@
 export interface BillingResolutionDto {
   resolutionId: string;
+  companyId?: number | null;
   branchId?: number | null;
   branchName?: string | null;
   name: string;
@@ -19,6 +20,7 @@ export interface BillingResolutionDto {
 
 export interface SaveBillingResolutionDto {
   resolutionId?: string;
+  companyId?: number | null;
   branchId?: number | null;
   name: string;
   documentType: string;

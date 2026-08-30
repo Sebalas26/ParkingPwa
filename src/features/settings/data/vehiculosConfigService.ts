@@ -34,9 +34,10 @@ export const vehiculosConfigService = {
   /**
    * Obtiene exclusivamente los tipos de vehículos del catálogo general (BranchId == null)
    */
-  getGlobalTypes: async (): Promise<VehiculoConfigDto[]> => {
+  getGlobalTypes: async (companyId?: number): Promise<VehiculoConfigDto[]> => {
     try {
-      const rates = await apiClient.get<any[]>('/VehicleRates');
+      const url = companyId ? `/VehicleRates?companyId=${companyId}` : '/VehicleRates';
+      const rates = await apiClient.get<any[]>(url);
       if (rates && rates.length > 0) {
         const globalRates = rates.filter((r) => r.branchId === null || r.branchId === undefined);
         const source = globalRates.length > 0 ? globalRates : rates;
@@ -62,9 +63,10 @@ export const vehiculosConfigService = {
   /**
    * Obtiene estrictamente las tarifas asignadas a una sede específica (BranchId == branchId)
    */
-  getBranchRates: async (branchId: number): Promise<VehiculoConfigDto[]> => {
+  getBranchRates: async (branchId: number, companyId?: number): Promise<VehiculoConfigDto[]> => {
     try {
-      const rates = await apiClient.get<any[]>('/VehicleRates');
+      const url = companyId ? `/VehicleRates?companyId=${companyId}` : '/VehicleRates';
+      const rates = await apiClient.get<any[]>(url);
       if (rates && rates.length > 0) {
         const branchSpecific = rates.filter((r) => r.branchId === branchId);
         return branchSpecific.map((r) => ({
@@ -90,9 +92,10 @@ export const vehiculosConfigService = {
    * Obtiene la lista completa de tipos de vehículos activos para operar en una sede,
    * combinando las tarifas parametrizadas de la sede con el catálogo general de la BD.
    */
-  getConfigs: async (branchId?: number | null): Promise<VehiculoConfigDto[]> => {
+  getConfigs: async (branchId?: number | null, companyId?: number): Promise<VehiculoConfigDto[]> => {
     try {
-      const rates = await apiClient.get<any[]>('/VehicleRates');
+      const url = companyId ? `/VehicleRates?companyId=${companyId}` : '/VehicleRates';
+      const rates = await apiClient.get<any[]>(url);
       if (rates && rates.length > 0) {
         let branchRates: any[] = [];
         if (branchId !== undefined && branchId !== null) {
@@ -131,12 +134,13 @@ export const vehiculosConfigService = {
     return [];
   },
 
-  saveConfig: async (cfg: SaveVehiculoConfigDto, branchId?: number | null): Promise<VehiculoConfigDto> => {
+  saveConfig: async (cfg: SaveVehiculoConfigDto & { companyId?: number }, branchId?: number | null): Promise<VehiculoConfigDto> => {
     try {
       const targetBranchId = cfg.branchId !== undefined ? cfg.branchId : (branchId ?? null);
       const payload = {
         rateId: cfg.rateId,
         branchId: targetBranchId,
+        companyId: cfg.companyId,
         vehicleType: typeof cfg.vehicleType === 'string' ? Number(cfg.vehicleType) || 0 : (cfg.vehicleType || 0),
         displayName: cfg.category,
         hourRate: cfg.hourRate ?? 0,

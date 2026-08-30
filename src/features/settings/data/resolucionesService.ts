@@ -2,9 +2,13 @@ import { apiClient } from '../../../shared/api/apiClient';
 import type { BillingResolutionDto, SaveBillingResolutionDto } from '../model/ResolucionesContracts';
 
 export const resolucionesService = {
-  getAllResolutions: async (branchId?: number): Promise<BillingResolutionDto[]> => {
+  getAllResolutions: async (branchId?: number, companyId?: number): Promise<BillingResolutionDto[]> => {
     try {
-      const url = branchId ? `/Resolutions?branchId=${branchId}` : '/Resolutions';
+      let url = '/Resolutions';
+      const params: string[] = [];
+      if (branchId) params.push(`branchId=${branchId}`);
+      if (companyId) params.push(`companyId=${companyId}`);
+      if (params.length > 0) url += `?${params.join('&')}`;
       const data = await apiClient.get<BillingResolutionDto[]>(url);
       return data || [];
     } catch (err) {
@@ -13,9 +17,13 @@ export const resolucionesService = {
     }
   },
 
-  getActiveResolutions: async (branchId?: number): Promise<BillingResolutionDto[]> => {
+  getActiveResolutions: async (branchId?: number, companyId?: number): Promise<BillingResolutionDto[]> => {
     try {
-      const url = branchId ? `/Resolutions/active?branchId=${branchId}` : '/Resolutions/active';
+      let url = '/Resolutions/active';
+      const params: string[] = [];
+      if (branchId) params.push(`branchId=${branchId}`);
+      if (companyId) params.push(`companyId=${companyId}`);
+      if (params.length > 0) url += `?${params.join('&')}`;
       const data = await apiClient.get<BillingResolutionDto[]>(url);
       return data || [];
     } catch (err) {

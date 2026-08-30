@@ -51,9 +51,15 @@ export interface AssignUserBranchDto {
 }
 
 export interface BranchPaymentMethodDto {
+  id: number;
   branchId: number;
   paymentMethodId: number;
-  isEnabled: boolean;
+  paymentMethodName?: string;
+  paymentMethodIcon?: string;
+  requiresCashTender: boolean;
+  isActive: boolean;
+  // Fallbacks de compatibilidad
+  isEnabled?: boolean;
   name?: string;
   icon?: string;
   paymentMethod?: {

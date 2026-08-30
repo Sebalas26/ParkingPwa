@@ -4,6 +4,7 @@ import type { PaymentMethodDto, SavePaymentMethodDto } from '../model/MediosPago
 import { mediosPagoService } from '../data/mediosPagoService';
 import { authService } from '../../auth/data/authService';
 import { ModalPortal } from '../../../shared/ui/ModalPortal';
+import { useParqueaderoContext } from '../../../shared/context/ParqueaderoContext';
 
 const PAYMENT_EMOJIS = [
   { emoji: '💵', label: 'Efectivo' },
@@ -25,6 +26,7 @@ const PAYMENT_EMOJIS = [
 ];
 
 export const MediosPagoTab: React.FC = () => {
+  const { selectedParqueaderoId } = useParqueaderoContext();
   const [mediosPago, setMediosPago] = useState<PaymentMethodDto[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMedio, setEditingMedio] = useState<SavePaymentMethodDto | null>(null);
@@ -34,7 +36,7 @@ export const MediosPagoTab: React.FC = () => {
   const loadMediosPago = async () => {
     setIsLoading(true);
     try {
-      const data = await mediosPagoService.getPaymentMethods();
+      const data = await mediosPagoService.getPaymentMethods(selectedParqueaderoId ?? undefined);
       setMediosPago(data || []);
     } catch (err) {
       console.error('Error al cargar medios de pago:', err);
@@ -45,7 +47,7 @@ export const MediosPagoTab: React.FC = () => {
 
   useEffect(() => {
     loadMediosPago();
-  }, []);
+  }, [selectedParqueaderoId]);
 
   const handleOpenCreate = () => {
     setEditingMedio({
@@ -77,6 +79,7 @@ export const MediosPagoTab: React.FC = () => {
         name: editingMedio.name.trim(),
         icon: editingMedio.icon || '💳',
         isActive: editingMedio.isActive,
+        companyId: selectedParqueaderoId ?? undefined,
       });
       setIsModalOpen(false);
       setEditingMedio(null);

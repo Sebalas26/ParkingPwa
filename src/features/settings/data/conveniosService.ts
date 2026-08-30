@@ -2,9 +2,10 @@ import { apiClient } from '../../../shared/api/apiClient';
 import type { CommercialAgreementDto, SaveCommercialAgreementDto, StoreDto, SaveStoreDto } from '../model/ConveniosContracts';
 
 export const conveniosService = {
-  getAllAgreements: async (): Promise<CommercialAgreementDto[]> => {
+  getAllAgreements: async (companyId?: number): Promise<CommercialAgreementDto[]> => {
     try {
-      const data = await apiClient.get<CommercialAgreementDto[]>('/Agreements');
+      const url = companyId ? `/Agreements?companyId=${companyId}` : '/Agreements';
+      const data = await apiClient.get<CommercialAgreementDto[]>(url);
       return data || [];
     } catch (err) {
       console.error('Error al consultar convenios:', err);
@@ -16,11 +17,11 @@ export const conveniosService = {
     return await apiClient.get<CommercialAgreementDto>(`/Agreements/${id}`);
   },
 
-  createAgreement: async (agreement: SaveCommercialAgreementDto): Promise<CommercialAgreementDto> => {
+  createAgreement: async (agreement: SaveCommercialAgreementDto, companyId?: number): Promise<CommercialAgreementDto> => {
     let storeId = agreement.storeId;
     if (!storeId) {
       try {
-        const stores = await conveniosService.getStores();
+        const stores = await conveniosService.getStores(companyId);
         if (stores && stores.length > 0) {
           storeId = stores[0].storeId;
         } else {
@@ -29,6 +30,7 @@ export const conveniosService = {
             taxId: 'ALIADO-GEN',
             phoneNumber: '',
             isActive: true,
+            companyId: companyId,
           });
           storeId = newStore.storeId;
         }
@@ -39,11 +41,11 @@ export const conveniosService = {
     return await apiClient.post<CommercialAgreementDto>('/Agreements', { ...agreement, storeId });
   },
 
-  updateAgreement: async (id: string, agreement: SaveCommercialAgreementDto): Promise<CommercialAgreementDto> => {
+  updateAgreement: async (id: string, agreement: SaveCommercialAgreementDto, companyId?: number): Promise<CommercialAgreementDto> => {
     let storeId = agreement.storeId;
     if (!storeId) {
       try {
-        const stores = await conveniosService.getStores();
+        const stores = await conveniosService.getStores(companyId);
         if (stores && stores.length > 0) {
           storeId = stores[0].storeId;
         }
@@ -63,9 +65,10 @@ export const conveniosService = {
     }
   },
 
-  getStores: async (): Promise<StoreDto[]> => {
+  getStores: async (companyId?: number): Promise<StoreDto[]> => {
     try {
-      const data = await apiClient.get<StoreDto[]>('/Stores');
+      const url = companyId ? `/Stores?companyId=${companyId}` : '/Stores';
+      const data = await apiClient.get<StoreDto[]>(url);
       return data || [];
     } catch (err) {
       console.error('Error al consultar comercios:', err);

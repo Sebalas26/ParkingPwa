@@ -4,8 +4,10 @@ import type { VehiculoConfigDto, SaveVehiculoConfigDto } from '../model/Vehiculo
 import { vehiculosConfigService } from '../data/vehiculosConfigService';
 import { authService } from '../../auth/data/authService';
 import { ModalPortal } from '../../../shared/ui/ModalPortal';
+import { useParqueaderoContext } from '../../../shared/context/ParqueaderoContext';
 
 export const VehiculosConfigTab: React.FC = () => {
+  const { selectedParqueaderoId } = useParqueaderoContext();
   const [configs, setConfigs] = useState<VehiculoConfigDto[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingConfig, setEditingConfig] = useState<Partial<SaveVehiculoConfigDto> | null>(null);
@@ -17,12 +19,12 @@ export const VehiculosConfigTab: React.FC = () => {
 
   useEffect(() => {
     loadConfigs();
-  }, []);
+  }, [selectedParqueaderoId]);
 
   const loadConfigs = async () => {
     setIsLoading(true);
     try {
-      const data = await vehiculosConfigService.getGlobalTypes();
+      const data = await vehiculosConfigService.getGlobalTypes(selectedParqueaderoId ?? undefined);
       setConfigs(data || []);
     } catch (err) {
       console.error('Error al cargar catálogo de tipos de vehículos:', err);
@@ -102,7 +104,7 @@ export const VehiculosConfigTab: React.FC = () => {
 
     setIsSaving(true);
     try {
-      await vehiculosConfigService.saveConfig(payload, null);
+      await vehiculosConfigService.saveConfig({ ...payload, companyId: selectedParqueaderoId ?? undefined }, null);
       setIsModalOpen(false);
       setEditingConfig(null);
       await loadConfigs();

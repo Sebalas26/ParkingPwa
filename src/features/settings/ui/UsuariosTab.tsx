@@ -6,6 +6,7 @@ import { usuariosService } from '../data/usuariosService';
 import { branchesService } from '../data/branchesService';
 import { authService } from '../../auth/data/authService';
 import { ModalPortal } from '../../../shared/ui/ModalPortal';
+import { useParqueaderoContext } from '../../../shared/context/ParqueaderoContext';
 
 const getDocTypeLabel = (identification?: string, name?: string) => {
   const code = (identification || '').trim().toUpperCase();
@@ -52,6 +53,7 @@ const getInitials = (name?: string, username?: string) => {
 };
 
 export const UsuariosTab: React.FC = () => {
+  const { selectedParqueaderoId } = useParqueaderoContext();
   const [usuarios, setUsuarios] = useState<UserDto[]>([]);
   const [identTypes, setIdentTypes] = useState<GetIdentificationTypeDto[]>([]);
   const [allUserRoles, setAllUserRoles] = useState<GetUserRoleDto[]>([]);
@@ -73,15 +75,15 @@ export const UsuariosTab: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [selectedParqueaderoId]);
 
   const loadData = async () => {
     setIsLoading(true);
     try {
       const [usersData, typesData, rolesData, branchesData] = await Promise.all([
-        usuariosService.getUsers(),
+        usuariosService.getUsers(selectedParqueaderoId ?? undefined),
         usuariosService.getIdentificationTypes(),
-        usuariosService.getUserRoles(),
+        usuariosService.getUserRoles(selectedParqueaderoId ?? undefined),
         branchesService.getAll(),
       ]);
       setUsuarios(usersData || []);
@@ -112,7 +114,7 @@ export const UsuariosTab: React.FC = () => {
     const defaultRoleId = allUserRoles.length > 0 ? (allUserRoles[0].idUserRol ?? allUserRoles[0].id ?? 2) : 2;
 
     setEditingUsuario({
-      companyId: currentUser?.companyId,
+      companyId: (selectedParqueaderoId ?? currentUser?.companyId) || undefined,
       identificationTypeId: defaultTypeId,
       identificationNumber: '',
       firstName: '',
@@ -182,7 +184,7 @@ export const UsuariosTab: React.FC = () => {
     try {
       const payload: SaveUserDto = {
         ...editingUsuario,
-        companyId: editingUsuario.companyId || currentUser?.companyId,
+        companyId: (editingUsuario.companyId || selectedParqueaderoId || currentUser?.companyId) || undefined,
         fullName: computedFullName,
         username: editingUsuario.username.trim() || editingUsuario.email.trim(),
       };
@@ -212,7 +214,7 @@ export const UsuariosTab: React.FC = () => {
 
       setIsModalOpen(false);
       setEditingUsuario(null);
-      const freshUsers = await usuariosService.getUsers();
+      const freshUsers = await usuariosService.getUsers(selectedParqueaderoId ?? undefined);
       setUsuarios(freshUsers || []);
     } catch (err: any) {
       alert(err?.message || 'Error al guardar el usuario en la base de datos.');
@@ -231,7 +233,7 @@ export const UsuariosTab: React.FC = () => {
 
     try {
       await usuariosService.deleteUser(targetId);
-      const freshUsers = await usuariosService.getUsers();
+      const freshUsers = await usuariosService.getUsers(selectedParqueaderoId ?? undefined);
       setUsuarios(freshUsers || []);
       setUserToDelete(null);
     } catch (err: any) {

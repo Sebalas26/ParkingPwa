@@ -145,26 +145,36 @@ export const Dashboard: React.FC = () => {
         vehiculosConfigService.getConfigs(selectedParqueaderoId),
       ]);
 
-      // Cargar medios de pago específicos de la sede o globales
+      // Cargar medios de pago específicos de la sede activa (solo los que estén en BD)
       let paymentMethods: PaymentMethodDto[] = [];
       if (selectedParqueaderoId) {
         try {
           const branchPm = await branchesService.getBranchPaymentMethods(selectedParqueaderoId);
           if (branchPm && branchPm.length > 0) {
-            paymentMethods = branchPm.map((bpm) => ({
-              id: bpm.paymentMethodId,
-              name: bpm.paymentMethod?.name || bpm.name || 'Medio de Pago',
-              code: bpm.paymentMethod?.name || 'CUSTOM',
-              icon: bpm.paymentMethod?.icon || bpm.icon || '💳',
-              requiresReference: false,
-              isActive: bpm.isEnabled ?? true,
-            }));
+            paymentMethods = branchPm
+              .filter((bpm) => {
+                const realName = bpm.paymentMethodName || bpm.paymentMethod?.name || bpm.name || '';
+                return realName.trim().length > 0;
+              })
+              .map((bpm) => {
+                const name = bpm.paymentMethodName || bpm.paymentMethod?.name || bpm.name || '';
+                const icon = bpm.paymentMethodIcon || bpm.paymentMethod?.icon || bpm.icon || '💳';
+                return {
+                  id: bpm.paymentMethodId,
+                  name: name,
+                  code: name,
+                  icon: icon,
+                  requiresReference: false,
+                  isActive: bpm.isActive !== false && bpm.isEnabled !== false,
+                };
+              });
           }
         } catch {
-          // Fallback a métodos globales
+          // Sin medios de pago configurados para esta sede
         }
       }
-      if (!paymentMethods || paymentMethods.length === 0) {
+      // Solo cargar medios globales si no estamos en modo sede específica
+      if ((!paymentMethods || paymentMethods.length === 0) && !selectedParqueaderoId) {
         paymentMethods = await mediosPagoService.getPaymentMethods();
       }
 

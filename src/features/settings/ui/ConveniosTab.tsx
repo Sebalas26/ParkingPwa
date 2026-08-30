@@ -4,8 +4,10 @@ import type { CommercialAgreementDto, SaveCommercialAgreementDto } from '../mode
 import { conveniosService } from '../data/conveniosService';
 import { authService } from '../../auth/data/authService';
 import { ModalPortal } from '../../../shared/ui/ModalPortal';
+import { useParqueaderoContext } from '../../../shared/context/ParqueaderoContext';
 
 export const ConveniosTab: React.FC = () => {
+  const { selectedParqueaderoId } = useParqueaderoContext();
   const [convenios, setConvenios] = useState<CommercialAgreementDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -17,7 +19,7 @@ export const ConveniosTab: React.FC = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const data = await conveniosService.getAllAgreements();
+      const data = await conveniosService.getAllAgreements(selectedParqueaderoId ?? undefined);
       setConvenios(data || []);
     } catch (err) {
       console.error('Error al cargar convenios:', err);
@@ -28,7 +30,7 @@ export const ConveniosTab: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [selectedParqueaderoId]);
 
   const handleOpenCreate = () => {
     setEditingConvenio({
@@ -112,9 +114,9 @@ export const ConveniosTab: React.FC = () => {
 
     try {
       if (editingConvenio.agreementId) {
-        await conveniosService.updateAgreement(editingConvenio.agreementId, payload);
+        await conveniosService.updateAgreement(editingConvenio.agreementId, payload, selectedParqueaderoId ?? undefined);
       } else {
-        await conveniosService.createAgreement(payload);
+        await conveniosService.createAgreement(payload, selectedParqueaderoId ?? undefined);
       }
       setIsModalOpen(false);
       setEditingConvenio(null);

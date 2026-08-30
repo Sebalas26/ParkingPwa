@@ -2,13 +2,15 @@ import { apiClient } from '../../../shared/api/apiClient';
 import type { UserDto, SaveUserDto, GetIdentificationTypeDto, GetUserRoleDto } from '../model/UsuariosContracts';
 
 export const usuariosService = {
-  getUsers: async (): Promise<UserDto[]> => {
+  getUsers: async (companyId?: number): Promise<UserDto[]> => {
     try {
-      const data = await apiClient.get<UserDto[]>('/Users/GetUsers');
+      const url = companyId ? `/Users/GetUsers?companyId=${companyId}` : '/Users/GetUsers';
+      const data = await apiClient.get<UserDto[]>(url);
       return data || [];
     } catch {
       try {
-        const fallbackData = await apiClient.get<UserDto[]>('/Users');
+        const urlFallback = companyId ? `/Users?companyId=${companyId}` : '/Users';
+        const fallbackData = await apiClient.get<UserDto[]>(urlFallback);
         return fallbackData || [];
       } catch {
         return [];
@@ -16,8 +18,8 @@ export const usuariosService = {
     }
   },
 
-  getUsuarios: async (): Promise<UserDto[]> => {
-    return await usuariosService.getUsers();
+  getUsuarios: async (companyId?: number): Promise<UserDto[]> => {
+    return await usuariosService.getUsers(companyId);
   },
 
   getIdentificationTypes: async (): Promise<GetIdentificationTypeDto[]> => {
@@ -58,9 +60,10 @@ export const usuariosService = {
     }
   },
 
-  getUserRoles: async (): Promise<GetUserRoleDto[]> => {
+  getUserRoles: async (companyId?: number): Promise<GetUserRoleDto[]> => {
     try {
-      const data = await apiClient.get<any[]>('/UserRole/GetUsersRoles');
+      const url = companyId ? `/UserRole/GetUsersRoles?companyId=${companyId}` : '/UserRole/GetUsersRoles';
+      const data = await apiClient.get<any[]>(url);
       if (data && Array.isArray(data) && data.length > 0) {
         return data.map((r) => {
           const roleId = r.idUserRol ?? r.IdUserRol ?? r.id ?? r.Id ?? 2;
@@ -75,7 +78,8 @@ export const usuariosService = {
           };
         });
       }
-      const fallback = await apiClient.get<any[]>('/UserRole');
+      const urlFallback = companyId ? `/UserRole?companyId=${companyId}` : '/UserRole';
+      const fallback = await apiClient.get<any[]>(urlFallback);
       if (fallback && Array.isArray(fallback) && fallback.length > 0) {
         return fallback.map((r) => {
           const roleId = r.idUserRol ?? r.IdUserRol ?? r.id ?? r.Id ?? 2;

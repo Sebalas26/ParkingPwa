@@ -7,6 +7,42 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 06:10:00] - [FEATURE/SECURITY] [MULTI-TENANT] - Aislamiento Multi-Tenant de Configuración y Corrección del Dashboard
+
+#### 💬 Prompt Original del Usuario
+> "Cuando registro un nuevo parqueadero, le doy al boton de administrar (de un parqueadero nuevo) , voy a la configuracion y ahi me salen las sedes, roles, usuarios, convenios, tipos de vehiculos y resolcuines de todos los parqueaderos que tengo creados, podrias arreglarme qeu cuadno yo haga la admnistracion de un parquedero me muestre solo los que se encuentran asociados a ese parqueadero, revisa si hace falta agregar algun campo en base de datos parq que queden asociados, si es correcto, incluyelo,
+> en la dashboard requieoro que me muestres los medios de pago que tengo creados en ese parqueadero, , es decr elimina ese texto que dice medio de pago porque ese medio no lo tegno creado en mi BD"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Aislamiento Multi-Tenant por CompanyId**:
+   - **Base de Datos / Backend**: Se añadió la columna nullable `CompanyId` al modelo `PaymentMethod.cs` y su correspondiente migración de base de datos (`parkflow.db`). Se actualizaron todas las interfaces y repositorios (`UserRoleRepository`, `UserRepository`, `VehicleRateRepository`, `PaymentMethodRepository`, `CommercialAgreementRepository`, `BillingResolutionRepository`, `StoreRepository`) para admitir el filtrado por `companyId`.
+   - **Endpoints del API**: Se modificaron los controladores `UserRoleController`, `UsersController`, `VehicleRatesController`, `PaymentMethodController`, `AgreementsController` y `ResolutionsController` para recibir `companyId` por query string, resolviéndose del claim `company_id` del JWT si es nulo.
+   - **Frontend (PWA)**: Se actualizaron los servicios y componentes de UI (`RolesTab.tsx`, `UsuariosTab.tsx`, `ConveniosTab.tsx`, `VehiculosConfigTab.tsx`, `MediosPagoTab.tsx` y `ResolucionesTab.tsx`) para consumir el contexto de sede actual (`useParqueaderoContext`) y pasar reactivamente `selectedParqueaderoId ?? undefined` a las peticiones del backend.
+2. **Dashboard y Medios de Pago**:
+   - Se ajustó el DTO `BranchPaymentMethodDto` para mapear las propiedades correctas del backend (`paymentMethodName`, `paymentMethodIcon`, `isActive`).
+   - Se eliminó el string hardcoded genérico `"Medio de Pago"` en el donut chart y se conectaron los datos dinámicamente con la base de datos por sede seleccionada.
+3. **Cero Errores**:
+   - Backend compila limpiamente con `dotnet build`.
+   - Frontend compila limpiamente con `npm run build`.
+
+#### 📦 Componentes Modificados
+- **Backend (API)**:
+  - `PaymentMethod.cs` y `GetPaymentMethodDto.cs`
+  - `PaymentMethodRepository.cs`, `UserRoleRepository.cs`, `UserRepository.cs`, `VehicleRateRepository.cs`, `CommercialAgreementRepository.cs`, `BillingResolutionRepository.cs`, `StoreRepository.cs`
+  - Interfaces asociadas en dominio
+  - `UserRoleController.cs`, `UsersController.cs`, `VehicleRatesController.cs`, `PaymentMethodController.cs`, `AgreementsController.cs`, `ResolutionsController.cs`, `StoresController.cs`
+  - `SyncService.cs`
+- **Frontend (PWA)**:
+  - `BranchesContracts.ts`, `ResolucionesContracts.ts`
+  - `conveniosService.ts`, `mediosPagoService.ts`, `resolucionesService.ts`, `rolesService.ts`, `usuariosService.ts`, `vehiculosConfigService.ts`
+  - `RolesTab.tsx`, `UsuariosTab.tsx`, `ConveniosTab.tsx`, `VehiculosConfigTab.tsx`, `MediosPagoTab.tsx`, `ResolucionesTab.tsx`, `ParqueaderosTab.tsx`, `Dashboard.tsx`
+- **Cambios Organizacionales**:
+  - `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `dotnet build` -> **0 Errores**
+- `npm run build` -> **0 Errores** (Precache generado exitosamente)
+
 ### [2026-08-30 00:30:00] - [UI/UX] [RESPONSIVE] - Unificación de Listas Móvil (Accordion Cards)
 
 #### 💬 Prompt Original del Usuario
