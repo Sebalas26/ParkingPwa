@@ -62,7 +62,6 @@ const SvgDonutChart: React.FC<{
             fill="none"
             stroke="rgba(100, 116, 139, 0.2)"
             strokeWidth="14"
-            strokeDasharray="6 4"
           />
         ) : (
           data.map((item, i) => {

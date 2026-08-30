@@ -98,6 +98,14 @@ export default defineConfig(({ mode }) => {
         navigateFallbackDenylist: [/^\/api/],
         runtimeCaching: [
           {
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'app-navigation-cache',
+              networkTimeoutSeconds: 3,
+            },
+          },
+          {
             urlPattern: /\/version\.json/i,
             handler: 'NetworkOnly',
           },

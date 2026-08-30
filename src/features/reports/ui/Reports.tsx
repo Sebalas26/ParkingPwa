@@ -222,53 +222,108 @@ export const Reports: React.FC = () => {
         <div className="reports-table-header">
           <h2>Transacciones y Tiquetes ({filteredTickets.length})</h2>
         </div>
-        <div className="reports-table-wrapper">
-          <table className="reports-table">
-            <thead>
-              <tr>
-                <th>TIQUETE</th>
-                <th>PLACA</th>
-                <th>INGRESO</th>
-                <th>SALIDA</th>
-                <th>DURACIÓN</th>
-                <th className="text-right">BRUTO</th>
-                <th className="text-right">DESCUENTO</th>
-                <th className="text-right">TOTAL PAGADO</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTickets.length > 0 ? (
-                filteredTickets.map((t) => (
-                  <tr key={t.ticketId}>
-                    <td style={{ fontWeight: 700, color: 'var(--text-secondary, #64748b)' }}>{t.ticketNumber}</td>
-                    <td style={{ fontWeight: 800, color: 'var(--primary-color, #07665e)' }}>{t.plateNumber}</td>
-                    <td style={{ color: 'var(--text-secondary, #64748b)' }}>
-                      {formatDateTime(t.entryTimeUtc || (t as any).entryTime || (t as any).createdAtUtc || (t as any).entryDate)}
-                    </td>
-                    <td style={{ color: 'var(--text-secondary, #64748b)' }}>
-                      {t.exitTimeUtc ? formatDateTime(t.exitTimeUtc || (t as any).exitTime) : 'En parqueadero'}
-                    </td>
-                    <td>{t.totalDurationMinutes ? `${t.totalDurationMinutes} min` : '--'}</td>
-                    <td className="text-right" style={{ color: 'var(--text-secondary, #64748b)' }}>
-                      ${(t.grossAmount || 0).toLocaleString()}
-                    </td>
-                    <td className="text-right" style={{ color: '#f59e0b', fontWeight: 600 }}>
-                      ${(t.discountAmount || 0).toLocaleString()}
-                    </td>
-                    <td className="text-right" style={{ fontWeight: 800, color: '#10b981' }}>
-                      ${(t.amountPaid || 0).toLocaleString()}
+        
+        {/* Desktop Table View */}
+        <div className="desktop-table-container">
+          <div className="reports-table-wrapper">
+            <table className="reports-table">
+              <thead>
+                <tr>
+                  <th>TIQUETE</th>
+                  <th>PLACA</th>
+                  <th>INGRESO</th>
+                  <th>SALIDA</th>
+                  <th>DURACIÓN</th>
+                  <th className="text-right">BRUTO</th>
+                  <th className="text-right">DESCUENTO</th>
+                  <th className="text-right">TOTAL PAGADO</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTickets.length > 0 ? (
+                  filteredTickets.map((t) => (
+                    <tr key={t.ticketId}>
+                      <td style={{ fontWeight: 700, color: 'var(--text-secondary, #64748b)' }}>{t.ticketNumber}</td>
+                      <td style={{ fontWeight: 800, color: 'var(--primary-color, #07665e)' }}>{t.plateNumber}</td>
+                      <td style={{ color: 'var(--text-secondary, #64748b)' }}>
+                        {formatDateTime(t.entryTimeUtc || (t as any).entryTime || (t as any).createdAtUtc || (t as any).entryDate)}
+                      </td>
+                      <td style={{ color: 'var(--text-secondary, #64748b)' }}>
+                        {t.exitTimeUtc ? formatDateTime(t.exitTimeUtc || (t as any).exitTime) : 'En parqueadero'}
+                      </td>
+                      <td>{t.totalDurationMinutes ? `${t.totalDurationMinutes} min` : '--'}</td>
+                      <td className="text-right" style={{ color: 'var(--text-secondary, #64748b)' }}>
+                        ${(t.grossAmount || 0).toLocaleString()}
+                      </td>
+                      <td className="text-right" style={{ color: '#f59e0b', fontWeight: 600 }}>
+                        ${(t.discountAmount || 0).toLocaleString()}
+                      </td>
+                      <td className="text-right" style={{ fontWeight: 800, color: '#10b981' }}>
+                        ${(t.amountPaid || 0).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={8} className="reports-empty-state">
+                      {isLoading ? 'Cargando datos...' : 'No hay registros que coincidan con los filtros seleccionados.'}
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={8} className="reports-empty-state">
-                    {isLoading ? 'Cargando datos...' : 'No hay registros que coincidan con los filtros seleccionados.'}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="mobile-card-list">
+          {filteredTickets.length > 0 ? (
+            filteredTickets.map((t) => (
+              <div key={t.ticketId} className="expandable-card">
+                <div className="expandable-card-header" style={{ paddingBottom: '12px', borderBottom: '1px solid var(--border-color)', marginBottom: '12px' }}>
+                  <div className="expandable-card-title">
+                    <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--primary-color)' }}>{t.plateNumber}</span>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginLeft: '8px' }}>{t.ticketNumber}</span>
+                  </div>
+                  <span style={{ fontWeight: 800, color: '#10b981', fontSize: '1.1rem' }}>
+                    ${(t.amountPaid || 0).toLocaleString()}
+                  </span>
+                </div>
+                <div className="expandable-card-content" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Ingreso:</span>
+                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                      {formatDateTime(t.entryTimeUtc || (t as any).entryTime || (t as any).createdAtUtc || (t as any).entryDate)}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Salida:</span>
+                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                      {t.exitTimeUtc ? formatDateTime(t.exitTimeUtc || (t as any).exitTime) : 'En parqueadero'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Duración:</span>
+                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                      {t.totalDurationMinutes ? `${t.totalDurationMinutes} min` : '--'}
+                    </span>
+                  </div>
+                  {t.discountAmount > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginTop: '4px' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Descuento:</span>
+                      <span style={{ fontWeight: 600, color: '#f59e0b' }}>
+                        ${(t.discountAmount || 0).toLocaleString()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="empty-state-message" style={{ textAlign: 'center', padding: '32px 16px', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
+              {isLoading ? 'Cargando datos...' : 'No hay registros que coincidan con los filtros seleccionados.'}
+            </div>
+          )}
         </div>
       </div>
     </div>

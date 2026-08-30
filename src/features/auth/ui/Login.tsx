@@ -12,6 +12,7 @@ export const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [warningMessage, setWarningMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showNoAccessModal, setShowNoAccessModal] = useState(false);
   const navigate = useNavigate();
 
   const appVersion = import.meta.env.VITE_APP_VERSION || '0.0.1 Dev';
@@ -47,6 +48,14 @@ export const Login: React.FC = () => {
         localStorage.setItem('remembered_username', username.trim());
       } else {
         localStorage.removeItem('remembered_username');
+      }
+
+      // Validar si el usuario tiene acceso a la PWA (módulos o permisos)
+      if (!session.isSuperAdmin && (!session.permissions || session.permissions.length === 0) && (!session.modules || session.modules.length === 0)) {
+        authService.logout();
+        setShowNoAccessModal(true);
+        setIsLoading(false);
+        return;
       }
 
       if (session.isSuperAdmin) {
@@ -177,6 +186,39 @@ export const Login: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal de Acceso Denegado a PWA */}
+      {showNoAccessModal && (
+        <div className="modal-overlay">
+          <div className="modal-card" style={{ maxWidth: '400px', textAlign: 'center' }}>
+            <div className="modal-header" style={{ justifyContent: 'center', borderBottom: 'none', paddingBottom: '0' }}>
+              <div style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '16px', borderRadius: '50%' }}>
+                <ShieldAlert size={48} color="#ef4444" />
+              </div>
+            </div>
+            <div className="modal-body" style={{ paddingTop: '16px', paddingBottom: '24px' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#f8fafc', marginBottom: '12px' }}>
+                Acceso Denegado
+              </h3>
+              <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: '1.5' }}>
+                Su usuario no tiene permisos configurados para acceder a la plataforma Web.
+                <br /><br />
+                Por favor, contacte al administrador de su sede o utilice el terminal POS si corresponde.
+              </p>
+            </div>
+            <div className="modal-footer" style={{ justifyContent: 'center', borderTop: 'none', paddingTop: '0' }}>
+              <button 
+                type="button" 
+                className="login-submit-btn" 
+                onClick={() => setShowNoAccessModal(false)}
+                style={{ width: '100%', maxWidth: '200px' }}
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -7,6 +7,132 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 00:04:00] - [UI/UX] [TABLES] - Diseño Responsivo para Tablas de Vehículos y Reportes
+
+#### 💬 Prompt Original del Usuario
+> "Ahora quiero que estas listas se vean como el estilo que me dejas las de configracion"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Refactorización de `Vehicles.tsx` (Vehículos Activos)**:
+   - Se reemplazó el uso directo de `.table-card` por la estructura híbrida `.desktop-table-container` (para PC) y `.mobile-card-list` (para móvil).
+   - En versión móvil, cada vehículo activo se muestra ahora como una `.expandable-card` que consolida la placa (destacada), el tiquete, la información de tiempo/costo y un botón de cobro expandido.
+2. **Refactorización de `Reports.tsx` (Centro de Reportes)**:
+   - Se implementó el mismo patrón híbrido para la lista de transacciones.
+   - En móviles, cada transacción se muestra en formato tarjeta, priorizando la lectura de ingresos brutos, descuentos, montos pagados, ingreso y salida, sin requerir scroll horizontal.
+3. **Bump de Versión**:
+   - Actualizado `.env` a `0.0.64 Dev`.
+
+#### 📦 Componentes Modificados
+- `src/features/vehicles/ui/Vehicles.tsx` — Migración a estructura responsiva (tarjetas en móvil).
+- `src/features/reports/ui/Reports.tsx` — Migración a estructura responsiva (tarjetas en móvil).
+- `.env` — Bump a la versión `0.0.64 Dev`.
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `cmd.exe /c "npm run build"` → **0 Errores** (build en 1.66s).
+
+
+
+### [2026-08-30 00:00:00] - [UI/BRANDING] [SIDEBAR] - Actualización de Logo de Marca de Agua
+
+#### 💬 Prompt Original del Usuario
+> "Reemplazame esta imagen de la primera foto , por la que te pase en la segunda (quiero que tenga opacacidad para que casi no se vea y tenga comportamiento demarca de agua"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Sustitución de SVG por Imagen JPG (`DashboardLayout.tsx`)**:
+   - Se eliminó el componente local `<svg>` (`WatermarkLogo`) que renderizaba el isotipo antiguo mediante paths.
+   - Se reemplazó por un tag `<img>` apuntando al nuevo archivo estático `/watermark-logo.jpg`.
+2. **Estilizado de Marca de Agua (`DashboardLayout.tsx`)**:
+   - Se aplicaron estilos de opacidad (`opacity: 0.05`) y mezcla (`mixBlendMode: 'luminosity'`) directamente a la imagen para que se integre al fondo del sidebar oscuro de manera sutil.
+3. **Migración de Activos Estáticos (`public/watermark-logo.jpg`)**:
+   - Se copió la imagen enviada por el usuario desde el directorio de subidas al directorio `public/` del proyecto.
+4. **Bump de Versión**:
+   - Actualizado `.env` a `0.0.63 Dev`.
+
+#### 📦 Componentes Modificados
+- `src/shared/ui/DashboardLayout.tsx` — Reemplazo del SVG de la marca de agua por la nueva imagen.
+- `public/watermark-logo.jpg` — Nuevo asset integrado.
+- `.env` — Bump a la versión `0.0.63 Dev`.
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `cmd.exe /c "npm run build"` → **0 Errores** (build en 2.09s).
+
+
+
+### [2026-08-29 23:55:00] - [FIX] [DASHBOARD/UI] - Ajuste Visual Gráfica Donut (Anillo Sólido en $0)
+
+#### 💬 Prompt Original del Usuario
+> "Me cambiaste la grafica de la dashboard , dejamela circular completamente y que esta muestre % por tipos de pago recibido, ejemplo si solo recibe efectivo pues un 100%"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Reversión de Estilo de Gráfica (`Dashboard.tsx`)**:
+   - Se modificó la condición de estado vacío (`total === 0`) en el componente `SvgDonutChart`.
+   - Se eliminó el atributo `strokeDasharray="6 4"`, permitiendo que la gráfica sea circular y completamente sólida, en lugar de un contorno punteado, preservando el cálculo correcto del 100% u otros porcentajes cuando sí hay datos.
+2. **Bump de Versión**:
+   - Actualizado `.env` a `0.0.62 Dev`.
+
+#### 📦 Componentes Modificados
+- `src/features/dashboard/ui/Dashboard.tsx` — Se eliminó el array de dashes del SVG para total 0.
+- `.env` — Bump a la versión `0.0.62 Dev`.
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `cmd.exe /c "npm run build"` → **0 Errores**.
+
+
+
+### [2026-08-29 23:53:00] - [FEATURE/SECURITY] [AUTH/LOGIN] - Denegación de Acceso a PWA para Usuarios sin Permisos Web
+
+#### 💬 Prompt Original del Usuario
+> "perfecto lo de los roles cuando le quitan todos los permisos de la web , sin embargo quiero que al logear y no cuenten con ningun permiso, muestre un dialog de alerta informando que no tiene permissos y le cierre la sesion"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Validación Inmediata Post-Login (`Login.tsx`)**:
+   - Se interceptó el flujo de autenticación justo después de recibir el token de la API (`authService.login()`).
+   - Se añadió una condición que evalúa si el usuario no es `isSuperAdmin` y carece de permisos (`session.permissions.length === 0`) o módulos (`session.modules.length === 0`).
+2. **Revocación de Sesión y Modal de Alerta**:
+   - Si se cumple la condición, el sistema invoca inmediatamente `authService.logout()` (limpiando `localStorage` y `sessionStorage`).
+   - El estado de la promesa se interrumpe (evitando el `navigate` al Dashboard) y se activa el flag `showNoAccessModal`.
+   - El usuario visualiza un Diálogo de Alerta de diseño *Dark Glassmorphism* que le informa: *"Su usuario no tiene permisos configurados para acceder a la plataforma Web"*.
+3. **Bump de Versión**:
+   - Actualizado `.env` a `0.0.61 Dev` para forzar la sincronización del cambio.
+
+#### 📦 Componentes Modificados
+- `src/features/auth/ui/Login.tsx` — Estado `showNoAccessModal`, validación de matriz de permisos y UI del diálogo.
+- `.env` — Bump a la versión `0.0.61 Dev`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `cmd.exe /c "npm run build"` → **0 Errores** (build en 1.33s).
+
+
+
+### [2026-08-29 23:46:00] - [FEATURE/FIX] [PWA/SERVICE-WORKER/CACHE] - Purga Completa de Caché y Forzado de Actualización de Versión PWA
+
+#### 💬 Prompt Original del Usuario
+> "ajustame esto, que cuando le doy aceptar al actualizar la version, me deja en la misma y no actualiza, faltara algo para que limoie cache y no actualice?"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Solución al Bloqueo de Versión en Service Worker (`UpdatePromptModal.tsx`)**:
+   - Al pulsar *"Actualizar Ahora"*, se implementó el envío explícito del mensaje `SKIP_WAITING` a todos los Service Workers en espera y el **desregistro de todos los Service Workers anteriores** (`reg.unregister()`).
+   - Se eliminaron todas las llaves de `CacheStorage` (`caches.delete()`) y se ejecuta un hard-reload limpio con parámetro dinámico (`?_reload=timestamp`), garantizando que el navegador descargue el nuevo `index.html` y los nuevos bundles JavaScript.
+2. **Estrategia NetworkFirst para Documento Raíz (`vite.config.ts`)**:
+   - Se añadió una regla `NetworkFirst` con timeout de 3 segundos para las peticiones de navegación (`request.mode === 'navigate'`), evitando que la PWA sirva `index.html` obsoleto desde la caché local cuando hay conexión a internet.
+3. **Bump de Versión**:
+   - Actualizado `.env` a `0.0.60 Dev` para propagar el cambio.
+
+#### 📦 Componentes Modificados
+- `src/shared/ui/UpdatePromptModal.tsx` — Desregistro forzado de SW y purga de CacheStorage
+- `vite.config.ts` — Regla NetworkFirst para navegaciones
+- `.env` — Bump a la versión `0.0.60 Dev`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `cmd.exe /c "npm run build"` → **0 Errores** (build en 1.26s).
+
+
+
 ### [2026-08-29 23:42:00] - [FEATURE/FIX] [DASHBOARD/ANALYTICS/UI] - Optimización y Sincronización en Tiempo Real del Reporte de Métodos de Pago
 
 #### 💬 Prompt Original del Usuario

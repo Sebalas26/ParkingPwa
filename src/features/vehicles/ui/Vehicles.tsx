@@ -268,93 +268,166 @@ export const Vehicles: React.FC = () => {
           />
         </div>
       </div>
-
-      <div className="table-card">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>TIQUETE</th>
-              <th>PLACA</th>
-              <th>TIPO DE VEHÍCULO</th>
-              <th>HORA DE INGRESO</th>
-              <th>TIEMPO EN SITIO</th>
-              <th>TARIFA BASE</th>
-              <th>ESTADO</th>
-              <th className="text-right">ACCIONES</th>
-            </tr>
-          </thead>
-          <tbody>
-            {displayedVehicles.length > 0 ? (
-              displayedVehicles.map((v) => {
-                const typeName = getVehicleTypeName(v.vehicleType);
-                return (
-                  <tr key={v.ticketId}>
-                    <td className="font-bold text-muted">{v.ticketNumber}</td>
-                    <td className="font-bold text-primary" style={{ fontSize: '1rem' }}>{v.plateNumber}</td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {typeName.toLowerCase().includes('moto') ? (
-                          <Bike size={16} />
-                        ) : typeName.toLowerCase().includes('camion') || typeName.toLowerCase().includes('camión') || typeName.toLowerCase().includes('truck') ? (
-                          <Truck size={16} />
-                        ) : (
-                          <Car size={16} />
-                        )}
-                        <span>{typeName}</span>
-                      </div>
-                    </td>
-                    <td className="text-muted">
-                      {formatTime(v.entryTimeUtc || (v as any).entryTime || (v as any).createdAtUtc || (v as any).entryDate)}
-                    </td>
-                    <td className="font-bold">
-                      {calculateDuration(v.entryTimeUtc || (v as any).entryTime || (v as any).createdAtUtc || (v as any).entryDate)}
-                    </td>
-                    <td className="text-muted">${(v.hourlyRate || 0).toLocaleString()} /hr</td>
-                    <td>
-                      <span className="badge badge-success" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        <CheckCircle size={12} /> Activo
-                      </span>
-                    </td>
-                    <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
-                      <button
-                        type="button"
-                        className="btn-action primary"
-                        style={{
-                          background: '#ef4444',
-                          color: '#ffffff',
-                          border: 'none',
-                          padding: '6px 12px',
-                          borderRadius: '6px',
-                          fontSize: '0.8rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                        }}
-                        onClick={() => handleOpenCheckOut(v)}
-                        title="Registrar salida y cobro del vehículo"
-                      >
-                        <LogOut size={14} /> Dar Salida
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
+        {/* Desktop Table View */}
+      <div className="desktop-table-container">
+        <div className="table-card">
+          <table className="data-table">
+            <thead>
               <tr>
-                <td colSpan={8} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
-                  {isLoading ? (
-                    <div className="loader-container">
-                      <div className="spinner"></div>
-                      <span>Cargando vehículos activos...</span>
-                    </div>
-                  ) : 'No hay vehículos activos que coincidan con la búsqueda.'}
-                </td>
+                <th>TIQUETE</th>
+                <th>PLACA</th>
+                <th>TIPO DE VEHÍCULO</th>
+                <th>HORA DE INGRESO</th>
+                <th>TIEMPO EN SITIO</th>
+                <th>TARIFA BASE</th>
+                <th>ESTADO</th>
+                <th className="text-right">ACCIONES</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {displayedVehicles.length > 0 ? (
+                displayedVehicles.map((v) => {
+                  const typeName = getVehicleTypeName(v.vehicleType);
+                  return (
+                    <tr key={v.ticketId}>
+                      <td className="font-bold text-muted">{v.ticketNumber}</td>
+                      <td className="font-bold text-primary" style={{ fontSize: '1rem' }}>{v.plateNumber}</td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {typeName.toLowerCase().includes('moto') ? (
+                            <Bike size={16} />
+                          ) : typeName.toLowerCase().includes('camion') || typeName.toLowerCase().includes('camión') || typeName.toLowerCase().includes('truck') ? (
+                            <Truck size={16} />
+                          ) : (
+                            <Car size={16} />
+                          )}
+                          <span>{typeName}</span>
+                        </div>
+                      </td>
+                      <td className="text-muted">
+                        {formatTime(v.entryTimeUtc || (v as any).entryTime || (v as any).createdAtUtc || (v as any).entryDate)}
+                      </td>
+                      <td className="font-bold">
+                        {calculateDuration(v.entryTimeUtc || (v as any).entryTime || (v as any).createdAtUtc || (v as any).entryDate)}
+                      </td>
+                      <td className="text-muted">${(v.hourlyRate || 0).toLocaleString()} /hr</td>
+                      <td>
+                        <span className="badge badge-success" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <CheckCircle size={12} /> Activo
+                        </span>
+                      </td>
+                      <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
+                        <button
+                          type="button"
+                          className="btn-action primary"
+                          style={{
+                            background: '#ef4444',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '6px 12px',
+                            borderRadius: '6px',
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                          }}
+                          onClick={() => handleOpenCheckOut(v)}
+                          title="Registrar salida y cobro del vehículo"
+                        >
+                          <LogOut size={14} /> Dar Salida
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={8} className="text-center text-muted" style={{ padding: '24px' }}>
+                    {isLoading ? (
+                      <div className="loader-container">
+                        <div className="spinner"></div>
+                        <span>Cargando vehículos activos...</span>
+                      </div>
+                    ) : 'No hay vehículos activos que coincidan con la búsqueda.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="mobile-card-list">
+        {displayedVehicles.length > 0 ? (
+          displayedVehicles.map((v) => {
+            const typeName = getVehicleTypeName(v.vehicleType);
+            return (
+              <div key={v.ticketId} className="expandable-card">
+                <div className="expandable-card-header" style={{ paddingBottom: '12px', borderBottom: '1px solid var(--border-color)', marginBottom: '12px' }}>
+                  <div className="expandable-card-title">
+                    <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--primary-color)' }}>{v.plateNumber}</span>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginLeft: '8px' }}>{v.ticketNumber}</span>
+                  </div>
+                  <span className="badge badge-success" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem' }}>
+                    <CheckCircle size={12} /> Activo
+                  </span>
+                </div>
+                <div className="expandable-card-content" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Tipo:</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
+                      {typeName.toLowerCase().includes('moto') ? <Bike size={14} /> : typeName.toLowerCase().includes('camion') || typeName.toLowerCase().includes('camión') || typeName.toLowerCase().includes('truck') ? <Truck size={14} /> : <Car size={14} />}
+                      {typeName}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Ingreso:</span>
+                    <span style={{ fontWeight: 600 }}>{formatTime(v.entryTimeUtc || (v as any).entryTime || (v as any).createdAtUtc || (v as any).entryDate)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Tiempo en Sitio:</span>
+                    <span style={{ fontWeight: 600 }}>{calculateDuration(v.entryTimeUtc || (v as any).entryTime || (v as any).createdAtUtc || (v as any).entryDate)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Tarifa Base:</span>
+                    <span style={{ fontWeight: 600 }}>${(v.hourlyRate || 0).toLocaleString()} /hr</span>
+                  </div>
+                  
+                  <div style={{ marginTop: '8px', paddingTop: '12px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end' }}>
+                    <button
+                      type="button"
+                      style={{
+                        background: '#ef4444',
+                        color: '#ffffff',
+                        border: 'none',
+                        padding: '10px 16px',
+                        borderRadius: '8px',
+                        fontSize: '0.9rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        width: '100%'
+                      }}
+                      onClick={() => handleOpenCheckOut(v)}
+                    >
+                      <LogOut size={16} /> Dar Salida
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="empty-state-message" style={{ textAlign: 'center', padding: '32px 16px', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
+            {isLoading ? 'Cargando vehículos activos...' : 'No hay vehículos activos que coincidan con la búsqueda.'}
+          </div>
+        )}
       </div>
 
       {/* Modal Registrar Ingreso */}

@@ -99,9 +99,6 @@ export const UpdatePromptModal: React.FC = () => {
     if (isUpdating) return;
     setIsUpdating(true);
 
-    // Evita bucle en la recarga inmediata
-    sessionStorage.setItem('pwa_just_updated', Date.now().toString());
-
     try {
       // 1. Purgar todo CacheStorage de forma limpia
       if ('caches' in window) {
@@ -109,18 +106,34 @@ export const UpdatePromptModal: React.FC = () => {
         await Promise.all(cacheKeys.map((key) => caches.delete(key)));
       }
 
-      // 2. Forzar actualización del Service Worker
+      // 2. Notificar SKIP_WAITING y desregistrar todos los Service Workers anteriores
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const reg of registrations) {
+          if (reg.waiting) {
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
+          await reg.unregister();
+        }
+      }
+
+      // 3. Forzar actualización del Service Worker si existe hook
       if (typeof updateServiceWorker === 'function') {
-        await updateServiceWorker(true);
+        try {
+          await updateServiceWorker(true);
+        } catch {}
       }
     } catch (err) {
       console.warn('[PWA Purge Error]:', err);
     }
 
-    // 3. Mantener la pantalla / ruta activa del usuario añadiendo cache-buster
+    // 4. Limpiar marcas temporales de actualización previa
+    sessionStorage.removeItem('pwa_just_updated');
+
+    // 5. Hard reload garantizado evitando la caché HTTP del navegador
     const currentUrl = new URL(window.location.href);
-    currentUrl.searchParams.set('_v', Date.now().toString());
-    window.location.replace(currentUrl.toString());
+    currentUrl.searchParams.set('_reload', Date.now().toString());
+    window.location.href = currentUrl.toString();
   };
 
   if (!isUpdateAvailable) {
