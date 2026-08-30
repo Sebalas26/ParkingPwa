@@ -7,6 +7,27 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 15:55:00] - [BUGFIX] [DASHBOARD / LIQUIDACIÓN] - Mapeo Correcto de Todos los Medios de Pago (Efectivo, Tarjeta, Transferencia)
+
+#### 💬 Prompt Original del Usuario
+> "Bien ahi sirvio, ahora estoy notando que cuando le doy salida del vehiculo y elijo tipo de medio efectivo no me llega a la dashboard , por ejemplo mira"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Traducción Universal de Medios de Pago en `ParkingTicketService.cs`**:
+   - Se ajustó `CheckOutAsync` en la API C# para mapear de forma explícita los IDs de la base de datos de todos los medios de pago hacia la enumeración de dominio `PaymentMethod` (1 = Efectivo ➔ `PaymentMethod.Cash`, 2 = Tarjeta Crédito ➔ `PaymentMethod.CreditCard`, 3 = Tarjeta Débito ➔ `PaymentMethod.DebitCard`, 4 = Transferencia ➔ `PaymentMethod.Transfer`).
+   - Esto resuelve la discrepancia de índices (base 0 vs base 1), garantizando que las liquidaciones en Efectivo se registren e incrementen en la barra de Efectivo del Dashboard y no se desvíen hacia Tarjeta de Crédito.
+2. **Cero Errores**:
+   - Compilación limpia de Backend con `dotnet build` (**0 errores**).
+   - Compilación limpia de Frontend con `npm run build` (**0 errores**).
+
+#### 📦 Componentes Modificados
+- `ParkingApi/ParkingApi.Core/Services/Tickets/ParkingTicketService.cs`
+- `ParkingPwa/HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `dotnet build` -> **0 Errores**
+- `npm run build` -> **0 Errores**
+
 ### [2026-08-30 15:29:00] - [BUGFIX] [DASHBOARD / MEDIOS DE PAGO] - Mapeo Directo de Medios de Pago por Sede en el Dashboard
 
 #### 💬 Prompt Original del Usuario
