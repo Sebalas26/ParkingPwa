@@ -7,6 +7,32 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 08:52:00] - [BUGFIX] [UX / CHECK-IN] - Corrección de Marca de Agua Sidebar y Fix Error 400 vehicleType en Ingreso de Vehículo
+
+#### 💬 Prompt Original del Usuario
+> "se ve feo dejamelo sin ese fondo que se ve, dejalo solo el logo si es necesario modifica la imagen"
+> "Ahora se daño el registro de un nuevo vehiculo, vo que los tipos de vehiculo nuevamente estan quemados y no me esta mostrando los que tengo creados y al crear sale este error 400..."
+
+#### 🤖 Resumen Técnico para la IA
+1. **Limpieza Visual de Marca de Agua (Sidebar)**:
+   - Se ajustó `DashboardLayout.tsx` aplicando la propiedad CSS `mixBlendMode: 'screen'` con una opacidad reducida (`0.08`). Esto eliminó el recuadro gris de la imagen PNG sobre el fondo oscuro `#2a2b2c` del sidebar, dejando ver únicamente la silueta del emblema.
+2. **Corrección de Error 400 (`vehicleType: NaN`)**:
+   - La API retorna las tarifas `VehicleRates` con `vehicleType` serializado como string (`"Car"`, `"Motorcycle"`, `"Truck"`, etc.).
+   - `Vehicles.tsx` realizaba `Number(e.target.value)`, lo que producía `NaN` al recibir strings de texto enum.
+   - Se implementó la función utilitaria `parseVehicleTypeToEnum(v)` en `vehiculosConfigService.ts` para mapear de forma segura tanto strings (`"Car"` -> 0, `"Motorcycle"` -> 1, `"Truck"` -> 2, `"Van"` -> 3, `"Bicycle"` -> 4, `"Suv"` -> 5) como números.
+   - Se normalizó `vehicleType` en `Vehicles.tsx` garantizando un número entero válido y enviando `inspectedCompany?.id` para cargar las tarifas dinámicas al impersonar.
+3. **Cero Errores**:
+   - Compilación limpia con `npm run build` (**0 errores**).
+
+#### 📦 Componentes Modificados
+- `src/shared/ui/DashboardLayout.tsx`
+- `src/features/settings/data/vehiculosConfigService.ts`
+- `src/features/vehicles/ui/Vehicles.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores**
+
 ### [2026-08-30 06:30:00] - [FEATURE] [MULTI-TENANT] - Botón y Funcionalidad de Eliminación Permanente de Empresa (SaaS)
 
 #### 💬 Prompt Original del Usuario

@@ -1,32 +1,48 @@
 import { apiClient } from '../../../shared/api/apiClient';
 import type { VehiculoConfigDto, SaveVehiculoConfigDto } from '../model/VehiculosConfigContracts';
 
+export const parseVehicleTypeToEnum = (v: any): number => {
+  if (typeof v === 'number' && !isNaN(v)) return v;
+  const str = String(v ?? '').trim();
+  if (str !== '' && !isNaN(Number(str))) return Number(str);
+  switch (str.toLowerCase()) {
+    case 'car':
+      return 0;
+    case 'motorcycle':
+      return 1;
+    case 'truck':
+      return 2;
+    case 'van':
+      return 3;
+    case 'bicycle':
+      return 4;
+    case 'suv':
+      return 5;
+    default:
+      return 0;
+  }
+};
+
 export const getCategoryName = (r: any): string => {
   if (r.displayName && typeof r.displayName === 'string' && r.displayName.trim()) {
     return r.displayName;
   }
-  const vType = String(r.vehicleType);
-  switch (vType) {
-    case '0':
-    case 'Car':
+  const enumVal = parseVehicleTypeToEnum(r.vehicleType);
+  switch (enumVal) {
+    case 0:
       return 'Automóvil / Sedán';
-    case '1':
-    case 'Motorcycle':
+    case 1:
       return 'Motocicleta';
-    case '2':
-    case 'Truck':
+    case 2:
       return 'Vehículo Pesado / Camión';
-    case '3':
-    case 'Van':
+    case 3:
       return 'Furgón / Minibús';
-    case '4':
-    case 'Bicycle':
+    case 4:
       return 'Bicicleta';
-    case '5':
-    case 'Suv':
+    case 5:
       return 'Camioneta / SUV';
     default:
-      return vType || 'Vehículo General';
+      return 'Vehículo General';
   }
 };
 
@@ -44,7 +60,7 @@ export const vehiculosConfigService = {
         return source.map((r) => ({
           rateId: r.rateId || r.id,
           branchId: null,
-          vehicleType: r.vehicleType,
+          vehicleType: parseVehicleTypeToEnum(r.vehicleType),
           category: r.displayName?.trim() || getCategoryName(r),
           gracePeriodMinutes: r.gracePeriodMinutes ?? 15,
           hourRate: r.hourRate ?? 0,
@@ -72,7 +88,7 @@ export const vehiculosConfigService = {
         return branchSpecific.map((r) => ({
           rateId: r.rateId || r.id,
           branchId: r.branchId,
-          vehicleType: r.vehicleType,
+          vehicleType: parseVehicleTypeToEnum(r.vehicleType),
           category: r.displayName?.trim() || getCategoryName(r),
           gracePeriodMinutes: r.gracePeriodMinutes ?? 15,
           hourRate: r.hourRate ?? 0,
@@ -118,7 +134,7 @@ export const vehiculosConfigService = {
         return combined.map((r) => ({
           rateId: r.rateId || r.id,
           branchId: r.branchId ?? null,
-          vehicleType: r.vehicleType,
+          vehicleType: parseVehicleTypeToEnum(r.vehicleType),
           category: r.displayName?.trim() || getCategoryName(r),
           gracePeriodMinutes: r.gracePeriodMinutes ?? 15,
           hourRate: r.hourRate ?? 0,

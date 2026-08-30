@@ -13,7 +13,7 @@ import { ModalPortal } from '../../../shared/ui/ModalPortal';
 import './Vehicles.css';
 
 export const Vehicles: React.FC = () => {
-  const { selectedParqueadero, selectedParqueaderoId } = useParqueaderoContext();
+  const { selectedParqueadero, selectedParqueaderoId, inspectedCompany } = useParqueaderoContext();
   const [vehicles, setVehicles] = useState<TicketDto[]>([]);
   const [vehicleTypesList, setVehicleTypesList] = useState<VehiculoConfigDto[]>([]);
   const [mediosPagoList, setMediosPagoList] = useState<PaymentMethodDto[]>([]);
@@ -42,18 +42,19 @@ export const Vehicles: React.FC = () => {
     loadActiveVehicles();
     loadVehicleTypes();
     loadMediosPago();
-  }, [selectedParqueaderoId]);
+  }, [selectedParqueaderoId, inspectedCompany]);
 
   const loadVehicleTypes = async () => {
     setIsLoadingVehicleTypes(true);
     try {
-      const data = await vehiculosConfigService.getConfigs(selectedParqueaderoId);
+      const companyId = inspectedCompany?.id;
+      const data = await vehiculosConfigService.getConfigs(selectedParqueaderoId, companyId);
       const active = (data || []).filter((t) => t.isActive ?? true);
       setVehicleTypesList(active);
       if (active.length > 0) {
         setVehicleType((prev) => {
           const exists = active.some((a) => Number(a.vehicleType) === Number(prev));
-          return exists ? prev : (Number(active[0].vehicleType) || 0);
+          return exists ? Number(prev) || 0 : (Number(active[0].vehicleType) || 0);
         });
       }
     } catch (err) {
@@ -103,7 +104,7 @@ export const Vehicles: React.FC = () => {
     try {
       await vehicleService.checkIn({
         plateNumber: plateNumber.trim().toUpperCase(),
-        vehicleType: Number(vehicleType),
+        vehicleType: isNaN(Number(vehicleType)) ? 0 : Number(vehicleType),
         phoneNumber: phoneNumber.trim() || undefined,
         notes: notes.trim() || undefined,
       });

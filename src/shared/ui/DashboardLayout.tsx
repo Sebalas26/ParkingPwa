@@ -17,7 +17,9 @@ const WatermarkLogo = () => (
         width: '100%', 
         height: '100%', 
         objectFit: 'contain', 
-        opacity: 0.15 
+        opacity: 0.08,
+        mixBlendMode: 'screen',
+        filter: 'brightness(1.2)'
       }} 
     />
   </div>
