@@ -7,6 +7,28 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 06:30:00] - [FEATURE] [MULTI-TENANT] - Botón y Funcionalidad de Eliminación Permanente de Empresa (SaaS)
+
+#### 💬 Prompt Original del Usuario
+> "podrias agregar un boton de eliminar empresa cuando estoy desde el super administrador"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Borrado en Frontend**:
+   - Se añadió el método `delete` en `companyService.ts`.
+   - Se modificó `CompaniesPage.tsx` para agregar el ícono de papelera (`Trash2`) de color rojo en la columna de acciones.
+   - Se implementó la lógica `handleDeleteCompany` que ejecuta una confirmación en doble paso (alertas anidadas en el navegador con mensajes de precaución claros sobre el impacto del borrado) antes de llamar al endpoint del backend.
+   - Una vez finalizado y exitoso el borrado, se actualiza en pantalla la lista de empresas.
+2. **Cero Errores**:
+   - Compilación limpia con `npm run build` (0 errores).
+
+#### 📦 Componentes Modificados
+- `src/features/companies/data/companyService.ts` — Invocación al endpoint DELETE del backend.
+- `src/features/companies/ui/CompaniesPage.tsx` — Interfaz, estado, botón de confirmación en doble paso.
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores**
+
 ### [2026-08-30 06:20:00] - [BUGFIX] [MULTI-TENANT] - Corrección de CompanyId en Creación de Sedes para SuperAdministrador Impersonado
 
 #### 💬 Prompt Original del Usuario

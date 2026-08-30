@@ -27,4 +27,8 @@ export const companyService = {
   toggleStatus: async (id: number): Promise<{ message: string }> => {
     return await apiClient.patch<{ message: string }>(`/Companies/${id}/toggle-status`, {});
   },
+
+  delete: async (id: number): Promise<{ message: string }> => {
+    return await apiClient.delete<{ message: string }>(`/Companies/${id}`);
+  },
 };

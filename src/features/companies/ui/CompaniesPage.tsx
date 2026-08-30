@@ -13,7 +13,8 @@ import {
   Mail,
   Loader2,
   Building,
-  Sliders
+  Sliders,
+  Trash2
 } from 'lucide-react';
 import { companyService } from '../data/companyService';
 import { apiClient } from '../../../shared/api/apiClient';
@@ -178,6 +179,24 @@ export const CompaniesPage: React.FC = () => {
       await loadCompanies();
     } catch (err: any) {
       alert(err?.message || 'Error al alternar estado de la empresa.');
+    }
+  };
+
+  const handleDeleteCompany = async (company: CompanyDto) => {
+    const firstConfirm = window.confirm(`¿Estás seguro de que deseas eliminar permanentemente la empresa "${company.name}"?`);
+    if (!firstConfirm) return;
+    
+    const secondConfirm = window.confirm(`¡ADVERTENCIA CRÍTICA! Esto borrará permanentemente la empresa "${company.name}" y TODOS sus datos asociados (sedes, usuarios, transacciones, tarifas, convenios, etc.). Esta acción es IRREVERSIBLE.\n\n¿Estás absolutamente seguro de continuar?`);
+    if (!secondConfirm) return;
+
+    try {
+      setActionLoading(true);
+      await companyService.delete(company.id);
+      await loadCompanies();
+    } catch (err: any) {
+      alert(err?.response?.data?.message || err?.message || 'Error al eliminar la empresa.');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -408,8 +427,18 @@ export const CompaniesPage: React.FC = () => {
                           className="btn-icon-action btn-toggle-suspend"
                           title={c.isActive ? 'Suspender suscripción' : 'Activar suscripción'}
                           onClick={() => handleToggleStatus(c)}
+                          disabled={actionLoading}
                         >
                           <Power size={16} color={c.isActive ? '#ef4444' : 'var(--primary-color, #07665e)'} />
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-icon-action"
+                          title="Eliminar Empresa Permanentemente"
+                          onClick={() => handleDeleteCompany(c)}
+                          disabled={actionLoading}
+                        >
+                          <Trash2 size={16} color="#ef4444" />
                         </button>
                       </div>
                     </td>
