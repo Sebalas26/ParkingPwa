@@ -29,7 +29,7 @@ export const PlateQueryMockup: React.FC = () => {
       boxShadow: '0 0 20px rgba(0,0,0,0.05)',
     }}>
       {/* Botón flotante para simulación */}
-      <button 
+      <button
         onClick={handleSimulate}
         style={{
           position: 'absolute',
@@ -62,7 +62,7 @@ export const PlateQueryMockup: React.FC = () => {
         alignItems: 'center',
         position: 'relative'
       }}>
-        <button 
+        <button
           onClick={() => navigate(-1)}
           style={{
             position: 'absolute',
@@ -94,10 +94,10 @@ export const PlateQueryMockup: React.FC = () => {
 
       {/* Contenido Principal */}
       <div style={{ padding: '0 20px 20px 20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-        
+
         {isSimulating ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
-             <div className="spinner"></div>
+            <div className="spinner"></div>
           </div>
         ) : showData ? (
           <>
@@ -113,9 +113,9 @@ export const PlateQueryMockup: React.FC = () => {
               position: 'relative',
               border: '1px solid #f1f5f9'
             }}>
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'space-between',
                 width: '100%',
                 marginBottom: '10px'
@@ -123,11 +123,11 @@ export const PlateQueryMockup: React.FC = () => {
                 <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#334155' }}>TIEMPO TRANSCURRIDO</span>
                 <Clock size={20} color="#0f172a" />
               </div>
-              
+
               <div style={{ fontSize: '3rem', fontWeight: '800', color: '#0f172a', lineHeight: '1', margin: '10px 0', letterSpacing: '-1px' }}>
                 02:15:48
               </div>
-              
+
               <div style={{ display: 'flex', gap: '5px', fontSize: '0.85rem', color: '#64748b', fontWeight: '500' }}>
                 <span>Horas</span>
                 <span>|</span>
@@ -149,17 +149,17 @@ export const PlateQueryMockup: React.FC = () => {
               position: 'relative',
               border: '1px solid #f1f5f9'
             }}>
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'space-between',
                 width: '100%',
                 marginBottom: '5px'
               }}>
                 <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#334155' }}>PLACA DEL VEHÍCULO</span>
-                <div style={{ 
-                  border: '1px solid #94a3b8', 
-                  borderRadius: '4px', 
+                <div style={{
+                  border: '1px solid #94a3b8',
+                  borderRadius: '4px',
                   padding: '2px 6px',
                   display: 'flex',
                   alignItems: 'center',
@@ -168,11 +168,11 @@ export const PlateQueryMockup: React.FC = () => {
                   <CarFront size={18} color="#0f172a" />
                 </div>
               </div>
-              
+
               <div style={{ fontSize: '2.8rem', fontWeight: '900', color: '#0f172a', lineHeight: '1', margin: '10px 0', letterSpacing: '-1px' }}>
                 ABC-123
               </div>
-              
+
               <div style={{ fontSize: '0.9rem', color: '#475569', fontWeight: '500' }}>
                 Renault Sandero
               </div>
@@ -189,9 +189,9 @@ export const PlateQueryMockup: React.FC = () => {
               position: 'relative',
               border: '1px solid #f1f5f9'
             }}>
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'space-between',
                 width: '100%',
                 marginBottom: '5px'
@@ -199,11 +199,11 @@ export const PlateQueryMockup: React.FC = () => {
                 <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#334155' }}>VALOR TOTAL A PAGAR</span>
                 <DollarSign size={22} color="#10b981" />
               </div>
-              
+
               <div style={{ fontSize: '2.5rem', fontWeight: '800', color: '#10b981', lineHeight: '1', margin: '15px 0', letterSpacing: '-1px' }}>
                 $12.500 <span style={{ fontSize: '1.2rem', fontWeight: '700' }}>COL</span>
               </div>
-              
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '5px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#475569' }}>
                   <span>Tarifa Base (1 Hr):</span>
