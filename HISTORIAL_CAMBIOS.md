@@ -7,6 +7,27 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 21:05:00] - [BUGFIX] [UI / SEDES] - Corrección de validación vacía en campo Capacidad Total
+
+#### 💬 Prompt Original del Usuario
+> "ayudame con que este campo me permita ingresar cualquier numero, en el momento se queda pegado el 1" (referente a Capacidad Total (Plazas) en modal de crear sede)
+
+#### 🤖 Resumen Técnico para la IA
+1. **Corrección de fallback restrictivo en `ParqueaderosTab.tsx`**:
+   - En el campo *Capacidad Total (Plazas)* del modal de *Crear/Editar Sede*, la propiedad `value` de `<input type="number">` hacía fallback a `1` usando `|| 1`, impidiendo borrar el valor temporalmente. Se ajustó a `value={editingBranch.totalCapacity ?? ''}` para aceptar valores nulos o indefinidos durante la edición, permitiendo borrar el número sin que retorne inmediatamente a `1`.
+   - Se ajustó el evento `onChange` para asignar `undefined` si el campo queda vacío (`e.target.value === ''`), asegurando un comportamiento fluido en React.
+2. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/settings/ui/ParqueaderosTab.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores** (build PWA exitoso)
+
+---
+
 ### [2026-08-30 20:55:00] - [SECURITY / Multi-Tenant / SuperAdmin] - Blindaje de Contexto de Organización y Header X-Company-Id en PWA
 
 #### 💬 Prompt Original del Usuario

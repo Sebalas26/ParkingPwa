@@ -685,8 +685,8 @@ export const ParqueaderosTab: React.FC = () => {
                     <input
                       type="number"
                       className="input-field"
-                      value={editingBranch.totalCapacity || 1}
-                      onChange={(e) => setEditingBranch({ ...editingBranch, totalCapacity: Number(e.target.value) })}
+                      value={editingBranch.totalCapacity ?? ''}
+                      onChange={(e) => setEditingBranch({ ...editingBranch, totalCapacity: e.target.value ? Number(e.target.value) : undefined })}
                       min={1}
                       required
                     />
