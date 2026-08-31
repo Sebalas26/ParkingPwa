@@ -7,6 +7,44 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 20:55:00] - [SECURITY / Multi-Tenant / SuperAdmin] - Blindaje de Contexto de Organización y Header X-Company-Id en PWA
+
+#### 💬 Prompt Original del Usuario
+> "AUDITORÍA Y BLINDAJE: GESTIÓN DE ROLES/PERMISOS MULTI-ORGANIZACIÓN PARA SUPERADMIN (PWA & API). Verificar y validar exhaustivamente que la experiencia de administración multi-tenant en la ParkingPwa y el backend ParkingApi mantenga aislamiento estricto por organización cuando opera un usuario con rol SuperAdmin."
+
+#### 🤖 Resumen Técnico para la IA
+1. **Propagación Automática de Contexto `X-Company-Id` (`apiClient.ts`)**:
+   - Se actualizó `getAuthHeaders` en `apiClient.ts` para extraer automáticamente `inspectedCompany.id` desde `sessionStorage` y adjuntarlo en el header HTTP `X-Company-Id` en cada petición realizada por el SuperAdmin durante la gestión de una empresa.
+2. **Aislamiento Estricto en Roles y Permisos (`RolesTab.tsx`, `rolesService.ts`)**:
+   - Al administrar una empresa seleccionada, la consulta de roles (`getRoles`), la creación/edición de roles (`saveOrEditRole`) y la asignación de permisos (`assignRolePermissions`) operan exclusivamente sobre el ID de la empresa activa y su `branchId` correspondiente.
+3. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/shared/api/apiClient.ts`
+- `HISTORIAL_CAMBIOS.md`
+
+---
+
+### [2026-08-30 20:30:00] - [SECURITY / RBAC / Multi-Tenant] - Estandarización Canónica de Permisos RBAC y Sincronización Multi-Plataforma (PWA / API / WPF)
+
+#### 💬 Prompt Original del Usuario
+> "AUDITORÍA TÉCNICA EXHAUSTIVA: SISTEMA DE PERMISOS (PWA/API/WPF) Y MULTI-TENANCY SaaS. Diagnóstico del flujo de permisos (PWA -> API -> WPF), blindaje de aislamiento multi-tenant SaaS (Organizaciones y Sedes), cero errores de compilación y registro estricto en HISTORIAL_CAMBIOS.md."
+
+#### 🤖 Resumen Técnico para la IA
+1. **Alineación de Permisos Canónicos y Aliases en `authService.ts`**:
+   - Se extendió el mapeo bidireccional en `hasPermission` para soportar tanto los slugs oficiales definidos en base de datos (`shifts.view_current`, `shifts.open`, `shifts.blind_count`, `shifts.close`, `shifts.view_history`, `shifts.reprint_closure`, `monitoring.view_occupancy`, `monitoring.search_vehicles`, `monitoring.force_exit`, `monitoring.export`, `checkin.create_ticket`, `checkout.process_payment`, `subscriptions.view_list`) como sus representaciones singulares y modulares (`shift.*`, `recent_entries.*`).
+2. **Compatibilidad Total Multi-Tenant SaaS**:
+   - Los permisos del usuario se evalúan exclusivamente a través de `authService.hasPermission(slug)` garantizando cero dependencias de nombres de rol quemados.
+3. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/auth/data/authService.ts`
+- `HISTORIAL_CAMBIOS.md`
+
+---
+
 ### [2026-08-30 19:40:00] - [FEATURE / RBAC / Multi-Tenant] - Aislamiento Total de Roles y Usuarios a Nivel Sede/Branch
 
 #### 💬 Prompt Original del Usuario

@@ -14,12 +14,24 @@ export class ApiError extends Error {
 
 const getAuthHeaders = (): HeadersInit => {
   const token = localStorage.getItem('auth_token');
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  try {
+    const inspected = sessionStorage.getItem('parkflow_inspected_company');
+    if (inspected) {
+      const comp = JSON.parse(inspected);
+      if (comp && comp.id) {
+        headers['X-Company-Id'] = String(comp.id);
+      }
+    }
+  } catch {
+    // Ignore storage parse errors
   }
 
   return headers;

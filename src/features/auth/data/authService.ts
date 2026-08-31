@@ -125,15 +125,29 @@ export const authService = {
 
       // 2. Cobro / Caja / Turnos (Módulos 2 & 5 - checkout.view, shifts.view_current)
       'checkout.view': ['checkout.process_payment'],
+      'checkout.process_payment': ['checkout.view'],
       'shift.view': ['shifts.view_current', 'shifts.view_history', 'shifts.open'],
       'shifts.view_current': ['shift.view'],
+      'shift.close': ['shifts.close'],
+      'shifts.close': ['shift.close'],
+      'shift.open': ['shifts.open'],
+      'shifts.open': ['shift.open'],
+      'shifts.blind_count': ['shift.blind_count', 'shift.cash_withdrawal'],
+      'shift.cash_withdrawal': ['shifts.blind_count'],
+      'shifts.view_history': ['shift.history'],
+      'shift.history': ['shifts.view_history'],
+      'shifts.reprint_closure': ['shift.reprint', 'shift.export'],
+      'shift.export': ['shifts.reprint_closure'],
 
       // 3. Activos / Patio / Ingreso (Módulos 1 & 4 - monitoring.view_occupancy, checkin.view, checkin.create)
       'recent_entries.view': ['monitoring.view_occupancy', 'monitoring.search_vehicles', 'checkin.view', 'checkin.create', 'monitoring.force_exit', 'monitoring.export'],
       'monitoring.view_occupancy': ['recent_entries.view', 'checkin.view'],
       'monitoring.search_vehicles': ['recent_entries.view', 'checkin.view'],
-      'checkin.view': ['recent_entries.view', 'monitoring.view_occupancy'],
-      'checkin.create': ['recent_entries.view', 'checkin.view'],
+      'monitoring.force_exit': ['recent_entries.force_exit'],
+      'monitoring.export': ['recent_entries.export'],
+      'checkin.view': ['recent_entries.view', 'monitoring.view_occupancy', 'checkin.create_ticket'],
+      'checkin.create_ticket': ['checkin.create', 'checkin.view'],
+      'checkin.create': ['recent_entries.view', 'checkin.view', 'checkin.create_ticket'],
 
       // 4. Reportes (Módulo 6 - analytics.income_reports, analytics.occupancy_reports, analytics.audit_reports, analytics.export)
       'reports.view': ['analytics.income_reports', 'analytics.occupancy_reports', 'analytics.audit_reports', 'analytics.export'],
