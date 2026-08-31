@@ -324,6 +324,15 @@ export const DashboardLayout: React.FC = () => {
               )
             )}
 
+            <button
+              type="button"
+              className="btn-action"
+              style={{ background: '#f59e0b', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 'bold', fontSize: '0.8rem', cursor: 'pointer' }}
+              onClick={() => window.open('/mockup-consulta', '_blank')}
+              title="Abrir pantalla de simulación"
+            >
+              Ver Pantalla Exclusiva
+            </button>
             <PwaInstallPrompt />
             <button
               type="button"
