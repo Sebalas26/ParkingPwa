@@ -7,6 +7,27 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-31 15:29:00] - [BUGFIX / USERS] [PWA / GESTIÓN DE USUARIOS] - Eliminación de filtro restrictivo de branchId en Gestión de Usuarios
+
+#### 💬 Prompt Original del Usuario
+> "Intente crear una sede y se revento, segundo estoy como superadministrador controlando una sede pero no me carga los usuarios de esa sede y reviso en la bd y si esta creado los usuarios yo los cree pero no los esta mostrando ni filtrando, revisa eso que esta pasando llega null algo esat m al por que filtra por sede los usuartios si soy super administrador o igual soy administrador como va a filtrar por sede el usuario no entiendo ese filtro entiendo lo de la compañia nada mas es lo correcto. si me explico. analiza ese proceso y dame el plan"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Gestión Integral de Usuarios a Nivel de Empresa (`UsuariosTab.tsx`)**:
+   - Se removió el parámetro `targetBranchId` en `loadData`, `handleSaveUser` y `handleConfirmDelete`.
+   - Ahora `usuariosService.getUsers(targetCompanyId)` y `usuariosService.getUserRoles(targetCompanyId)` se ejecutan consultando la totalidad de los usuarios y roles de la empresa/parqueadero administrado, permitiendo listar a todos los administradores, operadores y personal independientemente de la sede activa en la cabecera.
+2. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/settings/ui/UsuariosTab.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores** (build PWA exitoso)
+
+---
+
 ### [2026-08-31 15:06:00] - [BUGFIX / CORE] [PWA / SERVICE WORKER] - Implementación canónica de recarga con listener `controllerchange` y registro inmediato
 
 #### 💬 Prompt Original del Usuario

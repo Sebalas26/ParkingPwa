@@ -53,15 +53,11 @@ const getInitials = (name?: string, username?: string) => {
 };
 
 export const UsuariosTab: React.FC = () => {
-  const { inspectedCompany, activeBranch } = useParqueaderoContext();
+  const { inspectedCompany } = useParqueaderoContext();
   const currentUser = authService.getCurrentUser();
   const targetCompanyId = useMemo(
     () => inspectedCompany?.id || currentUser?.companyId || undefined,
     [inspectedCompany?.id, currentUser?.companyId]
-  );
-  const targetBranchId = useMemo(
-    () => activeBranch?.id || undefined,
-    [activeBranch?.id]
   );
 
   const [usuarios, setUsuarios] = useState<UserDto[]>([]);
@@ -84,16 +80,16 @@ export const UsuariosTab: React.FC = () => {
   const [isDeletingUser, setIsDeletingUser] = useState(false);
 
   useEffect(() => {
-    loadData(targetCompanyId, targetBranchId);
-  }, [targetCompanyId, targetBranchId]);
+    loadData(targetCompanyId);
+  }, [targetCompanyId]);
 
-  const loadData = async (companyId?: number, branchId?: number) => {
+  const loadData = async (companyId?: number) => {
     setIsLoading(true);
     try {
       const [usersData, typesData, rolesData, branchesData] = await Promise.all([
-        usuariosService.getUsers(companyId, branchId),
+        usuariosService.getUsers(companyId),
         usuariosService.getIdentificationTypes(),
-        usuariosService.getUserRoles(companyId, branchId),
+        usuariosService.getUserRoles(companyId),
         companyId ? branchesService.getByCompany(companyId) : branchesService.getAll(),
       ]);
       setUsuarios(usersData || []);
@@ -222,7 +218,7 @@ export const UsuariosTab: React.FC = () => {
 
       setIsModalOpen(false);
       setEditingUsuario(null);
-      const freshUsers = await usuariosService.getUsers(targetCompanyId, targetBranchId);
+      const freshUsers = await usuariosService.getUsers(targetCompanyId);
       setUsuarios(freshUsers || []);
     } catch (err: any) {
       alert(err?.message || 'Error al guardar el usuario en la base de datos.');
@@ -241,12 +237,12 @@ export const UsuariosTab: React.FC = () => {
 
     try {
       await usuariosService.deleteUser(targetId);
-      const freshUsers = await usuariosService.getUsers(targetCompanyId, targetBranchId);
+      const freshUsers = await usuariosService.getUsers(targetCompanyId);
       setUsuarios(freshUsers || []);
       setUserToDelete(null);
     } catch (err: any) {
       alert(err?.message || 'Error al eliminar el usuario de la base de datos.');
-      await loadData(targetCompanyId, targetBranchId);
+      await loadData(targetCompanyId);
     } finally {
       setIsDeletingUser(false);
     }
