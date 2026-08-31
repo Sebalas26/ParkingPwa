@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Building2,
@@ -16,7 +16,10 @@ import {
   Sliders,
   Trash2,
   Eye,
-  EyeOff
+  EyeOff,
+  ImagePlus,
+  Maximize2,
+  X
 } from 'lucide-react';
 import { companyService } from '../data/companyService';
 import { apiClient } from '../../../shared/api/apiClient';
@@ -42,6 +45,10 @@ export const CompaniesPage: React.FC = () => {
   const [actionLoading, setActionLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showAdminPassword, setShowAdminPassword] = useState<boolean>(false);
+  const [previewImageModal, setPreviewImageModal] = useState<string | null>(null);
+
+  const fileInputCreateRef = useRef<HTMLInputElement>(null);
+  const fileInputEditRef = useRef<HTMLInputElement>(null);
 
   // Form states for creating company
   const [createForm, setCreateForm] = useState<CreateCompanyDto>({
@@ -92,6 +99,32 @@ export const CompaniesPage: React.FC = () => {
     loadCompanies();
   }, []);
 
+  const handleLogoUpload = (file: File, isEdit: boolean) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setErrorMessage('Por favor selecciona un archivo de imagen válido (PNG, JPG, WEBP, SVG).');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setErrorMessage('El tamaño del logo no puede exceder los 2MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        if (isEdit) {
+          setEditForm((prev) => ({ ...prev, logo: reader.result as string }));
+        } else {
+          setCreateForm((prev) => ({ ...prev, logo: reader.result as string }));
+        }
+      }
+    };
+    reader.onerror = () => {
+      setErrorMessage('Error al leer el archivo de imagen.');
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleOpenCreateModal = () => {
     setCreateForm({
       name: '',
@@ -101,6 +134,7 @@ export const CompaniesPage: React.FC = () => {
       phone: '',
       address: '',
       city: '',
+      logo: undefined,
       planType: 'Basic',
       maxBranches: 1,
       adminUsername: '',
@@ -124,6 +158,7 @@ export const CompaniesPage: React.FC = () => {
       phone: company.phone || '',
       address: company.address || '',
       city: company.city || '',
+      logo: company.logo,
       planType: company.planType || 'Basic',
       maxBranches: company.maxBranches || 1,
       isActive: company.isActive,
@@ -357,9 +392,25 @@ export const CompaniesPage: React.FC = () => {
                 {filteredCompanies.map((c) => (
                   <tr key={c.id}>
                     <td>
-                      <div className="company-name-cell">
-                        <span className="company-main-name">{c.name}</span>
-                        {c.legalName && <span className="company-legal-name">{c.legalName}</span>}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        {c.logo ? (
+                          <div
+                            className="company-table-logo-avatar"
+                            onClick={() => setPreviewImageModal(c.logo || null)}
+                            title="Clic para ver logo en grande"
+                            style={{ cursor: 'pointer' }}
+                          >
+                            <img src={c.logo} alt={c.name} className="pro-logo-thumb-img" />
+                          </div>
+                        ) : (
+                          <div className="company-table-default-avatar" title="Logo por defecto del software">
+                            <Building2 size={18} />
+                          </div>
+                        )}
+                        <div className="company-name-cell">
+                          <span className="company-main-name">{c.name}</span>
+                          {c.legalName && <span className="company-legal-name">{c.legalName}</span>}
+                        </div>
                       </div>
                     </td>
                     <td>
@@ -472,6 +523,86 @@ export const CompaniesPage: React.FC = () => {
                   )}
 
                   <div className="modal-section-title">1. Datos de la Empresa (Tenant)</div>
+
+                  {/* PRO LOGO UPLOADER - CREATE MODAL */}
+                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span>Logo Corporativo <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary, #64748b)', fontWeight: 400 }}>(Opcional)</span></span>
+                    </label>
+
+                    <input
+                      type="file"
+                      ref={fileInputCreateRef}
+                      style={{ display: 'none' }}
+                      accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleLogoUpload(file, false);
+                      }}
+                    />
+
+                    {createForm.logo ? (
+                      <div className="pro-logo-preview-card">
+                        <div
+                          className="pro-logo-thumb-wrapper"
+                          onClick={() => setPreviewImageModal(createForm.logo || null)}
+                          title="Clic para ampliar imagen"
+                        >
+                          <img src={createForm.logo} alt="Logo Preview" className="pro-logo-thumb-img" />
+                          <div className="pro-logo-thumb-overlay">
+                            <Maximize2 size={16} />
+                          </div>
+                        </div>
+                        <div className="pro-logo-info">
+                          <span className="pro-logo-title">Logo Cargado</span>
+                          <span className="pro-logo-desc">Se usará en tickets de parqueadero e identificación corporativa.</span>
+                          <div className="pro-logo-actions">
+                            <button
+                              type="button"
+                              className="btn-pro-logo-action"
+                              onClick={() => setPreviewImageModal(createForm.logo || null)}
+                            >
+                              <Eye size={13} /> Ver en grande
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-pro-logo-action"
+                              onClick={() => fileInputCreateRef.current?.click()}
+                            >
+                              <Edit2 size={13} /> Cambiar
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-pro-logo-action btn-pro-logo-danger"
+                              onClick={() => setCreateForm((prev) => ({ ...prev, logo: undefined }))}
+                            >
+                              <Trash2 size={13} /> Quitar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        className="pro-logo-dropzone"
+                        onClick={() => fileInputCreateRef.current?.click()}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const file = e.dataTransfer.files?.[0];
+                          if (file) handleLogoUpload(file, false);
+                        }}
+                      >
+                        <div className="pro-logo-dropzone-icon">
+                          <ImagePlus size={22} />
+                        </div>
+                        <div className="pro-logo-dropzone-text">
+                          <span className="pro-logo-dropzone-primary">Haz clic o arrastra el logo aquí</span>
+                          <span className="pro-logo-dropzone-secondary">PNG, JPG, WEBP o SVG (Máx. 2MB) — Si no se carga, se usará el logo estándar</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="form-grid-2">
                     <div className="form-group">
                       <label>Nombre Comercial *</label>
@@ -693,6 +824,87 @@ export const CompaniesPage: React.FC = () => {
                       {errorMessage}
                     </div>
                   )}
+
+                  <div className="modal-section-title">1. Datos de la Empresa (Tenant)</div>
+
+                  {/* PRO LOGO UPLOADER - EDIT MODAL */}
+                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span>Logo Corporativo <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary, #64748b)', fontWeight: 400 }}>(Opcional)</span></span>
+                    </label>
+
+                    <input
+                      type="file"
+                      ref={fileInputEditRef}
+                      style={{ display: 'none' }}
+                      accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleLogoUpload(file, true);
+                      }}
+                    />
+
+                    {editForm.logo ? (
+                      <div className="pro-logo-preview-card">
+                        <div
+                          className="pro-logo-thumb-wrapper"
+                          onClick={() => setPreviewImageModal(editForm.logo || null)}
+                          title="Clic para ampliar imagen"
+                        >
+                          <img src={editForm.logo} alt="Logo Preview" className="pro-logo-thumb-img" />
+                          <div className="pro-logo-thumb-overlay">
+                            <Maximize2 size={16} />
+                          </div>
+                        </div>
+                        <div className="pro-logo-info">
+                          <span className="pro-logo-title">Logo Corporativo Configurado</span>
+                          <span className="pro-logo-desc">Se usará en tickets de parqueadero e identificación corporativa.</span>
+                          <div className="pro-logo-actions">
+                            <button
+                              type="button"
+                              className="btn-pro-logo-action"
+                              onClick={() => setPreviewImageModal(editForm.logo || null)}
+                            >
+                              <Eye size={13} /> Ver en grande
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-pro-logo-action"
+                              onClick={() => fileInputEditRef.current?.click()}
+                            >
+                              <Edit2 size={13} /> Cambiar
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-pro-logo-action btn-pro-logo-danger"
+                              onClick={() => setEditForm((prev) => ({ ...prev, logo: undefined }))}
+                            >
+                              <Trash2 size={13} /> Quitar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        className="pro-logo-dropzone"
+                        onClick={() => fileInputEditRef.current?.click()}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const file = e.dataTransfer.files?.[0];
+                          if (file) handleLogoUpload(file, true);
+                        }}
+                      >
+                        <div className="pro-logo-dropzone-icon">
+                          <ImagePlus size={22} />
+                        </div>
+                        <div className="pro-logo-dropzone-text">
+                          <span className="pro-logo-dropzone-primary">Haz clic o arrastra el logo aquí</span>
+                          <span className="pro-logo-dropzone-secondary">PNG, JPG, WEBP o SVG (Máx. 2MB) — Si no se carga, se usará el logo estándar</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
                   <div className="form-grid-2">
                     <div className="form-group">
@@ -1020,6 +1232,82 @@ export const CompaniesPage: React.FC = () => {
                     </>
                   )}
                 </button>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+
+      {/* LIGHTBOX MODAL PREVIEW */}
+      {previewImageModal && (
+        <ModalPortal>
+          <div
+            className="modal-overlay"
+            onClick={() => setPreviewImageModal(null)}
+            style={{ zIndex: 30000, background: 'rgba(15, 23, 42, 0.85)' }}
+          >
+            <div
+              style={{
+                position: 'relative',
+                maxWidth: '90vw',
+                maxHeight: '90vh',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                animation: 'fadeIn 0.2s ease-out',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => setPreviewImageModal(null)}
+                style={{
+                  position: 'absolute',
+                  top: '-44px',
+                  right: '0',
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '38px',
+                  height: '38px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#ffffff',
+                  cursor: 'pointer',
+                  backdropFilter: 'blur(6px)',
+                  transition: 'background 0.2s ease',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.35)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)')}
+              >
+                <X size={22} />
+              </button>
+              <div
+                style={{
+                  background: '#ffffff',
+                  borderRadius: '16px',
+                  padding: '1.5rem',
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  maxWidth: '100%',
+                  maxHeight: '80vh',
+                  overflow: 'hidden',
+                }}
+              >
+                <img
+                  src={previewImageModal}
+                  alt="Logo Preview"
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '75vh',
+                    objectFit: 'contain',
+                    borderRadius: '8px',
+                  }}
+                />
               </div>
             </div>
           </div>

@@ -7,6 +7,7 @@ export interface CompanyDto {
   phone?: string;
   address?: string;
   city?: string;
+  logo?: string;
   planType: string;
   maxBranches: number;
   isActive: boolean;
@@ -24,6 +25,7 @@ export interface CreateCompanyDto {
   phone?: string;
   address?: string;
   city?: string;
+  logo?: string;
   planType: string;
   maxBranches: number;
   subscriptionExpiresAt?: string;
@@ -43,6 +45,7 @@ export interface UpdateCompanyDto {
   phone?: string;
   address?: string;
   city?: string;
+  logo?: string;
   planType: string;
   maxBranches: number;
   isActive: boolean;

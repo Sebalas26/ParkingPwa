@@ -7,6 +7,33 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-31 17:20:00] - [FEATURE / UI / MULTI-TENANT] [PWA / EMPRESAS] - Soporte de Logo Opcional en Base64 con Componente Pro de Carga y Lightbox Modal
+
+#### 💬 Prompt Original del Usuario
+> "Necesito que agregues una columna en la tabla companies que sea logo eso se guardara en base 64 pero que sea opcional, compañia que no tenga el logo usuara el de nosotros el de nuestro software vale el que si lo tenga configurado se usara para la impresión eso lo vamos mirando después pero entonces para que lo tengas muy presente. lo que toca hacer, eso implica modificar la modal de creación de la compañia para que permita opcional cargar la imagen pero no quiero el boton convecional algo mas pro unico que se le pueda dar click y poder ver la imagen pero ten presente que no dañe nada del responsi completo que se tienen en el sistema, e iogual al editar la compañias ya creadas listo . analiza y dame el plan completo."
+
+#### 🤖 Resumen Técnico para la IA
+1. **Contratos TypeScript (`CompanyContracts.ts`)**:
+   - Se tipó la propiedad opcional `logo?: string;` en `CompanyDto`, `CreateCompanyDto` y `UpdateCompanyDto`.
+2. **Componente Pro de Carga y Previsualización (`CompaniesPage.tsx` y `CompaniesPage.css`)**:
+   - Se diseñó un dropzone moderno e interactivo (drag-and-drop y clic) con ícono estilizado y directivas de formato/tamaño (PNG, JPG, WEBP, SVG máx. 2MB).
+   - Cuando se selecciona una imagen, se renderiza una tarjeta con miniatura, título y botones de acción rápida: *"Ver en grande"* (abre visor lightbox), *"Cambiar"* y *"Quitar"*.
+   - Se implementó un visor modal Lightbox que permite ver la imagen ampliada en alta resolución con botón flotante de cierre sin romper la cuadrícula ni el flujo de pantalla.
+   - En la tabla de empresas, la columna principal renderiza el logo real de la empresa como avatar (con click para ampliar), o muestra el avatar corporativo por defecto del software si no tiene logo cargado.
+3. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/companies/model/CompanyContracts.ts`
+- `src/features/companies/ui/CompaniesPage.tsx`
+- `src/features/companies/ui/CompaniesPage.css`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+
+---
+
 ### [2026-08-31 17:10:00] - [FEATURE / UX / MULTI-TENANT] [PWA / SEDES] - Control Estricto de MaxBranches y Código de Sede Autoincremental Oculto
 
 #### 💬 Prompt Original del Usuario
