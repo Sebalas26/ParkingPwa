@@ -7,7 +7,30 @@
 
 ## 📋 Registro Cronológico de Cambios
 
-### [2026-08-30 19:00:00] - [BUGFIX / RBAC / Multi-Tenant] - Filtrado de Roles y Usuarios por Parqueadero (CompanyId)
+### [2026-08-30 19:18:00] - [FEATURE / RBAC / Multi-Tenant] - Aislamiento Total de Roles, Usuarios y Sedes por Parqueadero
+
+#### 💬 Prompt Original del Usuario
+> "tengo un problema cuando ingreso con el super administrador y administro un parqueadero veo todos sus roles, sin embargo, no me esta filtrando los roles que se encuentran creados para cada parqueadero, porque cuando ingreso a otro parqueadero veo los mismos, requiero es que si yo ingreso a la administracion de un parqueadero, desde el superadministrador me muestre sus roles y usuario, si ingreso a otro igual, caso contrario que pasaria ya cuando ingreso con el usuario administrador de ese parqueadero, a el solo le deberia de mostrar los roles y usuarios asociados a ese parqueadero , valida porque en BD y las apis deben retornar los usuarios y roles de cada parqueadero cuando ingreso a dichos modulos"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Erradicación de Roles Quemados y Fallbacks Estáticos (`usuariosService.ts`)**:
+   - Se eliminó el array quemado `[Administrador, Operador, Supervisor]` en `usuariosService.getUserRoles`, devolviendo estrictamente la lista relacional proveniente de base de datos.
+2. **Filtrado Estricto de Sedes por Parqueadero (`UsuariosTab.tsx`)**:
+   - En `UsuariosTab.loadData`, se condicionó la consulta de sedes para invocar `branchesService.getByCompany(companyId)` cuando se inspecciona o administra un parqueadero específico, evitando cargar sedes de otras organizaciones.
+3. **Persistencia y Validación Multi-Tenant**:
+   - Sincronización completa con los endpoints `/api/UserRole/GetUsersRoles?companyId={id}` y `/api/Users/GetUsers?companyId={id}`.
+4. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/settings/data/usuariosService.ts`
+- `src/features/settings/ui/UsuariosTab.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores** (build PWA exitoso)
+
+---
 
 #### 💬 Prompt Original del Usuario
 > "Tengo un problema cuando ingreso con el super administrador y administro un parqueadero veo todos sus roles, sin embargo, no me está filtrando los roles que se encuentran creados para cada parqueadero, porque cuando ingreso a otro parqueadero veo los mismos."

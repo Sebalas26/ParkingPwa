@@ -94,17 +94,9 @@ export const usuariosService = {
           };
         });
       }
-      return [
-        { idUserRol: 1, id: 1, roleName: 'Administrador', role: 'Administrador', name: 'Administrador', isActive: true },
-        { idUserRol: 2, id: 2, roleName: 'Operador', role: 'Operador', name: 'Operador', isActive: true },
-        { idUserRol: 3, id: 3, roleName: 'Supervisor', role: 'Supervisor', name: 'Supervisor', isActive: true },
-      ];
+      return [];
     } catch {
-      return [
-        { idUserRol: 1, id: 1, roleName: 'Administrador', role: 'Administrador', name: 'Administrador', isActive: true },
-        { idUserRol: 2, id: 2, roleName: 'Operador', role: 'Operador', name: 'Operador', isActive: true },
-        { idUserRol: 3, id: 3, roleName: 'Supervisor', role: 'Supervisor', name: 'Supervisor', isActive: true },
-      ];
+      return [];
     }
   },
 

@@ -90,7 +90,7 @@ export const UsuariosTab: React.FC = () => {
         usuariosService.getUsers(companyId),
         usuariosService.getIdentificationTypes(),
         usuariosService.getUserRoles(companyId),
-        branchesService.getAll(),
+        companyId ? branchesService.getByCompany(companyId) : branchesService.getAll(),
       ]);
       setUsuarios(usersData || []);
       setIdentTypes(typesData || []);
