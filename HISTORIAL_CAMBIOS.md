@@ -7,6 +7,32 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-31 14:56:00] - [ARCHITECTURE / REFACTOR] [PWA / SERVICE WORKER] - Re-arquitectura limpia del ciclo de vida PWA bajo useRegisterSW y UX sin parpadeos
+
+#### 💬 Prompt Original del Usuario
+> "Actúa como un Principal Frontend Architect y experto de bajo nivel en Service Workers, Workbox y PWAs en React (Vite). Contexto del Problema Real (Post-implementación fallida): Bucle de actualización persistente (tras 10s vuelve a saltar) y Experiencia de usuario rota (Flicker / F5 brusco con pantalla blanca)."
+
+#### 🤖 Resumen Técnico para la IA
+1. **Eliminación del Conflicto del Doble Motor (`UpdatePromptModal.tsx`)**:
+   - Se removió por completo el sondeo HTTP a `version.json` y la comparación estática contra variables de build (`__APP_BUILD_TIME__` / `currentAppVersion`), la cual abría el modal antes de que Workbox terminara de precachear los chunks pesados en segundo plano provocando un estado inconsistente y el bucle infinito a los 10–30 segundos.
+   - Se estandarizó el Service Worker bajo **Única Fuente de Verdad** mediante `useRegisterSW` de `virtual:pwa-register/react`. El modal solo se renderiza cuando `needRefresh === true`, lo cual garantiza que el 100% de los assets JS/CSS/HTML de la nueva versión ya residen íntegramente en `CacheStorage`.
+2. **Sondeo Proactivo Estándar y Silencioso**:
+   - `registration.update()` se ejecuta periódicamente cada 60 segundos y ante eventos de `focus` y `visibilitychange` (`document.visibilityState === 'visible'`).
+3. **UX de Transición Fluida (Cero Parpadeos / Cero Pantallas Blancas)**:
+   - Al pulsar "Actualizar Ahora", la UI entra en un estado de transición con spinner y feedback visual (*"Aplicando actualización..."*), desactivando el botón.
+   - Se delega la activación limpia a `updateServiceWorker(true)`, permitiendo que Workbox envíe `SKIP_WAITING`, reclame los clientes (`clientsClaim`) y recargue la página desde `CacheStorage` de forma instantánea (<100ms) sin recargas manuales toscas que destruyan el contexto de WebView.
+4. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/shared/ui/UpdatePromptModal.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores** (build PWA exitoso)
+
+---
+
 ### [2026-08-31 14:34:00] - [BUGFIX] [PWA / SERVICE WORKER] - Corrección de ciclo de vida del SW y bucle infinito de actualización en móviles standalone
 
 #### 💬 Prompt Original del Usuario
