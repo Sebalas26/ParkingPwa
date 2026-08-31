@@ -31,11 +31,11 @@ export const UpdatePromptModal: React.FC = () => {
     },
   });
 
-  // Motor 2: Sondeo al manifiesto de versión (cada 12 segundos)
+  // Motor de verificación contra version.json
   const checkForVersionJson = useCallback(async () => {
-    // Si acaba de actualizarse en los últimos 15 segundos, evitar re-chequeo transitorio
+    // Protección anti-bucle: Si acabamos de actualizar en los últimos 30 segundos, ignorar
     const lastUpdateTimestamp = Number(sessionStorage.getItem('pwa_just_updated') || '0');
-    if (Date.now() - lastUpdateTimestamp < 15000) {
+    if (Date.now() - lastUpdateTimestamp < 30000) {
       return;
     }
 
@@ -55,7 +55,7 @@ export const UpdatePromptModal: React.FC = () => {
             setServerVersion(data.version);
           }
 
-          // Un build es nuevo ÚNICAMENTE si el servidor tiene un timestamp posterior al de la app en memoria
+          // Un build es nuevo si el servidor tiene un timestamp posterior al empaquetado en memoria
           const isNewerBuild = data.buildTime > (localBuildTimeRef.current + 2000);
           const isNewerVersion = Boolean(
             data.version && 
@@ -64,76 +64,105 @@ export const UpdatePromptModal: React.FC = () => {
           );
 
           if (isNewerBuild || isNewerVersion) {
-            console.log('[PWA Version Tracker] Nueva versión detectada en servidor:', data.version, 'Build:', data.buildTime);
+            console.log('[PWA Tracker] Nueva versión detectada en servidor:', data.version, 'Build:', data.buildTime);
             setHasNewVersion(true);
           }
         }
       }
     } catch {
-      // Ignorar fallos de red temporales
+      // Ignorar fallos transitorios de red
     }
   }, [currentAppVersion]);
 
   useEffect(() => {
     checkForVersionJson();
 
-    const versionInterval = setInterval(checkForVersionJson, 12 * 1000);
+    const versionInterval = setInterval(checkForVersionJson, 30 * 1000);
 
-    const handleFocus = () => {
-      checkForVersionJson();
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        checkForVersionJson();
+      }
     };
 
-    window.addEventListener('focus', handleFocus);
-    window.addEventListener('visibilitychange', handleFocus);
+    window.addEventListener('focus', handleVisibilityOrFocus);
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
 
     return () => {
       clearInterval(versionInterval);
-      window.removeEventListener('focus', handleFocus);
-      window.removeEventListener('visibilitychange', handleFocus);
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
     };
   }, [checkForVersionJson]);
 
   const isUpdateAvailable = needRefresh || hasNewVersion;
 
+  /**
+   * Ejecuta la activación limpia y segura del Service Worker + recarga universal móvil
+   */
   const handleUpdate = async () => {
     if (isUpdating) return;
     setIsUpdating(true);
 
-    try {
-      // 1. Purgar todo CacheStorage de forma limpia
-      if ('caches' in window) {
-        const cacheKeys = await caches.keys();
-        await Promise.all(cacheKeys.map((key) => caches.delete(key)));
-      }
+    // 1. Marcar timestamp de actualización para evitar re-detecciones inmediatas
+    sessionStorage.setItem('pwa_just_updated', Date.now().toString());
 
-      // 2. Notificar SKIP_WAITING y desregistrar todos los Service Workers anteriores
-      if ('serviceWorker' in navigator) {
+    try {
+      // 2. Esperar al evento 'controllerchange' para garantizar que el nuevo SW gobierna la página
+      const waitForControllerChange = new Promise<void>((resolve) => {
+        if (!navigator.serviceWorker || !navigator.serviceWorker.controller) {
+          resolve();
+          return;
+        }
+
+        const onControllerChange = () => {
+          navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+          console.log('[PWA] Evento controllerchange detectado: Nuevo SW activo.');
+          resolve();
+        };
+
+        navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
+
+        // Fallback de seguridad (timeout de 2.5 segundos)
+        setTimeout(() => {
+          navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+          resolve();
+        }, 2500);
+      });
+
+      // 3. Activar el Service Worker en espera (SKIP_WAITING nativo de vite-plugin-pwa)
+      if (typeof updateServiceWorker === 'function') {
+        // Enviar skipWaiting sin forzar reload inmediato para controlar nosotros el controllerchange
+        await updateServiceWorker(false);
+      } else if ('serviceWorker' in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations();
         for (const reg of registrations) {
           if (reg.waiting) {
             reg.waiting.postMessage({ type: 'SKIP_WAITING' });
           }
-          await reg.unregister();
         }
       }
 
-      // 3. Forzar actualización del Service Worker si existe hook
-      if (typeof updateServiceWorker === 'function') {
-        try {
-          await updateServiceWorker(true);
-        } catch {}
+      // 4. Esperar a que el nuevo worker tome el control
+      await waitForControllerChange;
+
+      // 5. Purgar cachés viejas residuales (sin tocar la caché del nuevo worker)
+      if ('caches' in window) {
+        const cacheKeys = await caches.keys();
+        await Promise.all(
+          cacheKeys
+            .filter((key) => !key.includes('workbox-precache'))
+            .map((key) => caches.delete(key))
+        );
       }
     } catch (err) {
-      console.warn('[PWA Purge Error]:', err);
+      console.warn('[PWA Update Error]:', err);
     }
 
-    // 4. Limpiar marcas temporales de actualización previa
-    sessionStorage.removeItem('pwa_just_updated');
-
-    // 5. Hard reload garantizado evitando la caché HTTP del navegador
+    // 6. Hard-reload compatible con WebAPKs y iOS Standalone
     const currentUrl = new URL(window.location.href);
-    currentUrl.searchParams.set('_reload', Date.now().toString());
-    window.location.href = currentUrl.toString();
+    currentUrl.searchParams.set('_pwa_refresh', Date.now().toString());
+    window.location.replace(currentUrl.toString());
   };
 
   if (!isUpdateAvailable) {

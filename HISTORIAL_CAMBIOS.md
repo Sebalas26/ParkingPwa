@@ -7,6 +7,34 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-31 14:34:00] - [BUGFIX] [PWA / SERVICE WORKER] - Corrección de ciclo de vida del SW y bucle infinito de actualización en móviles standalone
+
+#### 💬 Prompt Original del Usuario
+> "Esto es react no angular. hazme el plan para revisarlo" (Solución al bucle infinito de actualización en PWA Standalone / WebAPK / iOS PWA)
+
+#### 🤖 Resumen Técnico para la IA
+1. **Preservación del Ciclo de Vida del Service Worker (`UpdatePromptModal.tsx`)**:
+   - Se eliminó el bucle destructivo `reg.unregister()`, el cual abortaba y desregistraba el nuevo Service Worker en estado `waiting` antes de que pudiera completar su activación.
+   - Se implementó la sincronización con el evento nativo `navigator.serviceWorker.addEventListener('controllerchange', ...)` junto a un fallback de seguridad (timeout de 2.5s), garantizando que la página solo se recargue una vez que el nuevo SW haya tomado el control de los clientes (`clients.claim()`).
+   - Se ajustó la activación a `updateServiceWorker(false)` para coordinar el evento de recarga manual.
+   - Se preservó la guardia temporal en `sessionStorage.setItem('pwa_just_updated', Date.now().toString())` con una ventana de 30 segundos para evitar que `checkForVersionJson()` re-dispare el modal inmediatamente si el WebView sirve transitoriamente el bundle en caché.
+   - Se configuró la purga selectiva de cachés (`caches.delete()`) filtrando las entradas de `workbox-precache` para no destruir los assets pre-cacheados de la nueva versión.
+   - Se actualizó el mecanismo de refresco a `window.location.replace(urlWithParam)` con el parámetro `_pwa_refresh` para romper la memoria caché del WebView en Android WebAPK e iOS Standalone.
+2. **Alineación de Configuración Workbox (`vite.config.ts`)**:
+   - Se configuró `skipWaiting: false` en `VitePWA.workbox` para respetar el patrón manual `registerType: 'prompt'`, permitiendo que el modal controle el momento exacto en el que el Service Worker en espera se activa.
+3. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/shared/ui/UpdatePromptModal.tsx`
+- `vite.config.ts`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores** (build PWA exitoso con `dist/sw.js` y 33 entries precached)
+
+---
+
 ### [2026-08-30 21:36:00] - [FEATURE] [UI / EMPRESAS] - Ícono para ver contraseña en creación de empresa
 
 #### 💬 Prompt Original del Usuario
