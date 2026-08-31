@@ -7,6 +7,43 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 19:00:00] - [BUGFIX / RBAC / Multi-Tenant] - Filtrado de Roles y Usuarios por Parqueadero (CompanyId)
+
+#### 💬 Prompt Original del Usuario
+> "Tengo un problema cuando ingreso con el super administrador y administro un parqueadero veo todos sus roles, sin embargo, no me está filtrando los roles que se encuentran creados para cada parqueadero, porque cuando ingreso a otro parqueadero veo los mismos."
+
+#### 🤖 Resumen Técnico para la IA
+1. **Bug Root Cause — API (`UserRoleRepository.GetUserRoleName` y `UserRoleService.ValidateRole`)**:
+   - `GetUserRoleName` buscaba roles por nombre **globalmente** sin filtrar por `CompanyId`. Esto causaba que la validación de duplicados (`ValidateRole`) encontrara roles de otras empresas o globales, impidiendo crear roles con el mismo nombre para diferentes parqueaderos.
+   - `SaveOrEditUserRole` usaba `GetUserRoleName` sin `companyId` para buscar el rol recién guardado, pudiendo devolver el rol global en vez del de la empresa.
+   
+2. **Bug Root Cause — PWA (Closure Stale en `RolesTab` y `UsuariosTab`)**:
+   - `targetCompanyId` se calculaba como variable derivada sin `useMemo`, y `loadData` no lo recibía como parámetro explícito, haciéndolo vulnerable a closures stale.
+   - Las dependencias del `useEffect` usaban `selectedParqueaderoId` e `inspectedCompany?.id` en vez del valor derivado `targetCompanyId`.
+
+3. **Correcciones Aplicadas**:
+   - **API**: `IUserRoleRepository.GetUserRoleName` → nuevo parámetro `int? companyId = null`
+   - **API**: `UserRoleRepository.GetUserRoleName` → filtro `WHERE CompanyId == companyId` 
+   - **API**: `UserRoleService.ValidateRole` y `SaveOrEditUserRole` → pasan `companyId` a `GetUserRoleName`
+   - **PWA**: `RolesTab.tsx` → `targetCompanyId` con `useMemo`, `loadData` recibe `companyId` como parámetro explícito, `useEffect` depende de `targetCompanyId`
+   - **PWA**: `UsuariosTab.tsx` → misma corrección de closure stale
+
+#### 📦 Componentes Modificados
+**API (ParkingApi):**
+- `ParkingApi.Domain/Interfaces/Repositories/UserRoles/IUserRoleRepository.cs` — Nuevo param `companyId` en `GetUserRoleName`
+- `ParkingApi.Infrastructure/Data/Repositories/UserRoles/UserRoleRepository.cs` — Filtro `CompanyId == companyId` en `GetUserRoleName`
+- `ParkingApi.Core/Services/UserRoles/UserRoleService.cs` — `ValidateRole` y `SaveOrEditUserRole` pasan `companyId`
+
+**PWA (ParkingPwa):**
+- `src/features/settings/ui/RolesTab.tsx` — `useMemo` para `targetCompanyId`, `loadData(companyId)` con parámetro
+- `src/features/settings/ui/UsuariosTab.tsx` — `useMemo` para `targetCompanyId`, `loadData(companyId)` con parámetro
+
+#### ✅ Verificación y Compilación
+- `dotnet build` → **0 Errores** (5 Warnings preexistentes)
+- `npm run build` → **0 Errores** (build exitoso)
+
+---
+
 ### [2026-08-30 18:41:00] - [FEATURE / RBAC] - Aprovisionamiento Automático de Roles Base (Administrador, Supervisor, Operador) y Roles Dinámicos por Empresa
 
 #### 💬 Prompt Original del Usuario

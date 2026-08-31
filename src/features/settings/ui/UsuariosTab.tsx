@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, Edit2, Shield, Trash2, IdCard, Search, Loader2, AlertTriangle, ChevronDown, Eye, EyeOff } from 'lucide-react';
 import type { UserDto, SaveUserDto, GetIdentificationTypeDto, GetUserRoleDto } from '../model/UsuariosContracts';
 import type { BranchDto } from '../model/BranchesContracts';
@@ -53,9 +53,12 @@ const getInitials = (name?: string, username?: string) => {
 };
 
 export const UsuariosTab: React.FC = () => {
-  const { selectedParqueaderoId, inspectedCompany } = useParqueaderoContext();
+  const { inspectedCompany } = useParqueaderoContext();
   const currentUser = authService.getCurrentUser();
-  const targetCompanyId = inspectedCompany?.id || currentUser?.companyId || undefined;
+  const targetCompanyId = useMemo(
+    () => inspectedCompany?.id || currentUser?.companyId || undefined,
+    [inspectedCompany?.id, currentUser?.companyId]
+  );
 
   const [usuarios, setUsuarios] = useState<UserDto[]>([]);
   const [identTypes, setIdentTypes] = useState<GetIdentificationTypeDto[]>([]);
@@ -77,16 +80,16 @@ export const UsuariosTab: React.FC = () => {
   const [isDeletingUser, setIsDeletingUser] = useState(false);
 
   useEffect(() => {
-    loadData();
-  }, [selectedParqueaderoId, inspectedCompany?.id]);
+    loadData(targetCompanyId);
+  }, [targetCompanyId]);
 
-  const loadData = async () => {
+  const loadData = async (companyId?: number) => {
     setIsLoading(true);
     try {
       const [usersData, typesData, rolesData, branchesData] = await Promise.all([
-        usuariosService.getUsers(targetCompanyId),
+        usuariosService.getUsers(companyId),
         usuariosService.getIdentificationTypes(),
-        usuariosService.getUserRoles(targetCompanyId),
+        usuariosService.getUserRoles(companyId),
         branchesService.getAll(),
       ]);
       setUsuarios(usersData || []);
@@ -239,7 +242,7 @@ export const UsuariosTab: React.FC = () => {
       setUserToDelete(null);
     } catch (err: any) {
       alert(err?.message || 'Error al eliminar el usuario de la base de datos.');
-      await loadData();
+      await loadData(targetCompanyId);
     } finally {
       setIsDeletingUser(false);
     }

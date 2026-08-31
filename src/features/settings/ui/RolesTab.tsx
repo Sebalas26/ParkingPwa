@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Plus,
   Edit2,
@@ -30,9 +30,12 @@ import { useParqueaderoContext } from '../../../shared/context/ParqueaderoContex
 type PlatformTab = 'all' | 'pwa' | 'wpf';
 
 export const RolesTab: React.FC = () => {
-  const { selectedParqueaderoId, inspectedCompany } = useParqueaderoContext();
+  const { inspectedCompany } = useParqueaderoContext();
   const currentUser = authService.getCurrentUser();
-  const targetCompanyId = inspectedCompany?.id || currentUser?.companyId || undefined;
+  const targetCompanyId = useMemo(
+    () => inspectedCompany?.id || currentUser?.companyId || undefined,
+    [inspectedCompany?.id, currentUser?.companyId]
+  );
 
   const [roles, setRoles] = useState<RoleDto[]>([]);
   const [allModules, setAllModules] = useState<ModuleDto[]>([]);
@@ -64,11 +67,11 @@ export const RolesTab: React.FC = () => {
   const [isSavingPermissions, setIsSavingPermissions] = useState(false);
   const [expandedRoleId, setExpandedRoleId] = useState<number | null>(null);
 
-  const loadData = async () => {
+  const loadData = async (companyId?: number) => {
     setIsLoading(true);
     try {
       const [rolesData, modulesData, actionsData] = await Promise.all([
-        rolesService.getRoles(targetCompanyId),
+        rolesService.getRoles(companyId),
         rolesService.getModules(),
         rolesService.getActions(),
       ]);
@@ -105,8 +108,8 @@ export const RolesTab: React.FC = () => {
   };
 
   useEffect(() => {
-    loadData();
-  }, [selectedParqueaderoId, inspectedCompany?.id]);
+    loadData(targetCompanyId);
+  }, [targetCompanyId]);
 
   // Modal de confirmación de eliminación de rol
   const [roleToDelete, setRoleToDelete] = useState<RoleDto | null>(null);
@@ -149,7 +152,7 @@ export const RolesTab: React.FC = () => {
       await rolesService.deleteRole(roleId);
       showToast('Rol eliminado exitosamente.', 'success');
       setRoleToDelete(null);
-      await loadData();
+      await loadData(targetCompanyId);
     } catch (err: any) {
       showToast(err?.message || 'Error al eliminar el rol de la base de datos.', 'error');
     } finally {
@@ -244,7 +247,7 @@ export const RolesTab: React.FC = () => {
       setIsRoleModalOpen(false);
       setEditingRole(null);
       showToast('Rol guardado exitosamente.', 'success');
-      await loadData();
+      await loadData(targetCompanyId);
     } catch (err: any) {
       showToast(err?.message || 'Error al guardar el rol.', 'error');
     }
