@@ -13,6 +13,7 @@ import { ParqueaderoProvider } from './shared/context/ParqueaderoContext';
 import { authService } from './features/auth/data/authService';
 import { apiClient } from './shared/api/apiClient';
 import { UpdatePromptModal } from './shared/ui/UpdatePromptModal';
+import { PlateQueryMockup } from './features/isolated/ui/PlateQueryMockup';
 
 import { NoPermissionsView } from './shared/ui/NoPermissionsView';
 
@@ -155,6 +156,9 @@ function App() {
           
           {/* Redirección retrocompatible de /login hacia la raíz limpia */}
           <Route path="/login" element={<Navigate to="/" replace />} />
+          
+          {/* Pantalla exclusiva de simulación de consulta */}
+          <Route path="/mockup-consulta" element={<PlateQueryMockup />} />
           
           {/* Rutas protegidas del Dashboard */}
           <Route
