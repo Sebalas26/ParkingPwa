@@ -4,6 +4,7 @@ import { branchesService } from '../../features/settings/data/branchesService';
 import type { ParqueaderoDto } from '../../features/settings/model/ParqueaderosContracts';
 import type { CompanyDto } from '../../features/companies/model/CompanyContracts';
 import { apiClient } from '../api/apiClient';
+import { authService } from '../../features/auth/data/authService';
 
 interface BranchContextType {
   // Nueva API Multi-Sede
@@ -51,7 +52,16 @@ const BranchContext = createContext<BranchContextType>({
 });
 
 export const ParqueaderoProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [branchesList, setBranchesList] = useState<BranchDto[]>([]);
+  const [branchesList, setBranchesList] = useState<BranchDto[]>(() => {
+    try {
+      const user = authService.getCurrentUser();
+      return Array.isArray(user?.branches) && user.branches.length > 0
+        ? (user.branches as BranchDto[])
+        : [];
+    } catch {
+      return [];
+    }
+  });
   const [isLoadingBranches, setIsLoadingBranches] = useState<boolean>(true);
   const [inspectedCompany, setInspectedCompany] = useState<CompanyDto | null>(() => {
     try {

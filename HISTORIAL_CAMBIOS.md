@@ -7,6 +7,27 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-31 16:07:00] - [BUGFIX / ONBOARDING] [PWA / CONTEXTO DE SEDES] - Inicialización reactiva de sedes desde sesión y prevención de modal de bienvenida indebido
+
+#### 💬 Prompt Original del Usuario
+> "Listo perfecto, pero tengo otro error sucede que le listo cree el usuario en la otra compañia super bien le di permisos super bien le di todos los permisos super bien pero me loguee y de una me mando a crear sede pero si ya existe una sede en esa compañia por que me saco esa ventana eso no deberia ser así deberia existir algo antes. analiza eso y dame el plan"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Inicialización Reactiva de Sedes (`ParqueaderoContext.tsx`)**:
+   - Se configuró el estado inicial de `branchesList` consumiendo directamente las sedes retornadas en `authService.getCurrentUser()?.branches`.
+   - Esto previene cualquier estado transitorio de 0 sedes (`hasZeroBranches = true`) durante el primer renderizado, evitando que la aplicación muestre erróneamente el modal de primera sede (`ZeroDataOnboardingWizard`) a usuarios pertenecientes a empresas con sedes preexistentes.
+2. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/shared/context/ParqueaderoContext.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores** (build PWA exitoso)
+
+---
+
 ### [2026-08-31 15:29:00] - [BUGFIX / USERS] [PWA / GESTIÓN DE USUARIOS] - Eliminación de filtro restrictivo de branchId en Gestión de Usuarios
 
 #### 💬 Prompt Original del Usuario
