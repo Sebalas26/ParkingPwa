@@ -7,6 +7,28 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 21:36:00] - [FEATURE] [UI / EMPRESAS] - Ícono para ver contraseña en creación de empresa
+
+#### 💬 Prompt Original del Usuario
+> "Al crear parqueadero , en el campo de donde se ingresa la clave le puedes agregar icono para que se vea la clave"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Adición de botón y estado para visibilidad de contraseña (`CompaniesPage.tsx`)**:
+   - Se añadió el estado `showAdminPassword` para controlar la visibilidad del campo "Contraseña Inicial".
+   - Se modificó el input de `<input type="password">` a `<input type={showAdminPassword ? "text" : "password"}>`.
+   - Se implementó un botón con posicionamiento absoluto y los íconos `Eye` / `EyeOff` de `lucide-react` para alternar la visibilidad de la contraseña, mejorando la UX.
+2. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/companies/ui/CompaniesPage.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores** (build PWA exitoso)
+
+---
+
 ### [2026-08-30 21:05:00] - [BUGFIX] [UI / SEDES] - Corrección de validación vacía en campo Capacidad Total
 
 #### 💬 Prompt Original del Usuario
