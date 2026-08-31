@@ -326,7 +326,7 @@ export const RolesTab: React.FC = () => {
 
   const handleSavePermissions = async () => {
     if (!targetRole) return;
-    
+
     const currentUser = authService.getCurrentUser();
     const isSuperAdmin = currentUser?.isSuperAdmin === true;
 
@@ -394,8 +394,8 @@ export const RolesTab: React.FC = () => {
     activePlatform === 'all'
       ? allGrouped
       : activePlatform === 'pwa'
-      ? pwaGrouped
-      : wpfGrouped;
+        ? pwaGrouped
+        : wpfGrouped;
 
   const currentUserRoleMatch = (r: RoleDto): boolean => {
     const roleId = r.idUserRol ?? r.id;
@@ -459,14 +459,14 @@ export const RolesTab: React.FC = () => {
                   const roleId = r.idUserRol ?? r.id ?? 1;
                   const assignedCount = rolePermissionsMap[roleId]?.length || 0;
                   const roleTitle = r.roleName || r.role || r.name || `Rol #${roleId}`;
-                  
+
                   const isRoleSuperAdmin = isSuperAdminRole(r);
                   const isRoleAdmin = isAdminRole(r);
                   const isProtected = isProtectedSystemRole(r);
-                  
+
                   const currentUser = authService.getCurrentUser();
                   const isUserSuperAdmin = currentUser?.isSuperAdmin === true;
-                  
+
                   // El Super Administrador SIEMPRE está bloqueado para edición de permisos o configuración
                   // El Administrador está bloqueado a menos que el usuario logueado sea Super Administrador
                   const isLockedForCurrentUser = isRoleSuperAdmin || (isRoleAdmin && !isUserSuperAdmin);
@@ -743,49 +743,49 @@ export const RolesTab: React.FC = () => {
       {isRoleModalOpen && editingRole && (
         <ModalPortal>
           <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '440px' }}>
-            <div className="modal-header">
-              <h3>{editingRole.idUserRol ? `Editar Rol (#${editingRole.idUserRol})` : 'Crear Nuevo Rol'}</h3>
+            <div className="modal-card" style={{ maxWidth: '440px' }}>
+              <div className="modal-header">
+                <h3>{editingRole.idUserRol ? `Editar Rol (#${editingRole.idUserRol})` : 'Crear Nuevo Rol'}</h3>
+              </div>
+
+              <form onSubmit={handleSaveRole}>
+                <div className="modal-body">
+                  <div className="form-group">
+                    <label>Nombre del Rol</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      placeholder="Ej: Auditor / Supervisor de Patio"
+                      value={editingRole.roleName || ''}
+                      onChange={(e) => setEditingRole({ ...editingRole, roleName: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Estado</label>
+                    <select
+                      className="input-field"
+                      value={editingRole.isActive ? 'true' : 'false'}
+                      onChange={(e) => setEditingRole({ ...editingRole, isActive: e.target.value === 'true' })}
+                    >
+                      <option value="true">Activo</option>
+                      <option value="false">Inactivo</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="modal-footer">
+                  <button type="button" className="btn-secondary" onClick={() => setIsRoleModalOpen(false)}>
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn-primary" style={{ width: 'auto' }}>
+                    {editingRole.idUserRol ? 'Guardar Cambios' : 'Crear Rol'}
+                  </button>
+                </div>
+              </form>
             </div>
-
-            <form onSubmit={handleSaveRole}>
-              <div className="modal-body">
-                <div className="form-group">
-                  <label>Nombre del Rol</label>
-                  <input
-                    type="text"
-                    className="input-field"
-                    placeholder="Ej: Auditor / Supervisor de Patio"
-                    value={editingRole.roleName || ''}
-                    onChange={(e) => setEditingRole({ ...editingRole, roleName: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Estado</label>
-                  <select
-                    className="input-field"
-                    value={editingRole.isActive ? 'true' : 'false'}
-                    onChange={(e) => setEditingRole({ ...editingRole, isActive: e.target.value === 'true' })}
-                  >
-                    <option value="true">Activo</option>
-                    <option value="false">Inactivo</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="modal-footer">
-                <button type="button" className="btn-secondary" onClick={() => setIsRoleModalOpen(false)}>
-                  Cancelar
-                </button>
-                <button type="submit" className="btn-primary" style={{ width: 'auto' }}>
-                  {editingRole.idUserRol ? 'Guardar Cambios' : 'Crear Rol'}
-                </button>
-              </div>
-            </form>
           </div>
-        </div>
         </ModalPortal>
       )}
 
@@ -793,417 +793,417 @@ export const RolesTab: React.FC = () => {
       {isPermissionsModalOpen && targetRole && (
         <ModalPortal>
           <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '840px', maxHeight: '92vh' }}>
-            <div className="modal-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Key size={20} style={{ color: 'var(--primary-color, #07665e)' }} />
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '1.1rem' }}>
-                    Configurar Permisos: {targetRole.roleName || targetRole.role}
-                  </h3>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                    Administra selectivamente los módulos operativos de Escritorio y Web
-                  </span>
+            <div className="modal-card" style={{ maxWidth: '840px', maxHeight: '92vh' }}>
+              <div className="modal-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Key size={20} style={{ color: 'var(--primary-color, #07665e)' }} />
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '1.1rem' }}>
+                      Configurar Permisos: {targetRole.roleName || targetRole.role}
+                    </h3>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                      Administra selectivamente los módulos operativos de Escritorio y Web
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="modal-body" style={{ overflowY: 'auto', gap: '1rem', paddingBottom: '1.5rem' }}>
-              {/* Pestañas de Plataforma */}
-              <div
-                style={{
-                  display: 'flex',
-                  background: 'var(--bg-secondary, #f1f5f9)',
-                  padding: '4px',
-                  borderRadius: '10px',
-                  gap: '6px',
-                  border: '1px solid var(--border-color, #cbd5e1)',
-                  flexWrap: 'wrap',
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={() => handleSwitchPlatform('all')}
+              <div className="modal-body" style={{ overflowY: 'auto', gap: '1rem', paddingBottom: '1.5rem' }}>
+                {/* Pestañas de Plataforma */}
+                <div
                   style={{
-                    flex: 1,
-                    minWidth: '140px',
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    background: activePlatform === 'all' ? '#ffffff' : 'transparent',
-                    color: activePlatform === 'all' ? 'var(--primary-color, #07665e)' : '#64748b',
-                    fontWeight: activePlatform === 'all' ? 700 : 500,
-                    boxShadow: activePlatform === 'all' ? '0 2px 4px rgba(0,0,0,0.06)' : 'none',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
+                    background: 'var(--bg-secondary, #f1f5f9)',
+                    padding: '4px',
+                    borderRadius: '10px',
+                    gap: '6px',
+                    border: '1px solid var(--border-color, #cbd5e1)',
+                    flexWrap: 'wrap',
                   }}
                 >
-                  <Globe size={16} />
-                  <span>🌐 Todos los Módulos</span>
-                  <span
-                    className="badge"
-                    style={{
-                      fontSize: '0.72rem',
-                      background: activePlatform === 'all' ? 'rgba(7, 102, 94, 0.12)' : 'rgba(100, 116, 139, 0.1)',
-                      color: activePlatform === 'all' ? '#07665e' : '#64748b',
-                    }}
-                  >
-                    {allSelectedCount} / {allActions.length}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleSwitchPlatform('pwa')}
-                  style={{
-                    flex: 1,
-                    minWidth: '140px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    background: activePlatform === 'pwa' ? '#ffffff' : 'transparent',
-                    color: activePlatform === 'pwa' ? 'var(--primary-color, #07665e)' : '#64748b',
-                    fontWeight: activePlatform === 'pwa' ? 700 : 500,
-                    boxShadow: activePlatform === 'pwa' ? '0 2px 4px rgba(0,0,0,0.06)' : 'none',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  <Globe size={16} />
-                  <span>📱 Módulos Web (PWA)</span>
-                  <span
-                    className="badge"
-                    style={{
-                      fontSize: '0.72rem',
-                      background: activePlatform === 'pwa' ? 'rgba(7, 102, 94, 0.12)' : 'rgba(100, 116, 139, 0.1)',
-                      color: activePlatform === 'pwa' ? '#07665e' : '#64748b',
-                    }}
-                  >
-                    {pwaSelectedCount} / {pwaTotalActions.length}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleSwitchPlatform('wpf')}
-                  style={{
-                    flex: 1,
-                    minWidth: '140px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    background: activePlatform === 'wpf' ? '#ffffff' : 'transparent',
-                    color: activePlatform === 'wpf' ? 'var(--primary-color, #07665e)' : '#64748b',
-                    fontWeight: activePlatform === 'wpf' ? 700 : 500,
-                    boxShadow: activePlatform === 'wpf' ? '0 2px 4px rgba(0,0,0,0.06)' : 'none',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  <Monitor size={16} />
-                  <span>🖥️ Terminal POS (WPF)</span>
-                  <span
-                    className="badge"
-                    style={{
-                      fontSize: '0.72rem',
-                      background: activePlatform === 'wpf' ? 'rgba(7, 102, 94, 0.12)' : 'rgba(100, 116, 139, 0.1)',
-                      color: activePlatform === 'wpf' ? '#07665e' : '#64748b',
-                    }}
-                  >
-                    {wpfSelectedCount} / {wpfTotalActions.length}
-                  </span>
-                </button>
-              </div>
-
-              {/* Barra de Búsqueda y Acciones Rápidas */}
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
-                  <Search
-                    size={16}
-                    style={{
-                      position: 'absolute',
-                      left: '10px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      color: '#94a3b8',
-                    }}
-                  />
-                  <input
-                    type="text"
-                    className="input-field"
-                    placeholder={`Buscar permiso en ${activePlatform === 'wpf' ? 'Escritorio (WPF)' : 'Web (PWA)'}...`}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    style={{ paddingLeft: '32px' }}
-                  />
-                </div>
-
-                <div style={{ display: 'flex', gap: '6px' }}>
                   <button
                     type="button"
-                    onClick={() => handlePlatformSelectAll(activePlatform, true)}
+                    onClick={() => handleSwitchPlatform('all')}
                     style={{
-                      background: '#07665e',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '6px',
-                      padding: '7px 12px',
-                      fontSize: '0.78rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
+                      flex: 1,
+                      minWidth: '140px',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '4px',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: activePlatform === 'all' ? '#ffffff' : 'transparent',
+                      color: activePlatform === 'all' ? 'var(--primary-color, #07665e)' : '#64748b',
+                      fontWeight: activePlatform === 'all' ? 700 : 500,
+                      boxShadow: activePlatform === 'all' ? '0 2px 4px rgba(0,0,0,0.06)' : 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
                     }}
                   >
-                    <CheckSquare size={13} /> Marcar Plataforma
+                    <Globe size={16} />
+                    <span>🌐 Todos los Módulos</span>
+                    <span
+                      className="badge"
+                      style={{
+                        fontSize: '0.72rem',
+                        background: activePlatform === 'all' ? 'rgba(7, 102, 94, 0.12)' : 'rgba(100, 116, 139, 0.1)',
+                        color: activePlatform === 'all' ? '#07665e' : '#64748b',
+                      }}
+                    >
+                      {allSelectedCount} / {allActions.length}
+                    </span>
                   </button>
+
                   <button
                     type="button"
-                    onClick={() => handlePlatformSelectAll(activePlatform, false)}
+                    onClick={() => handleSwitchPlatform('pwa')}
                     style={{
-                      background: 'transparent',
-                      border: '1px solid #ef4444',
-                      color: '#ef4444',
-                      borderRadius: '6px',
-                      padding: '7px 12px',
-                      fontSize: '0.78rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
+                      flex: 1,
+                      minWidth: '140px',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '4px',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: activePlatform === 'pwa' ? '#ffffff' : 'transparent',
+                      color: activePlatform === 'pwa' ? 'var(--primary-color, #07665e)' : '#64748b',
+                      fontWeight: activePlatform === 'pwa' ? 700 : 500,
+                      boxShadow: activePlatform === 'pwa' ? '0 2px 4px rgba(0,0,0,0.06)' : 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
                     }}
                   >
-                    <Square size={13} /> Desmarcar Plataforma
+                    <Globe size={16} />
+                    <span>📱 Módulos Web</span>
+                    <span
+                      className="badge"
+                      style={{
+                        fontSize: '0.72rem',
+                        background: activePlatform === 'pwa' ? 'rgba(7, 102, 94, 0.12)' : 'rgba(100, 116, 139, 0.1)',
+                        color: activePlatform === 'pwa' ? '#07665e' : '#64748b',
+                      }}
+                    >
+                      {pwaSelectedCount} / {pwaTotalActions.length}
+                    </span>
                   </button>
-                </div>
-              </div>
 
-              {/* Resumen Global de Asignación */}
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  background: 'var(--bg-secondary, #f8fafc)',
-                  padding: '8px 14px',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border-color, #cbd5e1)',
-                }}
-              >
-                <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                    Filtro activo:{' '}
-                    <strong>
-                      {activePlatform === 'all'
-                        ? '🌐 Todos los Módulos'
-                        : activePlatform === 'pwa'
-                        ? '📱 Módulos Web (PWA)'
-                        : '🖥️ Terminal POS (WPF)'}
-                    </strong>
-                  </span>
-                  <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                    Total Global: <strong>{selectedActionIds.length} / {allActions.length}</strong> permisos
-                  </span>
-                </div>
-
-                <div style={{ display: 'flex', gap: '6px' }}>
                   <button
                     type="button"
-                    onClick={() => handleGlobalSelectAll(true)}
+                    onClick={() => handleSwitchPlatform('wpf')}
                     style={{
-                      background: 'none',
+                      flex: 1,
+                      minWidth: '140px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
                       border: 'none',
-                      color: '#07665e',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
+                      background: activePlatform === 'wpf' ? '#ffffff' : 'transparent',
+                      color: activePlatform === 'wpf' ? 'var(--primary-color, #07665e)' : '#64748b',
+                      fontWeight: activePlatform === 'wpf' ? 700 : 500,
+                      boxShadow: activePlatform === 'wpf' ? '0 2px 4px rgba(0,0,0,0.06)' : 'none',
                       cursor: 'pointer',
-                      textDecoration: 'underline',
+                      transition: 'all 0.15s ease',
                     }}
                   >
-                    Marcar Todo Global
-                  </button>
-                  <span style={{ color: '#cbd5e1' }}>|</span>
-                  <button
-                    type="button"
-                    onClick={() => handleGlobalSelectAll(false)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#ef4444',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      textDecoration: 'underline',
-                    }}
-                  >
-                    Limpiar Todo
+                    <Monitor size={16} />
+                    <span>🖥️ Módulos Escritorio</span>
+                    <span
+                      className="badge"
+                      style={{
+                        fontSize: '0.72rem',
+                        background: activePlatform === 'wpf' ? 'rgba(7, 102, 94, 0.12)' : 'rgba(100, 116, 139, 0.1)',
+                        color: activePlatform === 'wpf' ? '#07665e' : '#64748b',
+                      }}
+                    >
+                      {wpfSelectedCount} / {wpfTotalActions.length}
+                    </span>
                   </button>
                 </div>
-              </div>
 
-              {/* Lista de Módulos y Acciones de la Plataforma Activa */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {currentGroupedModules.length > 0 ? (
-                  currentGroupedModules.map(({ module: mod, actions }) => {
-                    const moduleActionIds = actions.map((a) => a.id);
-                    const selectedInModuleCount = actions.filter((a) => selectedActionIds.includes(a.id)).length;
-                    const isAllModuleSelected = actions.length > 0 && selectedInModuleCount === actions.length;
-                    const isExpanded = searchTerm.trim() !== '' || expandedModuleId === mod.id;
+                {/* Barra de Búsqueda y Acciones Rápidas */}
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
+                    <Search
+                      size={16}
+                      style={{
+                        position: 'absolute',
+                        left: '10px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: '#94a3b8',
+                      }}
+                    />
+                    <input
+                      type="text"
+                      className="input-field"
+                      placeholder={`Buscar permiso en ${activePlatform === 'wpf' ? 'Escritorio (WPF)' : 'Web (PWA)'}...`}
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      style={{ paddingLeft: '32px' }}
+                    />
+                  </div>
 
-                    return (
-                      <div
-                        key={mod.id}
-                        style={{
-                          border: '1px solid var(--border-color, #e2e8f0)',
-                          borderRadius: '10px',
-                          overflow: 'hidden',
-                          background: 'var(--bg-card, #ffffff)',
-                        }}
-                      >
-                        {/* Cabecera del Módulo */}
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button
+                      type="button"
+                      onClick={() => handlePlatformSelectAll(activePlatform, true)}
+                      style={{
+                        background: '#07665e',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '7px 12px',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                      }}
+                    >
+                      <CheckSquare size={13} /> Marcar Plataforma
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handlePlatformSelectAll(activePlatform, false)}
+                      style={{
+                        background: 'transparent',
+                        border: '1px solid #ef4444',
+                        color: '#ef4444',
+                        borderRadius: '6px',
+                        padding: '7px 12px',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                      }}
+                    >
+                      <Square size={13} /> Desmarcar Plataforma
+                    </button>
+                  </div>
+                </div>
+
+                {/* Resumen Global de Asignación */}
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    background: 'var(--bg-secondary, #f8fafc)',
+                    padding: '8px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color, #cbd5e1)',
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                      Filtro activo:{' '}
+                      <strong>
+                        {activePlatform === 'all'
+                          ? '🌐 Todos los Módulos'
+                          : activePlatform === 'pwa'
+                            ? '📱 Módulos Web (PWA)'
+                            : '🖥️ Terminal POS (WPF)'}
+                      </strong>
+                    </span>
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                      Total Global: <strong>{selectedActionIds.length} / {allActions.length}</strong> permisos
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button
+                      type="button"
+                      onClick={() => handleGlobalSelectAll(true)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#07665e',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        textDecoration: 'underline',
+                      }}
+                    >
+                      Marcar Todo Global
+                    </button>
+                    <span style={{ color: '#cbd5e1' }}>|</span>
+                    <button
+                      type="button"
+                      onClick={() => handleGlobalSelectAll(false)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#ef4444',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        textDecoration: 'underline',
+                      }}
+                    >
+                      Limpiar Todo
+                    </button>
+                  </div>
+                </div>
+
+                {/* Lista de Módulos y Acciones de la Plataforma Activa */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {currentGroupedModules.length > 0 ? (
+                    currentGroupedModules.map(({ module: mod, actions }) => {
+                      const moduleActionIds = actions.map((a) => a.id);
+                      const selectedInModuleCount = actions.filter((a) => selectedActionIds.includes(a.id)).length;
+                      const isAllModuleSelected = actions.length > 0 && selectedInModuleCount === actions.length;
+                      const isExpanded = searchTerm.trim() !== '' || expandedModuleId === mod.id;
+
+                      return (
                         <div
+                          key={mod.id}
                           style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            padding: '10px 14px',
-                            background: 'var(--table-header-bg, #f8fafc)',
-                            cursor: 'pointer',
-                            borderBottom: isExpanded ? '1px solid var(--border-color, #e2e8f0)' : 'none',
+                            border: '1px solid var(--border-color, #e2e8f0)',
+                            borderRadius: '10px',
+                            overflow: 'hidden',
+                            background: 'var(--bg-card, #ffffff)',
                           }}
                         >
+                          {/* Cabecera del Módulo */}
                           <div
-                            onClick={() => toggleModuleAccordion(mod.id)}
-                            style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '10px 14px',
+                              background: 'var(--table-header-bg, #f8fafc)',
+                              cursor: 'pointer',
+                              borderBottom: isExpanded ? '1px solid var(--border-color, #e2e8f0)' : 'none',
+                            }}
                           >
-                            {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                            <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
-                              {mod.name}
-                            </span>
-                            <span
-                              className="badge badge-success"
+                            <div
+                              onClick={() => toggleModuleAccordion(mod.id)}
+                              style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}
+                            >
+                              {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                              <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+                                {mod.name}
+                              </span>
+                              <span
+                                className="badge badge-success"
+                                style={{
+                                  fontSize: '0.72rem',
+                                  background: selectedInModuleCount > 0 ? 'rgba(7, 102, 94, 0.12)' : 'rgba(100,116,139,0.1)',
+                                  color: selectedInModuleCount > 0 ? '#07665e' : '#64748b',
+                                }}
+                              >
+                                {selectedInModuleCount} / {actions.length} Habilitados
+                              </span>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleModuleAll(moduleActionIds);
+                              }}
                               style={{
-                                fontSize: '0.72rem',
-                                background: selectedInModuleCount > 0 ? 'rgba(7, 102, 94, 0.12)' : 'rgba(100,116,139,0.1)',
-                                color: selectedInModuleCount > 0 ? '#07665e' : '#64748b',
+                                background: 'transparent',
+                                border: '1px solid var(--border-color)',
+                                borderRadius: '4px',
+                                padding: '3px 8px',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                color: isAllModuleSelected ? '#ef4444' : '#07665e',
                               }}
                             >
-                              {selectedInModuleCount} / {actions.length} Habilitados
-                            </span>
+                              {isAllModuleSelected ? 'Desmarcar Módulo' : 'Marcar Módulo'}
+                            </button>
                           </div>
 
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggleModuleAll(moduleActionIds);
-                            }}
-                            style={{
-                              background: 'transparent',
-                              border: '1px solid var(--border-color)',
-                              borderRadius: '4px',
-                              padding: '3px 8px',
-                              fontSize: '0.75rem',
-                              fontWeight: 600,
-                              cursor: 'pointer',
-                              color: isAllModuleSelected ? '#ef4444' : '#07665e',
-                            }}
-                          >
-                            {isAllModuleSelected ? 'Desmarcar Módulo' : 'Marcar Módulo'}
-                          </button>
-                        </div>
+                          {/* Lista de Acciones del Módulo */}
+                          {isExpanded && (
+                            <div
+                              style={{
+                                padding: '8px 12px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '6px',
+                                background: 'var(--bg-card, #ffffff)',
+                              }}
+                            >
+                              {actions.map((action) => {
+                                const isChecked = selectedActionIds.includes(action.id);
 
-                        {/* Lista de Acciones del Módulo */}
-                        {isExpanded && (
-                          <div
-                            style={{
-                              padding: '8px 12px',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              gap: '6px',
-                              background: 'var(--bg-card, #ffffff)',
-                            }}
-                          >
-                            {actions.map((action) => {
-                              const isChecked = selectedActionIds.includes(action.id);
-
-                              return (
-                                <div
-                                  key={action.id}
-                                  onClick={() => handleToggleAction(action.id)}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    padding: '9px 14px',
-                                    borderRadius: '6px',
-                                    cursor: 'pointer',
-                                    background: isChecked ? 'rgba(7, 102, 94, 0.06)' : 'transparent',
-                                    border: isChecked ? '1px solid rgba(7, 102, 94, 0.25)' : '1px solid transparent',
-                                    transition: 'all 0.12s ease',
-                                  }}
-                                >
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
-                                    <input
-                                      type="checkbox"
-                                      checked={isChecked}
-                                      onChange={() => { }}
-                                      style={{ width: '16px', height: '16px', pointerEvents: 'none' }}
-                                    />
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                      <span style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text-primary)' }}>
-                                        {action.name}
-                                      </span>
-                                      <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontFamily: 'monospace' }}>
-                                        {action.slug}
-                                      </span>
+                                return (
+                                  <div
+                                    key={action.id}
+                                    onClick={() => handleToggleAction(action.id)}
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      padding: '9px 14px',
+                                      borderRadius: '6px',
+                                      cursor: 'pointer',
+                                      background: isChecked ? 'rgba(7, 102, 94, 0.06)' : 'transparent',
+                                      border: isChecked ? '1px solid rgba(7, 102, 94, 0.25)' : '1px solid transparent',
+                                      transition: 'all 0.12s ease',
+                                    }}
+                                  >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                                      <input
+                                        type="checkbox"
+                                        checked={isChecked}
+                                        onChange={() => { }}
+                                        style={{ width: '16px', height: '16px', pointerEvents: 'none' }}
+                                      />
+                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                        <span style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text-primary)' }}>
+                                          {action.name}
+                                        </span>
+                                        <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontFamily: 'monospace' }}>
+                                          {action.slug}
+                                        </span>
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div style={{ textAlign: 'center', padding: '24px', color: '#64748b' }}>
-                    No se encontraron acciones en esta plataforma que coincidan con la búsqueda.
-                  </div>
-                )}
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '24px', color: '#64748b' }}>
+                      No se encontraron acciones en esta plataforma que coincidan con la búsqueda.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="btn-secondary" onClick={() => setIsPermissionsModalOpen(false)}>
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  style={{ width: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  onClick={handleSavePermissions}
+                  disabled={isSavingPermissions}
+                >
+                  <Check size={16} /> {isSavingPermissions ? 'Guardando...' : 'Guardar Permisos'}
+                </button>
               </div>
             </div>
-
-            <div className="modal-footer">
-              <button type="button" className="btn-secondary" onClick={() => setIsPermissionsModalOpen(false)}>
-                Cancelar
-              </button>
-              <button
-                type="button"
-                className="btn-primary"
-                style={{ width: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}
-                onClick={handleSavePermissions}
-                disabled={isSavingPermissions}
-              >
-                <Check size={16} /> {isSavingPermissions ? 'Guardando...' : 'Guardar Permisos'}
-              </button>
-            </div>
           </div>
-        </div>
         </ModalPortal>
       )}
 
