@@ -11,9 +11,10 @@ export const UpdatePromptModal: React.FC = () => {
     needRefresh: [needRefresh],
     updateServiceWorker,
   } = useRegisterSW({
-    onRegisteredSW(_swUrl, registration) {
+    immediate: true,
+    onRegistered(registration) {
       if (registration) {
-        // 1. Sondeo periódico estándar de nuevas versiones cada 60 segundos
+        // 1. Sondeo periódico de nuevas versiones cada 60 segundos
         const swInterval = setInterval(() => {
           registration.update().catch((err) => {
             console.debug('[PWA Update Check Skipped]:', err);
@@ -43,22 +44,37 @@ export const UpdatePromptModal: React.FC = () => {
   });
 
   /**
-   * Ejecuta la activación limpia gobernada por Workbox
-   * Al ejecutar updateServiceWorker(true), Workbox envía SKIP_WAITING y recarga
-   * la aplicación desde CacheStorage sin parpadeos ni race conditions.
+   * Flujo canónico de actualización:
+   * 1. Escucha activa de 'controllerchange' ({ once: true }) para recargar en cuanto el nuevo SW tome el control.
+   * 2. Envío de SKIP_WAITING mediante updateServiceWorker().
+   * 3. Fallback con timeout de 2000ms para asegurar la recarga universal.
    */
   const handleUpdate = async () => {
     if (isUpdating) return;
     setIsUpdating(true);
 
+    let isReloading = false;
+    const triggerReload = () => {
+      if (!isReloading) {
+        isReloading = true;
+        window.location.reload();
+      }
+    };
+
+    // 1. Enlazar listener nativo de controllerchange
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('controllerchange', triggerReload, { once: true });
+    }
+
     try {
-      // Indicamos a Workbox que active el nuevo Service Worker y recargue
+      // 2. Notificar al nuevo Service Worker que active skipWaiting
       await updateServiceWorker(true);
     } catch (err) {
-      console.error('[PWA Update Trigger Error]:', err);
-      // Fallback de emergencia solo en caso de excepción crítica
-      window.location.reload();
+      console.error('[PWA Update Error]:', err);
     }
+
+    // 3. Fallback de seguridad por si controllerchange ya disparó o tarda en responder
+    setTimeout(triggerReload, 2000);
   };
 
   // El modal se muestra ÚNICAMENTE cuando Workbox confirma que los nuevos chunks

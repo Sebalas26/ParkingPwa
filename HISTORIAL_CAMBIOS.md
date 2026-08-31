@@ -7,6 +7,33 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-31 15:06:00] - [BUGFIX / CORE] [PWA / SERVICE WORKER] - Implementación canónica de recarga con listener `controllerchange` y registro inmediato
+
+#### 💬 Prompt Original del Usuario
+> "El plan es completamente correcto. Procede a implementarlo en `src/shared/ui/UpdatePromptModal.tsx`:
+1. Implementa el registro de `useRegisterSW` con `immediate: true`, el sondeo de `registration.update()` en intervalos/focus y el callback `onNeedRefresh`.
+2. Implementa el handler de actualización con el listener de `controllerchange` `{ once: true }`, `updateServiceWorker()` y el fallback de `setTimeout` a 2000ms.
+3. Ejecuta `npm run build` para validar 0 errores de compilación y registra los cambios en `HISTORIAL_CAMBIOS.md`."
+
+#### 🤖 Resumen Técnico para la IA
+1. **Flujo de Recarga Canónico e Infalible (`UpdatePromptModal.tsx`)**:
+   - En `vite-plugin-pwa` moderno, `updateServiceWorker()` no recarga la página por sí solo. Se implementó el enlace al evento nativo `navigator.serviceWorker.addEventListener('controllerchange', triggerReload, { once: true })` con una bandera anti-rebote `isReloading`.
+   - Se configuró un fallback de seguridad mediante `setTimeout(triggerReload, 2000)` para garantizar la recarga universal incluso si el evento `controllerchange` ya ocurrió previo a la asignación o en entornos móviles donde el WebView retiene el evento.
+2. **Registro Inmediato y Sondeo (`useRegisterSW`)**:
+   - Se activó `immediate: true` en `useRegisterSW` para asegurar que el registro y sondeo del Service Worker comiencen sin demora al arrancar la aplicación.
+   - Se configuró el sondeo periódico cada 60 segundos y ante eventos de `focus` y `visibilitychange` (`document.visibilityState === 'visible'`).
+3. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/shared/ui/UpdatePromptModal.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores** (build PWA exitoso)
+
+---
+
 ### [2026-08-31 14:56:00] - [ARCHITECTURE / REFACTOR] [PWA / SERVICE WORKER] - Re-arquitectura limpia del ciclo de vida PWA bajo useRegisterSW y UX sin parpadeos
 
 #### 💬 Prompt Original del Usuario
