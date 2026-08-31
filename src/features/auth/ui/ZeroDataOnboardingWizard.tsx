@@ -8,7 +8,6 @@ import './ZeroDataOnboardingWizard.css';
 export const ZeroDataOnboardingWizard: React.FC = () => {
   const { refreshBranches, setActiveBranchId } = useBranchContext();
   const [formData, setFormData] = useState<{
-    code: string;
     name: string;
     address: string;
     phone: string;
@@ -17,7 +16,6 @@ export const ZeroDataOnboardingWizard: React.FC = () => {
     notes: string;
     logoBase64: string;
   }>({
-    code: '',
     name: '',
     address: '',
     phone: '',
@@ -60,8 +58,8 @@ export const ZeroDataOnboardingWizard: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.code.trim() || !formData.name.trim()) {
-      setErrorMessage('El código y el nombre de la sede son obligatorios.');
+    if (!formData.name.trim()) {
+      setErrorMessage('El nombre de la sede es obligatorio.');
       return;
     }
 
@@ -76,7 +74,6 @@ export const ZeroDataOnboardingWizard: React.FC = () => {
 
     try {
       const payload: CreateBranchDto = {
-        code: formData.code.trim(),
         name: formData.name.trim(),
         address: formData.address.trim() || undefined,
         phone: formData.phone.trim() || undefined,
@@ -123,20 +120,7 @@ export const ZeroDataOnboardingWizard: React.FC = () => {
 
         <form onSubmit={handleSubmit}>
           <div className="onboarding-form-grid">
-            <div className="onboarding-form-group">
-              <label>Código de Sede *</label>
-              <input
-                type="text"
-                name="code"
-                className="input-field"
-                value={formData.code}
-                onChange={handleChange}
-                placeholder="Ej: SEDE-01"
-                required
-              />
-            </div>
-
-            <div className="onboarding-form-group">
+            <div className="onboarding-form-group full-width">
               <label>Nombre de la Sede *</label>
               <input
                 type="text"

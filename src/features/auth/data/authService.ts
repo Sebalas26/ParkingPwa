@@ -57,6 +57,7 @@ export const authService = {
       isSuperAdmin,
       companyId: response.companyId,
       companyName: response.companyName,
+      maxBranches: response.maxBranches,
       token: response.token,
       permissions: userPermissions,
       modules: userModules,

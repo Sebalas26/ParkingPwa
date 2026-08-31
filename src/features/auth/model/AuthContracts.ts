@@ -27,6 +27,7 @@ export interface AuthResponseDto {
   isSuperAdmin?: boolean;
   companyId?: number;
   companyName?: string;
+  maxBranches?: number;
   errorMessage?: string;
   message?: string;
   permissions?: string[];
@@ -44,6 +45,7 @@ export interface UserSession {
   isSuperAdmin?: boolean;
   companyId?: number;
   companyName?: string;
+  maxBranches?: number;
   token: string;
   permissions: string[];
   modules: string[];

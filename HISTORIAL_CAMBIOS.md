@@ -7,6 +7,36 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-31 17:10:00] - [FEATURE / UX / MULTI-TENANT] [PWA / SEDES] - Control Estricto de MaxBranches y Código de Sede Autoincremental Oculto
+
+#### 💬 Prompt Original del Usuario
+> "Listo, ya se creo bien las compañias deja crear bien las sedes, pero encontramos otro error se supone que cuando se crea la compañia se le coloca el limite de sedes que puede tener le colocamos 3 y dejo pasar dejor crear 4 sedes eso no debe ser posible debería salir un mensaje de alerta con el mismo diseño del sistema donde diga ya alcanzaste tu limite comprado si necesitas mas sedes contacta al administrador si me explico. otro error que encontrado el codigo de sede necesito que le crees un codigo dinamico si pero que no se repita en la bd osea oculta ese campo del fronted pero que si guarde un codigo dinamico osea consecutivo entonces va a coger el nombre de la compañia y le va a sumar el 01 despues el02 si me explico así autoincremental pero se debe quitar de la visual del usuario tanto al crear como al editar la sedeme explico analiza el plan para revisarlo."
+
+#### 🤖 Resumen Técnico para la IA
+1. **Modal Nativo de Límite de Sedes (`ParqueaderosTab.tsx`)**:
+   - Se evaluó el límite máximo contratado (`maxBranchesLimit`) a partir de `inspectedCompany?.maxBranches` o `currentUser?.maxBranches`.
+   - Se implementó un modal corporativo de advertencia con el diseño del sistema (`isLimitReachedModalOpen`) con ícono estilizado, mensaje explicativo y botón de acción.
+   - Si el usuario pulsa "+ Crear Sede" habiendo alcanzado el cupo o si la API retorna rechazo por cupo, se activa inmediatamente la alerta.
+   - Se agregó en el encabezado la insignia de conteo reactivo (`{branches.length} / {maxBranchesLimit} Sedes`).
+2. **Ocultamiento Visual del Código de Sede (`ParqueaderosTab.tsx` & `ZeroDataOnboardingWizard.tsx`)**:
+   - Se eliminaron por completo los campos de entrada de "Código de Sede" en los formularios de creación, edición y wizard inicial.
+   - En `BranchesContracts.ts`, `code` se convirtió en opcional (`code?: string`).
+3. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/settings/model/BranchesContracts.ts`
+- `src/features/auth/model/AuthContracts.ts`
+- `src/features/auth/data/authService.ts`
+- `src/features/settings/ui/ParqueaderosTab.tsx`
+- `src/features/auth/ui/ZeroDataOnboardingWizard.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+
+---
+
 ### [2026-08-31 16:07:00] - [BUGFIX / ONBOARDING] [PWA / CONTEXTO DE SEDES] - Inicialización reactiva de sedes desde sesión y prevención de modal de bienvenida indebido
 
 #### 💬 Prompt Original del Usuario

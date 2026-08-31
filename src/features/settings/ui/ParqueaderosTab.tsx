@@ -57,10 +57,17 @@ export const ParqueaderosTab: React.FC = () => {
   const currentUser = authService.getCurrentUser();
   const targetCompanyId = inspectedCompany?.id || currentUser?.companyId || undefined;
 
+  const maxBranchesLimit = inspectedCompany?.maxBranches ?? currentUser?.maxBranches ?? 0;
+
   const [branches, setBranches] = useState<BranchDto[]>([]);
+  const isLimitReached = maxBranchesLimit > 0 && branches.length >= maxBranchesLimit;
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [expandedBranchId, setExpandedBranchId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
+
+  // Modal Alerta Límite de Sedes
+  const [isLimitReachedModalOpen, setIsLimitReachedModalOpen] = useState(false);
+  const [limitErrorMessage, setLimitErrorMessage] = useState<string | null>(null);
 
   // Modal Crear / Editar Sede
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -118,8 +125,13 @@ export const ParqueaderosTab: React.FC = () => {
   };
 
   const handleOpenCreate = () => {
+    if (isLimitReached) {
+      setLimitErrorMessage(`Has alcanzado el límite máximo contratado (${maxBranchesLimit} ${maxBranchesLimit === 1 ? 'sede' : 'sedes'}) para tu empresa. Si requieres habilitar más sedes de operación, comunícate con el Administrador.`);
+      setIsLimitReachedModalOpen(true);
+      return;
+    }
+
     setEditingBranch({
-      code: `SEDE-0${branches.length + 1}`,
       name: '',
       address: '',
       phone: '',
@@ -148,18 +160,26 @@ export const ParqueaderosTab: React.FC = () => {
 
   const handleSaveBranch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingBranch || !editingBranch.code || !editingBranch.name) {
-      alert('Por favor completa el código y nombre de la sede.');
+    if (!editingBranch || !editingBranch.name?.trim()) {
+      alert('Por favor completa el nombre de la sede.');
       return;
     }
 
     setIsSavingBranch(true);
     try {
       if (editingBranch.id) {
-        await branchesService.update(editingBranch.id, editingBranch as UpdateBranchDto);
+        await branchesService.update(editingBranch.id, {
+          name: editingBranch.name.trim(),
+          address: editingBranch.address?.trim() || '',
+          phone: editingBranch.phone?.trim(),
+          city: editingBranch.city?.trim(),
+          totalCapacity: editingBranch.totalCapacity || 100,
+          notes: editingBranch.notes?.trim(),
+          logoBase64: editingBranch.logoBase64?.trim(),
+          isActive: editingBranch.isActive ?? true,
+        });
       } else {
         const payload: CreateBranchDto = {
-          code: editingBranch.code.trim().toUpperCase(),
           name: editingBranch.name.trim(),
           address: editingBranch.address?.trim() || '',
           phone: editingBranch.phone?.trim(),
@@ -176,7 +196,14 @@ export const ParqueaderosTab: React.FC = () => {
       await loadBranches();
       await refreshBranches();
     } catch (err: any) {
-      alert(err?.message || 'Error al guardar la sede.');
+      const msg = err?.response?.data?.message || err?.message || 'Error al guardar la sede.';
+      if (msg.toLowerCase().includes('límite') || msg.toLowerCase().includes('limite') || msg.toLowerCase().includes('maxbranches')) {
+        setIsEditModalOpen(false);
+        setLimitErrorMessage(msg);
+        setIsLimitReachedModalOpen(true);
+      } else {
+        alert(msg);
+      }
     } finally {
       setIsSavingBranch(false);
     }
@@ -402,11 +429,33 @@ export const ParqueaderosTab: React.FC = () => {
     <div className="settings-section-card">
       <div className="section-header">
         <div className="section-header-titles">
-          <h2>Gestión de Sedes (Parqueaderos)</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h2>Gestión de Sedes (Parqueaderos)</h2>
+            {maxBranchesLimit > 0 && (
+              <span
+                style={{
+                  fontSize: '0.76rem',
+                  fontWeight: 700,
+                  padding: '3px 9px',
+                  borderRadius: '6px',
+                  background: isLimitReached ? 'rgba(239, 68, 68, 0.12)' : 'rgba(16, 185, 129, 0.12)',
+                  color: isLimitReached ? '#ef4444' : '#10b981',
+                  border: isLimitReached ? '1px solid rgba(239, 68, 68, 0.25)' : '1px solid rgba(16, 185, 129, 0.25)',
+                }}
+              >
+                {branches.length} / {maxBranchesLimit} Sedes
+              </span>
+            )}
+          </div>
           <p>Administra las sedes físicas del sistema, parametrizando medios de pago, usuarios autorizados y tarifas por sede.</p>
         </div>
         {authService.hasPermission('branches.create') && (
-          <button className="btn-primary" style={{ width: 'auto' }} onClick={handleOpenCreate}>
+          <button
+            className="btn-primary"
+            style={{ width: 'auto' }}
+            onClick={handleOpenCreate}
+            title={isLimitReached ? 'Has alcanzado el límite máximo contratado de sedes' : 'Crear Sede'}
+          >
             <Plus size={16} /> Crear Sede
           </button>
         )}
@@ -644,29 +693,16 @@ export const ParqueaderosTab: React.FC = () => {
 
             <form onSubmit={handleSaveBranch}>
               <div className="modal-body">
-                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '12px' }}>
-                  <div className="form-group">
-                    <label>Código de Sede *</label>
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={editingBranch.code || ''}
-                      onChange={(e) => setEditingBranch({ ...editingBranch, code: e.target.value })}
-                      placeholder="SEDE-01"
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Nombre de la Sede *</label>
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={editingBranch.name || ''}
-                      onChange={(e) => setEditingBranch({ ...editingBranch, name: e.target.value })}
-                      placeholder="Sede Principal Centro"
-                      required
-                    />
-                  </div>
+                <div className="form-group">
+                  <label>Nombre de la Sede *</label>
+                  <input
+                    type="text"
+                    className="input-field"
+                    value={editingBranch.name || ''}
+                    onChange={(e) => setEditingBranch({ ...editingBranch, name: e.target.value })}
+                    placeholder="Ej: Sede Principal Centro"
+                    required
+                  />
                 </div>
 
                 <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -1205,6 +1241,51 @@ export const ParqueaderosTab: React.FC = () => {
             </div>
           </div>
         </div>
+        </ModalPortal>
+      )}
+
+      {/* MODAL ALERTA: LÍMITE DE SEDES ALCANZADO */}
+      {isLimitReachedModalOpen && (
+        <ModalPortal>
+          <div className="modal-overlay" onClick={() => setIsLimitReachedModalOpen(false)}>
+            <div
+              className="modal-content"
+              style={{ maxWidth: '440px', textAlign: 'center', padding: '2rem' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div
+                style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '50%',
+                  background: 'rgba(239, 68, 68, 0.12)',
+                  color: '#ef4444',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 1.25rem',
+                  boxShadow: '0 0 20px rgba(239, 68, 68, 0.2)',
+                }}
+              >
+                <AlertTriangle size={32} />
+              </div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.6rem' }}>
+                Límite de Sedes Alcanzado
+              </h3>
+              <p style={{ color: '#64748b', fontSize: '0.92rem', lineHeight: '1.55', marginBottom: '1.75rem' }}>
+                {limitErrorMessage ||
+                  `Has alcanzado el límite máximo contratado (${maxBranchesLimit} ${maxBranchesLimit === 1 ? 'sede' : 'sedes'}) para tu empresa. Si requieres habilitar más sedes de operación, por favor comunícate con el Administrador del sistema.`}
+              </p>
+              <button
+                type="button"
+                className="btn-primary"
+                style={{ width: '100%', justifyContent: 'center' }}
+                onClick={() => setIsLimitReachedModalOpen(false)}
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
         </ModalPortal>
       )}
     </div>
