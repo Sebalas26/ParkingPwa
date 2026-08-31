@@ -7,6 +7,33 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-30 19:40:00] - [FEATURE / RBAC / Multi-Tenant] - Aislamiento Total de Roles y Usuarios a Nivel Sede/Branch
+
+#### 💬 Prompt Original del Usuario
+> "no, esta mal, cuando como super administrador ingreso administrar un parqueadero me deben salir toda la infomacion de ese parqueadero, dashboard, caja, activos, reportes, novedades y confguraciones (sedes, usuarios, roles) ... valida porque en BD y las apis deben retornar los usuarios y roles de cada parqueadero cuando ingreso a dichos modulos"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Filtro de `branchId` en UI (`RolesTab.tsx`, `UsuariosTab.tsx`)**:
+   - Se añadió `targetBranchId` extrayéndolo directamente desde `activeBranch?.id` provisto por el contexto `useParqueaderoContext()`.
+   - Se modificó la invocación a los endpoints `loadData(companyId, branchId)` para pasar el ID de la sede a los métodos del backend.
+2. **Propagación en Servicios API (`rolesService.ts`, `usuariosService.ts`)**:
+   - Se integró el parámetro opcional `branchId` al final de los endpoints `getRoles(companyId, branchId)` y `getUsers(companyId, branchId)`.
+   - Se utilizó `URLSearchParams` para adjuntar los query strings correctamente y garantizar un listado 100% segmentado.
+3. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/settings/ui/RolesTab.tsx`
+- `src/features/settings/ui/UsuariosTab.tsx`
+- `src/features/settings/data/rolesService.ts`
+- `src/features/settings/data/usuariosService.ts`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` -> **0 Errores** (build PWA exitoso)
+
+---
+
 ### [2026-08-30 19:18:00] - [FEATURE / RBAC / Multi-Tenant] - Aislamiento Total de Roles, Usuarios y Sedes por Parqueadero
 
 #### 💬 Prompt Original del Usuario

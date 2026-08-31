@@ -2,9 +2,15 @@ import { apiClient } from '../../../shared/api/apiClient';
 import type { RoleDto, SaveRoleDto, ActionDto, ModuleDto, RoleActionPermissionDto } from '../model/RolesContracts';
 
 export const rolesService = {
-  getRoles: async (companyId?: number): Promise<RoleDto[]> => {
+  getRoles: async (companyId?: number, branchId?: number): Promise<RoleDto[]> => {
     try {
-      const url = companyId ? `/UserRole/GetUsersRoles?companyId=${companyId}` : '/UserRole/GetUsersRoles';
+      let url = '/UserRole/GetUsersRoles';
+      const params = new URLSearchParams();
+      if (companyId) params.append('companyId', companyId.toString());
+      if (branchId) params.append('branchId', branchId.toString());
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
       const data = await apiClient.get<any[]>(url);
       if (data && Array.isArray(data) && data.length > 0) {
         return data.map((r) => {
@@ -51,12 +57,13 @@ export const rolesService = {
     }
   },
 
-  saveOrEditRole: async (role: SaveRoleDto & { companyId?: number }): Promise<boolean> => {
+  saveOrEditRole: async (role: SaveRoleDto & { companyId?: number; branchId?: number }): Promise<boolean> => {
     const payload = {
       idUserRol: role.idUserRol,
       roleName: role.roleName,
       isActive: role.isActive,
       companyId: role.companyId,
+      branchId: role.branchId,
     };
     await apiClient.post('/UserRole/SaveOrEditUserRole', payload);
     return true;

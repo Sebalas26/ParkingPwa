@@ -2,14 +2,26 @@ import { apiClient } from '../../../shared/api/apiClient';
 import type { UserDto, SaveUserDto, GetIdentificationTypeDto, GetUserRoleDto } from '../model/UsuariosContracts';
 
 export const usuariosService = {
-  getUsers: async (companyId?: number): Promise<UserDto[]> => {
+  getUsers: async (companyId?: number, branchId?: number): Promise<UserDto[]> => {
     try {
-      const url = companyId ? `/Users/GetUsers?companyId=${companyId}` : '/Users/GetUsers';
+      let url = '/Users/GetUsers';
+      const params = new URLSearchParams();
+      if (companyId) params.append('companyId', companyId.toString());
+      if (branchId) params.append('branchId', branchId.toString());
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
       const data = await apiClient.get<UserDto[]>(url);
       return data || [];
     } catch {
       try {
-        const urlFallback = companyId ? `/Users?companyId=${companyId}` : '/Users';
+        let urlFallback = '/Users';
+        const params = new URLSearchParams();
+        if (companyId) params.append('companyId', companyId.toString());
+        if (branchId) params.append('branchId', branchId.toString());
+        if (params.toString()) {
+          urlFallback += `?${params.toString()}`;
+        }
         const fallbackData = await apiClient.get<UserDto[]>(urlFallback);
         return fallbackData || [];
       } catch {
@@ -18,8 +30,8 @@ export const usuariosService = {
     }
   },
 
-  getUsuarios: async (companyId?: number): Promise<UserDto[]> => {
-    return await usuariosService.getUsers(companyId);
+  getUsuarios: async (companyId?: number, branchId?: number): Promise<UserDto[]> => {
+    return await usuariosService.getUsers(companyId, branchId);
   },
 
   getIdentificationTypes: async (): Promise<GetIdentificationTypeDto[]> => {
@@ -60,9 +72,15 @@ export const usuariosService = {
     }
   },
 
-  getUserRoles: async (companyId?: number): Promise<GetUserRoleDto[]> => {
+  getUserRoles: async (companyId?: number, branchId?: number): Promise<GetUserRoleDto[]> => {
     try {
-      const url = companyId ? `/UserRole/GetUsersRoles?companyId=${companyId}` : '/UserRole/GetUsersRoles';
+      let url = '/UserRole/GetUsersRoles';
+      const params = new URLSearchParams();
+      if (companyId) params.append('companyId', companyId.toString());
+      if (branchId) params.append('branchId', branchId.toString());
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
       const data = await apiClient.get<any[]>(url);
       if (data && Array.isArray(data) && data.length > 0) {
         return data.map((r) => {

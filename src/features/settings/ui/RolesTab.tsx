@@ -30,11 +30,15 @@ import { useParqueaderoContext } from '../../../shared/context/ParqueaderoContex
 type PlatformTab = 'all' | 'pwa' | 'wpf';
 
 export const RolesTab: React.FC = () => {
-  const { inspectedCompany } = useParqueaderoContext();
+  const { inspectedCompany, activeBranch } = useParqueaderoContext();
   const currentUser = authService.getCurrentUser();
   const targetCompanyId = useMemo(
     () => inspectedCompany?.id || currentUser?.companyId || undefined,
     [inspectedCompany?.id, currentUser?.companyId]
+  );
+  const targetBranchId = useMemo(
+    () => activeBranch?.id || undefined,
+    [activeBranch?.id]
   );
 
   const [roles, setRoles] = useState<RoleDto[]>([]);
@@ -67,11 +71,11 @@ export const RolesTab: React.FC = () => {
   const [isSavingPermissions, setIsSavingPermissions] = useState(false);
   const [expandedRoleId, setExpandedRoleId] = useState<number | null>(null);
 
-  const loadData = async (companyId?: number) => {
+  const loadData = async (companyId?: number, branchId?: number) => {
     setIsLoading(true);
     try {
       const [rolesData, modulesData, actionsData] = await Promise.all([
-        rolesService.getRoles(companyId),
+        rolesService.getRoles(companyId, branchId),
         rolesService.getModules(),
         rolesService.getActions(),
       ]);
@@ -108,8 +112,8 @@ export const RolesTab: React.FC = () => {
   };
 
   useEffect(() => {
-    loadData(targetCompanyId);
-  }, [targetCompanyId]);
+    loadData(targetCompanyId, targetBranchId);
+  }, [targetCompanyId, targetBranchId]);
 
   // Modal de confirmación de eliminación de rol
   const [roleToDelete, setRoleToDelete] = useState<RoleDto | null>(null);
@@ -152,7 +156,7 @@ export const RolesTab: React.FC = () => {
       await rolesService.deleteRole(roleId);
       showToast('Rol eliminado exitosamente.', 'success');
       setRoleToDelete(null);
-      await loadData(targetCompanyId);
+      await loadData(targetCompanyId, targetBranchId);
     } catch (err: any) {
       showToast(err?.message || 'Error al eliminar el rol de la base de datos.', 'error');
     } finally {
@@ -243,11 +247,12 @@ export const RolesTab: React.FC = () => {
         roleName: editingRole.roleName.trim(),
         isActive: editingRole.isActive ?? true,
         companyId: targetCompanyId,
+        branchId: targetBranchId,
       });
       setIsRoleModalOpen(false);
       setEditingRole(null);
       showToast('Rol guardado exitosamente.', 'success');
-      await loadData(targetCompanyId);
+      await loadData(targetCompanyId, targetBranchId);
     } catch (err: any) {
       showToast(err?.message || 'Error al guardar el rol.', 'error');
     }
