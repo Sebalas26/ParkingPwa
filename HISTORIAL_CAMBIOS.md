@@ -7,6 +7,34 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-09-01 07:22:00] - [FEATURE / UX / RBAC] [PWA / PERMISOS] - Rediseño Pro del Modal de Permisos por Rol y Supresión de Slugs Técnicos
+
+#### 💬 Prompt Original del Usuario
+> "Listo lee el historial de cambios para revisar todo lo que se ha hecho y vamos a revisar este modulo de permisos por que la verdad no creo que al usuario le interese saber esos nombres en ingles pero sabes que nos toca revisar el modulo por que eso esta super complejo demasiados botones no se como lo veas pero se necesita un mejor diseño me explico ? segundo analizar si de verdad estan todos los permisos de los modulos web parametrizados nos toca revisar que si esten todos todos los permisos hasta el mas minimo boton si me explico ? analiza y dame el plan."
+
+#### 🤖 Resumen Técnico para la IA
+1. **Rediseño Visual Pro del Modal de Permisos (`RolesTab.tsx` & `Settings.css`)**:
+   - **Supresión de Slugs en Inglés**: Se eliminaron completamente las etiquetas monoespaciadas técnicas de base de datos (`analytics.audit_reports`, `rates.create`, etc.). La UI ahora muestra exclusivamente los nombres claros y descriptivos en español.
+   - **Segmented Control Superior**: Se rediseñaron las pestañas de plataforma (`Todos`, `Web (PWA)`, `Terminal POS`) con íconos vectoriales limpios y badges de conteo sin emojis duplicados.
+   - **Toolbar Simplificada e Inteligente**: Se condensaron los múltiples botones dispersos en 2 únicas acciones contextuales: `[ Seleccionar Visibles ]` y `[ Desmarcar Visibles ]`, las cuales respetan en tiempo real el filtro de búsqueda y la plataforma seleccionada.
+   - **Indicador de Progreso Visual**: Se incorporó una barra de progreso animada con el porcentaje y conteo de cobertura (`X de Y permisos asignados (Z%)`).
+   - **Switch Maestro por Módulo**: Se integró un checkbox/switch maestro directamente en el encabezado de cada módulo para activar o desactivar todas sus acciones con un solo clic.
+   - **Tarjetas Interactivas de Acciones**: Lista estilizada con checkboxes personalizados, estados hover y bordes suaves de acento.
+2. **Auditoría Exhaustiva de Cobertura Web**:
+   - Se verificó la consistencia de los 14 módulos web (Caja, Ingresos, Salidas, Mensualidades, Reportes, Novedades, Sedes, Tarifas, Medios de Pago, Convenios, Usuarios, Roles, Resoluciones, Empresas) asegurando que cada pantalla y botón operativo esté protegido por su slug RBAC correspondiente.
+3. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/settings/ui/RolesTab.tsx`
+- `src/features/settings/ui/Settings.css`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+
+---
+
 ### [2026-08-31 21:50:00] - [UX / UI] [PWA / USUARIOS] - Restricción Numérica Estricta en Número de Identificación y Limpieza de Placeholder de Contraseña Inicial
 
 #### 💬 Prompt Original del Usuario

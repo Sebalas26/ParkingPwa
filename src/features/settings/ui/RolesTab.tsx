@@ -13,6 +13,7 @@ import {
   Check,
   Monitor,
   Globe,
+  Laptop,
   ShieldCheck,
   Lock,
   CheckCircle2,
@@ -346,25 +347,12 @@ export const RolesTab: React.FC = () => {
     }
   };
 
-  const handlePlatformSelectAll = (platform: PlatformTab, selectAll: boolean) => {
-    const platformActions = allActions.filter((a) => {
-      const mod = allModules.find((m) => m.id === (a.moduleId ?? a.module?.id));
-      return mod ? isModuleInPlatform(mod, platform) : true;
-    });
-    const platformActionIds = platformActions.map((a) => a.id);
-
+  const handleSelectVisible = (selectAll: boolean) => {
+    const visibleActionIds = currentGroupedModules.flatMap((g) => g.actions.map((a) => a.id));
     if (selectAll) {
-      setSelectedActionIds((prev) => Array.from(new Set([...prev, ...platformActionIds])));
+      setSelectedActionIds((prev) => Array.from(new Set([...prev, ...visibleActionIds])));
     } else {
-      setSelectedActionIds((prev) => prev.filter((id) => !platformActionIds.includes(id)));
-    }
-  };
-
-  const handleGlobalSelectAll = (selectAll: boolean) => {
-    if (selectAll) {
-      setSelectedActionIds(allActions.map((a) => a.id));
-    } else {
-      setSelectedActionIds([]);
+      setSelectedActionIds((prev) => prev.filter((id) => !visibleActionIds.includes(id)));
     }
   };
 
@@ -854,383 +842,208 @@ export const RolesTab: React.FC = () => {
           <div className="modal-overlay">
             <div className="modal-card" style={{ maxWidth: '840px', maxHeight: '92vh' }}>
               <div className="modal-header">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Key size={20} style={{ color: 'var(--primary-color, #07665e)' }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div
+                    style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '10px',
+                      background: 'rgba(7, 102, 94, 0.1)',
+                      color: 'var(--primary-color, #07665e)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Key size={20} />
+                  </div>
                   <div>
-                    <h3 style={{ margin: 0, fontSize: '1.1rem' }}>
+                    <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>
                       Configurar Permisos: {targetRole.roleName || targetRole.role}
                     </h3>
-                    <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                      Administra selectivamente los módulos operativos de Escritorio y Web
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary, #64748b)' }}>
+                      Habilita o restringe las acciones operativas y administrativas para este rol
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="modal-body" style={{ overflowY: 'auto', gap: '1rem', paddingBottom: '1.5rem' }}>
-                {/* Pestañas de Plataforma */}
-                <div
-                  style={{
-                    display: 'flex',
-                    background: 'var(--bg-secondary, #f1f5f9)',
-                    padding: '4px',
-                    borderRadius: '10px',
-                    gap: '6px',
-                    border: '1px solid var(--border-color, #cbd5e1)',
-                    flexWrap: 'wrap',
-                  }}
-                >
+              <div className="modal-body" style={{ overflowY: 'auto', gap: '1rem', paddingBottom: '1.25rem' }}>
+                {/* Selector de Plataforma */}
+                <div className="perm-platform-tabs">
                   <button
                     type="button"
+                    className={`perm-platform-tab ${activePlatform === 'all' ? 'active' : ''}`}
                     onClick={() => handleSwitchPlatform('all')}
-                    style={{
-                      flex: 1,
-                      minWidth: '140px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      padding: '8px 12px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      background: activePlatform === 'all' ? '#ffffff' : 'transparent',
-                      color: activePlatform === 'all' ? 'var(--primary-color, #07665e)' : '#64748b',
-                      fontWeight: activePlatform === 'all' ? 700 : 500,
-                      boxShadow: activePlatform === 'all' ? '0 2px 4px rgba(0,0,0,0.06)' : 'none',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
                   >
-                    <Globe size={16} />
-                    <span>🌐 Todos los Módulos</span>
-                    <span
-                      className="badge"
-                      style={{
-                        fontSize: '0.72rem',
-                        background: activePlatform === 'all' ? 'rgba(7, 102, 94, 0.12)' : 'rgba(100, 116, 139, 0.1)',
-                        color: activePlatform === 'all' ? '#07665e' : '#64748b',
-                      }}
-                    >
+                    <Globe size={15} />
+                    <span>Todos los Módulos</span>
+                    <span className="perm-platform-badge">
                       {allSelectedCount} / {allActions.length}
                     </span>
                   </button>
 
                   <button
                     type="button"
+                    className={`perm-platform-tab ${activePlatform === 'pwa' ? 'active' : ''}`}
                     onClick={() => handleSwitchPlatform('pwa')}
-                    style={{
-                      flex: 1,
-                      minWidth: '140px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      padding: '8px 12px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      background: activePlatform === 'pwa' ? '#ffffff' : 'transparent',
-                      color: activePlatform === 'pwa' ? 'var(--primary-color, #07665e)' : '#64748b',
-                      fontWeight: activePlatform === 'pwa' ? 700 : 500,
-                      boxShadow: activePlatform === 'pwa' ? '0 2px 4px rgba(0,0,0,0.06)' : 'none',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
                   >
-                    <Globe size={16} />
-                    <span>📱 Módulos Web</span>
-                    <span
-                      className="badge"
-                      style={{
-                        fontSize: '0.72rem',
-                        background: activePlatform === 'pwa' ? 'rgba(7, 102, 94, 0.12)' : 'rgba(100, 116, 139, 0.1)',
-                        color: activePlatform === 'pwa' ? '#07665e' : '#64748b',
-                      }}
-                    >
+                    <Laptop size={15} />
+                    <span>Módulos Web (PWA)</span>
+                    <span className="perm-platform-badge">
                       {pwaSelectedCount} / {pwaTotalActions.length}
                     </span>
                   </button>
 
                   <button
                     type="button"
+                    className={`perm-platform-tab ${activePlatform === 'wpf' ? 'active' : ''}`}
                     onClick={() => handleSwitchPlatform('wpf')}
-                    style={{
-                      flex: 1,
-                      minWidth: '140px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      padding: '8px 12px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      background: activePlatform === 'wpf' ? '#ffffff' : 'transparent',
-                      color: activePlatform === 'wpf' ? 'var(--primary-color, #07665e)' : '#64748b',
-                      fontWeight: activePlatform === 'wpf' ? 700 : 500,
-                      boxShadow: activePlatform === 'wpf' ? '0 2px 4px rgba(0,0,0,0.06)' : 'none',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
                   >
-                    <Monitor size={16} />
-                    <span>🖥️ Módulos Escritorio</span>
-                    <span
-                      className="badge"
-                      style={{
-                        fontSize: '0.72rem',
-                        background: activePlatform === 'wpf' ? 'rgba(7, 102, 94, 0.12)' : 'rgba(100, 116, 139, 0.1)',
-                        color: activePlatform === 'wpf' ? '#07665e' : '#64748b',
-                      }}
-                    >
+                    <Monitor size={15} />
+                    <span>Terminal POS (WPF)</span>
+                    <span className="perm-platform-badge">
                       {wpfSelectedCount} / {wpfTotalActions.length}
                     </span>
                   </button>
                 </div>
 
                 {/* Barra de Búsqueda y Acciones Rápidas */}
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
-                    <Search
-                      size={16}
-                      style={{
-                        position: 'absolute',
-                        left: '10px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        color: '#94a3b8',
-                      }}
-                    />
+                <div className="perm-toolbar">
+                  <div className="perm-search-box">
+                    <Search size={16} />
                     <input
                       type="text"
-                      className="input-field"
-                      placeholder={`Buscar permiso en ${activePlatform === 'wpf' ? 'Escritorio (WPF)' : 'Web (PWA)'}...`}
+                      className="perm-search-input"
+                      placeholder={`Buscar acción o módulo en ${activePlatform === 'wpf' ? 'Terminal POS' : activePlatform === 'pwa' ? 'Web' : 'todos'}...`}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      style={{ paddingLeft: '32px' }}
                     />
                   </div>
 
-                  <div style={{ display: 'flex', gap: '6px' }}>
+                  <div className="perm-actions-group">
                     <button
                       type="button"
-                      onClick={() => handlePlatformSelectAll(activePlatform, true)}
-                      style={{
-                        background: '#07665e',
-                        color: '#ffffff',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '7px 12px',
-                        fontSize: '0.78rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                      }}
+                      className="btn-perm-tool select-all"
+                      onClick={() => handleSelectVisible(true)}
+                      title="Seleccionar todas las acciones visibles en la lista"
                     >
-                      <CheckSquare size={13} /> Marcar Plataforma
+                      <CheckSquare size={14} /> Seleccionar Visibles
                     </button>
                     <button
                       type="button"
-                      onClick={() => handlePlatformSelectAll(activePlatform, false)}
-                      style={{
-                        background: 'transparent',
-                        border: '1px solid #ef4444',
-                        color: '#ef4444',
-                        borderRadius: '6px',
-                        padding: '7px 12px',
-                        fontSize: '0.78rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                      }}
+                      className="btn-perm-tool deselect-all"
+                      onClick={() => handleSelectVisible(false)}
+                      title="Desmarcar todas las acciones visibles en la lista"
                     >
-                      <Square size={13} /> Desmarcar Plataforma
+                      <Square size={14} /> Desmarcar Visibles
                     </button>
                   </div>
                 </div>
 
-                {/* Resumen Global de Asignación */}
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    background: 'var(--bg-secondary, #f8fafc)',
-                    padding: '8px 14px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border-color, #cbd5e1)',
-                  }}
-                >
-                  <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                      Filtro activo:{' '}
+                {/* Barra de Progreso */}
+                <div className="perm-progress-card">
+                  <div className="perm-progress-header">
+                    <span className="perm-progress-title">
+                      {activePlatform === 'all'
+                        ? 'Cobertura Global'
+                        : activePlatform === 'pwa'
+                          ? 'Cobertura Plataforma Web'
+                          : 'Cobertura Terminal POS'}
+                    </span>
+                    <span className="perm-progress-stats">
                       <strong>
                         {activePlatform === 'all'
-                          ? '🌐 Todos los Módulos'
+                          ? allSelectedCount
                           : activePlatform === 'pwa'
-                            ? '📱 Módulos Web (PWA)'
-                            : '🖥️ Terminal POS (WPF)'}
-                      </strong>
-                    </span>
-                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                      Total Global: <strong>{selectedActionIds.length} / {allActions.length}</strong> permisos
+                            ? pwaSelectedCount
+                            : wpfSelectedCount}
+                      </strong>{' '}
+                      de{' '}
+                      {activePlatform === 'all'
+                        ? allActions.length
+                        : activePlatform === 'pwa'
+                          ? pwaTotalActions.length
+                          : wpfTotalActions.length}{' '}
+                      permisos ({Math.round(((activePlatform === 'all' ? allSelectedCount : activePlatform === 'pwa' ? pwaSelectedCount : wpfSelectedCount) / Math.max(1, (activePlatform === 'all' ? allActions.length : activePlatform === 'pwa' ? pwaTotalActions.length : wpfTotalActions.length))) * 100)}%)
                     </span>
                   </div>
-
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <button
-                      type="button"
-                      onClick={() => handleGlobalSelectAll(true)}
+                  <div className="perm-progress-track">
+                    <div
+                      className="perm-progress-fill"
                       style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#07665e',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        textDecoration: 'underline',
+                        width: `${Math.round(((activePlatform === 'all' ? allSelectedCount : activePlatform === 'pwa' ? pwaSelectedCount : wpfSelectedCount) / Math.max(1, (activePlatform === 'all' ? allActions.length : activePlatform === 'pwa' ? pwaTotalActions.length : wpfTotalActions.length))) * 100)}%`,
                       }}
-                    >
-                      Marcar Todo Global
-                    </button>
-                    <span style={{ color: '#cbd5e1' }}>|</span>
-                    <button
-                      type="button"
-                      onClick={() => handleGlobalSelectAll(false)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#ef4444',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        textDecoration: 'underline',
-                      }}
-                    >
-                      Limpiar Todo
-                    </button>
+                    />
                   </div>
                 </div>
 
-                {/* Lista de Módulos y Acciones de la Plataforma Activa */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {/* Lista de Módulos y Acciones */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {currentGroupedModules.length > 0 ? (
                     currentGroupedModules.map(({ module: mod, actions }) => {
                       const moduleActionIds = actions.map((a) => a.id);
                       const selectedInModuleCount = actions.filter((a) => selectedActionIds.includes(a.id)).length;
                       const isAllModuleSelected = actions.length > 0 && selectedInModuleCount === actions.length;
+                      const isPartialModuleSelected = selectedInModuleCount > 0 && !isAllModuleSelected;
                       const isExpanded = searchTerm.trim() !== '' || expandedModuleId === mod.id;
 
                       return (
-                        <div
-                          key={mod.id}
-                          style={{
-                            border: '1px solid var(--border-color, #e2e8f0)',
-                            borderRadius: '10px',
-                            overflow: 'hidden',
-                            background: 'var(--bg-card, #ffffff)',
-                          }}
-                        >
+                        <div key={mod.id} className="perm-module-card">
                           {/* Cabecera del Módulo */}
                           <div
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              padding: '10px 14px',
-                              background: 'var(--table-header-bg, #f8fafc)',
-                              cursor: 'pointer',
-                              borderBottom: isExpanded ? '1px solid var(--border-color, #e2e8f0)' : 'none',
-                            }}
+                            className="perm-module-header"
+                            onClick={() => toggleModuleAccordion(mod.id)}
                           >
-                            <div
-                              onClick={() => toggleModuleAccordion(mod.id)}
-                              style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}
-                            >
-                              {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                              <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
-                                {mod.name}
-                              </span>
-                              <span
-                                className="badge badge-success"
-                                style={{
-                                  fontSize: '0.72rem',
-                                  background: selectedInModuleCount > 0 ? 'rgba(7, 102, 94, 0.12)' : 'rgba(100,116,139,0.1)',
-                                  color: selectedInModuleCount > 0 ? '#07665e' : '#64748b',
-                                }}
-                              >
-                                {selectedInModuleCount} / {actions.length} Habilitados
+                            <div className="perm-module-title-box">
+                              {isExpanded ? <ChevronDown size={17} color="var(--primary-color, #07665e)" /> : <ChevronRight size={17} color="#94a3b8" />}
+                              <span className="perm-module-name">{mod.name}</span>
+                              <span className={`perm-module-badge ${selectedInModuleCount > 0 ? 'active' : 'inactive'}`}>
+                                {selectedInModuleCount} / {actions.length} activos
                               </span>
                             </div>
 
                             <button
                               type="button"
+                              className={`perm-module-toggle ${isAllModuleSelected ? 'all-checked' : ''}`}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleToggleModuleAll(moduleActionIds);
                               }}
-                              style={{
-                                background: 'transparent',
-                                border: '1px solid var(--border-color)',
-                                borderRadius: '4px',
-                                padding: '3px 8px',
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                color: isAllModuleSelected ? '#ef4444' : '#07665e',
-                              }}
+                              title={isAllModuleSelected ? "Desmarcar todas las acciones de este módulo" : "Marcar todas las acciones de este módulo"}
                             >
-                              {isAllModuleSelected ? 'Desmarcar Módulo' : 'Marcar Módulo'}
+                              <input
+                                type="checkbox"
+                                checked={isAllModuleSelected}
+                                ref={(el) => {
+                                  if (el) el.indeterminate = isPartialModuleSelected;
+                                }}
+                                onChange={() => {}}
+                                style={{ pointerEvents: 'none', cursor: 'pointer', width: '15px', height: '15px', accentColor: 'var(--primary-color, #07665e)' }}
+                              />
+                              <span>{isAllModuleSelected ? 'Desmarcar' : 'Marcar Todo'}</span>
                             </button>
                           </div>
 
                           {/* Lista de Acciones del Módulo */}
                           {isExpanded && (
-                            <div
-                              style={{
-                                padding: '8px 12px',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '6px',
-                                background: 'var(--bg-card, #ffffff)',
-                              }}
-                            >
+                            <div className="perm-actions-list">
                               {actions.map((action) => {
                                 const isChecked = selectedActionIds.includes(action.id);
 
                                 return (
                                   <div
                                     key={action.id}
+                                    className={`perm-item-row ${isChecked ? 'checked' : ''}`}
                                     onClick={() => handleToggleAction(action.id)}
-                                    style={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      padding: '9px 14px',
-                                      borderRadius: '6px',
-                                      cursor: 'pointer',
-                                      background: isChecked ? 'rgba(7, 102, 94, 0.06)' : 'transparent',
-                                      border: isChecked ? '1px solid rgba(7, 102, 94, 0.25)' : '1px solid transparent',
-                                      transition: 'all 0.12s ease',
-                                    }}
                                   >
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
-                                      <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={() => { }}
-                                        style={{ width: '16px', height: '16px', pointerEvents: 'none' }}
-                                      />
-                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                        <span style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text-primary)' }}>
-                                          {action.name}
-                                        </span>
-                                        <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontFamily: 'monospace' }}>
-                                          {action.slug}
-                                        </span>
-                                      </div>
+                                    <div className="perm-custom-checkbox">
+                                      {isChecked && <Check size={13} strokeWidth={3} />}
                                     </div>
+                                    <span className="perm-item-label">
+                                      {action.name}
+                                    </span>
                                   </div>
                                 );
                               })}
@@ -1240,26 +1053,32 @@ export const RolesTab: React.FC = () => {
                       );
                     })
                   ) : (
-                    <div style={{ textAlign: 'center', padding: '24px', color: '#64748b' }}>
-                      No se encontraron acciones en esta plataforma que coincidan con la búsqueda.
+                    <div style={{ textAlign: 'center', padding: '36px 16px', color: 'var(--text-secondary, #64748b)' }}>
+                      <AlertCircle size={28} style={{ opacity: 0.35, margin: '0 auto 8px' }} />
+                      <p style={{ margin: 0, fontSize: '0.88rem' }}>No se encontraron acciones que coincidan con la búsqueda.</p>
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className="modal-footer">
-                <button type="button" className="btn-secondary" onClick={() => setIsPermissionsModalOpen(false)}>
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  className="btn-primary"
-                  style={{ width: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}
-                  onClick={handleSavePermissions}
-                  disabled={isSavingPermissions}
-                >
-                  <Check size={16} /> {isSavingPermissions ? 'Guardando...' : 'Guardar Permisos'}
-                </button>
+              <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary, #64748b)' }}>
+                  Total asignados: <strong>{selectedActionIds.length} de {allActions.length}</strong>
+                </span>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button type="button" className="btn-secondary" onClick={() => setIsPermissionsModalOpen(false)}>
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    style={{ width: 'auto', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                    onClick={handleSavePermissions}
+                    disabled={isSavingPermissions}
+                  >
+                    <CheckCircle2 size={16} /> {isSavingPermissions ? 'Guardando...' : 'Guardar Permisos'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
