@@ -7,6 +7,38 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-09-01 13:08:00] - [CLEANUP / PRODUCTION] [PWA / SERVICE WORKER] - Retiro de Panel de Diagnóstico y Activación de Modal en Estado Estable de Producción
+
+#### 💬 Prompt Original del Usuario
+> "El problema de caché en el servidor está resuelto y la PWA ya detecta las actualizaciones. Por favor, elimina el código de diagnóstico y restaura el componente a su estado estable de producción.
+> Aplica estos cambios exactos en src/shared/ui/UpdatePromptModal.tsx:
+> 1. Elimina por completo el panel flotante de diagnóstico visual (el div negro) y el botón de forzar check que agregamos temporalmente.
+> 2. Restaura la barrera de renderizado: Vuelve a colocar la condición if (!needRefresh) { return null; } justo antes del bloque return principal. La modal solo debe existir en el DOM si hay una actualización en espera.
+> 3. En la función onRegisteredSW, cambia el setInterval de 10 * 1000 a 5 * 60 * 1000 (5 minutos). 10 segundos es demasiado agresivo y crea bucles; 5 minutos es ideal para producción.
+> 4. Asegúrate de que el botón de actualización nativo tenga exactamente onClick={handleUpdate} (sin paréntesis) para evitar ejecuciones automáticas.
+> 5. Mantén intacta la etiqueta visual de la versión y el Build (__APP_BUILD_TIME__) que pusimos en la parte inferior de la modal, eso sí nos sirve.
+> No modifiques el vite.config.ts, su configuración de mutación forzada está funcionando perfectamente."
+
+#### 🤖 Resumen Técnico para la IA
+1. **Limpieza de Código Temporal de Debug (`UpdatePromptModal.tsx`)**:
+   - Se removió el panel flotante de diagnóstico visual y sus variables auxiliares (`swReg`, `lastCheck`, `checkCount`, `checkStatus`, `handleManualCheck`).
+   - Se restauró la barrera de renderizado limpio `if (!needRefresh) return null;` para que no ocupe espacio ni afecte la UI en estado idle.
+2. **Sondeo Periódico de Producción**:
+   - Intervalo configurado a **5 minutos** (`5 * 60 * 1000`) en segundo plano, sumado a la detección instantánea al recuperar visibilidad/foco (`visibilitychange` / `focus`).
+3. **Preservación de Versión y Build Time**:
+   - Muestra `Parking Flow • Versión {currentVersion}` y `Build: {buildTime}` con fecha y hora del bundle compilado.
+4. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/shared/ui/UpdatePromptModal.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+
+---
+
 ### [2026-09-01 12:52:00] - [FEATURE / DIAGNOSTICS / PWA] [PWA / LIVE SW DIAGNOSTIC OVERLAY] - Panel de Diagnóstico Visual en Vivo para Detección de Ciclo de Vida de SW
 
 #### 💬 Prompt Original del Usuario
