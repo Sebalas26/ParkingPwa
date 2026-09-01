@@ -6,7 +6,6 @@ export default defineConfig(() => {
   const buildTimestamp = Date.now();
 
   return {
-    base: '/Parking/',
     define: {
       __APP_BUILD_TIME__: buildTimestamp,
     },
@@ -36,8 +35,8 @@ export default defineConfig(() => {
           background_color: '#0b0f19',
           display: 'standalone',
           orientation: 'any',
-          start_url: '/Parking/',
-          scope: '/Parking/',
+          start_url: '/',
+          scope: '/',
           categories: ['business', 'productivity', 'utilities'],
           icons: [
             {

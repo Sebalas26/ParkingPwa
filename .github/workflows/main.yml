@@ -19,8 +19,8 @@ jobs:
       - name: 2. Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
-          cache: 'npm'
+          node-version: "24"
+          cache: "npm"
 
       - name: 3. Instalar dependencias
         run: npm ci
@@ -36,6 +36,7 @@ jobs:
             <system.webServer>
               <rewrite>
                 <rules>
+                  <!-- Enrutamiento SPA apuntando a la raíz del dominio -->
                   <rule name="React SPA Routes" stopProcessing="true">
                     <match url=".*" />
                     <conditions logicalGrouping="MatchAll">
@@ -43,20 +44,16 @@ jobs:
                       <add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
                       <add input="{REQUEST_URI}" pattern="^/api" negate="true" />
                     </conditions>
-                    <action type="Rewrite" url="/Parking/" />
+                    <action type="Rewrite" url="/" />
                   </rule>
                 </rules>
               </rewrite>
+              
               <staticContent>
                 <remove fileExtension=".webmanifest" />
                 <mimeMap fileExtension=".webmanifest" mimeType="application/manifest+json" />
-                <remove fileExtension=".json" />
-                <mimeMap fileExtension=".json" mimeType="application/json" />
-                <remove fileExtension=".woff" />
-                <mimeMap fileExtension=".woff" mimeType="font/woff" />
-                <remove fileExtension=".woff2" />
-                <mimeMap fileExtension=".woff2" mimeType="font/woff2" />
               </staticContent>
+
               <httpProtocol>
                 <customHeaders>
                   <add name="X-Content-Type-Options" value="nosniff" />
@@ -64,35 +61,30 @@ jobs:
               </httpProtocol>
             </system.webServer>
 
-            <!-- Control Nativo Seguro IIS: sw.js sin cache -->
+            <!-- Bloqueo nativo IIS: Service Worker SIEMPRE fresco -->
             <location path="sw.js">
               <system.webServer>
                 <staticContent>
                   <clientCache cacheControlMode="DisableCache" />
                 </staticContent>
-                <httpProtocol>
-                  <customHeaders>
-                    <add name="Cache-Control" value="no-cache, no-store, must-revalidate, max-age=0" />
-                    <add name="Pragma" value="no-cache" />
-                    <add name="Expires" value="0" />
-                  </customHeaders>
-                </httpProtocol>
               </system.webServer>
             </location>
 
-            <!-- Control Nativo Seguro IIS: index.html sin cache -->
+            <!-- Bloqueo nativo IIS: HTML principal SIEMPRE fresco -->
             <location path="index.html">
               <system.webServer>
                 <staticContent>
                   <clientCache cacheControlMode="DisableCache" />
                 </staticContent>
-                <httpProtocol>
-                  <customHeaders>
-                    <add name="Cache-Control" value="no-cache, no-store, must-revalidate, max-age=0" />
-                    <add name="Pragma" value="no-cache" />
-                    <add name="Expires" value="0" />
-                  </customHeaders>
-                </httpProtocol>
+              </system.webServer>
+            </location>
+
+            <!-- Bloqueo nativo IIS: Manifest SIEMPRE fresco -->
+            <location path="manifest.webmanifest">
+              <system.webServer>
+                <staticContent>
+                  <clientCache cacheControlMode="DisableCache" />
+                </staticContent>
               </system.webServer>
             </location>
           </configuration>

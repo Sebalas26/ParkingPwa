@@ -152,7 +152,7 @@ function App() {
   return (
     <ParqueaderoProvider>
       <UpdatePromptModal />
-      <Router basename="/Parking">
+      <Router>
         <Routes>
           {/* Ruta raíz limpia: Muestra el Login directamente o Dashboard si ya inició sesión */}
           <Route path="/" element={<RootAuthHandler />} />

@@ -7,6 +7,41 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-09-01 12:32:00] - [REVERT / ROUTING] [PWA / VITE & ROUTER ROOT PATH] - Reversión de Enrutamiento Base a Raíz (/)
+
+#### 💬 Prompt Original del Usuario
+> "Por favor, revierte los últimos cambios de enrutamiento base que se hicieron. Hemos confirmado que la aplicación se sirve directamente desde la raíz del dominio y no desde un subdirectorio, aunque la carpeta física en el servidor se llame "Parking".
+> Aplica estos cambios exactos para solucionar la pantalla en blanco:
+> 1. En el archivo vite.config.ts:
+>    - Elimina la línea base: '/Parking/',.
+>    - Dentro de la configuración de VitePWA, en la sección manifest, devuelve start_url a su valor original: start_url: '/',.
+>    - En esa misma sección, devuelve scope a su valor original: scope: '/',.
+> 2. En el archivo src/App.tsx:
+>    - Localiza el componente <Router basename="/Parking"> dentro de la función App().
+>    - Elimina la propiedad basename para que vuelva a quedar exactamente como <Router>.
+> No toques nada más. Necesitamos que las rutas vuelvan a la raíz (/) para que Vite genere los assets correctamente."
+
+#### 🤖 Resumen Técnico para la IA
+1. **Restablecimiento de Rutas Raíz (`/`)**:
+   - Se eliminó `base: '/Parking/'` de `vite.config.ts`.
+   - Se restauraron `start_url: '/'` y `scope: '/'` en `VitePWA.manifest`.
+   - Se restauró `<Router>` (sin `basename`) en `App.tsx`.
+   - Se restableció la regla de fallback a `url="/"` en `public/web.config` y `.github/workflows/main.yml`.
+2. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `vite.config.ts`
+- `src/App.tsx`
+- `public/web.config`
+- `.github/workflows/main.yml`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+
+---
+
 ### [2026-09-01 12:00:00] - [CONFIG / PWA / ROUTING] [PWA / VITE & ROUTER BASE PATH] - Configuración de Base Path /Parking/ en Vite y React Router
 
 #### 💬 Prompt Original del Usuario
