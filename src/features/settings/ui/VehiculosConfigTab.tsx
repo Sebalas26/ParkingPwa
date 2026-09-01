@@ -438,7 +438,7 @@ export const VehiculosConfigTab: React.FC = () => {
                   <button
                     type="submit"
                     className="btn-primary"
-                    disabled={isSaving || Boolean(formErrors.category) || !editingConfig.category?.trim()}
+                    disabled={isSaving}
                   >
                     {isSaving ? (
                       <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>

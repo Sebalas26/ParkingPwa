@@ -7,6 +7,66 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-31 21:25:00] - [UX / UI] [PWA / CONFIGURACIÓN] - Habilitación de Botones de Envío en Modales con Disparo Reactivo de Validaciones Visuales al Clic
+
+#### 💬 Prompt Original del Usuario
+> "veo que desabilitaste el boton de crear tanto en usuarios como en convenios en tipo vehiculos en roles en medios de pago osea no hay que desabhilitarlo si ya tiene las validaciones es mas que suficiente pues no va a pasar nunca directamente la peiticon al backend si me explico por que al tenerlo así todo desabhilitado no es facil para el usuario saber que campos son los que debe llenar me explico ? has el plan analiza"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Optimización de UX en Formularios Modales**:
+   - Se removió la condición de bloqueo previo (`disabled={... || formErrors || !field.trim()}`) en los botones principales de guardado y creación de los 5 módulos de configuración:
+     - `UsuariosTab.tsx` (*"Crear Usuario"* / *"Guardar Cambios"*)
+     - `RolesTab.tsx` (*"Crear Rol"* / *"Guardar Cambios"*)
+     - `ConveniosTab.tsx` (*"Guardar Convenio"*)
+     - `VehiculosConfigTab.tsx` (*"Guardar Tipo de Vehículo"*)
+     - `MediosPagoTab.tsx` (*"Crear Medio de Pago"* / *"Guardar Cambios"*)
+2. **Disparo Reactivo al Clic**:
+   - Los botones permanecen siempre interactivos y habilitados (`disabled={isSaving}`).
+   - Cuando el usuario hace clic sin completar los campos requeridos, se ejecutan las validaciones (`validateForm()`) y se enmarcan de inmediato en rojo todos los campos faltantes (`.has-error`, `.input-error`, `<AlertCircle />`), guiando intuitivamente al usuario sobre qué datos debe ingresar sin enviar nada a la API.
+   - El botón se desactiva exclusivamente mientras la petición asíncrona está procesándose (`isSaving = true`) para evitar peticiones duplicadas.
+3. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/settings/ui/UsuariosTab.tsx`
+- `src/features/settings/ui/RolesTab.tsx`
+- `src/features/settings/ui/ConveniosTab.tsx`
+- `src/features/settings/ui/VehiculosConfigTab.tsx`
+- `src/features/settings/ui/MediosPagoTab.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+
+---
+
+### [2026-08-31 21:20:00] - [ARCHITECTURE / PWA / LIFECYCLE] - Sistema Infalible de Actualización PWA en React (Doble Detección Canónica version.json + SW y Recarga Cache-Busting)
+
+#### 💬 Prompt Original del Usuario
+> "No esta funcionando lo del actualziar para que llegue solo el mensaje y se actualice la verdad veo que las cosas estan mal eso se hizo el ajuste hoy revisa historial de cambios pero no quedo al final algo sucede no pasa no queda perfecto dime si si es posible hacerlo en react que quede perfecto de una vez por todas. cada vez que se publique salga el mensaje se le di click actualizar ahora el mismo actualice y se cambie la versión pues logio se sube la nueva version en el .env entonces dime que debemos ahcer para que eso pase eso supremamente importante eso."
+
+#### 🤖 Resumen Técnico para la IA
+1. **Doble Motor Canónico de Detección de Versiones (`UpdatePromptModal.tsx`)**:
+   - **Motor 1 (Polling Activo de `/version.json`)**: Consulta de forma periódica cada 45 segundos, en el arranque de la app (a los 2s) y reactivamente cada vez que el usuario enfoca la pestaña o abre la PWA (`focus` / `visibilitychange`).
+   - Usa cabeceras HTTP estrictas `cache: 'no-store'` para garantizar que nunca sea cacheado por el servidor ni el WebView.
+   - Compara la versión remota contra `import.meta.env.VITE_APP_VERSION` y el timestamp `__APP_BUILD_TIME__`. Al detectar un cambio (ej: `0.0.90` a `0.0.91`), levanta inmediatamente el modal y comanda a `registration.update()` a precachear los nuevos chunks en segundo plano.
+   - **Motor 2 (Ciclo de Vida Workbox `onNeedRefresh`)**: Dispara el modal complementariamente si Workbox culmina la descarga del Service Worker en espera.
+2. **Ejecución Canónica e Infalible de Actualización**:
+   - Al pulsar *"Actualizar Ahora"*, envía `SKIP_WAITING` al Service Worker en espera, purga de forma segura el almacenamiento `CacheStorage` local y ejecuta una recarga forzada (*Hard Cache-Busting*) mediante `window.location.replace(?_v=timestamp)`, obligando al navegador a solicitar el nuevo `index.html` sin retener bundles antiguos.
+3. **UI / UX Mejorada con Comparativa Visual**:
+   - Muestra la versión actual y la nueva versión disponible (`v0.0.90 Dev ➔ v0.0.91 Dev`) con indicador visual esmeralda y feedback de carga (*"Aplicando actualización..."*).
+4. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/shared/ui/UpdatePromptModal.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+
+---
+
 ### [2026-08-31 21:10:00] - [FEATURE / UX / UI] [PWA / CONFIGURACIÓN / MEDIOS DE PAGO] - Validaciones Visuales Pro, Unicidad de Medio de Pago, Título Limpio y Switch Moderno de Activación
 
 #### 💬 Prompt Original del Usuario

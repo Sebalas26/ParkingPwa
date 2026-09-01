@@ -512,7 +512,7 @@ export const MediosPagoTab: React.FC = () => {
                     type="submit"
                     className="btn-primary"
                     style={{ width: 'auto' }}
-                    disabled={isSaving || Boolean(formErrors.name) || !editingMedio.name?.trim()}
+                    disabled={isSaving}
                   >
                     {isSaving ? (
                       <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>

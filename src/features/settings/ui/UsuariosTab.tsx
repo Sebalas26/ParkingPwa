@@ -982,13 +982,7 @@ export const UsuariosTab: React.FC = () => {
                     type="submit"
                     className="btn-primary"
                     style={{ width: 'auto' }}
-                    disabled={
-                      isSavingUser ||
-                      Boolean(formErrors.username) ||
-                      Boolean(formErrors.identificationNumber) ||
-                      Boolean(formErrors.email) ||
-                      (!editingUsuario.id && editingUsuario.userRoleId === 0)
-                    }
+                    disabled={isSavingUser}
                   >
                     {isSavingUser ? (
                       <>

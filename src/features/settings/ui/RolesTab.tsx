@@ -837,7 +837,7 @@ export const RolesTab: React.FC = () => {
                     type="submit"
                     className="btn-primary"
                     style={{ width: 'auto' }}
-                    disabled={isSavingRole || Boolean(roleFormError) || !editingRole.roleName?.trim()}
+                    disabled={isSavingRole}
                   >
                     {isSavingRole ? <Loader2 size={16} className="animate-spin" /> : editingRole.idUserRol ? 'Guardar Cambios' : 'Crear Rol'}
                   </button>

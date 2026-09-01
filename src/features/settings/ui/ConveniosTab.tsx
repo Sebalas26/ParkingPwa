@@ -869,7 +869,7 @@ export const ConveniosTab: React.FC = () => {
                     type="submit"
                     className="btn-primary"
                     style={{ width: 'auto' }}
-                    disabled={isSaving || Boolean(formErrors.name) || Boolean(formErrors.imageUrl)}
+                    disabled={isSaving}
                   >
                     {isSaving ? (
                       <>
