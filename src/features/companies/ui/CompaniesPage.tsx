@@ -19,7 +19,8 @@ import {
   EyeOff,
   ImagePlus,
   Maximize2,
-  X
+  X,
+  AlertCircle
 } from 'lucide-react';
 import { companyService } from '../data/companyService';
 import { apiClient } from '../../../shared/api/apiClient';
@@ -27,6 +28,8 @@ import { useBranchContext } from '../../../shared/context/ParqueaderoContext';
 import { ModalPortal } from '../../../shared/ui/ModalPortal';
 import type { CompanyDto, CreateCompanyDto, UpdateCompanyDto } from '../model/CompanyContracts';
 import './CompaniesPage.css';
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const CompaniesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -46,6 +49,10 @@ export const CompaniesPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showAdminPassword, setShowAdminPassword] = useState<boolean>(false);
   const [previewImageModal, setPreviewImageModal] = useState<string | null>(null);
+
+  // Validation error states
+  const [createErrors, setCreateErrors] = useState<Record<string, string>>({});
+  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
 
   const fileInputCreateRef = useRef<HTMLInputElement>(null);
   const fileInputEditRef = useRef<HTMLInputElement>(null);
@@ -99,6 +106,102 @@ export const CompaniesPage: React.FC = () => {
     loadCompanies();
   }, []);
 
+  const validateCreateForm = (form: CreateCompanyDto): Record<string, string> => {
+    const errors: Record<string, string> = {};
+    if (!form.name || !form.name.trim()) {
+      errors.name = 'El nombre comercial es obligatorio.';
+    } else if (form.name.trim().length < 2) {
+      errors.name = 'El nombre debe tener al menos 2 caracteres.';
+    }
+
+    if (!form.nit || !form.nit.trim()) {
+      errors.nit = 'El NIT o documento fiscal es obligatorio.';
+    }
+
+    if (!form.email || !form.email.trim()) {
+      errors.email = 'El correo electrónico de la empresa es obligatorio.';
+    } else if (!EMAIL_REGEX.test(form.email.trim())) {
+      errors.email = 'Ingresa un correo válido (ej: contacto@empresa.com).';
+    }
+
+    if (form.maxBranches === undefined || form.maxBranches === null || form.maxBranches < 1) {
+      errors.maxBranches = 'El límite de sedes debe ser al menos 1.';
+    }
+
+    if (!form.adminFullName || !form.adminFullName.trim()) {
+      errors.adminFullName = 'El nombre completo del administrador es obligatorio.';
+    } else if (form.adminFullName.trim().length < 3) {
+      errors.adminFullName = 'El nombre debe tener al menos 3 caracteres.';
+    }
+
+    if (!form.adminEmail || !form.adminEmail.trim()) {
+      errors.adminEmail = 'El correo del administrador es obligatorio.';
+    } else if (!EMAIL_REGEX.test(form.adminEmail.trim())) {
+      errors.adminEmail = 'Ingresa un correo electrónico válido para el administrador.';
+    }
+
+    if (!form.adminUsername || !form.adminUsername.trim()) {
+      errors.adminUsername = 'El usuario para iniciar sesión es obligatorio.';
+    } else if (form.adminUsername.trim().length < 3) {
+      errors.adminUsername = 'El usuario debe tener al menos 3 caracteres.';
+    }
+
+    if (!form.adminPassword) {
+      errors.adminPassword = 'La contraseña inicial es obligatoria.';
+    } else if (form.adminPassword.length < 4) {
+      errors.adminPassword = 'La contraseña debe tener al menos 4 caracteres.';
+    }
+
+    return errors;
+  };
+
+  const validateEditForm = (form: UpdateCompanyDto): Record<string, string> => {
+    const errors: Record<string, string> = {};
+    if (!form.name || !form.name.trim()) {
+      errors.name = 'El nombre comercial es obligatorio.';
+    } else if (form.name.trim().length < 2) {
+      errors.name = 'El nombre debe tener al menos 2 caracteres.';
+    }
+
+    if (!form.nit || !form.nit.trim()) {
+      errors.nit = 'El NIT o documento fiscal es obligatorio.';
+    }
+
+    if (!form.email || !form.email.trim()) {
+      errors.email = 'El correo electrónico es obligatorio.';
+    } else if (!EMAIL_REGEX.test(form.email.trim())) {
+      errors.email = 'Ingresa un correo válido (ej: contacto@empresa.com).';
+    }
+
+    if (form.maxBranches === undefined || form.maxBranches === null || form.maxBranches < 1) {
+      errors.maxBranches = 'El límite de sedes debe ser al menos 1.';
+    }
+
+    return errors;
+  };
+
+  const handleCreateFieldChange = (field: keyof CreateCompanyDto, value: any) => {
+    setCreateForm((prev) => ({ ...prev, [field]: value }));
+    if (createErrors[field as string]) {
+      setCreateErrors((prev) => {
+        const next = { ...prev };
+        delete next[field as string];
+        return next;
+      });
+    }
+  };
+
+  const handleEditFieldChange = (field: keyof UpdateCompanyDto, value: any) => {
+    setEditForm((prev) => ({ ...prev, [field]: value }));
+    if (editErrors[field as string]) {
+      setEditErrors((prev) => {
+        const next = { ...prev };
+        delete next[field as string];
+        return next;
+      });
+    }
+  };
+
   const handleLogoUpload = (file: File, isEdit: boolean) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
@@ -144,6 +247,7 @@ export const CompaniesPage: React.FC = () => {
       adminIdentificationNumber: '',
       adminIdentificationTypeId: 1,
     });
+    setCreateErrors({});
     setErrorMessage('');
     setIsCreateModalOpen(true);
   };
@@ -164,17 +268,33 @@ export const CompaniesPage: React.FC = () => {
       isActive: company.isActive,
       subscriptionExpiresAt: company.subscriptionExpiresAt,
     });
+    setEditErrors({});
     setErrorMessage('');
     setIsEditModalOpen(true);
   };
 
   const handleCreateCompany = async (e: React.FormEvent) => {
     e.preventDefault();
+    const validationErrors = validateCreateForm(createForm);
+    if (Object.keys(validationErrors).length > 0) {
+      setCreateErrors(validationErrors);
+      return;
+    }
+    setCreateErrors({});
     try {
       setActionLoading(true);
       setErrorMessage('');
       const payload = {
         ...createForm,
+        name: createForm.name.trim(),
+        legalName: createForm.legalName?.trim() || undefined,
+        nit: createForm.nit.trim(),
+        email: createForm.email.trim(),
+        phone: createForm.phone?.trim() || undefined,
+        city: createForm.city?.trim() || undefined,
+        adminFullName: createForm.adminFullName.trim(),
+        adminEmail: createForm.adminEmail.trim(),
+        adminUsername: createForm.adminUsername.trim(),
         maxBranches: Math.max(1, Number(createForm.maxBranches) || 1),
       };
       await companyService.create(payload);
@@ -190,11 +310,23 @@ export const CompaniesPage: React.FC = () => {
   const handleUpdateCompany = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCompany) return;
+    const validationErrors = validateEditForm(editForm);
+    if (Object.keys(validationErrors).length > 0) {
+      setEditErrors(validationErrors);
+      return;
+    }
+    setEditErrors({});
     try {
       setActionLoading(true);
       setErrorMessage('');
       const payload = {
         ...editForm,
+        name: editForm.name.trim(),
+        legalName: editForm.legalName?.trim() || undefined,
+        nit: editForm.nit.trim(),
+        email: editForm.email.trim(),
+        phone: editForm.phone?.trim() || undefined,
+        city: editForm.city?.trim() || undefined,
         maxBranches: Math.max(1, Number(editForm.maxBranches) || 1),
       };
       await companyService.update(selectedCompany.id, payload);
@@ -514,7 +646,7 @@ export const CompaniesPage: React.FC = () => {
                 <h2>Registrar Nueva Empresa Cliente</h2>
               </div>
 
-              <form onSubmit={handleCreateCompany}>
+              <form onSubmit={handleCreateCompany} noValidate>
                 <div className="modal-body">
                   {errorMessage && (
                     <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.875rem' }}>
@@ -604,74 +736,101 @@ export const CompaniesPage: React.FC = () => {
                   </div>
 
                   <div className="form-grid-2">
-                    <div className="form-group">
-                      <label>Nombre Comercial *</label>
+                    <div className={`form-group ${createErrors.name ? 'has-error' : ''}`}>
+                      <label>
+                        Nombre Comercial <span className="required-asterisk">*</span>
+                      </label>
                       <input
                         type="text"
-                        required
+                        className={createErrors.name ? 'input-error' : ''}
                         placeholder="Ej. Estacionamientos El Cóndor"
                         value={createForm.name}
-                        onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                        onChange={(e) => handleCreateFieldChange('name', e.target.value)}
                       />
+                      {createErrors.name && (
+                        <span className="form-field-error">
+                          <AlertCircle size={12} /> {createErrors.name}
+                        </span>
+                      )}
                     </div>
                     <div className="form-group">
-                      <label>Razón Social</label>
+                      <label>
+                        Razón Social <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary, #64748b)', fontWeight: 400 }}>(Opcional)</span>
+                      </label>
                       <input
                         type="text"
                         placeholder="Ej. Inversiones Cóndor S.A.S"
                         value={createForm.legalName}
-                        onChange={(e) => setCreateForm({ ...createForm, legalName: e.target.value })}
+                        onChange={(e) => handleCreateFieldChange('legalName', e.target.value)}
                       />
                     </div>
                   </div>
 
                   <div className="form-grid-2">
-                    <div className="form-group">
-                      <label>NIT / Documento Fiscal *</label>
+                    <div className={`form-group ${createErrors.nit ? 'has-error' : ''}`}>
+                      <label>
+                        NIT / Documento Fiscal <span className="required-asterisk">*</span>
+                      </label>
                       <input
                         type="text"
-                        required
+                        className={createErrors.nit ? 'input-error' : ''}
                         placeholder="Ej. 901.234.567-8"
                         value={createForm.nit}
-                        onChange={(e) => setCreateForm({ ...createForm, nit: e.target.value })}
+                        onChange={(e) => handleCreateFieldChange('nit', e.target.value)}
                       />
+                      {createErrors.nit && (
+                        <span className="form-field-error">
+                          <AlertCircle size={12} /> {createErrors.nit}
+                        </span>
+                      )}
                     </div>
-                    <div className="form-group">
-                      <label>Correo Electrónico Empresa *</label>
+                    <div className={`form-group ${createErrors.email ? 'has-error' : ''}`}>
+                      <label>
+                        Correo Electrónico Empresa <span className="required-asterisk">*</span>
+                      </label>
                       <input
                         type="email"
-                        required
+                        className={createErrors.email ? 'input-error' : ''}
                         placeholder="contacto@elcondor.com"
                         value={createForm.email}
-                        onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                        onChange={(e) => handleCreateFieldChange('email', e.target.value)}
                       />
+                      {createErrors.email && (
+                        <span className="form-field-error">
+                          <AlertCircle size={12} /> {createErrors.email}
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   <div className="form-grid-2">
                     <div className="form-group">
-                      <label>Teléfono de Contacto</label>
+                      <label>
+                        Teléfono de Contacto <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary, #64748b)', fontWeight: 400 }}>(Opcional)</span>
+                      </label>
                       <input
                         type="text"
                         placeholder="+57 310 000 0000"
                         value={createForm.phone}
-                        onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })}
+                        onChange={(e) => handleCreateFieldChange('phone', e.target.value)}
                       />
                     </div>
                     <div className="form-group">
-                      <label>Ciudad</label>
+                      <label>
+                        Ciudad <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary, #64748b)', fontWeight: 400 }}>(Opcional)</span>
+                      </label>
                       <input
                         type="text"
                         placeholder="Ej. Medellín"
                         value={createForm.city}
-                        onChange={(e) => setCreateForm({ ...createForm, city: e.target.value })}
+                        onChange={(e) => handleCreateFieldChange('city', e.target.value)}
                       />
                     </div>
                   </div>
 
                   <div className="form-grid-2">
                     <div className="form-group">
-                      <label>Plan SaaS Contratado *</label>
+                      <label>Plan SaaS Contratado <span className="required-asterisk">*</span></label>
                       <select
                         value={createForm.planType}
                         onChange={(e) => {
@@ -680,7 +839,7 @@ export const CompaniesPage: React.FC = () => {
                           if (newPlan === 'Basic') defaultBranches = 1;
                           else if (newPlan === 'Pro') defaultBranches = 5;
                           else if (newPlan === 'Enterprise') defaultBranches = 20;
-                          setCreateForm({ ...createForm, planType: newPlan, maxBranches: defaultBranches });
+                          setCreateForm((prev) => ({ ...prev, planType: newPlan, maxBranches: defaultBranches }));
                         }}
                       >
                         <option value="Basic">Plan Básico (1 Sede)</option>
@@ -688,25 +847,30 @@ export const CompaniesPage: React.FC = () => {
                         <option value="Enterprise">Plan Enterprise (Ilimitado / Multi-Sede)</option>
                       </select>
                     </div>
-                    <div className="form-group">
-                      <label>Límite Máximo de Sedes *</label>
+                    <div className={`form-group ${createErrors.maxBranches ? 'has-error' : ''}`}>
+                      <label>Límite Máximo de Sedes <span className="required-asterisk">*</span></label>
                       <input
                         type="number"
                         min={1}
                         max={999}
-                        required
+                        className={createErrors.maxBranches ? 'input-error' : ''}
                         value={createForm.maxBranches === 0 ? '' : createForm.maxBranches}
                         onChange={(e) => {
                           const raw = e.target.value;
                           const num = raw === '' ? 0 : parseInt(raw, 10);
-                          setCreateForm({ ...createForm, maxBranches: isNaN(num) ? 0 : num });
+                          handleCreateFieldChange('maxBranches', isNaN(num) ? 0 : num);
                         }}
                         onBlur={() => {
                           if (!createForm.maxBranches || createForm.maxBranches < 1) {
-                            setCreateForm((prev) => ({ ...prev, maxBranches: 1 }));
+                            handleCreateFieldChange('maxBranches', 1);
                           }
                         }}
                       />
+                      {createErrors.maxBranches && (
+                        <span className="form-field-error">
+                          <AlertCircle size={12} /> {createErrors.maxBranches}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -718,48 +882,71 @@ export const CompaniesPage: React.FC = () => {
                   </p>
 
                   <div className="form-grid-2">
-                    <div className="form-group">
-                      <label>Nombre Completo Administrador *</label>
+                    <div className={`form-group ${createErrors.adminFullName ? 'has-error' : ''}`}>
+                      <label>
+                        Nombre Completo Administrador <span className="required-asterisk">*</span>
+                      </label>
                       <input
                         type="text"
-                        required
+                        className={createErrors.adminFullName ? 'input-error' : ''}
                         placeholder="Ej. Carlos Mario Restrepo"
                         value={createForm.adminFullName}
-                        onChange={(e) => setCreateForm({ ...createForm, adminFullName: e.target.value })}
+                        onChange={(e) => handleCreateFieldChange('adminFullName', e.target.value)}
                       />
+                      {createErrors.adminFullName && (
+                        <span className="form-field-error">
+                          <AlertCircle size={12} /> {createErrors.adminFullName}
+                        </span>
+                      )}
                     </div>
-                    <div className="form-group">
-                      <label>Correo del Administrador *</label>
+                    <div className={`form-group ${createErrors.adminEmail ? 'has-error' : ''}`}>
+                      <label>
+                        Correo del Administrador <span className="required-asterisk">*</span>
+                      </label>
                       <input
                         type="email"
-                        required
+                        className={createErrors.adminEmail ? 'input-error' : ''}
                         placeholder="carlos.admin@elcondor.com"
                         value={createForm.adminEmail}
-                        onChange={(e) => setCreateForm({ ...createForm, adminEmail: e.target.value })}
+                        onChange={(e) => handleCreateFieldChange('adminEmail', e.target.value)}
                       />
+                      {createErrors.adminEmail && (
+                        <span className="form-field-error">
+                          <AlertCircle size={12} /> {createErrors.adminEmail}
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   <div className="form-grid-2">
-                    <div className="form-group">
-                      <label>Usuario para Iniciar Sesión *</label>
+                    <div className={`form-group ${createErrors.adminUsername ? 'has-error' : ''}`}>
+                      <label>
+                        Usuario para Iniciar Sesión <span className="required-asterisk">*</span>
+                      </label>
                       <input
                         type="text"
-                        required
+                        className={createErrors.adminUsername ? 'input-error' : ''}
                         placeholder="Ej. admin_condor"
                         value={createForm.adminUsername}
-                        onChange={(e) => setCreateForm({ ...createForm, adminUsername: e.target.value })}
+                        onChange={(e) => handleCreateFieldChange('adminUsername', e.target.value)}
                       />
+                      {createErrors.adminUsername && (
+                        <span className="form-field-error">
+                          <AlertCircle size={12} /> {createErrors.adminUsername}
+                        </span>
+                      )}
                     </div>
-                    <div className="form-group">
-                      <label>Contraseña Inicial *</label>
+                    <div className={`form-group ${createErrors.adminPassword ? 'has-error' : ''}`}>
+                      <label>
+                        Contraseña Inicial <span className="required-asterisk">*</span>
+                      </label>
                       <div style={{ position: 'relative' }}>
                         <input
                           type={showAdminPassword ? "text" : "password"}
-                          required
+                          className={createErrors.adminPassword ? 'input-error' : ''}
                           placeholder="Contraseña segura"
                           value={createForm.adminPassword}
-                          onChange={(e) => setCreateForm({ ...createForm, adminPassword: e.target.value })}
+                          onChange={(e) => handleCreateFieldChange('adminPassword', e.target.value)}
                           style={{ paddingRight: '40px', width: '100%', boxSizing: 'border-box' }}
                         />
                         <button
@@ -784,6 +971,11 @@ export const CompaniesPage: React.FC = () => {
                           {showAdminPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
                       </div>
+                      {createErrors.adminPassword && (
+                        <span className="form-field-error">
+                          <AlertCircle size={12} /> {createErrors.adminPassword}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -817,7 +1009,7 @@ export const CompaniesPage: React.FC = () => {
                 <h2>Editar Empresa: {selectedCompany.name}</h2>
               </div>
 
-              <form onSubmit={handleUpdateCompany}>
+              <form onSubmit={handleUpdateCompany} noValidate>
                 <div className="modal-body">
                   {errorMessage && (
                     <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.875rem' }}>
@@ -907,68 +1099,95 @@ export const CompaniesPage: React.FC = () => {
                   </div>
 
                   <div className="form-grid-2">
-                    <div className="form-group">
-                      <label>Nombre Comercial *</label>
+                    <div className={`form-group ${editErrors.name ? 'has-error' : ''}`}>
+                      <label>
+                        Nombre Comercial <span className="required-asterisk">*</span>
+                      </label>
                       <input
                         type="text"
-                        required
+                        className={editErrors.name ? 'input-error' : ''}
                         value={editForm.name}
-                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                        onChange={(e) => handleEditFieldChange('name', e.target.value)}
                       />
+                      {editErrors.name && (
+                        <span className="form-field-error">
+                          <AlertCircle size={12} /> {editErrors.name}
+                        </span>
+                      )}
                     </div>
                     <div className="form-group">
-                      <label>Razón Social</label>
+                      <label>
+                        Razón Social <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary, #64748b)', fontWeight: 400 }}>(Opcional)</span>
+                      </label>
                       <input
                         type="text"
                         value={editForm.legalName}
-                        onChange={(e) => setEditForm({ ...editForm, legalName: e.target.value })}
+                        onChange={(e) => handleEditFieldChange('legalName', e.target.value)}
                       />
                     </div>
                   </div>
 
                   <div className="form-grid-2">
-                    <div className="form-group">
-                      <label>NIT / Documento Fiscal *</label>
+                    <div className={`form-group ${editErrors.nit ? 'has-error' : ''}`}>
+                      <label>
+                        NIT / Documento Fiscal <span className="required-asterisk">*</span>
+                      </label>
                       <input
                         type="text"
-                        required
+                        className={editErrors.nit ? 'input-error' : ''}
                         value={editForm.nit}
-                        onChange={(e) => setEditForm({ ...editForm, nit: e.target.value })}
+                        onChange={(e) => handleEditFieldChange('nit', e.target.value)}
                       />
+                      {editErrors.nit && (
+                        <span className="form-field-error">
+                          <AlertCircle size={12} /> {editErrors.nit}
+                        </span>
+                      )}
                     </div>
-                    <div className="form-group">
-                      <label>Correo Electrónico *</label>
+                    <div className={`form-group ${editErrors.email ? 'has-error' : ''}`}>
+                      <label>
+                        Correo Electrónico <span className="required-asterisk">*</span>
+                      </label>
                       <input
                         type="email"
-                        required
+                        className={editErrors.email ? 'input-error' : ''}
                         value={editForm.email}
-                        onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                        onChange={(e) => handleEditFieldChange('email', e.target.value)}
                       />
+                      {editErrors.email && (
+                        <span className="form-field-error">
+                          <AlertCircle size={12} /> {editErrors.email}
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   <div className="form-grid-2">
                     <div className="form-group">
-                      <label>Teléfono</label>
+                      <label>
+                        Teléfono <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary, #64748b)', fontWeight: 400 }}>(Opcional)</span>
+                      </label>
                       <input
                         type="text"
                         value={editForm.phone}
-                        onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                        onChange={(e) => handleEditFieldChange('phone', e.target.value)}
                       />
                     </div>
                     <div className="form-group">
-                      <label>Ciudad</label>
+                      <label>
+                        Ciudad <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary, #64748b)', fontWeight: 400 }}>(Opcional)</span>
+                      </label>
                       <input
                         type="text"
                         value={editForm.city}
-                        onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                        onChange={(e) => handleEditFieldChange('city', e.target.value)}
                       />
                     </div>
                   </div>
 
                   <div className="form-grid-2">
                     <div className="form-group">
-                      <label>Plan SaaS Contratado</label>
+                      <label>Plan SaaS Contratado <span className="required-asterisk">*</span></label>
                       <select
                         value={editForm.planType}
                         onChange={(e) => {
@@ -977,7 +1196,7 @@ export const CompaniesPage: React.FC = () => {
                           if (newPlan === 'Basic') defaultBranches = 1;
                           else if (newPlan === 'Pro') defaultBranches = 5;
                           else if (newPlan === 'Enterprise') defaultBranches = 20;
-                          setEditForm({ ...editForm, planType: newPlan, maxBranches: defaultBranches });
+                          setEditForm((prev) => ({ ...prev, planType: newPlan, maxBranches: defaultBranches }));
                         }}
                       >
                         <option value="Basic">Plan Básico</option>
@@ -985,25 +1204,30 @@ export const CompaniesPage: React.FC = () => {
                         <option value="Enterprise">Plan Enterprise</option>
                       </select>
                     </div>
-                    <div className="form-group">
-                      <label>Límite Máximo de Sedes</label>
+                    <div className={`form-group ${editErrors.maxBranches ? 'has-error' : ''}`}>
+                      <label>Límite Máximo de Sedes <span className="required-asterisk">*</span></label>
                       <input
                         type="number"
                         min={1}
                         max={999}
-                        required
+                        className={editErrors.maxBranches ? 'input-error' : ''}
                         value={editForm.maxBranches === 0 ? '' : editForm.maxBranches}
                         onChange={(e) => {
                           const raw = e.target.value;
                           const num = raw === '' ? 0 : parseInt(raw, 10);
-                          setEditForm({ ...editForm, maxBranches: isNaN(num) ? 0 : num });
+                          handleEditFieldChange('maxBranches', isNaN(num) ? 0 : num);
                         }}
                         onBlur={() => {
                           if (!editForm.maxBranches || editForm.maxBranches < 1) {
-                            setEditForm((prev) => ({ ...prev, maxBranches: 1 }));
+                            handleEditFieldChange('maxBranches', 1);
                           }
                         }}
                       />
+                      {editErrors.maxBranches && (
+                        <span className="form-field-error">
+                          <AlertCircle size={12} /> {editErrors.maxBranches}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -1011,7 +1235,7 @@ export const CompaniesPage: React.FC = () => {
                     <label>Estado de Suscripción</label>
                     <select
                       value={editForm.isActive ? 'true' : 'false'}
-                      onChange={(e) => setEditForm({ ...editForm, isActive: e.target.value === 'true' })}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, isActive: e.target.value === 'true' }))}
                     >
                       <option value="true">Activa (Acceso Habilitado)</option>
                       <option value="false">Suspendida (Acceso Bloqueado)</option>

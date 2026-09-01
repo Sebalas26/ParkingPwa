@@ -7,6 +7,37 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-31 20:38:00] - [FEATURE / UX / UI] [PWA / EMPRESAS] - Sistema Profesional de Validaciones Visuales en Modales de Registro y Edición de Empresas
+
+#### 💬 Prompt Original del Usuario
+> "Listo mira en la creación de la compañia le doy click en crear parqueadero y se ve super feo pues no tiene las validaciones que salgan bien que campos faltan y son obligatorios si me explico pues que se vea el rojito así bien pro como debería ser me explico analiza y dame el plan esa modal tanto la de crear como la de editar pero solo eso no vayas afectar ya el funcionamiento vale dame el plan"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Desactivación de Alertas Nativas del Navegador (`noValidate`)**:
+   - Se añadió el atributo `noValidate` a los formularios `<form>` de creación (`Registrar Nueva Empresa Cliente`) y edición (`Editar Empresa`) en `CompaniesPage.tsx`, erradicando los tooltips emergentes por defecto del navegador ("Completa este campo").
+2. **Validación Reactiva y Feedback en Tiempo Real (`CompaniesPage.tsx`)**:
+   - Se crearon estados dedicados `createErrors` y `editErrors` (`Record<string, string>`).
+   - Se implementaron las funciones `validateCreateForm` y `validateEditForm` con chequeo estricto de campos obligatorios, longitud mínima, límites numéricos y formato RFC de correos electrónicos.
+   - Handlers reactivos `handleCreateFieldChange` y `handleEditFieldChange` que limpian instantáneamente el estado de error de cada campo en cuanto el usuario escribe o ajusta un valor válido.
+3. **Diseño Visual Pro y Estilización CSS (`CompaniesPage.css`)**:
+   - Bordes de inputs en rojo elegante (`#ef4444 !important`), fondo sutil traslúcido (`rgba(239, 68, 68, 0.04)`) y halo de enfoque `box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15)`.
+   - Mensajes contextuales con micro-ícono `<AlertCircle size={12} />` debajo de cada campo con animación suave `errorSlideIn`.
+   - Asteriscos `.required-asterisk` estilizados en rojo para distinguir de forma clara los campos requeridos de los opcionales.
+4. **Preservación Funcional 100%**:
+   - Sanitización con `.trim()` de campos de texto y preservación de toda la integración con `companyService.create()` y `companyService.update()`.
+5. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/companies/ui/CompaniesPage.tsx`
+- `src/features/companies/ui/CompaniesPage.css`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+
+---
+
 ### [2026-08-31 17:20:00] - [FEATURE / UI / MULTI-TENANT] [PWA / EMPRESAS] - Soporte de Logo Opcional en Base64 con Componente Pro de Carga y Lightbox Modal
 
 #### 💬 Prompt Original del Usuario
