@@ -7,6 +7,42 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-09-01 12:00:00] - [CONFIG / PWA / ROUTING] [PWA / VITE & ROUTER BASE PATH] - Configuración de Base Path /Parking/ en Vite y React Router
+
+#### 💬 Prompt Original del Usuario
+> "Por favor, aplica las siguientes correcciones en el proyecto. Hemos detectado que el problema de la PWA y las rutas se debe a que la aplicación se despliega en el subdirectorio "/Parking/" en producción (IIS), pero actualmente está configurada para la raíz ("/").
+> Aplica los siguientes cambios exactos:
+> 1. En el archivo vite.config.ts:
+> - Agrega la propiedad base: '/Parking/', justo al inicio del objeto de retorno (antes de define:).
+> - Dentro de la configuración del plugin VitePWA, en la sección manifest, cambia start_url: '/', a start_url: '/Parking/',.
+> - En esa misma sección del manifest, cambia scope: '/', a scope: '/Parking/',.
+> - Mantén el resto de la configuración de Workbox y los íconos intacta.
+> 2. En el archivo src/App.tsx:
+> - Localiza el componente <Router> (importado de react-router-dom) dentro de la función App().
+> - Añádele la propiedad basename apuntando al subdirectorio, de modo que quede así: <Router basename="/Parking">.
+> No modifiques el archivo UpdatePromptModal.tsx, su lógica de actualización manual con SKIP_WAITING está perfecta. Solo genera los cambios para vite.config.ts y App.tsx."
+
+#### 🤖 Resumen Técnico para la IA
+1. **Configuración de Subdirectorio Base (`vite.config.ts`)**:
+   - `base: '/Parking/'` añadido para que todos los assets y bundles se sirvan con la ruta relativa `/Parking/assets/...`.
+   - `manifest.start_url: '/Parking/'` y `manifest.scope: '/Parking/'` configurados para que la PWA instalada se ejecute en el scope exacto del subdirectorio en IIS.
+2. **Enrutamiento React Router (`App.tsx`)**:
+   - `<Router basename="/Parking">` configurado para sincronizar las rutas del SPA con el subdirectorio `/Parking/` de IIS.
+3. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `vite.config.ts`
+- `src/App.tsx`
+- `public/web.config`
+- `.github/workflows/main.yml`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+
+---
+
 ### [2026-09-01 11:26:00] - [BUGFIX / CRITICAL / INFRA] [PWA / IIS / CACHE-CONTROL] - Corrección Crítica de Headers Cache-Control en IIS para sw.js e index.html
 
 #### 💬 Prompt Original del Usuario
