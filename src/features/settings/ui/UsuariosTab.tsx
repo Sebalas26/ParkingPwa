@@ -596,10 +596,12 @@ export const UsuariosTab: React.FC = () => {
                       </label>
                       <input
                         type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         className={`input-field ${formErrors.identificationNumber ? 'input-error' : ''}`}
                         placeholder="Ej: 1020304050"
                         value={editingUsuario.identificationNumber}
-                        onChange={(e) => handleFieldChange('identificationNumber', e.target.value)}
+                        onChange={(e) => handleFieldChange('identificationNumber', e.target.value.replace(/\D/g, ''))}
                         disabled={isSavingUser}
                       />
                       {formErrors.identificationNumber && (
@@ -738,7 +740,7 @@ export const UsuariosTab: React.FC = () => {
                         <input
                           type={showPassword ? 'text' : 'password'}
                           className={`input-field ${formErrors.password ? 'input-error' : ''}`}
-                          placeholder="••••••••••••"
+                          placeholder=""
                           style={{ paddingRight: '40px' }}
                           value={editingUsuario.password || ''}
                           onChange={(e) => handleFieldChange('password', e.target.value)}

@@ -7,6 +7,29 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-31 21:50:00] - [UX / UI] [PWA / USUARIOS] - Restricción Numérica Estricta en Número de Identificación y Limpieza de Placeholder de Contraseña Inicial
+
+#### 💬 Prompt Original del Usuario
+> "Quiero que en esta pantalla , en numero de identificacion solo me permita numeros, y el hint de contraseña incial esta en limpio, no me dejes los puntos"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Restricción Numérica Estricta en `identificationNumber` (`UsuariosTab.tsx`)**:
+   - Se añadió filtrado en caliente `e.target.value.replace(/\D/g, '')` en el `onChange` del campo **Número de Identificación**, impidiendo el ingreso de letras, espacios y caracteres especiales.
+   - Se configuraron los atributos HTML `inputMode="numeric"` y `pattern="[0-9]*"` para abrir teclados numéricos nativos en dispositivos móviles.
+2. **Limpieza Visual de Hint/Placeholder de Contraseña (`UsuariosTab.tsx`)**:
+   - Se eliminó el placeholder de puntos simulados (`placeholder="••••••••••••"`) dejándolo en blanco (`placeholder=""`), de modo que el campo no aparente tener una contraseña prellenada cuando está vacío.
+3. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/settings/ui/UsuariosTab.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+
+---
+
 ### [2026-08-31 21:25:00] - [UX / UI] [PWA / CONFIGURACIÓN] - Habilitación de Botones de Envío en Modales con Disparo Reactivo de Validaciones Visuales al Clic
 
 #### 💬 Prompt Original del Usuario
