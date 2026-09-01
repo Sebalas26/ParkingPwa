@@ -7,6 +7,42 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-09-01 12:52:00] - [FEATURE / DIAGNOSTICS / PWA] [PWA / LIVE SW DIAGNOSTIC OVERLAY] - Panel de Diagnóstico Visual en Vivo para Detección de Ciclo de Vida de SW
+
+#### 💬 Prompt Original del Usuario
+> "Por favor, vamos a aplicar una estrategia de "Diagnóstico Visual" paso a paso para descubrir por qué la PWA no detecta las actualizaciones. Modifica el archivo src/shared/ui/UpdatePromptModal.tsx aplicando estos cambios exactos:
+> 1. Baja el tiempo de sondeo proactivo: En onRegisteredSW, cambia el setInterval de 60 * 1000 a 10 * 1000 (10 segundos) para que consulte al servidor rápidamente.
+> 2. Elimina la barrera de renderizado: Quita la condición if (!needRefresh) { return null; } temporalmente. Necesitamos que el componente siempre se renderice para ver su estado.
+> 3. Inyecta un Panel de Debug Visual: El componente ahora debe retornar SIEMPRE un <div> que contenga dos cosas:
+> - El panel de diagnóstico (un div fijo en la parte inferior izquierda de la pantalla, con fondo negro, texto verde brillante, z-index 9999, tamaño de fuente 11px, que muestre el estado de variables clave: needRefresh, la hora actual, y si el Service Worker se registró).
+> - Si needRefresh es true, debe renderizar también la modal verde original update-modal-overlay que ya tenías.
+> 4. Agrega un botón manual de "Forzar Check": Dentro del panel de diagnóstico, agrega un botón pequeño que ejecute registration.update() al hacerle clic.
+> El objetivo es poder ver en la pantalla de un iPad en tiempo real qué valor tiene needRefresh y si el timer de 10 segundos está ejecutándose."
+
+#### 🤖 Resumen Técnico para la IA
+1. **Sondeo Ultrarrápido a 10s (`UpdatePromptModal.tsx`)**:
+   - `setInterval` reducido a 10 segundos para consultar `registration.update()` continuamente contra IIS.
+2. **Panel de Diagnóstico Flotante en Pantalla**:
+   - Renderizado persistente en la esquina inferior izquierda con indicadores en vivo:
+     - `needRefresh` (booleano reactivo).
+     - Estado del SW (`🟢 Activo`, `🟡 Waiting (Nuevo SW listo)`, `Instalando...`, `🔴 No Registrado`).
+     - Contador incremental de checks y hora exacta del último sondeo.
+     - Botón interactivo *"🔄 Forzar Check"* que ejecuta `swReg.update()` manualmente y muestra el resultado.
+     - Botón *"🚀 Actualizar"* condicional cuando `needRefresh === true`.
+3. **Renderizado Condicional del Modal Bloqueante**:
+   - Si `needRefresh === true`, despliega la modal completa sobre la pantalla.
+4. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/shared/ui/UpdatePromptModal.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+
+---
+
 ### [2026-09-01 12:46:00] - [FEATURE / PWA / BUILD] [PWA / CONSTANT MUTATION STRATEGY] - Implementación de Estrategia de Mutación Constante para Forzar Registro y Actualización de SW
 
 #### 💬 Prompt Original del Usuario
