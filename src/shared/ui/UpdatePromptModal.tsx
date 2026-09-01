@@ -13,10 +13,20 @@ export const UpdatePromptModal: React.FC = () => {
     immediate: true,
     onRegisteredSW(_swUrl, registration) {
       if (registration) {
-        // Sondeo silencioso cada 1 minuto (60,000 ms) sin forzar recargas
-        setInterval(() => {
-          registration.update().catch(() => {});
-        }, 60 * 1000);
+        // Detección reactiva al regresar al iPad o cambiar de pestaña
+        const checkUpdateOnActive = () => {
+          if (document.visibilityState === 'visible') {
+            registration.update().catch(() => {});
+          }
+        };
+
+        window.addEventListener('focus', checkUpdateOnActive);
+        document.addEventListener('visibilitychange', checkUpdateOnActive);
+
+        return () => {
+          window.removeEventListener('focus', checkUpdateOnActive);
+          document.removeEventListener('visibilitychange', checkUpdateOnActive);
+        };
       }
     },
   });

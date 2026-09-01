@@ -7,6 +7,31 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-09-01 14:09:00] - [BUGFIX / CRITICAL / PWA] [PWA / WORKBOX & SERVICE WORKER] - Eliminación de `clientsClaim` y Eliminación de Intervalo Agresivo para Estabilizar Modal
+
+#### 💬 Prompt Original del Usuario
+> "no es mejor que en cada despliegue se cree un nuevo Service Worker por que mira ya inicie sesion y cada minutos que es el refresh esta medio mostrando la modal y se da f5 se esta quedando pegado ... algo sucede hay existe algo que esta haciendo eso por hay me dijeron que la mejor practica era que cada despliegue es mejor cambiar el worker service y ya así el cambia de una y no hay que estar haciendo peticiones cada cierto tiempo a ver si algo cambio. no ? anjaliza eso que me dijeron"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Causa Raíz Identificada (`clientsClaim: true`)**:
+   - `clientsClaim: true` en la configuración de Workbox generaba la llamada `e.clientsClaim()` en `sw.js`. Al descargarse cualquier nuevo Service Worker, éste reclamaba los clientes inmediatamente, disparando el evento Workbox `controlling` que forzaba un `window.location.reload()` antes de que el usuario pudiera interactuar con la modal.
+2. **Corrección Aplicada**:
+   - `vite.config.ts`: `clientsClaim: false` en `workbox` para que el nuevo SW permanezca en `waiting` de forma pasiva hasta el clic del usuario.
+   - `UpdatePromptModal.tsx`: Eliminado el `setInterval` de 1 minuto; la detección ahora ocurre de forma reactiva al enfocar/volver a la app (`focus` y `visibilitychange`).
+   - `sw.js` regenerado sin `clientsClaim()`.
+3. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `vite.config.ts`
+- `src/shared/ui/UpdatePromptModal.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+
+---
+
 ### [2026-09-01 13:49:00] - [BUGFIX / PWA / LIFECYCLE] [PWA / VITE-PWA CONFIG] - Eliminación de Registro Duplicado `injectRegister: auto` para Evitar Auto-Recargas
 
 #### 💬 Prompt Original del Usuario
