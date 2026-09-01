@@ -7,6 +7,34 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-09-01 14:56:00] - [BUGFIX / PWA / REACT 19] [PWA / VIRTUAL:PWA-REGISTER] - Restauración de `useRegisterSW` y Registro Automático Seguro de Vite
+
+#### 💬 Prompt Original del Usuario
+> "Por favor, aplica la solución definitiva para evitar el bucle de actualizaciones de la PWA. Hemos diagnosticado que el uso de la API nativa del Service Worker dentro de un useEffect choca con el StrictMode de React 19, generando duplicidad de eventos.
+> Aplica estos 2 cambios exactos:
+> 1. En vite.config.ts: Localiza la configuración de VitePWA y ELIMINA la línea injectRegister: false,. Al quitarla, Vite volverá a su comportamiento por defecto ('auto') y se encargará de inyectar el script de registro de forma segura fuera del árbol de React.
+> 2. En src/shared/ui/UpdatePromptModal.tsx: Reemplaza TODO el contenido del archivo con el siguiente código. Volveremos a usar el hook useRegisterSW de virtual:pwa-register/react..."
+
+#### 🤖 Resumen Técnico para la IA
+1. **Configuración de Vite (`vite.config.ts`)**:
+   - Eliminada la directiva `injectRegister: false` para permitir la inyección segura y estándar del script de Service Worker fuera del ciclo de reconciliación de React 19 StrictMode.
+2. **Hook `useRegisterSW` (`UpdatePromptModal.tsx`)**:
+   - Restaurado `useRegisterSW` desde `virtual:pwa-register/react`.
+   - Sondeo periódico cada 60 segundos (`60 * 1000`) en `onRegisteredSW`.
+   - Renderizado condicional `if (!needRefresh) return null;` para aislar el DOM hasta que el usuario decida actualizar con `updateServiceWorker(true)`.
+3. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `vite.config.ts`
+- `src/shared/ui/UpdatePromptModal.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+
+---
+
 ### [2026-09-01 14:30:00] - [REFACTOR / ARCHITECTURE / PWA] [PWA / NATIVE SERVICE WORKER] - Transición a Ciclo de Vida Nativo del Service Worker (Eliminación de Workbox-Window)
 
 #### 💬 Prompt Original del Usuario
