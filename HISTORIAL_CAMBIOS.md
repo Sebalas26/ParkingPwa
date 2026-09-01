@@ -7,6 +7,30 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-09-01 13:49:00] - [BUGFIX / PWA / LIFECYCLE] [PWA / VITE-PWA CONFIG] - Eliminación de Registro Duplicado `injectRegister: auto` para Evitar Auto-Recargas
+
+#### 💬 Prompt Original del Usuario
+> "listo ya actualiza bien pero lo hace de una solo no sale la modal deberia aparecer la modal para mostrar que se debe actualziar y hasta que le di click se realice la actualizaciuón y ya muere hay espera hasta que exista otra actualización pero veo que se quedo pegado cada minuto el refresh de la actualización cada minuto se refresca como si actualizara si me explico ?"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Causa Raíz Identificada (`injectRegister: 'auto'`)**:
+   - Al tener `injectRegister: 'auto'` en `vite.config.ts`, VitePWA inyectaba un script de registro paralelo en el HTML además del hook `useRegisterSW` de React en `UpdatePromptModal.tsx`.
+   - Ese script paralelo consumía el evento de actualización e invocaba activación inmediata, provocando que la página se recargara automáticamente cada minuto al detectar cambios y evitando que el hook de React activara la modal `needRefresh = true`.
+2. **Corrección Aplicada (`vite.config.ts`)**:
+   - Se removió `injectRegister: 'auto'` en `VitePWA` para que el ciclo de vida esté gobernado **exclusivamente** por `useRegisterSW` en `UpdatePromptModal.tsx`.
+   - Ahora, al detectar una nueva versión, el Service Worker permanece en estado `waiting` sin recargar, y React muestra la modal `update-modal-overlay` hasta que el usuario pulse *"Actualizar Ahora"*.
+3. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `vite.config.ts`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+
+---
+
 ### [2026-09-01 13:33:00] - [PRODUCTION / PWA / POLLING] [PWA / SERVICE WORKER] - Configuración Definitiva de Sondeo a 1 Minuto y Cero Recargas Fantasma
 
 #### 💬 Prompt Original del Usuario
