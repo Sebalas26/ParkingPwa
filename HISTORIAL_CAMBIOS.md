@@ -7,6 +7,30 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-09-01 14:15:00] - [BUGFIX / CRITICAL / PWA] [PWA / WORKBOX-WINDOW] - Sobrescritura de `onNeedReload` para Impedir Auto-Recarga en `controlling`
+
+#### 💬 Prompt Original del Usuario
+> "pero sigue actualizando de automatico enserio algo sucede para que lo haga automatico revisa todo todo que puede ser el despliegue que se tiene en gitactiosns todo revisa por que se actuazia de una medio se ve la modal y ya se actualiza instastaneo de una hace como f5 eso no deberia ser así así no aplica debe salir la modal enserio y hasta que el usuario le de click..."
+
+#### 🤖 Resumen Técnico para la IA
+1. **Causa Raíz Identificada (`onNeedReload` por defecto en `workbox-window`)**:
+   - Al registrar el Service Worker con `useRegisterSW`, `workbox-window` adjunta por defecto un listener interno al evento `controlling` que ejecuta `window.location.reload()` de forma incondicional si no se le pasa un callback `onNeedReload` explícito.
+   - Esto provocaba que cualquier cambio de estado del Service Worker disparara la recarga de página sin esperar la interacción del usuario en la modal.
+2. **Corrección Aplicada (`UpdatePromptModal.tsx`)**:
+   - Se añadió `onNeedReload() { ... }` como handler explícito en `useRegisterSW`, anulando por completo el `window.location.reload()` automático de la librería Workbox.
+   - La recarga de página ahora queda supeditada **100% al evento `onClick` del botón "Actualizar Ahora"** en `handleUpdate`.
+3. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/shared/ui/UpdatePromptModal.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+
+---
+
 ### [2026-09-01 14:09:00] - [BUGFIX / CRITICAL / PWA] [PWA / WORKBOX & SERVICE WORKER] - Eliminación de `clientsClaim` y Eliminación de Intervalo Agresivo para Estabilizar Modal
 
 #### 💬 Prompt Original del Usuario

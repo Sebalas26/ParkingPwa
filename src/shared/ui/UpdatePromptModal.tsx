@@ -11,6 +11,10 @@ export const UpdatePromptModal: React.FC = () => {
     updateServiceWorker,
   } = useRegisterSW({
     immediate: true,
+    onNeedReload() {
+      // Bloqueo estricto: no permitir que Workbox recargue la página automáticamente en background
+      console.log('[PWA] Nueva versión en espera de confirmación de usuario');
+    },
     onRegisteredSW(_swUrl, registration) {
       if (registration) {
         // Detección reactiva al regresar al iPad o cambiar de pestaña
@@ -43,6 +47,7 @@ export const UpdatePromptModal: React.FC = () => {
     
     try {
       await updateServiceWorker(true);
+      window.location.reload();
     } catch (err) {
       console.warn('[PWA] Error al actualizar:', err);
       window.location.reload();
