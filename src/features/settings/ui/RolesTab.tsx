@@ -386,8 +386,25 @@ export const RolesTab: React.FC = () => {
     }
   };
 
+  // Módulos y acciones permitidos según el nivel de privilegio (SuperAdmin vs Administrador de Empresa)
+  const superAdminOnlyModuleIds = [7, 16]; // 7: Gestión de Sedes, 16: Gestión de Empresas SaaS
+  const effectiveModules = useMemo(() => {
+    if (isUserSuperAdmin) return allModules;
+    return allModules.filter((m) => !superAdminOnlyModuleIds.includes(m.id));
+  }, [allModules, isUserSuperAdmin]);
+
+  const effectiveActions = useMemo(() => {
+    if (isUserSuperAdmin) return allActions;
+    return allActions.filter(
+      (a) =>
+        !superAdminOnlyModuleIds.includes(a.moduleId ?? a.module?.id ?? 0) &&
+        !a.slug.startsWith('companies.') &&
+        !a.slug.startsWith('branches.')
+    );
+  }, [allActions, isUserSuperAdmin]);
+
   // Filtrado por término de búsqueda
-  const filteredActions = allActions.filter((a) => {
+  const filteredActions = effectiveActions.filter((a) => {
     if (!searchTerm.trim()) return true;
     const term = searchTerm.toLowerCase();
     return (
@@ -398,7 +415,7 @@ export const RolesTab: React.FC = () => {
   });
 
   // Módulos con sus acciones correspondientes
-  const groupedModules = allModules
+  const groupedModules = effectiveModules
     .map((mod) => {
       const actions = filteredActions.filter((a) => (a.moduleId ?? a.module?.id) === mod.id);
       return {
@@ -413,16 +430,16 @@ export const RolesTab: React.FC = () => {
   const pwaGrouped = groupedModules.filter((g) => isModuleInPlatform(g.module, 'pwa'));
   const wpfGrouped = groupedModules.filter((g) => isModuleInPlatform(g.module, 'wpf'));
 
-  const pwaTotalActions = allActions.filter((a) => {
-    const mod = allModules.find((m) => m.id === (a.moduleId ?? a.module?.id));
+  const pwaTotalActions = effectiveActions.filter((a) => {
+    const mod = effectiveModules.find((m) => m.id === (a.moduleId ?? a.module?.id));
     return mod ? isModuleInPlatform(mod, 'pwa') : true;
   });
-  const wpfTotalActions = allActions.filter((a) => {
-    const mod = allModules.find((m) => m.id === (a.moduleId ?? a.module?.id));
+  const wpfTotalActions = effectiveActions.filter((a) => {
+    const mod = effectiveModules.find((m) => m.id === (a.moduleId ?? a.module?.id));
     return mod ? isModuleInPlatform(mod, 'wpf') : false;
   });
 
-  const allSelectedCount = selectedActionIds.length;
+  const allSelectedCount = selectedActionIds.filter((id) => effectiveActions.some((a) => a.id === id)).length;
   const pwaSelectedCount = pwaTotalActions.filter((a) => selectedActionIds.includes(a.id)).length;
   const wpfSelectedCount = wpfTotalActions.filter((a) => selectedActionIds.includes(a.id)).length;
 
@@ -880,7 +897,7 @@ export const RolesTab: React.FC = () => {
                     <Globe size={15} />
                     <span>Todos los Módulos</span>
                     <span className="perm-platform-badge">
-                      {allSelectedCount} / {allActions.length}
+                      {allSelectedCount} / {effectiveActions.length}
                     </span>
                   </button>
 
@@ -962,18 +979,18 @@ export const RolesTab: React.FC = () => {
                       </strong>{' '}
                       de{' '}
                       {activePlatform === 'all'
-                        ? allActions.length
+                        ? effectiveActions.length
                         : activePlatform === 'pwa'
                           ? pwaTotalActions.length
                           : wpfTotalActions.length}{' '}
-                      permisos ({Math.round(((activePlatform === 'all' ? allSelectedCount : activePlatform === 'pwa' ? pwaSelectedCount : wpfSelectedCount) / Math.max(1, (activePlatform === 'all' ? allActions.length : activePlatform === 'pwa' ? pwaTotalActions.length : wpfTotalActions.length))) * 100)}%)
+                      permisos ({Math.round(((activePlatform === 'all' ? allSelectedCount : activePlatform === 'pwa' ? pwaSelectedCount : wpfSelectedCount) / Math.max(1, (activePlatform === 'all' ? effectiveActions.length : activePlatform === 'pwa' ? pwaTotalActions.length : wpfTotalActions.length))) * 100)}%)
                     </span>
                   </div>
                   <div className="perm-progress-track">
                     <div
                       className="perm-progress-fill"
                       style={{
-                        width: `${Math.round(((activePlatform === 'all' ? allSelectedCount : activePlatform === 'pwa' ? pwaSelectedCount : wpfSelectedCount) / Math.max(1, (activePlatform === 'all' ? allActions.length : activePlatform === 'pwa' ? pwaTotalActions.length : wpfTotalActions.length))) * 100)}%`,
+                        width: `${Math.round(((activePlatform === 'all' ? allSelectedCount : activePlatform === 'pwa' ? pwaSelectedCount : wpfSelectedCount) / Math.max(1, (activePlatform === 'all' ? effectiveActions.length : activePlatform === 'pwa' ? pwaTotalActions.length : wpfTotalActions.length))) * 100)}%`,
                       }}
                     />
                   </div>
@@ -1063,7 +1080,7 @@ export const RolesTab: React.FC = () => {
 
               <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary, #64748b)' }}>
-                  Total asignados: <strong>{selectedActionIds.length} de {allActions.length}</strong>
+                  Total asignados: <strong>{allSelectedCount} de {effectiveActions.length}</strong>
                 </span>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button type="button" className="btn-secondary" onClick={() => setIsPermissionsModalOpen(false)}>

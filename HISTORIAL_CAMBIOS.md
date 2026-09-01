@@ -7,6 +7,27 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-09-01 08:00:00] - [SECURITY / RBAC] [PWA / ROLES] - Restricción Estricta de Módulos 'Empresas SaaS' y 'Sedes' al Super Administrador
+
+#### 💬 Prompt Original del Usuario
+> "estos dos modulos no deberían aparecerle a nadie que no sea el superadministrador del todo el software por que mira que estaba configurando los permisos para un rol de la compañia desde el usuario administrador de la compañia, pero enserio no es posible imaginate darle el controla otra compañia de mi software eso es un error fatal si me explico ? analiza eso y dame el plan"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Aislamiento Dinámico de Módulos SuperAdmin en Frontend (`RolesTab.tsx`)**:
+   - Se implementó la exclusión estricta de los módulos 16 (`Gestión de Empresas SaaS`) y 7 (`Gestión de Sedes y Parqueaderos`) y todas sus acciones (`companies.*`, `branches.*`) cuando el usuario actual no es Super Administrador (`!isUserSuperAdmin`).
+   - Se recalcularon los totales de cobertura, badges de plataforma (`0 / 64` en lugar de `0 / 74` para roles de compañía) y los botones de selección masiva (`handleSelectVisible`).
+2. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/settings/ui/RolesTab.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+
+---
+
 ### [2026-09-01 07:22:00] - [FEATURE / UX / RBAC] [PWA / PERMISOS] - Rediseño Pro del Modal de Permisos por Rol y Supresión de Slugs Técnicos
 
 #### 💬 Prompt Original del Usuario
