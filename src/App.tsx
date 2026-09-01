@@ -14,6 +14,7 @@ import { authService } from './features/auth/data/authService';
 import { PlateQueryMockup } from './features/isolated/ui/PlateQueryMockup';
 import { NoPermissionsView } from './shared/ui/NoPermissionsView';
 import { useAuthSession } from './shared/hooks/useAuthSession';
+import { UpdatePromptModal } from './shared/ui/UpdatePromptModal';
 
 const SessionHeartbeat: React.FC = () => {
   useEffect(() => {
@@ -150,6 +151,7 @@ const GuardedRoute: React.FC<{
 function App() {
   return (
     <ParqueaderoProvider>
+      <UpdatePromptModal />
       <Router>
         <Routes>
           {/* Ruta raíz limpia: Muestra el Login directamente o Dashboard si ya inició sesión */}

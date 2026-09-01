@@ -30,6 +30,13 @@ import {
   CreditCard,
   FileCheck,
   Building,
+  Monitor,
+  Globe,
+  Laptop,
+  Ticket,
+  Receipt,
+  CalendarCheck,
+  RefreshCw,
 } from 'lucide-react';
 import type { RoleDto, SaveRoleDto, ActionDto } from '../model/RolesContracts';
 import { rolesService } from '../data/rolesService';
@@ -38,23 +45,26 @@ import { useAuthSession } from '../../../shared/hooks/useAuthSession';
 import { ModalPortal } from '../../../shared/ui/ModalPortal';
 import { useParqueaderoContext } from '../../../shared/context/ParqueaderoContext';
 
-interface PwaSubGroupDef {
+type PlatformTab = 'all' | 'pwa' | 'wpf';
+
+interface SubGroupDef {
   id: string;
   name: string;
   icon: React.ComponentType<{ size?: number; color?: string; className?: string }>;
   actionSlugs: string[];
 }
 
-interface PwaModuleDef {
+interface ModuleGroupDef {
   id: string;
   name: string;
   subtitle: string;
   icon: React.ComponentType<{ size?: number; color?: string; className?: string }>;
+  platform: 'pwa' | 'wpf' | 'both';
   actionSlugs?: string[];
-  subgroups?: PwaSubGroupDef[];
+  subgroups?: SubGroupDef[];
 }
 
-interface RenderedPwaSubGroup {
+interface RenderedSubGroup {
   id: string;
   name: string;
   icon: React.ComponentType<{ size?: number; color?: string; className?: string }>;
@@ -63,30 +73,144 @@ interface RenderedPwaSubGroup {
   totalActionIds: number[];
 }
 
-interface RenderedPwaModule {
+interface RenderedModule {
   id: string;
   name: string;
   subtitle: string;
   icon: React.ComponentType<{ size?: number; color?: string; className?: string }>;
+  platform: 'pwa' | 'wpf' | 'both';
   actionSlugs?: string[];
   actions?: ActionDto[];
-  subgroups?: RenderedPwaSubGroup[];
+  subgroups?: RenderedSubGroup[];
   totalModuleActionIds: number[];
 }
 
-const PWA_MODULES_STRUCTURE: PwaModuleDef[] = [
+// Diccionario de nombres dicientes, descriptivos y profesionales en español
+const ACTION_DESCRIPTIVE_NAMES: Record<string, string> = {
+  // CheckIn
+  'checkin.view': 'Ver pantalla de ingreso de vehículos',
+  'checkin.create': 'Generar e imprimir tiquete de ingreso con código de barras / QR',
+  'checkin.reprint': 'Reimprimir último tiquete de ingreso generado',
+  'checkin.edit_plate': 'Editar o corregir placa en tiquete de entrada',
+  'checkin.manual_barrier': 'Abrir barrera de entrada manualmente desde el terminal',
+
+  // CheckOut
+  'checkout.view': 'Ver pantalla de cobro y liquidación',
+  'checkout.process_payment': 'Liquidar, cobrar y timbrar tiquetes de estacionamiento',
+  'checkout.apply_discount': 'Aplicar convenios y descuentos comerciales con escaneo',
+  'checkout.waive_fee': 'Exonerar cobro de tiquete o autorizar cortesía',
+  'checkout.reprint_receipt': 'Reimprimir factura o comprobante térmico de salida',
+  'checkout.manual_barrier': 'Abrir barrera de salida manualmente desde caja',
+
+  // Subscriptions
+  'subscriptions.view': 'Ver catálogo de mensualidades y abonados',
+  'subscriptions.create': 'Registrar nuevo abonado / mensualidad',
+  'subscriptions.renew': 'Renovar mensualidad y recibir pago de cuota',
+  'subscriptions.print_receipt': 'Imprimir recibo térmico de pago de mensualidad',
+  'subscriptions.edit': 'Editar datos de abonado, vigencia o vehículo',
+  'subscriptions.cancel': 'Cancelar o inactivar suscripción de abonado',
+
+  // Monitoring
+  'monitoring.view_occupancy': 'Visualizar mapa de ocupación y cupos en tiempo real',
+  'monitoring.search_vehicles': 'Búsqueda rápida de placas adentro del parqueadero',
+  'monitoring.force_exit': 'Forzar salida manual de vehículo en patio',
+  'monitoring.export': 'Exportar listado de vehículos activos a Excel / PDF',
+
+  // Shifts
+  'shifts.view_current': 'Ver estado del turno actual y balance de efectivo en caja',
+  'shifts.open': 'Apertura de turno de estación con base de efectivo',
+  'shifts.blind_count': 'Retiro parcial de efectivo / Arqueo ciego en turno',
+  'shifts.close': 'Cerrar turno de caja y generar comprobante de corte Z',
+  'shifts.view_history': 'Ver historial de turnos y arqueos anteriores',
+  'shifts.reprint_closure': 'Reimprimir comprobante de cierre de turno',
+
+  // Analytics
+  'analytics.view_dashboard': 'Ver panel ejecutivo de analítica y KPIs en tiempo real',
+  'analytics.metrics': 'Consultar métricas operativas y gráficas de afluencia',
+  'analytics.income_reports': 'Consultar reportes de ingresos financieros y recaudos',
+  'analytics.occupancy_reports': 'Consultar reportes de ocupación y rotación de vehículos',
+  'analytics.audit_reports': 'Consultar auditoría de anulaciones, cortesías y descuentos',
+  'analytics.export': 'Exportar reportes analíticos a Excel / PDF',
+
+  // Branches
+  'branches.view': 'Ver listado de sedes y parqueaderos',
+  'branches.create': 'Crear nueva sede o parqueadero',
+  'branches.edit': 'Editar datos, capacidad y parametrización de sede',
+  'branches.delete': 'Inactivar sede o parqueadero',
+  'branches.assign_users': 'Asignar operadores y administradores a la sede',
+
+  // Rates
+  'rates.view': 'Ver catálogo de tarifas por tipo de vehículo',
+  'rates.create': 'Crear nueva tarifa y tipo de vehículo',
+  'rates.edit': 'Editar precios por hora, minuto, día y periodos de gracia',
+  'rates.delete': 'Inactivar tarifa de vehículo',
+
+  // Payment Methods
+  'payment_methods.view': 'Ver catálogo de medios de pago maestros',
+  'payment_methods.create': 'Crear nuevo medio de pago',
+  'payment_methods.edit': 'Editar medio de pago e ícono representativo',
+  'payment_methods.delete': 'Inactivar medio de pago maestro',
+
+  // Agreements
+  'agreements.view': 'Ver convenios comerciales y comercios aliados',
+  'agreements.create': 'Crear nuevo convenio comercial o comercio aliado',
+  'agreements.edit': 'Editar reglas y porcentaje de descuento de convenio',
+  'agreements.delete': 'Inactivar convenio comercial',
+
+  // Users & Roles
+  'users.view': 'Ver usuarios registrados en el sistema',
+  'users.create': 'Crear nuevo usuario operador / administrador',
+  'users.edit': 'Editar datos de usuario y restablecer contraseñas',
+  'users.delete': 'Inactivar usuario del sistema',
+  'roles.view': 'Ver catálogo de roles del sistema',
+  'roles.create': 'Crear nuevo rol de usuario',
+  'roles.edit': 'Editar nombre y estado de rol',
+  'roles.delete': 'Inactivar o eliminar rol de usuario',
+  'permissions.view': 'Ver matriz de permisos por rol',
+  'permissions.assign': 'Configurar y asignar permisos de acceso a roles',
+
+  // System
+  'system.sync': 'Forzar sincronización manual de datos con la nube',
+  'system.clean_cache': 'Limpiar base de datos local SQLite y resincronizar',
+
+  // Resolutions
+  'resolutions.view': 'Ver catálogo de resoluciones de facturación DIAN / POS',
+  'resolutions.create': 'Crear nueva resolución de facturación DIAN / POS',
+  'resolutions.edit': 'Editar rangos, prefijos y vigencias de resolución',
+  'resolutions.delete': 'Inactivar resolución de facturación',
+
+  // Incidents
+  'novedades.view': 'Ver historial de novedades e incidencias de vehículos',
+  'novedades.create': 'Registrar novedad o bloqueo restrictivo de placa',
+  'novedades.edit': 'Editar notas u observaciones de novedad',
+  'novedades.resolve': 'Resolver novedad y autorizar salida de vehículo',
+  'novedades.delete': 'Eliminar registro de novedad',
+
+  // Companies SaaS
+  'companies.view': 'Ver empresas clientes registradas en la plataforma',
+  'companies.create': 'Crear nueva empresa cliente y su administrador inicial',
+  'companies.edit': 'Editar datos, sedes máximas y planes de empresa',
+  'companies.suspend': 'Suspender o reactivar empresa cliente por suscripción',
+  'companies.delete': 'Eliminar empresa del sistema SaaS',
+  'companies.assign_limits': 'Asignar límites de sedes y capacidad SaaS',
+};
+
+// 1. Módulos de Plataforma Web (PWA)
+const PWA_MODULES_DEFINITIONS: ModuleGroupDef[] = [
   {
-    id: 'dashboard',
-    name: 'Dashboard',
-    subtitle: 'Métricas, analítica y visualización de ocupación en tiempo real',
+    id: 'pwa_dashboard',
+    name: 'Dashboard y Analítica Web',
+    subtitle: 'Métricas, KPIs ejecutivos y visualización de afluencia en tiempo real',
     icon: LayoutDashboard,
+    platform: 'pwa',
     actionSlugs: ['analytics.view_dashboard', 'analytics.metrics'],
   },
   {
-    id: 'caja',
-    name: 'Caja y Control de Turnos',
-    subtitle: 'Cobros, liquidación de tickets, apertura/cierre de turnos, arqueos y retiros',
+    id: 'pwa_caja',
+    name: 'Caja y Control de Turnos Web',
+    subtitle: 'Cobros, liquidación de tickets, apertura/cierre de turnos y arqueos',
     icon: Wallet,
+    platform: 'pwa',
     actionSlugs: [
       'checkout.process_payment',
       'shifts.view_current',
@@ -98,10 +222,11 @@ const PWA_MODULES_STRUCTURE: PwaModuleDef[] = [
     ],
   },
   {
-    id: 'activos',
+    id: 'pwa_activos',
     name: 'Activos y Monitoreo de Patio',
-    subtitle: 'Patio de vehículos en tiempo real, tickets de ingreso, salida manual y mensualidades',
+    subtitle: 'Patio en vivo, ingreso web de vehículos y gestión de mensualidades',
     icon: Car,
+    platform: 'pwa',
     actionSlugs: [
       'monitoring.view_occupancy',
       'monitoring.search_vehicles',
@@ -115,10 +240,11 @@ const PWA_MODULES_STRUCTURE: PwaModuleDef[] = [
     ],
   },
   {
-    id: 'reportes',
-    name: 'Reportes y Analítica',
-    subtitle: 'Reportes financieros, ocupación, auditoría y exportación a Excel / PDF',
+    id: 'pwa_reportes',
+    name: 'Reportes y Analítica Financiera',
+    subtitle: 'Reportes de ingresos, ocupación, auditoría y exportación a Excel / PDF',
     icon: BarChart3,
+    platform: 'pwa',
     actionSlugs: [
       'analytics.income_reports',
       'analytics.occupancy_reports',
@@ -127,10 +253,11 @@ const PWA_MODULES_STRUCTURE: PwaModuleDef[] = [
     ],
   },
   {
-    id: 'novedades',
-    name: 'Novedades y Bloqueos',
+    id: 'pwa_novedades',
+    name: 'Novedades y Bloqueo de Placas',
     subtitle: 'Registro de incidentes, novedades operativas y bloqueo preventivo de placas',
     icon: Bell,
+    platform: 'pwa',
     actionSlugs: [
       'novedades.view',
       'novedades.create',
@@ -139,10 +266,11 @@ const PWA_MODULES_STRUCTURE: PwaModuleDef[] = [
     ],
   },
   {
-    id: 'configuracion',
-    name: 'Configuración del Sistema',
+    id: 'pwa_configuracion',
+    name: 'Configuración del Sistema Web',
     subtitle: 'Parametrización general de sedes, usuarios, convenios, tarifas y medios de pago',
     icon: Settings,
+    platform: 'pwa',
     subgroups: [
       {
         id: 'branches',
@@ -203,7 +331,7 @@ const PWA_MODULES_STRUCTURE: PwaModuleDef[] = [
       },
       {
         id: 'payment_methods',
-        name: 'Medios de Pago',
+        name: 'Medios de Pago Maestros',
         icon: CreditCard,
         actionSlugs: [
           'payment_methods.view',
@@ -235,6 +363,107 @@ const PWA_MODULES_STRUCTURE: PwaModuleDef[] = [
           'companies.assign_limits',
         ],
       },
+    ],
+  },
+];
+
+// 2. Módulos de Terminal POS de Escritorio (WPF)
+const WPF_MODULES_DEFINITIONS: ModuleGroupDef[] = [
+  {
+    id: 'wpf_checkin',
+    name: 'Ingreso de Vehículos (CheckIn POS)',
+    subtitle: 'Impresión de tiquetes, lectura de placas y apertura de barrera de entrada',
+    icon: Ticket,
+    platform: 'wpf',
+    actionSlugs: [
+      'checkin.create',
+      'checkin.reprint',
+      'checkin.manual_barrier',
+      'checkin.edit_plate',
+      'checkin.view',
+    ],
+  },
+  {
+    id: 'wpf_checkout',
+    name: 'Cobro y Liquidación en Caja (CheckOut POS)',
+    subtitle: 'Liquidación de tarifas, convenios con escaneo, exoneraciones y corte térmico',
+    icon: Receipt,
+    platform: 'wpf',
+    actionSlugs: [
+      'checkout.process_payment',
+      'checkout.apply_discount',
+      'checkout.waive_fee',
+      'checkout.reprint_receipt',
+      'checkout.manual_barrier',
+      'checkout.view',
+    ],
+  },
+  {
+    id: 'wpf_monitoring',
+    name: 'Monitoreo de Patio y Plazas en Vivo',
+    subtitle: 'Visualización de cupos disponibles y vehículos estacionados en tiempo real',
+    icon: Car,
+    platform: 'wpf',
+    actionSlugs: [
+      'monitoring.view_occupancy',
+      'monitoring.search_vehicles',
+      'monitoring.force_exit',
+      'monitoring.export',
+    ],
+  },
+  {
+    id: 'wpf_shifts',
+    name: 'Control de Turnos y Caja POS',
+    subtitle: 'Apertura de turno con base, arqueos ciegos, entrega de turno y corte Z',
+    icon: Wallet,
+    platform: 'wpf',
+    actionSlugs: [
+      'shifts.view_current',
+      'shifts.open',
+      'shifts.blind_count',
+      'shifts.close',
+      'shifts.view_history',
+      'shifts.reprint_closure',
+    ],
+  },
+  {
+    id: 'wpf_subscriptions',
+    name: 'Mensualidades y Abonados en Terminal',
+    subtitle: 'Cobro y renovación de cuotas mensuales en caja con recibo térmico',
+    icon: CalendarCheck,
+    platform: 'wpf',
+    actionSlugs: [
+      'subscriptions.view',
+      'subscriptions.create',
+      'subscriptions.renew',
+      'subscriptions.print_receipt',
+      'subscriptions.edit',
+      'subscriptions.cancel',
+    ],
+  },
+  {
+    id: 'wpf_novedades',
+    name: 'Novedades y Bloqueo de Placas en Estación',
+    subtitle: 'Registro de incidentes en terminal y alertas preventivas al ingreso/salida',
+    icon: Bell,
+    platform: 'wpf',
+    actionSlugs: [
+      'novedades.view',
+      'novedades.create',
+      'novedades.edit',
+      'novedades.resolve',
+      'novedades.delete',
+    ],
+  },
+  {
+    id: 'wpf_system',
+    name: 'Sincronización y Configuración Local',
+    subtitle: 'Sincronización en caliente con la nube y mantenimiento de base local SQLite',
+    icon: RefreshCw,
+    platform: 'wpf',
+    actionSlugs: [
+      'system.sync',
+      'system.clean_cache',
     ],
   },
 ];
@@ -283,8 +512,9 @@ export const RolesTab: React.FC = () => {
   const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false);
   const [targetRole, setTargetRole] = useState<RoleDto | null>(null);
   const [selectedActionIds, setSelectedActionIds] = useState<number[]>([]);
+  const [activePlatform, setActivePlatform] = useState<PlatformTab>('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [expandedModuleKey, setExpandedModuleKey] = useState<string | null>('caja');
+  const [expandedModuleKey, setExpandedModuleKey] = useState<string | null>('pwa_caja');
   const [expandedSubgroupKey, setExpandedSubgroupKey] = useState<string | null>('payment_methods');
   const [isSavingPermissions, setIsSavingPermissions] = useState(false);
   const [expandedRoleId, setExpandedRoleId] = useState<number | null>(null);
@@ -580,23 +810,78 @@ export const RolesTab: React.FC = () => {
     );
   }, [allActions, isUserSuperAdmin]);
 
-  // Filtrado por término de búsqueda y mapeo jerárquico PWA
-  const pwaHierarchyRenderData = useMemo<{
-    modules: RenderedPwaModule[];
+  // Listas de slugs según la plataforma para cálculo preciso de métricas
+  const pwaActionSlugs = useMemo(() => {
+    const slugs = new Set<string>();
+    PWA_MODULES_DEFINITIONS.forEach((m) => {
+      m.actionSlugs?.forEach((s) => slugs.add(s));
+      m.subgroups?.forEach((sub) => sub.actionSlugs.forEach((s) => slugs.add(s)));
+    });
+    return slugs;
+  }, []);
+
+  const wpfActionSlugs = useMemo(() => {
+    const slugs = new Set<string>();
+    WPF_MODULES_DEFINITIONS.forEach((m) => {
+      m.actionSlugs?.forEach((s) => slugs.add(s));
+      m.subgroups?.forEach((sub) => sub.actionSlugs.forEach((s) => slugs.add(s)));
+    });
+    return slugs;
+  }, []);
+
+  const pwaEffectiveActions = useMemo(
+    () => effectiveActions.filter((a) => pwaActionSlugs.has(a.slug)),
+    [effectiveActions, pwaActionSlugs]
+  );
+
+  const wpfEffectiveActions = useMemo(
+    () => effectiveActions.filter((a) => wpfActionSlugs.has(a.slug)),
+    [effectiveActions, wpfActionSlugs]
+  );
+
+  const pwaSelectedCount = selectedActionIds.filter((id) =>
+    pwaEffectiveActions.some((a) => a.id === id)
+  ).length;
+
+  const wpfSelectedCount = selectedActionIds.filter((id) =>
+    wpfEffectiveActions.some((a) => a.id === id)
+  ).length;
+
+  const allSelectedCount = selectedActionIds.filter((id) =>
+    effectiveActions.some((a) => a.id === id)
+  ).length;
+
+  // Filtrado por término de búsqueda y mapeo jerárquico según plataforma activa
+  const hierarchyRenderData = useMemo<{
+    modules: RenderedModule[];
     unmatchedActions: ActionDto[];
   }>(() => {
     const termLower = searchTerm.trim().toLowerCase();
     const searchFilter = (a: ActionDto) => {
       if (!termLower) return true;
-      return a.name.toLowerCase().includes(termLower) || a.slug.toLowerCase().includes(termLower);
+      const descriptive = ACTION_DESCRIPTIVE_NAMES[a.slug] || '';
+      return (
+        a.name.toLowerCase().includes(termLower) ||
+        a.slug.toLowerCase().includes(termLower) ||
+        descriptive.toLowerCase().includes(termLower)
+      );
     };
+
+    let baseDefs: ModuleGroupDef[] = [];
+    if (activePlatform === 'pwa') {
+      baseDefs = PWA_MODULES_DEFINITIONS;
+    } else if (activePlatform === 'wpf') {
+      baseDefs = WPF_MODULES_DEFINITIONS;
+    } else {
+      baseDefs = [...PWA_MODULES_DEFINITIONS, ...WPF_MODULES_DEFINITIONS];
+    }
 
     const matchedSlugs = new Set<string>();
 
-    const modules: RenderedPwaModule[] = PWA_MODULES_STRUCTURE.map((modDef): RenderedPwaModule => {
+    const modules: RenderedModule[] = baseDefs.map((modDef): RenderedModule => {
       if (modDef.subgroups) {
         // Módulo con subgrupos (Configuración)
-        const subgroups: RenderedPwaSubGroup[] = modDef.subgroups
+        const subgroups: RenderedSubGroup[] = modDef.subgroups
           .filter((sub) => sub.id !== 'companies' || isUserSuperAdmin)
           .map((sub) => {
             const actions = effectiveActions.filter(
@@ -623,11 +908,12 @@ export const RolesTab: React.FC = () => {
           name: modDef.name,
           subtitle: modDef.subtitle,
           icon: modDef.icon,
+          platform: modDef.platform,
           subgroups,
           totalModuleActionIds,
         };
       } else {
-        // Módulo directo (Dashboard, Caja, Activos, Reportes, Novedades)
+        // Módulo directo
         const actionSlugs = modDef.actionSlugs || [];
         const actions = effectiveActions.filter(
           (a) => actionSlugs.includes(a.slug) && searchFilter(a)
@@ -642,6 +928,7 @@ export const RolesTab: React.FC = () => {
           name: modDef.name,
           subtitle: modDef.subtitle,
           icon: modDef.icon,
+          platform: modDef.platform,
           actionSlugs,
           actions,
           totalModuleActionIds,
@@ -649,31 +936,32 @@ export const RolesTab: React.FC = () => {
       }
     });
 
-    // Acciones adicionales de la BD que no estén contempladas explícitamente
-    const unmatchedActions = effectiveActions.filter(
-      (a) => !matchedSlugs.has(a.slug) && searchFilter(a)
-    );
+    // Acciones adicionales de la BD que no estén contempladas explícitamente en la vista
+    const unmatchedActions =
+      activePlatform === 'all'
+        ? effectiveActions.filter((a) => !matchedSlugs.has(a.slug) && searchFilter(a))
+        : [];
 
     return {
       modules,
       unmatchedActions,
     };
-  }, [effectiveActions, isUserSuperAdmin, searchTerm]);
+  }, [activePlatform, effectiveActions, isUserSuperAdmin, searchTerm]);
 
-  // Lista plana de acciones visibles
+  // Lista plana de acciones visibles para selección rápida
   const visibleActionsList = useMemo(() => {
     const list: ActionDto[] = [];
-    pwaHierarchyRenderData.modules.forEach((mod: RenderedPwaModule) => {
+    hierarchyRenderData.modules.forEach((mod: RenderedModule) => {
       if (mod.actions) {
         list.push(...mod.actions);
       }
       if (mod.subgroups) {
-        mod.subgroups.forEach((sub: RenderedPwaSubGroup) => list.push(...sub.actions));
+        mod.subgroups.forEach((sub: RenderedSubGroup) => list.push(...sub.actions));
       }
     });
-    list.push(...pwaHierarchyRenderData.unmatchedActions);
+    list.push(...hierarchyRenderData.unmatchedActions);
     return list;
-  }, [pwaHierarchyRenderData]);
+  }, [hierarchyRenderData]);
 
   const handleSelectVisible = (selectAll: boolean) => {
     const visibleActionIds = visibleActionsList.map((a) => a.id);
@@ -683,10 +971,6 @@ export const RolesTab: React.FC = () => {
       setSelectedActionIds((prev) => prev.filter((id) => !visibleActionIds.includes(id)));
     }
   };
-
-  const allSelectedCount = selectedActionIds.filter((id) =>
-    effectiveActions.some((a) => a.id === id)
-  ).length;
 
   const currentUserRoleMatch = (r: RoleDto): boolean => {
     const roleId = r.idUserRol ?? r.id;
@@ -1103,7 +1387,7 @@ export const RolesTab: React.FC = () => {
       {isPermissionsModalOpen && targetRole && (
         <ModalPortal>
           <div className="modal-overlay">
-            <div className="modal-card" style={{ maxWidth: '840px', maxHeight: '92vh' }}>
+            <div className="modal-card" style={{ maxWidth: '860px', maxHeight: '92vh' }}>
               <div className="modal-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div
@@ -1130,17 +1414,159 @@ export const RolesTab: React.FC = () => {
                     </span>
                   </div>
                 </div>
+                <button
+                  type="button"
+                  className="modal-close-btn"
+                  onClick={() => !isSavingPermissions && setIsPermissionsModalOpen(false)}
+                  title="Cerrar modal"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#64748b',
+                    padding: '4px',
+                    borderRadius: '6px',
+                  }}
+                >
+                  <X size={20} />
+                </button>
               </div>
 
               <div className="modal-body" style={{ overflowY: 'auto', gap: '1rem', paddingBottom: '1.25rem' }}>
-                {/* Barra de Búsqueda y Acciones Rápidas */}
+                {/* 1. Selector de Plataforma (Tabs) */}
+                <div
+                  className="perm-platform-tabs"
+                  style={{
+                    display: 'flex',
+                    gap: '8px',
+                    borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
+                    paddingBottom: '12px',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <button
+                    type="button"
+                    className={`perm-platform-tab ${activePlatform === 'all' ? 'active' : ''}`}
+                    onClick={() => setActivePlatform('all')}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      fontSize: '0.84rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      border: activePlatform === 'all' ? '1.5px solid #07665e' : '1px solid #e2e8f0',
+                      background: activePlatform === 'all' ? 'rgba(7, 102, 94, 0.09)' : '#fff',
+                      color: activePlatform === 'all' ? '#07665e' : '#64748b',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <Globe size={15} />
+                    <span>Todos los Módulos</span>
+                    <span
+                      style={{
+                        fontSize: '0.72rem',
+                        background: activePlatform === 'all' ? '#07665e' : '#e2e8f0',
+                        color: activePlatform === 'all' ? '#fff' : '#475569',
+                        padding: '1px 6px',
+                        borderRadius: '10px',
+                        marginLeft: '3px',
+                        fontWeight: 700,
+                      }}
+                    >
+                      {allSelectedCount} / {effectiveActions.length}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`perm-platform-tab ${activePlatform === 'pwa' ? 'active' : ''}`}
+                    onClick={() => setActivePlatform('pwa')}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      fontSize: '0.84rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      border: activePlatform === 'pwa' ? '1.5px solid #07665e' : '1px solid #e2e8f0',
+                      background: activePlatform === 'pwa' ? 'rgba(7, 102, 94, 0.09)' : '#fff',
+                      color: activePlatform === 'pwa' ? '#07665e' : '#64748b',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <Laptop size={15} />
+                    <span>Plataforma Web (PWA)</span>
+                    <span
+                      style={{
+                        fontSize: '0.72rem',
+                        background: activePlatform === 'pwa' ? '#07665e' : '#e2e8f0',
+                        color: activePlatform === 'pwa' ? '#fff' : '#475569',
+                        padding: '1px 6px',
+                        borderRadius: '10px',
+                        marginLeft: '3px',
+                        fontWeight: 700,
+                      }}
+                    >
+                      {pwaSelectedCount} / {pwaEffectiveActions.length}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`perm-platform-tab ${activePlatform === 'wpf' ? 'active' : ''}`}
+                    onClick={() => setActivePlatform('wpf')}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      fontSize: '0.84rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      border: activePlatform === 'wpf' ? '1.5px solid #07665e' : '1px solid #e2e8f0',
+                      background: activePlatform === 'wpf' ? 'rgba(7, 102, 94, 0.09)' : '#fff',
+                      color: activePlatform === 'wpf' ? '#07665e' : '#64748b',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <Monitor size={15} />
+                    <span>Terminal POS (WPF)</span>
+                    <span
+                      style={{
+                        fontSize: '0.72rem',
+                        background: activePlatform === 'wpf' ? '#07665e' : '#e2e8f0',
+                        color: activePlatform === 'wpf' ? '#fff' : '#475569',
+                        padding: '1px 6px',
+                        borderRadius: '10px',
+                        marginLeft: '3px',
+                        fontWeight: 700,
+                      }}
+                    >
+                      {wpfSelectedCount} / {wpfEffectiveActions.length}
+                    </span>
+                  </button>
+                </div>
+
+                {/* 2. Barra de Búsqueda y Acciones Rápidas */}
                 <div className="perm-toolbar">
                   <div className="perm-search-box">
                     <Search size={16} />
                     <input
                       type="text"
                       className="perm-search-input"
-                      placeholder="Buscar acción o submódulo en la plataforma web (PWA)..."
+                      placeholder={
+                        activePlatform === 'wpf'
+                          ? 'Buscar acción en Terminal POS de Escritorio...'
+                          : activePlatform === 'pwa'
+                          ? 'Buscar acción en Plataforma Web (PWA)...'
+                          : 'Buscar acción o módulo en el sistema...'
+                      }
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -1151,7 +1577,7 @@ export const RolesTab: React.FC = () => {
                       type="button"
                       className="btn-perm-tool select-all"
                       onClick={() => handleSelectVisible(true)}
-                      title="Seleccionar todas las acciones visibles"
+                      title="Seleccionar todas las acciones visibles en la pestaña activa"
                     >
                       <CheckSquare size={14} /> Seleccionar Visibles
                     </button>
@@ -1159,36 +1585,58 @@ export const RolesTab: React.FC = () => {
                       type="button"
                       className="btn-perm-tool deselect-all"
                       onClick={() => handleSelectVisible(false)}
-                      title="Desmarcar todas las acciones visibles"
+                      title="Desmarcar todas las acciones visibles en la pestaña activa"
                     >
                       <Square size={14} /> Desmarcar Visibles
                     </button>
                   </div>
                 </div>
 
-                {/* Barra de Progreso */}
-                <div className="perm-progress-card">
-                  <div className="perm-progress-header">
-                    <span className="perm-progress-title">
-                      Cobertura de Permisos (Plataforma Web PWA)
-                    </span>
-                    <span className="perm-progress-stats">
-                      <strong>{allSelectedCount}</strong> de {effectiveActions.length} permisos ({Math.round((allSelectedCount / Math.max(1, effectiveActions.length)) * 100)}%)
-                    </span>
-                  </div>
-                  <div className="perm-progress-track">
-                    <div
-                      className="perm-progress-fill"
-                      style={{
-                        width: `${Math.round((allSelectedCount / Math.max(1, effectiveActions.length)) * 100)}%`,
-                      }}
-                    />
-                  </div>
-                </div>
+                {/* 3. Barra de Progreso Dinámica */}
+                {(() => {
+                  const currentSelected =
+                    activePlatform === 'pwa'
+                      ? pwaSelectedCount
+                      : activePlatform === 'wpf'
+                      ? wpfSelectedCount
+                      : allSelectedCount;
+                  const currentTotal =
+                    activePlatform === 'pwa'
+                      ? pwaEffectiveActions.length
+                      : activePlatform === 'wpf'
+                      ? wpfEffectiveActions.length
+                      : effectiveActions.length;
+                  const currentPct = Math.round((currentSelected / Math.max(1, currentTotal)) * 100);
+                  const progressLabel =
+                    activePlatform === 'pwa'
+                      ? 'Cobertura en Plataforma Web (PWA)'
+                      : activePlatform === 'wpf'
+                      ? 'Cobertura en Terminal POS de Escritorio (WPF)'
+                      : 'Cobertura Global del Sistema';
 
-                {/* Lista de los 6 Módulos Oficiales PWA */}
+                  return (
+                    <div className="perm-progress-card">
+                      <div className="perm-progress-header">
+                        <span className="perm-progress-title">{progressLabel}</span>
+                        <span className="perm-progress-stats">
+                          <strong>{currentSelected}</strong> de {currentTotal} permisos ({currentPct}%)
+                        </span>
+                      </div>
+                      <div className="perm-progress-track">
+                        <div
+                          className="perm-progress-fill"
+                          style={{
+                            width: `${currentPct}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* 4. Lista de Módulos */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {pwaHierarchyRenderData.modules.map((mod) => {
+                  {hierarchyRenderData.modules.map((mod) => {
                     const IconComponent = mod.icon;
                     const isExpanded = searchTerm.trim() !== '' || expandedModuleKey === mod.id;
                     const allModActionIds = mod.totalModuleActionIds;
@@ -1230,7 +1678,23 @@ export const RolesTab: React.FC = () => {
                                 <IconComponent size={16} />
                               </div>
                               <div>
-                                <span className="perm-module-name">{mod.name}</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <span className="perm-module-name">{mod.name}</span>
+                                  {activePlatform === 'all' && (
+                                    <span
+                                      style={{
+                                        fontSize: '0.68rem',
+                                        padding: '1px 5px',
+                                        borderRadius: '4px',
+                                        background: mod.platform === 'wpf' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                                        color: mod.platform === 'wpf' ? '#2563eb' : '#059669',
+                                        fontWeight: 700,
+                                      }}
+                                    >
+                                      {mod.platform === 'wpf' ? 'WPF POS' : 'PWA WEB'}
+                                    </span>
+                                  )}
+                                </div>
                                 <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500 }}>
                                   {mod.subtitle}
                                 </div>
@@ -1266,11 +1730,13 @@ export const RolesTab: React.FC = () => {
                         {/* Contenido Expandible */}
                         {isExpanded && (
                           <>
-                            {/* Caso 1: Módulo directo con acciones (Dashboard, Caja, Activos, Reportes, Novedades) */}
+                            {/* Caso 1: Módulo directo con acciones */}
                             {mod.actions && mod.actions.length > 0 && (
                               <div className="perm-actions-list">
                                 {mod.actions.map((action) => {
                                   const isChecked = selectedActionIds.includes(action.id);
+                                  const friendlyName = ACTION_DESCRIPTIVE_NAMES[action.slug] || action.name;
+
                                   return (
                                     <div
                                       key={action.id}
@@ -1280,7 +1746,7 @@ export const RolesTab: React.FC = () => {
                                       <div className="perm-custom-checkbox">
                                         {isChecked && <Check size={13} strokeWidth={3} />}
                                       </div>
-                                      <span className="perm-item-label">{action.name}</span>
+                                      <span className="perm-item-label">{friendlyName}</span>
                                     </div>
                                   );
                                 })}
@@ -1343,6 +1809,8 @@ export const RolesTab: React.FC = () => {
                                         <div className="perm-subgroup-actions-list">
                                           {sub.actions.map((action) => {
                                             const isChecked = selectedActionIds.includes(action.id);
+                                            const friendlyName = ACTION_DESCRIPTIVE_NAMES[action.slug] || action.name;
+
                                             return (
                                               <div
                                                 key={action.id}
@@ -1352,7 +1820,7 @@ export const RolesTab: React.FC = () => {
                                                 <div className="perm-custom-checkbox">
                                                   {isChecked && <Check size={13} strokeWidth={3} />}
                                                 </div>
-                                                <span className="perm-item-label">{action.name}</span>
+                                                <span className="perm-item-label">{friendlyName}</span>
                                               </div>
                                             );
                                           })}
@@ -1370,7 +1838,7 @@ export const RolesTab: React.FC = () => {
                   })}
 
                   {/* Acciones adicionales de la BD si existen */}
-                  {pwaHierarchyRenderData.unmatchedActions.length > 0 && (
+                  {hierarchyRenderData.unmatchedActions.length > 0 && (
                     <div className="perm-module-card">
                       <div
                         className="perm-module-header"
@@ -1381,7 +1849,7 @@ export const RolesTab: React.FC = () => {
                           <ShieldCheck size={16} color="#07665e" />
                           <span className="perm-module-name">Otras Acciones del Sistema</span>
                           <span className="perm-module-badge inactive">
-                            {pwaHierarchyRenderData.unmatchedActions.filter((a) => selectedActionIds.includes(a.id)).length} / {pwaHierarchyRenderData.unmatchedActions.length} activos
+                            {hierarchyRenderData.unmatchedActions.filter((a) => selectedActionIds.includes(a.id)).length} / {hierarchyRenderData.unmatchedActions.length} activos
                           </span>
                         </div>
 
@@ -1390,7 +1858,7 @@ export const RolesTab: React.FC = () => {
                           className="perm-module-toggle"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleToggleModuleAll(pwaHierarchyRenderData.unmatchedActions.map((a) => a.id));
+                            handleToggleModuleAll(hierarchyRenderData.unmatchedActions.map((a) => a.id));
                           }}
                         >
                           <span>Marcar Todo</span>
@@ -1399,8 +1867,10 @@ export const RolesTab: React.FC = () => {
 
                       {expandedModuleKey === 'otras' && (
                         <div className="perm-actions-list">
-                          {pwaHierarchyRenderData.unmatchedActions.map((action) => {
+                          {hierarchyRenderData.unmatchedActions.map((action) => {
                             const isChecked = selectedActionIds.includes(action.id);
+                            const friendlyName = ACTION_DESCRIPTIVE_NAMES[action.slug] || action.name;
+
                             return (
                               <div
                                 key={action.id}
@@ -1410,7 +1880,7 @@ export const RolesTab: React.FC = () => {
                                 <div className="perm-custom-checkbox">
                                   {isChecked && <Check size={13} strokeWidth={3} />}
                                 </div>
-                                <span className="perm-item-label">{action.name}</span>
+                                <span className="perm-item-label">{friendlyName}</span>
                               </div>
                             );
                           })}

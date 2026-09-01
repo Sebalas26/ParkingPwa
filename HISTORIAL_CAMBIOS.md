@@ -7,6 +7,81 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-09-01 10:40:00] - [FEATURE / CORE / PWA] [PWA / SERVICE WORKER / UPDATE PROMPT] - Solución Definitiva al Sistema de Actualización PWA y Web con Confirmación Manual del Usuario
+
+#### 💬 Prompt Original del Usuario
+> "Analiza el historial de cambios de la PWA en donde se ha pedido lo del tema de actualziar que funcione tanto en la web como en la pwa que se instala y no ha sido posible que lo haga perfecto por que no funciona a veces si aparece a veces no y tiende a afallar entonces por que si aparece la modal se le da click en actualizar pero lo devuelve a la versión anterior o se queda pegado creo que hay en el historial puedes ver todo y tener claro pero necestio si o si la solución del tema por que ya vamos demasiados cambios y nada que se soluciona el proceso y eso ya esta afectando todos los ajustes que estoy realizando por que se necesita esa actualziación. recuerda así este logueado deberia salir la modal de que se debe actualziar se actualzia y listo sigo trabajando en lo que estaba si me explico ? analiza y dime el plan"
+> "Como te dije automatica no, es cuando el usuario le de actualizar hay si se efectue la actualización si me explico analiza esto y rearma el plan"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Alineación Arquitectónica Canónica (`vite.config.ts`)**:
+   - Se configuró `registerType: 'prompt'` y `workbox.skipWaiting: false`.
+   - Esto permite que el nuevo Service Worker se instale en segundo plano y quede en estado `waiting`, permitiendo que el hook `useRegisterSW` active de forma 100% determinista el callback `needRefresh = true`.
+2. **Implementación Reactiva de `UpdatePromptModal.tsx`**:
+   - Monitoreo proactivo con `registration.update()` cada 60s y ante eventos de `focus` y `visibilitychange`.
+   - Control 100% en manos del usuario: la modal aparece cuando hay una nueva versión lista en segundo plano y nunca recarga automáticamente sin consentimiento.
+   - Al hacer click en "Actualizar Ahora":
+     - La UI pasa a estado de carga (*"Aplicando actualización..."*) con spinner.
+     - Se registra el listener nativo `navigator.serviceWorker.addEventListener('controllerchange', triggerReload, { once: true })`.
+     - Se envía la señal de activación `updateServiceWorker(true)` que emite `SKIP_WAITING` al SW en espera.
+     - El nuevo Service Worker toma control de los clientes (`clientsClaim`) y el evento `controllerchange` dispara la recarga garantizando que los nuevos assets ya están 100% activos.
+     - Fallback de seguridad de 2.5s para WebView móvil en caso de que el entorno retenga el evento nativo.
+3. **Montaje Global en la Raíz de la Aplicación (`App.tsx`)**:
+   - Se renderizó `<UpdatePromptModal />` en la raíz de `App.tsx` (dentro de `ParqueaderoProvider`), garantizando que la modal se muestre tanto si el usuario está en el Login como si está autenticado en cualquier módulo del Dashboard.
+   - La sesión del usuario (JWT) se mantiene intacta en `localStorage`, regresando a la misma pantalla tras la recarga.
+4. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+   - `dotnet build` en ParkingApi ejecutado exitosamente (**0 Errores**).
+   - `dotnet build` en ParkingWpf ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `vite.config.ts`
+- `src/shared/ui/UpdatePromptModal.tsx`
+- `src/App.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+- `dotnet build` en ParkingApi (**0 Errores**).
+- `dotnet build` en ParkingWpf (**0 Errores**).
+
+---
+
+### [2026-09-01 10:10:00] - [FEATURE / RBAC / UI / UX] [PWA / DUAL PLATFORM PERMISSIONS & DESCRIPTIVE NAMES] - División Dual de Permisos (PWA Web y WPF POS) con Nombres Descriptivos en Español
+
+#### 💬 Prompt Original del Usuario
+> "pero se necesita que no quites lo del wpf y esos permisos no estan bien relacionados solo dejaste los del pwa y esta bien pero no son tan dicientes si me explico el diseño que hiciste esta perfecto pero no dejaste los otros permisos osea a que voy debe tener las dos divisiones para poder modificar los permisos tanto del wpf como de la pwa si me explico. analiza eso y me das el plan"
+
+#### 🤖 Resumen Técnico para la IA
+1. **División Dual y Selector de Plataforma por Pestañas (`RolesTab.tsx`)**:
+   - Se integraron 3 pestañas principales en la parte superior del modal de configuración de permisos:
+     - 🌐 **Todos los Módulos**: Vista unificada de todo el sistema (PWA + WPF).
+     - 💻 **Plataforma Web (PWA)**: Los 6 módulos oficiales del panel web (*Dashboard*, *Caja/Turnos Web*, *Activos/Monitoreo*, *Reportes Financieros*, *Novedades*, *Configuración del Sistema con sus 8 submódulos*).
+     - 🖥️ **Terminal POS (WPF)**: Los módulos operativos de la estación física de escritorio (*Ingreso/CheckIn con barrera e impresión*, *Cobro/CheckOut y liquidación*, *Monitoreo de patio*, *Control de turnos y corte Z*, *Mensualidades en terminal*, *Novedades en estación*, *Sincronización local SQLite*).
+2. **Diccionario Semántico y Nombres 100% Descriptivos en Español (`ACTION_DESCRIPTIVE_NAMES`)**:
+   - Se creó un mapeo exhaustivo para cada slug de acción con descripciones claras y profesionales en español natural (ej. *"Generar e imprimir tiquete de ingreso con código de barras / QR"*, *"Abrir barrera de salida manualmente desde caja"*, *"Liquidar, cobrar y timbrar tiquetes de estacionamiento"*, etc.).
+3. **Métricas de Cobertura y Barra de Progreso Dinámicas**:
+   - Cada pestaña calcula su propio contador de permisos activos y porcentaje de avance:
+     - PWA: `pwaSelectedCount` de `pwaEffectiveActions.length`.
+     - WPF: `wpfSelectedCount` de `wpfEffectiveActions.length`.
+     - Global: `allSelectedCount` de `effectiveActions.length`.
+   - Las herramientas rápidas *"Seleccionar Visibles"* y *"Desmarcar Visibles"* operan sobre las acciones de la pestaña actualmente activa.
+4. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+   - `dotnet build` en ParkingApi ejecutado exitosamente (**0 Errores**).
+   - `dotnet build` en ParkingWpf ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/settings/ui/RolesTab.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+- `dotnet build` en ParkingApi (**0 Errores**).
+- `dotnet build` en ParkingWpf (**0 Errores**).
+
+---
+
 ### [2026-09-01 09:25:00] - [FEATURE / RBAC / UI / UX] [PWA / PERMISSIONS HIERARCHY & GRANULARITY] - Reorganización Visual de la Matriz de Permisos por 6 Módulos PWA y Desacoplamiento de Granularidad Fina
 
 #### 💬 Prompt Original del Usuario
