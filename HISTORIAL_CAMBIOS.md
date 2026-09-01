@@ -17,15 +17,18 @@
    - El `web.config` del servidor IIS **no tenía headers `Cache-Control`** para archivos críticos (`sw.js`, `index.html`, `manifest.webmanifest`).
    - Cuando el navegador ejecutaba `registration.update()` cada 60 segundos, IIS le devolvía el **`sw.js` viejo desde su caché HTTP** sin verificar cambios en disco. Por eso `needRefresh` nunca se activaba: el navegador comparaba byte a byte y veía el SW como "idéntico".
    - Esto explica por qué tras 3 despliegues consecutivos la modal nunca apareció.
-2. **Corrección Aplicada en `web.config` (public/ y dist/)**:
-   - `sw.js` → `Cache-Control: no-cache, no-store, must-revalidate, max-age=0` (siempre fresco).
-   - `index.html` (text/html) → `Cache-Control: no-cache, no-store, must-revalidate, max-age=0` (siempre fresco).
-   - `manifest.webmanifest` → `Cache-Control: no-cache, no-store, must-revalidate, max-age=0` (siempre fresco).
-   - `/assets/*.js`, `/assets/*.css` → `Cache-Control: public, max-age=31536000, immutable` (cacheable 1 año — los nombres tienen hash único por build).
+2. **Corrección Aplicada en `web.config` (public/, dist/ y .github/workflows/main.yml)**:
+   - En el pipeline de CI/CD (`.github/workflows/main.yml`), el Paso 5 generaba un `dist/web.config` hardcodeado que **sobrescribía** el archivo de `public/` eliminando las reglas de caché.
+   - Se actualizaron las reglas en `.github/workflows/main.yml`, `public/web.config` y `dist/web.config`:
+     - `sw.js` → `Cache-Control: no-cache, no-store, must-revalidate, max-age=0` (siempre fresco).
+     - `index.html` (text/html) → `Cache-Control: no-cache, no-store, must-revalidate, max-age=0` (siempre fresco).
+     - `manifest.webmanifest` → `Cache-Control: no-cache, no-store, must-revalidate, max-age=0` (siempre fresco).
+     - `/assets/*.js`, `/assets/*.css` → `Cache-Control: public, max-age=31536000, immutable` (cacheable 1 año — los nombres tienen hash único por build).
 3. **Cero Errores de Compilación**:
    - `npm run build` ejecutado exitosamente (**0 Errores**).
 
 #### 📦 Componentes Modificados
+- `.github/workflows/main.yml`
 - `public/web.config`
 - `dist/web.config`
 - `HISTORIAL_CAMBIOS.md`
