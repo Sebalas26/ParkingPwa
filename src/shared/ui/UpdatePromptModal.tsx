@@ -1,55 +1,99 @@
-import React, { useState } from 'react';
-import { useRegisterSW } from 'virtual:pwa-register/react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, RefreshCw, Zap, ShieldCheck } from 'lucide-react';
 import './UpdatePromptModal.css';
 
 export const UpdatePromptModal: React.FC = () => {
+  const [needRefresh, setNeedRefresh] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const waitingWorkerRef = useRef<ServiceWorker | null>(null);
 
-  const {
-    needRefresh: [needRefresh],
-    updateServiceWorker,
-  } = useRegisterSW({
-    immediate: true,
-    onNeedReload() {
-      // Bloqueo estricto: no permitir que Workbox recargue la página automáticamente en background
-      console.log('[PWA] Nueva versión en espera de confirmación de usuario');
-    },
-    onRegisteredSW(_swUrl, registration) {
-      if (registration) {
-        // Detección reactiva al regresar al iPad o cambiar de pestaña
-        const checkUpdateOnActive = () => {
-          if (document.visibilityState === 'visible') {
-            registration.update().catch(() => {});
-          }
-        };
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
 
-        window.addEventListener('focus', checkUpdateOnActive);
-        document.addEventListener('visibilitychange', checkUpdateOnActive);
+    let registration: ServiceWorkerRegistration | null = null;
+    let pollInterval: any = null;
 
-        return () => {
-          window.removeEventListener('focus', checkUpdateOnActive);
-          document.removeEventListener('visibilitychange', checkUpdateOnActive);
-        };
+    const attachToInstallingWorker = (worker: ServiceWorker) => {
+      worker.addEventListener('statechange', () => {
+        // Cuando el nuevo SW termina de instalarse y ya hay una app corriendo
+        if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+          waitingWorkerRef.current = worker;
+          setNeedRefresh(true);
+        }
+      });
+    };
+
+    navigator.serviceWorker.register('/sw.js').then((reg) => {
+      registration = reg;
+
+      // 1. Caso en el que el nuevo Service Worker ya estaba en espera (waiting)
+      if (reg.waiting && navigator.serviceWorker.controller) {
+        waitingWorkerRef.current = reg.waiting;
+        setNeedRefresh(true);
       }
-    },
-  });
 
-  // Condición estricta: si no hay nueva versión, no renderiza nada en el DOM
+      // 2. Caso en el que el Service Worker se está instalando al iniciar
+      if (reg.installing) {
+        attachToInstallingWorker(reg.installing);
+      }
+
+      // 3. Caso en el que se detecta una nueva versión en tiempo de ejecución
+      reg.addEventListener('updatefound', () => {
+        if (reg.installing) {
+          attachToInstallingWorker(reg.installing);
+        }
+      });
+
+      // 4. Sondeo silencioso cada 30 segundos (sin ninguna recarga de página)
+      pollInterval = setInterval(() => {
+        reg.update().catch(() => {});
+      }, 30 * 1000);
+    }).catch((err) => {
+      console.warn('[PWA] Error al registrar Service Worker:', err);
+    });
+
+    // 5. Comprobación reactiva al cambiar de pestaña o retomar el iPad
+    const handleActiveState = () => {
+      if (document.visibilityState === 'visible' && registration) {
+        registration.update().catch(() => {});
+      }
+    };
+
+    window.addEventListener('focus', handleActiveState);
+    document.addEventListener('visibilitychange', handleActiveState);
+
+    return () => {
+      if (pollInterval) clearInterval(pollInterval);
+      window.removeEventListener('focus', handleActiveState);
+      document.removeEventListener('visibilitychange', handleActiveState);
+    };
+  }, []);
+
+  // Si no hay actualización en espera, no renderiza nada en el DOM
   if (!needRefresh) {
     return null;
   }
 
-  // La actualización y recarga ocurren ÚNICAMENTE al hacer clic
-  const handleUpdate = async () => {
+  // La actualización y recarga ocurren ÚNICAMENTE al hacer clic en el botón
+  const handleUpdate = () => {
     if (isUpdating) return;
     setIsUpdating(true);
-    
-    try {
-      await updateServiceWorker(true);
-      window.location.reload();
-    } catch (err) {
-      console.warn('[PWA] Error al actualizar:', err);
+
+    const waitingWorker = waitingWorkerRef.current;
+    if (waitingWorker) {
+      // Escuchar el cambio de controlador para recargar limpiamente a la nueva versión
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload();
+      }, { once: true });
+
+      // Indicar al Service Worker que se active
+      waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+
+      // Fallback de seguridad si controllerchange no dispara
+      setTimeout(() => {
+        window.location.reload();
+      }, 2500);
+    } else {
       window.location.reload();
     }
   };

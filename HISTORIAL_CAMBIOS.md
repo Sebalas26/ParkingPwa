@@ -7,6 +7,37 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-09-01 14:30:00] - [REFACTOR / ARCHITECTURE / PWA] [PWA / NATIVE SERVICE WORKER] - Transición a Ciclo de Vida Nativo del Service Worker (Eliminación de Workbox-Window)
+
+#### 💬 Prompt Original del Usuario
+> "No paila existe algo mas algo que hace que obligue a actualizar y se de f5 medio aparecio y de una se actualizo ... eso no deberia ser así siempre se demoro un poco quisiera que fuera menos pero enserio se actualizo eso paso en la web pero en la instalada no paso no se actulizo ni salio la modal ya la cerre y la volvi abrir y nada en la app instala no funciono ahorita que hicismos el cambio algo paso... y mira que cuadno le doy cerrar aparece como una modal no se que modal pero no me deja ver bien que opcion tiene eso cuando le doy cerrar sesion si.., y mira es algo que se queda como pegado el cache ya se actualizo pero ingrese y hay si me aparecio la modal y le di click actualizar osea no entiendo pero en la app instalada nada de nada. entonces algo acabamos de hacer mal para dañar el app.. revisa bien y exaustivamente."
+
+#### 🤖 Resumen Técnico para la IA
+1. **Causa Raíz Integral Identificada**:
+   - `virtual:pwa-register/react` arrastraba el paquete `workbox-window` el cual, por su diseño interno en navegadores WebKit/iOS y Chrome, intercepta eventos `controlling` y de transición de ciclo de vida con recargas no deseadas.
+   - En la PWA instalada en iPad (Safari Standalone WebKit), al no existir un sondeo periódico activo tras quitar el timer, la app nunca solicitaba `registration.update()` en segundo plano.
+2. **Reemplazo por Arquitectura Nativa Pura (`UpdatePromptModal.tsx`)**:
+   - Se removió `virtual:pwa-register/react` y `workbox-window`.
+   - Se implementó gestión directa del ciclo de vida con la Web API estándar `navigator.serviceWorker.register('/sw.js')`.
+   - Detección precisa de versiones en espera (`reg.waiting` y `reg.onupdatefound` -> `statechange === 'installed'`).
+   - Sondeo periódico seguro cada 30 segundos (`reg.update()`) y en cambios de foco/visibilidad (`focus` y `visibilitychange`).
+   - Bloqueo absoluto de recargas automáticas: la recarga sólo ocurre al despachar `SKIP_WAITING` y recibir `controllerchange` tras el clic explícito en el botón.
+3. **Optimización de Bundle y Configuración**:
+   - `vite.config.ts`: `injectRegister: false`, `skipWaiting: false`, `clientsClaim: false`.
+   - Eliminación de la dependencia `workbox-window.prod.es5` en el bundle final.
+4. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/shared/ui/UpdatePromptModal.tsx`
+- `vite.config.ts`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+
+---
+
 ### [2026-09-01 14:15:00] - [BUGFIX / CRITICAL / PWA] [PWA / WORKBOX-WINDOW] - Sobrescritura de `onNeedReload` para Impedir Auto-Recarga en `controlling`
 
 #### 💬 Prompt Original del Usuario
