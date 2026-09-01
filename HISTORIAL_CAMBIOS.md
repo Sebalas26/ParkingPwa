@@ -7,6 +7,55 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-09-01 09:25:00] - [FEATURE / RBAC / UI / UX] [PWA / PERMISSIONS HIERARCHY & GRANULARITY] - Reorganización Visual de la Matriz de Permisos por 6 Módulos PWA y Desacoplamiento de Granularidad Fina
+
+#### 💬 Prompt Original del Usuario
+> "mira listo ya quedo en tiempo real, pero falta afinar bien los permisos le di solo crear y ver no editar pero aun así lo activo, si me explico.  
+> otra cosa veo demasiados modulos en la visual y eso así no aplicaria me explico, en la tercera imagen se ven los modulos de la pwa eso son los modulos dentro es que existen todas las acciones completas si me explico eso va a obligar a reorganizar todos los modulos y los submodulos y acciones de esos submodulos si me explico. vamos solo atrabajr por el momento en el del pwa nada mas el de escritorio despues lo realizaremos pero por el momento necesitamos el de pwa para ir haciendo cosas por cosas si me explico. analiza y dame el plan"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Desacoplamiento de Alias y Granularidad Fina 1-a-1 (`authService.ts`)**:
+   - Se eliminaron los alias agregados donde `'settings.*.manage'` agrupaba `create`, `edit` y `delete` con `.some()`.
+   - Ahora `hasPermission` evalúa de forma 100% independiente cada acción atómica (`payment_methods.create`, `payment_methods.edit`, `payment_methods.delete`, `users.*`, `agreements.*`, `rates.*`, `branches.*`, `resolutions.*`, `roles.*`).
+2. **Afinación de Botones en Vistas de Configuración (Desktop & Mobile)**:
+   - `MediosPagoTab.tsx`: `canCreate` (`payment_methods.create`), `canEdit` (`payment_methods.edit`).
+   - `ConveniosTab.tsx`: `canCreate` (`agreements.create`), `canEdit` (`agreements.edit`), `canDelete` (`agreements.delete`).
+   - `VehiculosConfigTab.tsx`: `canCreate` (`rates.create`), `canEdit` (`rates.edit`), `canDelete` (`rates.delete`).
+   - `UsuariosTab.tsx`: `canCreate` (`users.create`), `canEdit` (`users.edit`), `canDelete` (`users.delete`).
+   - `ParqueaderosTab.tsx`: `canCreate` (`branches.create`), `canEdit` (`branches.edit`), `canParametrize` (`branches.edit` / `branches.assign_users`).
+   - `ResolucionesTab.tsx`: `canCreate` (`resolutions.create`), `canEdit` (`resolutions.edit`), `canDelete` (`resolutions.delete`).
+   - `RolesTab.tsx`: `canCreateRole` (`roles.create`), `canEditRole` (`roles.edit`), `canDeleteRolePerm` (`roles.delete`), `canAssignPermissions` (`permissions.assign`).
+3. **Reorganización Estructural del Modal de Permisos por los 6 Módulos Oficiales PWA (`RolesTab.tsx` & `Settings.css`)**:
+   - Se transformó la vista plana de base de datos en una jerarquía organizada con los **6 módulos oficiales del sidebar de la PWA**:
+     1. 📊 **Dashboard** (`analytics.view_dashboard`, `analytics.metrics`)
+     2. 💰 **Caja y Control de Turnos** (`checkout.*`, `shifts.*`)
+     3. 🚗 **Activos y Monitoreo de Patio** (`monitoring.*`, `checkin.*`, `subscriptions.*`)
+     4. 📈 **Reportes y Analítica** (`analytics.income_reports`, `analytics.occupancy_reports`, `analytics.audit_reports`, `analytics.export`)
+     5. 🔔 **Novedades y Bloqueos** (`novedades.*`)
+     6. ⚙️ **Configuración del Sistema** (Estructurado en submódulos limpios: *Sedes y Parqueaderos*, *Usuarios y Operadores*, *Roles y Permisos*, *Convenios Comerciales*, *Tipos de Vehículos y Tarifas*, *Medios de Pago*, *Resoluciones de Facturación*, y *Gestión de Empresas SaaS* exclusivo SuperAdmin).
+   - Cada módulo y submódulo cuenta con selector rápido *"Marcar Todo / Desmarcar"*, badges de cobertura en vivo y barra de progreso general.
+4. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+   - `dotnet build` en ParkingApi ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/auth/data/authService.ts`
+- `src/features/settings/ui/MediosPagoTab.tsx`
+- `src/features/settings/ui/ConveniosTab.tsx`
+- `src/features/settings/ui/VehiculosConfigTab.tsx`
+- `src/features/settings/ui/UsuariosTab.tsx`
+- `src/features/settings/ui/ParqueaderosTab.tsx`
+- `src/features/settings/ui/ResolucionesTab.tsx`
+- `src/features/settings/ui/RolesTab.tsx`
+- `src/features/settings/ui/Settings.css`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+- `dotnet build` (**0 Errores**).
+
+---
+
 ### [2026-09-01 08:38:00] - [FEATURE / RBAC / REACTIVITY] [PWA / PERMISSIONS REALTIME] - Sincronización Reactiva de Permisos y Roles en Vivo
 
 #### 💬 Prompt Original del Usuario

@@ -2,11 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, AlertTriangle, Loader2, Car, Bike, Truck, ChevronDown, AlertCircle, CheckCircle2, PauseCircle } from 'lucide-react';
 import type { VehiculoConfigDto, SaveVehiculoConfigDto } from '../model/VehiculosConfigContracts';
 import { vehiculosConfigService } from '../data/vehiculosConfigService';
-import { authService } from '../../auth/data/authService';
+import { useAuthSession } from '../../../shared/hooks/useAuthSession';
 import { ModalPortal } from '../../../shared/ui/ModalPortal';
 import { useParqueaderoContext } from '../../../shared/context/ParqueaderoContext';
 
 export const VehiculosConfigTab: React.FC = () => {
+  const { hasPermission } = useAuthSession();
+  const canCreate = hasPermission('rates.create');
+  const canEdit = hasPermission('rates.edit');
+  const canDelete = hasPermission('rates.delete');
   const { selectedParqueaderoId } = useParqueaderoContext();
   const [configs, setConfigs] = useState<VehiculoConfigDto[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -174,7 +178,7 @@ export const VehiculosConfigTab: React.FC = () => {
           <h2>Tipos de Vehículos</h2>
           <p>Catálogo general de tipos de vehículos disponibles para operar en los parqueaderos del sistema.</p>
         </div>
-        {(authService.hasPermission('settings.vehiculos.manage') || authService.hasPermission('rates.create')) && (
+        {canCreate && (
           <button className="btn-primary" style={{ width: 'auto' }} onClick={handleOpenCreate}>
             <Plus size={16} /> Crear Tipo de Vehículo
           </button>
@@ -208,12 +212,12 @@ export const VehiculosConfigTab: React.FC = () => {
                       </span>
                     </td>
                     <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
-                      {(authService.hasPermission('settings.vehiculos.manage') || authService.hasPermission('rates.edit')) && (
+                      {canEdit && (
                         <button className="btn-icon" style={{ marginRight: '4px' }} onClick={() => handleOpenEdit(c)} title="Editar Tipo de Vehículo">
                           <Edit2 size={16} />
                         </button>
                       )}
-                      {(authService.hasPermission('settings.vehiculos.manage') || authService.hasPermission('rates.delete')) && (
+                      {canDelete && (
                         <button className="btn-icon" style={{ color: '#ef4444' }} onClick={() => handleOpenDelete(c)} title="Eliminar Tipo de Vehículo">
                           <Trash2 size={16} />
                         </button>
@@ -293,7 +297,7 @@ export const VehiculosConfigTab: React.FC = () => {
                     </div>
 
                     <div className="expandable-card-actions">
-                      {(authService.hasPermission('settings.vehiculos.manage') || authService.hasPermission('rates.edit')) && (
+                      {canEdit && (
                         <button
                           type="button"
                           className="card-action-btn card-action-btn-outline"
@@ -302,7 +306,7 @@ export const VehiculosConfigTab: React.FC = () => {
                           <Edit2 size={14} /> Editar
                         </button>
                       )}
-                      {(authService.hasPermission('settings.vehiculos.manage') || authService.hasPermission('rates.delete')) && (
+                      {canDelete && (
                         <button
                           type="button"
                           className="card-action-btn card-action-btn-danger"

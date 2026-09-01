@@ -11,9 +11,6 @@ import {
   ChevronDown,
   ChevronRight,
   Check,
-  Monitor,
-  Globe,
-  Laptop,
   ShieldCheck,
   Lock,
   CheckCircle2,
@@ -21,18 +18,237 @@ import {
   AlertCircle,
   Trash2,
   Loader2,
+  LayoutDashboard,
+  Wallet,
+  Car,
+  BarChart3,
+  Bell,
+  Settings,
+  Building2,
+  Users,
+  Tag,
+  CreditCard,
+  FileCheck,
+  Building,
 } from 'lucide-react';
-import type { RoleDto, SaveRoleDto, ActionDto, ModuleDto } from '../model/RolesContracts';
+import type { RoleDto, SaveRoleDto, ActionDto } from '../model/RolesContracts';
 import { rolesService } from '../data/rolesService';
 import { authService } from '../../auth/data/authService';
+import { useAuthSession } from '../../../shared/hooks/useAuthSession';
 import { ModalPortal } from '../../../shared/ui/ModalPortal';
 import { useParqueaderoContext } from '../../../shared/context/ParqueaderoContext';
 
-type PlatformTab = 'all' | 'pwa' | 'wpf';
+interface PwaSubGroupDef {
+  id: string;
+  name: string;
+  icon: React.ComponentType<{ size?: number; color?: string; className?: string }>;
+  actionSlugs: string[];
+}
+
+interface PwaModuleDef {
+  id: string;
+  name: string;
+  subtitle: string;
+  icon: React.ComponentType<{ size?: number; color?: string; className?: string }>;
+  actionSlugs?: string[];
+  subgroups?: PwaSubGroupDef[];
+}
+
+interface RenderedPwaSubGroup {
+  id: string;
+  name: string;
+  icon: React.ComponentType<{ size?: number; color?: string; className?: string }>;
+  actionSlugs: string[];
+  actions: ActionDto[];
+  totalActionIds: number[];
+}
+
+interface RenderedPwaModule {
+  id: string;
+  name: string;
+  subtitle: string;
+  icon: React.ComponentType<{ size?: number; color?: string; className?: string }>;
+  actionSlugs?: string[];
+  actions?: ActionDto[];
+  subgroups?: RenderedPwaSubGroup[];
+  totalModuleActionIds: number[];
+}
+
+const PWA_MODULES_STRUCTURE: PwaModuleDef[] = [
+  {
+    id: 'dashboard',
+    name: 'Dashboard',
+    subtitle: 'Métricas, analítica y visualización de ocupación en tiempo real',
+    icon: LayoutDashboard,
+    actionSlugs: ['analytics.view_dashboard', 'analytics.metrics'],
+  },
+  {
+    id: 'caja',
+    name: 'Caja y Control de Turnos',
+    subtitle: 'Cobros, liquidación de tickets, apertura/cierre de turnos, arqueos y retiros',
+    icon: Wallet,
+    actionSlugs: [
+      'checkout.process_payment',
+      'shifts.view_current',
+      'shifts.open',
+      'shifts.close',
+      'shifts.blind_count',
+      'shifts.view_history',
+      'shifts.reprint_closure',
+    ],
+  },
+  {
+    id: 'activos',
+    name: 'Activos y Monitoreo de Patio',
+    subtitle: 'Patio de vehículos en tiempo real, tickets de ingreso, salida manual y mensualidades',
+    icon: Car,
+    actionSlugs: [
+      'monitoring.view_occupancy',
+      'monitoring.search_vehicles',
+      'checkin.create',
+      'monitoring.force_exit',
+      'monitoring.export',
+      'subscriptions.view',
+      'subscriptions.create',
+      'subscriptions.renew',
+      'subscriptions.cancel',
+    ],
+  },
+  {
+    id: 'reportes',
+    name: 'Reportes y Analítica',
+    subtitle: 'Reportes financieros, ocupación, auditoría y exportación a Excel / PDF',
+    icon: BarChart3,
+    actionSlugs: [
+      'analytics.income_reports',
+      'analytics.occupancy_reports',
+      'analytics.audit_reports',
+      'analytics.export',
+    ],
+  },
+  {
+    id: 'novedades',
+    name: 'Novedades y Bloqueos',
+    subtitle: 'Registro de incidentes, novedades operativas y bloqueo preventivo de placas',
+    icon: Bell,
+    actionSlugs: [
+      'novedades.view',
+      'novedades.create',
+      'novedades.edit',
+      'novedades.resolve',
+    ],
+  },
+  {
+    id: 'configuracion',
+    name: 'Configuración del Sistema',
+    subtitle: 'Parametrización general de sedes, usuarios, convenios, tarifas y medios de pago',
+    icon: Settings,
+    subgroups: [
+      {
+        id: 'branches',
+        name: 'Sedes y Parqueaderos',
+        icon: Building2,
+        actionSlugs: [
+          'branches.view',
+          'branches.create',
+          'branches.edit',
+          'branches.delete',
+          'branches.assign_users',
+        ],
+      },
+      {
+        id: 'users',
+        name: 'Usuarios y Operadores',
+        icon: Users,
+        actionSlugs: [
+          'users.view',
+          'users.create',
+          'users.edit',
+          'users.delete',
+        ],
+      },
+      {
+        id: 'roles',
+        name: 'Roles y Permisos (RBAC)',
+        icon: Shield,
+        actionSlugs: [
+          'roles.view',
+          'roles.create',
+          'roles.edit',
+          'roles.delete',
+          'permissions.assign',
+        ],
+      },
+      {
+        id: 'agreements',
+        name: 'Convenios Comerciales',
+        icon: Tag,
+        actionSlugs: [
+          'agreements.view',
+          'agreements.create',
+          'agreements.edit',
+          'agreements.delete',
+        ],
+      },
+      {
+        id: 'rates',
+        name: 'Tipos de Vehículos y Tarifas',
+        icon: Car,
+        actionSlugs: [
+          'rates.view',
+          'rates.create',
+          'rates.edit',
+          'rates.delete',
+        ],
+      },
+      {
+        id: 'payment_methods',
+        name: 'Medios de Pago',
+        icon: CreditCard,
+        actionSlugs: [
+          'payment_methods.view',
+          'payment_methods.create',
+          'payment_methods.edit',
+          'payment_methods.delete',
+        ],
+      },
+      {
+        id: 'resolutions',
+        name: 'Resoluciones de Facturación DIAN',
+        icon: FileCheck,
+        actionSlugs: [
+          'resolutions.view',
+          'resolutions.create',
+          'resolutions.edit',
+          'resolutions.delete',
+        ],
+      },
+      {
+        id: 'companies',
+        name: 'Gestión de Empresas SaaS',
+        icon: Building,
+        actionSlugs: [
+          'companies.view',
+          'companies.create',
+          'companies.edit',
+          'companies.delete',
+          'companies.assign_limits',
+        ],
+      },
+    ],
+  },
+];
 
 export const RolesTab: React.FC = () => {
   const { inspectedCompany, activeBranch } = useParqueaderoContext();
-  const currentUser = authService.getCurrentUser();
+  const { user: currentUser, hasPermission } = useAuthSession();
+  const isUserSuperAdmin = currentUser?.isSuperAdmin === true;
+
+  const canCreateRole = hasPermission('roles.create');
+  const canEditRole = hasPermission('roles.edit');
+  const canDeleteRolePerm = hasPermission('roles.delete');
+  const canAssignPermissions = hasPermission('permissions.assign') || hasPermission('roles.edit') || currentUser?.isAdmin;
+
   const targetCompanyId = useMemo(
     () => inspectedCompany?.id || currentUser?.companyId || undefined,
     [inspectedCompany?.id, currentUser?.companyId]
@@ -43,7 +259,6 @@ export const RolesTab: React.FC = () => {
   );
 
   const [roles, setRoles] = useState<RoleDto[]>([]);
-  const [allModules, setAllModules] = useState<ModuleDto[]>([]);
   const [allActions, setAllActions] = useState<ActionDto[]>([]);
   const [rolePermissionsMap, setRolePermissionsMap] = useState<Record<number, number[]>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -69,15 +284,15 @@ export const RolesTab: React.FC = () => {
   const [targetRole, setTargetRole] = useState<RoleDto | null>(null);
   const [selectedActionIds, setSelectedActionIds] = useState<number[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activePlatform, setActivePlatform] = useState<PlatformTab>('all');
-  const [expandedModuleId, setExpandedModuleId] = useState<number | null>(null);
+  const [expandedModuleKey, setExpandedModuleKey] = useState<string | null>('caja');
+  const [expandedSubgroupKey, setExpandedSubgroupKey] = useState<string | null>('payment_methods');
   const [isSavingPermissions, setIsSavingPermissions] = useState(false);
   const [expandedRoleId, setExpandedRoleId] = useState<number | null>(null);
 
   const loadData = async (companyId?: number, branchId?: number) => {
     setIsLoading(true);
     try {
-      const [rolesData, modulesData, actionsData] = await Promise.all([
+      const [rolesData, , actionsData] = await Promise.all([
         rolesService.getRoles(companyId, branchId),
         rolesService.getModules(),
         rolesService.getActions(),
@@ -94,7 +309,6 @@ export const RolesTab: React.FC = () => {
       const uniqueRoles = Array.from(uniqueRolesMap.values());
 
       setRoles(uniqueRoles);
-      setAllModules(modulesData || []);
       setAllActions(actionsData || []);
 
       // Cargar permisos asignados a cada rol
@@ -139,9 +353,6 @@ export const RolesTab: React.FC = () => {
     return isSuperAdminRole(role) || isAdminRole(role);
   };
 
-  const currentUserForPerms = authService.getCurrentUser();
-  const isUserSuperAdmin = currentUserForPerms?.isSuperAdmin === true;
-
   const canDeleteRole = (role?: RoleDto | null): boolean => {
     if (!role) return false;
     if (isSuperAdminRole(role)) return false; // NUNCA se permite eliminar el rol Super Administrador
@@ -167,20 +378,7 @@ export const RolesTab: React.FC = () => {
     }
   };
 
-  // Clasificador de módulos por plataforma
-  const isModuleInPlatform = (mod: ModuleDto, platform: PlatformTab): boolean => {
-    if (platform === 'all') return true;
-    if (platform === 'pwa') {
-      // Módulos Web PWA: incluye operativos (Ingreso, Caja, Patio/Activos, Turnos) y administrativos
-      // Módulo 13 (Hardware / Periféricos locales de escritorio) es exclusivo de WPF
-      return mod.id !== 13;
-    }
-    if (platform === 'wpf') {
-      // Terminal POS WPF (Ingreso, Cobro, Patio, Turnos, Sistema, Tarifas, Resoluciones, Medios Pago)
-      return [1, 2, 4, 5, 8, 9, 13, 14].includes(mod.id);
-    }
-    return true;
-  };
+
 
   const checkRoleNameError = (name: string, roleIdToExclude?: number): string | null => {
     const trimmed = name.trim();
@@ -308,10 +506,7 @@ export const RolesTab: React.FC = () => {
   };
 
   const handleOpenPermissionsModal = (role: RoleDto) => {
-    const currentUser = authService.getCurrentUser();
-    const isSuperAdmin = currentUser?.isSuperAdmin === true;
-
-    if (isAdminRole(role) && !isSuperAdmin) {
+    if (isAdminRole(role) && !isUserSuperAdmin) {
       showToast('El rol Administrador cuenta automáticamente con el 100% de los permisos del sistema.', 'warning');
       return;
     }
@@ -319,17 +514,9 @@ export const RolesTab: React.FC = () => {
     setTargetRole(role);
     setSelectedActionIds(rolePermissionsMap[roleId] || []);
     setSearchTerm('');
-    setActivePlatform('all');
-
-    // Abrir el primer módulo
-    setExpandedModuleId(allModules.length > 0 ? allModules[0].id : null);
+    setExpandedModuleKey('caja');
+    setExpandedSubgroupKey('payment_methods');
     setIsPermissionsModalOpen(true);
-  };
-
-  const handleSwitchPlatform = (platform: PlatformTab) => {
-    setActivePlatform(platform);
-    const targetMods = allModules.filter((m) => isModuleInPlatform(m, platform));
-    setExpandedModuleId(targetMods.length > 0 ? targetMods[0].id : null);
   };
 
   const handleToggleAction = (actionId: number) => {
@@ -347,26 +534,18 @@ export const RolesTab: React.FC = () => {
     }
   };
 
-  const handleSelectVisible = (selectAll: boolean) => {
-    const visibleActionIds = currentGroupedModules.flatMap((g) => g.actions.map((a) => a.id));
-    if (selectAll) {
-      setSelectedActionIds((prev) => Array.from(new Set([...prev, ...visibleActionIds])));
-    } else {
-      setSelectedActionIds((prev) => prev.filter((id) => !visibleActionIds.includes(id)));
-    }
+  const toggleModuleAccordion = (moduleKey: string) => {
+    setExpandedModuleKey((prev) => (prev === moduleKey ? null : moduleKey));
   };
 
-  const toggleModuleAccordion = (moduleId: number) => {
-    setExpandedModuleId((prev) => (prev === moduleId ? null : moduleId));
+  const toggleSubgroupAccordion = (subgroupKey: string) => {
+    setExpandedSubgroupKey((prev) => (prev === subgroupKey ? null : subgroupKey));
   };
 
   const handleSavePermissions = async () => {
     if (!targetRole) return;
 
-    const currentUser = authService.getCurrentUser();
-    const isSuperAdmin = currentUser?.isSuperAdmin === true;
-
-    if (isAdminRole(targetRole) && !isSuperAdmin) {
+    if (isAdminRole(targetRole) && !isUserSuperAdmin) {
       showToast('No está permitido modificar los permisos del Administrador.', 'warning');
       return;
     }
@@ -392,11 +571,6 @@ export const RolesTab: React.FC = () => {
 
   // Módulos y acciones permitidos según el nivel de privilegio (SuperAdmin vs Administrador de Empresa)
   const superAdminOnlyModuleIds = [16]; // 16: Gestión de Empresas SaaS (Exclusivo SuperAdmin)
-  const effectiveModules = useMemo(() => {
-    if (isUserSuperAdmin) return allModules;
-    return allModules.filter((m) => !superAdminOnlyModuleIds.includes(m.id));
-  }, [allModules, isUserSuperAdmin]);
-
   const effectiveActions = useMemo(() => {
     if (isUserSuperAdmin) return allActions;
     return allActions.filter(
@@ -406,52 +580,113 @@ export const RolesTab: React.FC = () => {
     );
   }, [allActions, isUserSuperAdmin]);
 
-  // Filtrado por término de búsqueda
-  const filteredActions = effectiveActions.filter((a) => {
-    if (!searchTerm.trim()) return true;
-    const term = searchTerm.toLowerCase();
-    return (
-      a.name.toLowerCase().includes(term) ||
-      a.slug.toLowerCase().includes(term) ||
-      (a.module?.name || '').toLowerCase().includes(term)
+  // Filtrado por término de búsqueda y mapeo jerárquico PWA
+  const pwaHierarchyRenderData = useMemo<{
+    modules: RenderedPwaModule[];
+    unmatchedActions: ActionDto[];
+  }>(() => {
+    const termLower = searchTerm.trim().toLowerCase();
+    const searchFilter = (a: ActionDto) => {
+      if (!termLower) return true;
+      return a.name.toLowerCase().includes(termLower) || a.slug.toLowerCase().includes(termLower);
+    };
+
+    const matchedSlugs = new Set<string>();
+
+    const modules: RenderedPwaModule[] = PWA_MODULES_STRUCTURE.map((modDef): RenderedPwaModule => {
+      if (modDef.subgroups) {
+        // Módulo con subgrupos (Configuración)
+        const subgroups: RenderedPwaSubGroup[] = modDef.subgroups
+          .filter((sub) => sub.id !== 'companies' || isUserSuperAdmin)
+          .map((sub) => {
+            const actions = effectiveActions.filter(
+              (a) => sub.actionSlugs.includes(a.slug) && searchFilter(a)
+            );
+            actions.forEach((a) => matchedSlugs.add(a.slug));
+            const totalActionIds = effectiveActions
+              .filter((a) => sub.actionSlugs.includes(a.slug))
+              .map((a) => a.id);
+            return {
+              id: sub.id,
+              name: sub.name,
+              icon: sub.icon,
+              actionSlugs: sub.actionSlugs,
+              actions,
+              totalActionIds,
+            };
+          })
+          .filter((sub) => sub.actions.length > 0 || !termLower);
+
+        const totalModuleActionIds = subgroups.flatMap((s) => s.totalActionIds);
+        return {
+          id: modDef.id,
+          name: modDef.name,
+          subtitle: modDef.subtitle,
+          icon: modDef.icon,
+          subgroups,
+          totalModuleActionIds,
+        };
+      } else {
+        // Módulo directo (Dashboard, Caja, Activos, Reportes, Novedades)
+        const actionSlugs = modDef.actionSlugs || [];
+        const actions = effectiveActions.filter(
+          (a) => actionSlugs.includes(a.slug) && searchFilter(a)
+        );
+        actions.forEach((a) => matchedSlugs.add(a.slug));
+        const totalModuleActionIds = effectiveActions
+          .filter((a) => actionSlugs.includes(a.slug))
+          .map((a) => a.id);
+
+        return {
+          id: modDef.id,
+          name: modDef.name,
+          subtitle: modDef.subtitle,
+          icon: modDef.icon,
+          actionSlugs,
+          actions,
+          totalModuleActionIds,
+        };
+      }
+    });
+
+    // Acciones adicionales de la BD que no estén contempladas explícitamente
+    const unmatchedActions = effectiveActions.filter(
+      (a) => !matchedSlugs.has(a.slug) && searchFilter(a)
     );
-  });
 
-  // Módulos con sus acciones correspondientes
-  const groupedModules = effectiveModules
-    .map((mod) => {
-      const actions = filteredActions.filter((a) => (a.moduleId ?? a.module?.id) === mod.id);
-      return {
-        module: mod,
-        actions,
-      };
-    })
-    .filter((g) => g.actions.length > 0);
+    return {
+      modules,
+      unmatchedActions,
+    };
+  }, [effectiveActions, isUserSuperAdmin, searchTerm]);
 
-  // Separación por plataforma
-  const allGrouped = groupedModules;
-  const pwaGrouped = groupedModules.filter((g) => isModuleInPlatform(g.module, 'pwa'));
-  const wpfGrouped = groupedModules.filter((g) => isModuleInPlatform(g.module, 'wpf'));
+  // Lista plana de acciones visibles
+  const visibleActionsList = useMemo(() => {
+    const list: ActionDto[] = [];
+    pwaHierarchyRenderData.modules.forEach((mod: RenderedPwaModule) => {
+      if (mod.actions) {
+        list.push(...mod.actions);
+      }
+      if (mod.subgroups) {
+        mod.subgroups.forEach((sub: RenderedPwaSubGroup) => list.push(...sub.actions));
+      }
+    });
+    list.push(...pwaHierarchyRenderData.unmatchedActions);
+    return list;
+  }, [pwaHierarchyRenderData]);
 
-  const pwaTotalActions = effectiveActions.filter((a) => {
-    const mod = effectiveModules.find((m) => m.id === (a.moduleId ?? a.module?.id));
-    return mod ? isModuleInPlatform(mod, 'pwa') : true;
-  });
-  const wpfTotalActions = effectiveActions.filter((a) => {
-    const mod = effectiveModules.find((m) => m.id === (a.moduleId ?? a.module?.id));
-    return mod ? isModuleInPlatform(mod, 'wpf') : false;
-  });
+  const handleSelectVisible = (selectAll: boolean) => {
+    const visibleActionIds = visibleActionsList.map((a) => a.id);
+    if (selectAll) {
+      setSelectedActionIds((prev) => Array.from(new Set([...prev, ...visibleActionIds])));
+    } else {
+      setSelectedActionIds((prev) => prev.filter((id) => !visibleActionIds.includes(id)));
+    }
+  };
 
-  const allSelectedCount = selectedActionIds.filter((id) => effectiveActions.some((a) => a.id === id)).length;
-  const pwaSelectedCount = pwaTotalActions.filter((a) => selectedActionIds.includes(a.id)).length;
-  const wpfSelectedCount = wpfTotalActions.filter((a) => selectedActionIds.includes(a.id)).length;
-
-  const currentGroupedModules =
-    activePlatform === 'all'
-      ? allGrouped
-      : activePlatform === 'pwa'
-        ? pwaGrouped
-        : wpfGrouped;
+  const allSelectedCount = selectedActionIds.filter((id) =>
+    effectiveActions.some((a) => a.id === id)
+  ).length;
 
   const currentUserRoleMatch = (r: RoleDto): boolean => {
     const roleId = r.idUserRol ?? r.id;
@@ -488,9 +723,9 @@ export const RolesTab: React.FC = () => {
       <div className="section-header">
         <div className="section-header-titles">
           <h2>Roles y Matriz de Permisos</h2>
-          <p>Administra los roles del sistema y configura detalladamente los permisos operativos para la aplicación de Escritorio (WPF) y Web (PWA).</p>
+          <p>Administra los roles del sistema y configura detalladamente los permisos operativos para la aplicación Web (PWA).</p>
         </div>
-        {(authService.hasPermission('settings.roles.manage') || authService.hasPermission('roles.manage') || authService.hasPermission('settings.usuarios.manage')) && (
+        {canCreateRole && (
           <button className="btn-primary" style={{ width: 'auto' }} onClick={handleOpenCreateRole}>
             <Plus size={16} /> Crear Rol
           </button>
@@ -595,26 +830,30 @@ export const RolesTab: React.FC = () => {
                           </span>
                         ) : (
                           <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                            <button
-                              className="btn-action primary"
-                              style={{
-                                background: 'var(--primary-color, #07665e)',
-                                color: '#ffffff',
-                                border: 'none',
-                                padding: '6px 12px',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                fontWeight: 600,
-                                fontSize: '0.8rem',
-                              }}
-                              onClick={() => handleOpenPermissionsModal(r)}
-                            >
-                              <Key size={13} style={{ marginRight: 4 }} /> Configurar Permisos
-                            </button>
-                            <button className="btn-action primary" onClick={() => handleOpenEditRole(r)}>
-                              <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
-                            </button>
-                            {canDeleteRole(r) && (
+                            {canAssignPermissions && (
+                              <button
+                                className="btn-action primary"
+                                style={{
+                                  background: 'var(--primary-color, #07665e)',
+                                  color: '#ffffff',
+                                  border: 'none',
+                                  padding: '6px 12px',
+                                  borderRadius: '6px',
+                                  cursor: 'pointer',
+                                  fontWeight: 600,
+                                  fontSize: '0.8rem',
+                                }}
+                                onClick={() => handleOpenPermissionsModal(r)}
+                              >
+                                <Key size={13} style={{ marginRight: 4 }} /> Configurar Permisos
+                              </button>
+                            )}
+                            {canEditRole && (
+                              <button className="btn-action primary" onClick={() => handleOpenEditRole(r)}>
+                                <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
+                              </button>
+                            )}
+                            {canDeleteRole(r) && canDeleteRolePerm && (
                               <button
                                 className="btn-action danger"
                                 style={{
@@ -756,21 +995,25 @@ export const RolesTab: React.FC = () => {
                         </span>
                       ) : (
                         <>
-                          <button
-                            type="button"
-                            className="card-action-btn card-action-btn-primary"
-                            onClick={() => handleOpenPermissionsModal(r)}
-                          >
-                            <Key size={14} /> Permisos
-                          </button>
-                          <button
-                            type="button"
-                            className="card-action-btn card-action-btn-outline"
-                            onClick={() => handleOpenEditRole(r)}
-                          >
-                            <Edit2 size={14} /> Editar
-                          </button>
-                          {canDeleteRole(r) && (
+                          {canAssignPermissions && (
+                            <button
+                              type="button"
+                              className="card-action-btn card-action-btn-primary"
+                              onClick={() => handleOpenPermissionsModal(r)}
+                            >
+                              <Key size={14} /> Permisos
+                            </button>
+                          )}
+                          {canEditRole && (
+                            <button
+                              type="button"
+                              className="card-action-btn card-action-btn-outline"
+                              onClick={() => handleOpenEditRole(r)}
+                            >
+                              <Edit2 size={14} /> Editar
+                            </button>
+                          )}
+                          {canDeleteRole(r) && canDeleteRolePerm && (
                             <button
                               type="button"
                               className="card-action-btn card-action-btn-outline"
@@ -890,45 +1133,6 @@ export const RolesTab: React.FC = () => {
               </div>
 
               <div className="modal-body" style={{ overflowY: 'auto', gap: '1rem', paddingBottom: '1.25rem' }}>
-                {/* Selector de Plataforma */}
-                <div className="perm-platform-tabs">
-                  <button
-                    type="button"
-                    className={`perm-platform-tab ${activePlatform === 'all' ? 'active' : ''}`}
-                    onClick={() => handleSwitchPlatform('all')}
-                  >
-                    <Globe size={15} />
-                    <span>Todos los Módulos</span>
-                    <span className="perm-platform-badge">
-                      {allSelectedCount} / {effectiveActions.length}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`perm-platform-tab ${activePlatform === 'pwa' ? 'active' : ''}`}
-                    onClick={() => handleSwitchPlatform('pwa')}
-                  >
-                    <Laptop size={15} />
-                    <span>Módulos Web (PWA)</span>
-                    <span className="perm-platform-badge">
-                      {pwaSelectedCount} / {pwaTotalActions.length}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`perm-platform-tab ${activePlatform === 'wpf' ? 'active' : ''}`}
-                    onClick={() => handleSwitchPlatform('wpf')}
-                  >
-                    <Monitor size={15} />
-                    <span>Terminal POS (WPF)</span>
-                    <span className="perm-platform-badge">
-                      {wpfSelectedCount} / {wpfTotalActions.length}
-                    </span>
-                  </button>
-                </div>
-
                 {/* Barra de Búsqueda y Acciones Rápidas */}
                 <div className="perm-toolbar">
                   <div className="perm-search-box">
@@ -936,7 +1140,7 @@ export const RolesTab: React.FC = () => {
                     <input
                       type="text"
                       className="perm-search-input"
-                      placeholder={`Buscar acción o módulo en ${activePlatform === 'wpf' ? 'Terminal POS' : activePlatform === 'pwa' ? 'Web' : 'todos'}...`}
+                      placeholder="Buscar acción o submódulo en la plataforma web (PWA)..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -947,7 +1151,7 @@ export const RolesTab: React.FC = () => {
                       type="button"
                       className="btn-perm-tool select-all"
                       onClick={() => handleSelectVisible(true)}
-                      title="Seleccionar todas las acciones visibles en la lista"
+                      title="Seleccionar todas las acciones visibles"
                     >
                       <CheckSquare size={14} /> Seleccionar Visibles
                     </button>
@@ -955,7 +1159,7 @@ export const RolesTab: React.FC = () => {
                       type="button"
                       className="btn-perm-tool deselect-all"
                       onClick={() => handleSelectVisible(false)}
-                      title="Desmarcar todas las acciones visibles en la lista"
+                      title="Desmarcar todas las acciones visibles"
                     >
                       <Square size={14} /> Desmarcar Visibles
                     </button>
@@ -966,113 +1170,256 @@ export const RolesTab: React.FC = () => {
                 <div className="perm-progress-card">
                   <div className="perm-progress-header">
                     <span className="perm-progress-title">
-                      {activePlatform === 'all'
-                        ? 'Cobertura Global'
-                        : activePlatform === 'pwa'
-                          ? 'Cobertura Plataforma Web'
-                          : 'Cobertura Terminal POS'}
+                      Cobertura de Permisos (Plataforma Web PWA)
                     </span>
                     <span className="perm-progress-stats">
-                      <strong>
-                        {activePlatform === 'all'
-                          ? allSelectedCount
-                          : activePlatform === 'pwa'
-                            ? pwaSelectedCount
-                            : wpfSelectedCount}
-                      </strong>{' '}
-                      de{' '}
-                      {activePlatform === 'all'
-                        ? effectiveActions.length
-                        : activePlatform === 'pwa'
-                          ? pwaTotalActions.length
-                          : wpfTotalActions.length}{' '}
-                      permisos ({Math.round(((activePlatform === 'all' ? allSelectedCount : activePlatform === 'pwa' ? pwaSelectedCount : wpfSelectedCount) / Math.max(1, (activePlatform === 'all' ? effectiveActions.length : activePlatform === 'pwa' ? pwaTotalActions.length : wpfTotalActions.length))) * 100)}%)
+                      <strong>{allSelectedCount}</strong> de {effectiveActions.length} permisos ({Math.round((allSelectedCount / Math.max(1, effectiveActions.length)) * 100)}%)
                     </span>
                   </div>
                   <div className="perm-progress-track">
                     <div
                       className="perm-progress-fill"
                       style={{
-                        width: `${Math.round(((activePlatform === 'all' ? allSelectedCount : activePlatform === 'pwa' ? pwaSelectedCount : wpfSelectedCount) / Math.max(1, (activePlatform === 'all' ? effectiveActions.length : activePlatform === 'pwa' ? pwaTotalActions.length : wpfTotalActions.length))) * 100)}%`,
+                        width: `${Math.round((allSelectedCount / Math.max(1, effectiveActions.length)) * 100)}%`,
                       }}
                     />
                   </div>
                 </div>
 
-                {/* Lista de Módulos y Acciones */}
+                {/* Lista de los 6 Módulos Oficiales PWA */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {currentGroupedModules.length > 0 ? (
-                    currentGroupedModules.map(({ module: mod, actions }) => {
-                      const moduleActionIds = actions.map((a) => a.id);
-                      const selectedInModuleCount = actions.filter((a) => selectedActionIds.includes(a.id)).length;
-                      const isAllModuleSelected = actions.length > 0 && selectedInModuleCount === actions.length;
-                      const isPartialModuleSelected = selectedInModuleCount > 0 && !isAllModuleSelected;
-                      const isExpanded = searchTerm.trim() !== '' || expandedModuleId === mod.id;
+                  {pwaHierarchyRenderData.modules.map((mod) => {
+                    const IconComponent = mod.icon;
+                    const isExpanded = searchTerm.trim() !== '' || expandedModuleKey === mod.id;
+                    const allModActionIds = mod.totalModuleActionIds;
+                    const selectedInModCount = allModActionIds.filter((id) => selectedActionIds.includes(id)).length;
+                    const isAllModSelected = allModActionIds.length > 0 && selectedInModCount === allModActionIds.length;
+                    const isPartialModSelected = selectedInModCount > 0 && !isAllModSelected;
 
-                      return (
-                        <div key={mod.id} className="perm-module-card">
-                          {/* Cabecera del Módulo */}
-                          <div
-                            className="perm-module-header"
-                            onClick={() => toggleModuleAccordion(mod.id)}
-                          >
-                            <div className="perm-module-title-box">
-                              {isExpanded ? <ChevronDown size={17} color="var(--primary-color, #07665e)" /> : <ChevronRight size={17} color="#94a3b8" />}
-                              <span className="perm-module-name">{mod.name}</span>
-                              <span className={`perm-module-badge ${selectedInModuleCount > 0 ? 'active' : 'inactive'}`}>
-                                {selectedInModuleCount} / {actions.length} activos
-                              </span>
-                            </div>
+                    // Si se está buscando y este módulo no tiene acciones coincidentes, omitirlo
+                    const hasVisibleContent =
+                      (mod.actions && mod.actions.length > 0) ||
+                      (mod.subgroups && mod.subgroups.some((s) => s.actions.length > 0));
 
-                            <button
-                              type="button"
-                              className={`perm-module-toggle ${isAllModuleSelected ? 'all-checked' : ''}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleToggleModuleAll(moduleActionIds);
-                              }}
-                              title={isAllModuleSelected ? "Desmarcar todas las acciones de este módulo" : "Marcar todas las acciones de este módulo"}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={isAllModuleSelected}
-                                ref={(el) => {
-                                  if (el) el.indeterminate = isPartialModuleSelected;
+                    if (searchTerm.trim() && !hasVisibleContent) {
+                      return null;
+                    }
+
+                    return (
+                      <div key={mod.id} className="perm-module-card">
+                        {/* Cabecera del Módulo */}
+                        <div
+                          className="perm-module-header"
+                          onClick={() => toggleModuleAccordion(mod.id)}
+                        >
+                          <div className="perm-module-title-box">
+                            {isExpanded ? <ChevronDown size={17} color="var(--primary-color, #07665e)" /> : <ChevronRight size={17} color="#94a3b8" />}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div
+                                style={{
+                                  width: '28px',
+                                  height: '28px',
+                                  borderRadius: '6px',
+                                  background: 'rgba(7, 102, 94, 0.1)',
+                                  color: 'var(--primary-color, #07665e)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
                                 }}
-                                onChange={() => {}}
-                                style={{ pointerEvents: 'none', cursor: 'pointer', width: '15px', height: '15px', accentColor: 'var(--primary-color, #07665e)' }}
-                              />
-                              <span>{isAllModuleSelected ? 'Desmarcar' : 'Marcar Todo'}</span>
-                            </button>
+                              >
+                                <IconComponent size={16} />
+                              </div>
+                              <div>
+                                <span className="perm-module-name">{mod.name}</span>
+                                <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500 }}>
+                                  {mod.subtitle}
+                                </div>
+                              </div>
+                            </div>
+                            <span className={`perm-module-badge ${selectedInModCount > 0 ? 'active' : 'inactive'}`} style={{ marginLeft: 'auto', marginRight: '8px' }}>
+                              {selectedInModCount} / {allModActionIds.length} activos
+                            </span>
                           </div>
 
-                          {/* Lista de Acciones del Módulo */}
-                          {isExpanded && (
-                            <div className="perm-actions-list">
-                              {actions.map((action) => {
-                                const isChecked = selectedActionIds.includes(action.id);
-
-                                return (
-                                  <div
-                                    key={action.id}
-                                    className={`perm-item-row ${isChecked ? 'checked' : ''}`}
-                                    onClick={() => handleToggleAction(action.id)}
-                                  >
-                                    <div className="perm-custom-checkbox">
-                                      {isChecked && <Check size={13} strokeWidth={3} />}
-                                    </div>
-                                    <span className="perm-item-label">
-                                      {action.name}
-                                    </span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
+                          <button
+                            type="button"
+                            className={`perm-module-toggle ${isAllModSelected ? 'all-checked' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleModuleAll(allModActionIds);
+                            }}
+                            title={isAllModSelected ? "Desmarcar todo el módulo" : "Marcar todo el módulo"}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isAllModSelected}
+                              ref={(el) => {
+                                if (el) el.indeterminate = isPartialModSelected;
+                              }}
+                              onChange={() => {}}
+                              style={{ pointerEvents: 'none', cursor: 'pointer', width: '15px', height: '15px', accentColor: 'var(--primary-color, #07665e)' }}
+                            />
+                            <span>{isAllModSelected ? 'Desmarcar' : 'Marcar Todo'}</span>
+                          </button>
                         </div>
-                      );
-                    })
-                  ) : (
+
+                        {/* Contenido Expandible */}
+                        {isExpanded && (
+                          <>
+                            {/* Caso 1: Módulo directo con acciones (Dashboard, Caja, Activos, Reportes, Novedades) */}
+                            {mod.actions && mod.actions.length > 0 && (
+                              <div className="perm-actions-list">
+                                {mod.actions.map((action) => {
+                                  const isChecked = selectedActionIds.includes(action.id);
+                                  return (
+                                    <div
+                                      key={action.id}
+                                      className={`perm-item-row ${isChecked ? 'checked' : ''}`}
+                                      onClick={() => handleToggleAction(action.id)}
+                                    >
+                                      <div className="perm-custom-checkbox">
+                                        {isChecked && <Check size={13} strokeWidth={3} />}
+                                      </div>
+                                      <span className="perm-item-label">{action.name}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            {/* Caso 2: Módulo con Subgrupos (Configuración) */}
+                            {mod.subgroups && mod.subgroups.length > 0 && (
+                              <div className="perm-subgroups-container">
+                                {mod.subgroups.map((sub) => {
+                                  const SubIcon = sub.icon;
+                                  const isSubExpanded = searchTerm.trim() !== '' || expandedSubgroupKey === sub.id;
+                                  const subActionIds = sub.totalActionIds;
+                                  const selectedInSubCount = subActionIds.filter((id) => selectedActionIds.includes(id)).length;
+                                  const isAllSubSelected = subActionIds.length > 0 && selectedInSubCount === subActionIds.length;
+                                  const isPartialSubSelected = selectedInSubCount > 0 && !isAllSubSelected;
+
+                                  if (searchTerm.trim() && sub.actions.length === 0) {
+                                    return null;
+                                  }
+
+                                  return (
+                                    <div key={sub.id} className="perm-subgroup-card">
+                                      <div
+                                        className="perm-subgroup-header"
+                                        onClick={() => toggleSubgroupAccordion(sub.id)}
+                                      >
+                                        <div className="perm-subgroup-title-box">
+                                          {isSubExpanded ? <ChevronDown size={15} color="#07665e" /> : <ChevronRight size={15} color="#94a3b8" />}
+                                          <SubIcon size={15} color="#07665e" />
+                                          <span className="perm-subgroup-name">{sub.name}</span>
+                                          <span className={`perm-module-badge ${selectedInSubCount > 0 ? 'active' : 'inactive'}`}>
+                                            {selectedInSubCount} / {subActionIds.length} activos
+                                          </span>
+                                        </div>
+
+                                        <button
+                                          type="button"
+                                          className={`perm-module-toggle ${isAllSubSelected ? 'all-checked' : ''}`}
+                                          style={{ padding: '3px 8px', fontSize: '0.72rem' }}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleToggleModuleAll(subActionIds);
+                                          }}
+                                        >
+                                          <input
+                                            type="checkbox"
+                                            checked={isAllSubSelected}
+                                            ref={(el) => {
+                                              if (el) el.indeterminate = isPartialSubSelected;
+                                            }}
+                                            onChange={() => {}}
+                                            style={{ pointerEvents: 'none', cursor: 'pointer', width: '13px', height: '13px', accentColor: 'var(--primary-color, #07665e)' }}
+                                          />
+                                          <span>{isAllSubSelected ? 'Desmarcar' : 'Marcar'}</span>
+                                        </button>
+                                      </div>
+
+                                      {isSubExpanded && sub.actions.length > 0 && (
+                                        <div className="perm-subgroup-actions-list">
+                                          {sub.actions.map((action) => {
+                                            const isChecked = selectedActionIds.includes(action.id);
+                                            return (
+                                              <div
+                                                key={action.id}
+                                                className={`perm-item-row ${isChecked ? 'checked' : ''}`}
+                                                onClick={() => handleToggleAction(action.id)}
+                                              >
+                                                <div className="perm-custom-checkbox">
+                                                  {isChecked && <Check size={13} strokeWidth={3} />}
+                                                </div>
+                                                <span className="perm-item-label">{action.name}</span>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {/* Acciones adicionales de la BD si existen */}
+                  {pwaHierarchyRenderData.unmatchedActions.length > 0 && (
+                    <div className="perm-module-card">
+                      <div
+                        className="perm-module-header"
+                        onClick={() => toggleModuleAccordion('otras')}
+                      >
+                        <div className="perm-module-title-box">
+                          {expandedModuleKey === 'otras' ? <ChevronDown size={17} color="#07665e" /> : <ChevronRight size={17} color="#94a3b8" />}
+                          <ShieldCheck size={16} color="#07665e" />
+                          <span className="perm-module-name">Otras Acciones del Sistema</span>
+                          <span className="perm-module-badge inactive">
+                            {pwaHierarchyRenderData.unmatchedActions.filter((a) => selectedActionIds.includes(a.id)).length} / {pwaHierarchyRenderData.unmatchedActions.length} activos
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="perm-module-toggle"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleModuleAll(pwaHierarchyRenderData.unmatchedActions.map((a) => a.id));
+                          }}
+                        >
+                          <span>Marcar Todo</span>
+                        </button>
+                      </div>
+
+                      {expandedModuleKey === 'otras' && (
+                        <div className="perm-actions-list">
+                          {pwaHierarchyRenderData.unmatchedActions.map((action) => {
+                            const isChecked = selectedActionIds.includes(action.id);
+                            return (
+                              <div
+                                key={action.id}
+                                className={`perm-item-row ${isChecked ? 'checked' : ''}`}
+                                onClick={() => handleToggleAction(action.id)}
+                              >
+                                <div className="perm-custom-checkbox">
+                                  {isChecked && <Check size={13} strokeWidth={3} />}
+                                </div>
+                                <span className="perm-item-label">{action.name}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {visibleActionsList.length === 0 && (
                     <div style={{ textAlign: 'center', padding: '36px 16px', color: 'var(--text-secondary, #64748b)' }}>
                       <AlertCircle size={28} style={{ opacity: 0.35, margin: '0 auto 8px' }} />
                       <p style={{ margin: 0, fontSize: '0.88rem' }}>No se encontraron acciones que coincidan con la búsqueda.</p>

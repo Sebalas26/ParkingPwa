@@ -1351,6 +1351,63 @@ select.input-error:focus {
   line-height: 1.35;
 }
 
+/* Subgrupos de Configuración en Matriz de Permisos */
+.perm-subgroups-container {
+  padding: 8px 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #ffffff;
+}
+
+.perm-subgroup-card {
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f8fafc;
+  transition: border-color 0.15s ease;
+}
+
+.perm-subgroup-card:hover {
+  border-color: #cbd5e1;
+}
+
+.perm-subgroup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #f8fafc;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid transparent;
+}
+
+.perm-subgroup-header:hover {
+  background: #f1f5f9;
+}
+
+.perm-subgroup-title-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.perm-subgroup-name {
+  font-weight: 700;
+  font-size: 0.84rem;
+  color: var(--text-primary, #1e293b);
+}
+
+.perm-subgroup-actions-list {
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #ffffff;
+  border-top: 1px solid var(--border-color, #e2e8f0);
+}
+
 @media (max-width: 640px) {
   .perm-platform-tabs {
     flex-direction: column;

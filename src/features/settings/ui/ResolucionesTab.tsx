@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Plus, Search, Edit2, Trash2, FileText, CheckCircle, AlertCircle, ChevronDown } from 'lucide-react';
 import { resolucionesService } from '../data/resolucionesService';
 import type { BillingResolutionDto, SaveBillingResolutionDto } from '../model/ResolucionesContracts';
-import { authService } from '../../../features/auth/data/authService';
+import { useAuthSession } from '../../../shared/hooks/useAuthSession';
 import { ModalPortal } from '../../../shared/ui/ModalPortal';
 import { useParqueaderoContext } from '../../../shared/context/ParqueaderoContext';
 
@@ -16,6 +16,10 @@ const COMMON_DOCUMENT_TYPES = [
 ];
 
 export const ResolucionesTab: React.FC = () => {
+  const { hasPermission } = useAuthSession();
+  const canCreate = hasPermission('resolutions.create');
+  const canEdit = hasPermission('resolutions.edit');
+  const canDelete = hasPermission('resolutions.delete');
   const { selectedParqueaderoId } = useParqueaderoContext();
   const [resolutions, setResolutions] = useState<BillingResolutionDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -157,7 +161,7 @@ export const ResolucionesTab: React.FC = () => {
           <h2>Resoluciones</h2>
           <p>Parametrización de autorizaciones DIAN para numeración consecutiva de tiquetes POS y facturación electrónica.</p>
         </div>
-        {authService.hasPermission('settings.roles.manage') && (
+        {canCreate && (
           <button className="btn-primary" style={{ width: 'auto' }} onClick={handleOpenCreate}>
             <Plus size={16} /> Agregar nuevo
           </button>
@@ -234,10 +238,12 @@ export const ResolucionesTab: React.FC = () => {
                     </td>
                     <td className="text-right">
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                        <button className="btn-action primary" onClick={() => handleOpenEdit(res)} title="Editar Resolución">
-                          <Edit2 size={14} />
-                        </button>
-                        {res.isActive && (
+                        {canEdit && (
+                          <button className="btn-action primary" onClick={() => handleOpenEdit(res)} title="Editar Resolución">
+                            <Edit2 size={14} />
+                          </button>
+                        )}
+                        {canDelete && res.isActive && (
                           <button
                             className="btn-action danger"
                             onClick={() => handleDeactivate(res.resolutionId, res.name)}
@@ -328,14 +334,16 @@ export const ResolucionesTab: React.FC = () => {
                     </div>
 
                     <div className="expandable-card-actions">
-                      <button
-                        type="button"
-                        className="card-action-btn card-action-btn-outline"
-                        onClick={() => handleOpenEdit(res)}
-                      >
-                        <Edit2 size={14} /> Editar
-                      </button>
-                      {res.isActive && (
+                      {canEdit && (
+                        <button
+                          type="button"
+                          className="card-action-btn card-action-btn-outline"
+                          onClick={() => handleOpenEdit(res)}
+                        >
+                          <Edit2 size={14} /> Editar
+                        </button>
+                      )}
+                      {canDelete && res.isActive && (
                         <button
                           type="button"
                           className="card-action-btn card-action-btn-danger"

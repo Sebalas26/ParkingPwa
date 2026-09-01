@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, CreditCard, ChevronDown, AlertCircle, CheckCircle2, PauseCircle, Loader2 } from 'lucide-react';
 import type { PaymentMethodDto, SavePaymentMethodDto } from '../model/MediosPagoContracts';
 import { mediosPagoService } from '../data/mediosPagoService';
-import { authService } from '../../auth/data/authService';
+import { useAuthSession } from '../../../shared/hooks/useAuthSession';
 import { ModalPortal } from '../../../shared/ui/ModalPortal';
 import { useParqueaderoContext } from '../../../shared/context/ParqueaderoContext';
 
@@ -26,6 +26,9 @@ const PAYMENT_EMOJIS = [
 ];
 
 export const MediosPagoTab: React.FC = () => {
+  const { hasPermission } = useAuthSession();
+  const canCreate = hasPermission('payment_methods.create');
+  const canEdit = hasPermission('payment_methods.edit');
   const { selectedParqueaderoId } = useParqueaderoContext();
   const [mediosPago, setMediosPago] = useState<PaymentMethodDto[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -195,7 +198,7 @@ export const MediosPagoTab: React.FC = () => {
           <h2>Gestión de Medios de Pago</h2>
           <p>Configura las formas de recaudación y cobro disponibles en las cajas del parqueadero (Efectivo, Tarjetas, Transferencias, etc.).</p>
         </div>
-        {authService.hasPermission('settings.medios_pago.manage') && (
+        {canCreate && (
           <button className="btn-primary" style={{ width: 'auto' }} onClick={handleOpenCreate}>
             <Plus size={16} /> Crear Medio de Pago
           </button>
@@ -249,7 +252,7 @@ export const MediosPagoTab: React.FC = () => {
                       </td>
                       <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                          {authService.hasPermission('settings.medios_pago.manage') && (
+                          {canEdit && (
                             <button className="btn-action primary" onClick={() => handleOpenEdit(mp)}>
                               <Edit2 size={14} style={{ marginRight: 4 }} /> Editar
                             </button>
@@ -328,7 +331,7 @@ export const MediosPagoTab: React.FC = () => {
                     </div>
 
                     <div className="expandable-card-actions">
-                      {authService.hasPermission('settings.medios_pago.manage') && (
+                      {canEdit && (
                         <button
                           type="button"
                           className="card-action-btn card-action-btn-outline"

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Edit2, Tag, Percent, DollarSign, Trash2, Upload, Image as ImageIcon, ChevronDown, AlertCircle, CheckCircle2, PauseCircle, Loader2 } from 'lucide-react';
 import type { CommercialAgreementDto, SaveCommercialAgreementDto } from '../model/ConveniosContracts';
 import { conveniosService } from '../data/conveniosService';
-import { authService } from '../../auth/data/authService';
+import { useAuthSession } from '../../../shared/hooks/useAuthSession';
 import { ModalPortal } from '../../../shared/ui/ModalPortal';
 import { useParqueaderoContext } from '../../../shared/context/ParqueaderoContext';
 
@@ -14,6 +14,10 @@ const formatCurrencyDisplay = (val?: number | string | null): string => {
 };
 
 export const ConveniosTab: React.FC = () => {
+  const { hasPermission } = useAuthSession();
+  const canCreate = hasPermission('agreements.create');
+  const canEdit = hasPermission('agreements.edit');
+  const canDelete = hasPermission('agreements.delete');
   const { selectedParqueaderoId } = useParqueaderoContext();
   const [convenios, setConvenios] = useState<CommercialAgreementDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -271,7 +275,7 @@ export const ConveniosTab: React.FC = () => {
           <p>Administra los convenios de descuento, logos aliados y tarifas preferenciales aplicables en caja.</p>
         </div>
 
-        {(authService.hasPermission('settings.convenios.manage') || authService.hasPermission('agreements.manage')) && (
+        {canCreate && (
           <button className="btn-primary" style={{ width: 'auto' }} onClick={handleOpenCreate}>
             <Plus size={16} /> Crear Convenio
           </button>
@@ -359,12 +363,12 @@ export const ConveniosTab: React.FC = () => {
                       </td>
                       <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
                         <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                          {(authService.hasPermission('settings.convenios.manage') || authService.hasPermission('agreements.manage')) && (
+                          {canEdit && (
                             <button className="btn-icon" onClick={() => handleOpenEdit(c)} title="Editar Convenio">
                               <Edit2 size={16} />
                             </button>
                           )}
-                          {(authService.hasPermission('settings.convenios.manage') || authService.hasPermission('agreements.manage')) && (
+                          {canDelete && (
                             <button className="btn-icon danger" onClick={() => handleDelete(c.agreementId)} title="Eliminar Convenio">
                               <Trash2 size={16} />
                             </button>
@@ -465,7 +469,7 @@ export const ConveniosTab: React.FC = () => {
                     </div>
 
                     <div className="expandable-card-actions">
-                      {(authService.hasPermission('settings.convenios.manage') || authService.hasPermission('agreements.manage')) && (
+                      {canEdit && (
                         <button
                           type="button"
                           className="card-action-btn card-action-btn-outline"
@@ -474,7 +478,7 @@ export const ConveniosTab: React.FC = () => {
                           <Edit2 size={14} /> Editar
                         </button>
                       )}
-                      {(authService.hasPermission('settings.convenios.manage') || authService.hasPermission('agreements.manage')) && (
+                      {canDelete && (
                         <button
                           type="button"
                           className="card-action-btn card-action-btn-danger"

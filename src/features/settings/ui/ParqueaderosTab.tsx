@@ -34,18 +34,16 @@ import type { PaymentMethodDto } from '../model/MediosPagoContracts';
 import type { UserDto } from '../model/UsuariosContracts';
 import type { VehiculoConfigDto, SaveVehiculoConfigDto } from '../model/VehiculosConfigContracts';
 import { useBranchContext } from '../../../shared/context/ParqueaderoContext';
-import { authService } from '../../auth/data/authService';
+import { useAuthSession } from '../../../shared/hooks/useAuthSession';
 import { ModalPortal } from '../../../shared/ui/ModalPortal';
 import { formatCurrencyInput, parseCurrencyInput } from '../../../shared/utils/currencyUtils';
 
 const AVATAR_COLORS = [
-  { bg: '#e0f2fe', text: '#0369a1' },
-  { bg: '#dcfce7', text: '#15803d' },
-  { bg: '#fef3c7', text: '#b45309' },
-  { bg: '#f3e8ff', text: '#7e22ce' },
-  { bg: '#fee2e2', text: '#b91c1c' },
-  { bg: '#ccfbf1', text: '#0f766e' },
-  { bg: '#ffedd5', text: '#c2410c' },
+  { bg: 'rgba(7, 102, 94, 0.1)', color: '#07665e' },
+  { bg: 'rgba(59, 130, 246, 0.1)', color: '#2563eb' },
+  { bg: 'rgba(245, 158, 11, 0.1)', color: '#d97706' },
+  { bg: 'rgba(139, 92, 246, 0.1)', color: '#7c3aed' },
+  { bg: 'rgba(236, 72, 153, 0.1)', color: '#db2777' },
 ];
 
 const getAvatarStyle = (index: number) => {
@@ -54,7 +52,10 @@ const getAvatarStyle = (index: number) => {
 
 export const ParqueaderosTab: React.FC = () => {
   const { refreshBranches, inspectedCompany } = useBranchContext();
-  const currentUser = authService.getCurrentUser();
+  const { user: currentUser, hasPermission } = useAuthSession();
+  const canCreate = hasPermission('branches.create');
+  const canEdit = hasPermission('branches.edit');
+  const canParametrize = hasPermission('branches.edit') || hasPermission('branches.assign_users') || currentUser?.isAdmin;
   const targetCompanyId = inspectedCompany?.id || currentUser?.companyId || undefined;
 
   const maxBranchesLimit = inspectedCompany?.maxBranches ?? currentUser?.maxBranches ?? 0;
@@ -449,7 +450,7 @@ export const ParqueaderosTab: React.FC = () => {
           </div>
           <p>Administra las sedes físicas del sistema, parametrizando medios de pago, usuarios autorizados y tarifas por sede.</p>
         </div>
-        {authService.hasPermission('branches.create') && (
+        {canCreate && (
           <button
             className="btn-primary"
             style={{ width: 'auto' }}
@@ -545,14 +546,16 @@ export const ParqueaderosTab: React.FC = () => {
                       </td>
                       <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                          <button
-                            className="btn-action primary"
-                            onClick={() => handleOpenConfig(b)}
-                            title="Parametrizar Medios de Pago, Usuarios y Tarifas"
-                          >
-                            <Settings2 size={14} style={{ marginRight: 4 }} /> Parametrizar
-                          </button>
-                          {authService.hasPermission('branches.edit') && (
+                          {canParametrize && (
+                            <button
+                              className="btn-action primary"
+                              onClick={() => handleOpenConfig(b)}
+                              title="Parametrizar Medios de Pago, Usuarios y Tarifas"
+                            >
+                              <Settings2 size={14} style={{ marginRight: 4 }} /> Parametrizar
+                            </button>
+                          )}
+                          {canEdit && (
                             <button
                               className="btn-action secondary"
                               onClick={() => handleOpenEdit(b)}
@@ -596,7 +599,7 @@ export const ParqueaderosTab: React.FC = () => {
                   <div className="expandable-card-main">
                     <div
                       className="expandable-card-avatar"
-                      style={{ background: avatarColor.bg, color: avatarColor.text }}
+                      style={{ background: avatarColor.bg, color: avatarColor.color }}
                     >
                       {initials}
                       <span className={`avatar-status-dot ${isActive ? 'active' : 'inactive'}`} />
@@ -653,14 +656,16 @@ export const ParqueaderosTab: React.FC = () => {
                     </div>
 
                     <div className="expandable-card-actions">
-                      <button
-                        type="button"
-                        className="card-action-btn card-action-btn-primary"
-                        onClick={() => handleOpenConfig(b)}
-                      >
-                        <Settings2 size={14} /> Parametrizar
-                      </button>
-                      {authService.hasPermission('branches.edit') && (
+                      {canParametrize && (
+                        <button
+                          type="button"
+                          className="card-action-btn card-action-btn-primary"
+                          onClick={() => handleOpenConfig(b)}
+                        >
+                          <Settings2 size={14} /> Parametrizar
+                        </button>
+                      )}
+                      {canEdit && (
                         <button
                           type="button"
                           className="card-action-btn card-action-btn-outline"

@@ -4,7 +4,7 @@ import type { UserDto, SaveUserDto, GetIdentificationTypeDto, GetUserRoleDto } f
 import type { BranchDto } from '../model/BranchesContracts';
 import { usuariosService } from '../data/usuariosService';
 import { branchesService } from '../data/branchesService';
-import { authService } from '../../auth/data/authService';
+import { useAuthSession } from '../../../shared/hooks/useAuthSession';
 import { ModalPortal } from '../../../shared/ui/ModalPortal';
 import { useParqueaderoContext } from '../../../shared/context/ParqueaderoContext';
 
@@ -53,8 +53,11 @@ const getInitials = (name?: string, username?: string) => {
 };
 
 export const UsuariosTab: React.FC = () => {
+  const { user: currentUser, hasPermission } = useAuthSession();
+  const canCreate = hasPermission('users.create');
+  const canEdit = hasPermission('users.edit');
+  const canDelete = hasPermission('users.delete');
   const { inspectedCompany } = useParqueaderoContext();
-  const currentUser = authService.getCurrentUser();
   const targetCompanyId = useMemo(
     () => inspectedCompany?.id || currentUser?.companyId || undefined,
     [inspectedCompany?.id, currentUser?.companyId]
@@ -353,7 +356,7 @@ export const UsuariosTab: React.FC = () => {
     }
   };
 
-  const currentUserForFilter = authService.getCurrentUser();
+  const currentUserForFilter = currentUser;
   const isUserSuperAdmin = currentUserForFilter?.isSuperAdmin === true;
 
   const displayUsers = usuarios.filter((u) => {
@@ -375,7 +378,7 @@ export const UsuariosTab: React.FC = () => {
           <h2>Gestión de Usuarios</h2>
           <p>Administra los operadores, supervisores y administradores con acceso al sistema.</p>
         </div>
-        {authService.hasPermission('users.create') && (
+        {canCreate && (
           <button className="btn-primary" style={{ width: 'auto' }} onClick={handleOpenCreate}>
             <Plus size={16} /> Crear Usuario
           </button>
@@ -435,12 +438,12 @@ export const UsuariosTab: React.FC = () => {
                       </td>
                       <td className="text-right">
                         <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                          {authService.hasPermission('users.edit') && (
+                          {canEdit && (
                             <button className="btn-icon" onClick={() => handleOpenEdit(u)} title="Editar Usuario">
                               <Edit2 size={16} />
                             </button>
                           )}
-                          {authService.hasPermission('users.edit') && (
+                          {canDelete && (
                             <button className="btn-icon danger" onClick={() => setUserToDelete(u)} title="Eliminar Usuario de la BD">
                               <Trash2 size={16} />
                             </button>
@@ -531,7 +534,7 @@ export const UsuariosTab: React.FC = () => {
                     </div>
 
                     <div className="expandable-card-actions">
-                      {authService.hasPermission('users.edit') && (
+                      {canEdit && (
                         <button
                           type="button"
                           className="card-action-btn card-action-btn-outline"
@@ -540,7 +543,7 @@ export const UsuariosTab: React.FC = () => {
                           <Edit2 size={14} /> Editar
                         </button>
                       )}
-                      {authService.hasPermission('users.edit') && (
+                      {canDelete && (
                         <button
                           type="button"
                           className="card-action-btn card-action-btn-danger"
