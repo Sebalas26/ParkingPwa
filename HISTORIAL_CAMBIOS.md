@@ -7,6 +7,35 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-09-01 11:26:00] - [BUGFIX / CRITICAL / INFRA] [PWA / IIS / CACHE-CONTROL] - Corrección Crítica de Headers Cache-Control en IIS para sw.js e index.html
+
+#### 💬 Prompt Original del Usuario
+> "Pues te cuento que ya realice 3 actualziaciones 3 cambios de versión y no aparece esa modal automatica para actualizar nada. me toco igual solo refrescar manual apra que cambiara a la versión 98, yo la verdad creo que algo esta supremamente mal enserio eso me parece gravisimo si hiciste un plan estrememadamente perfecto dices pero no funciono como deberia funcionar enserio. no se que sucede no se si es algo del despliegue o no se que pueda ser. analiza eso nuevamente."
+
+#### 🤖 Resumen Técnico para la IA
+1. **Causa Raíz Identificada: Caché HTTP de IIS**:
+   - El `web.config` del servidor IIS **no tenía headers `Cache-Control`** para archivos críticos (`sw.js`, `index.html`, `manifest.webmanifest`).
+   - Cuando el navegador ejecutaba `registration.update()` cada 60 segundos, IIS le devolvía el **`sw.js` viejo desde su caché HTTP** sin verificar cambios en disco. Por eso `needRefresh` nunca se activaba: el navegador comparaba byte a byte y veía el SW como "idéntico".
+   - Esto explica por qué tras 3 despliegues consecutivos la modal nunca apareció.
+2. **Corrección Aplicada en `web.config` (public/ y dist/)**:
+   - `sw.js` → `Cache-Control: no-cache, no-store, must-revalidate, max-age=0` (siempre fresco).
+   - `index.html` (text/html) → `Cache-Control: no-cache, no-store, must-revalidate, max-age=0` (siempre fresco).
+   - `manifest.webmanifest` → `Cache-Control: no-cache, no-store, must-revalidate, max-age=0` (siempre fresco).
+   - `/assets/*.js`, `/assets/*.css` → `Cache-Control: public, max-age=31536000, immutable` (cacheable 1 año — los nombres tienen hash único por build).
+3. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `public/web.config`
+- `dist/web.config`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+- `dist/web.config` verificado con headers de Cache-Control correctos.
+
+---
+
 ### [2026-09-01 10:40:00] - [FEATURE / CORE / PWA] [PWA / SERVICE WORKER / UPDATE PROMPT] - Solución Definitiva al Sistema de Actualización PWA y Web con Confirmación Manual del Usuario
 
 #### 💬 Prompt Original del Usuario
