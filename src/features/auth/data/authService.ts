@@ -2,6 +2,17 @@ import { apiClient } from '../../../shared/api/apiClient';
 import type { AuthRequestDto, AuthResponseDto, UserSession, ActionRoleDto } from '../model/AuthContracts';
 import { ALL_PWA_PERMISSIONS_LIST, ALL_PWA_MODULES_LIST } from '../../../shared/auth/rbacConstants';
 
+if (typeof window !== 'undefined' && typeof BroadcastChannel !== 'undefined') {
+  try {
+    const rbacChannel = new BroadcastChannel('parkflow_rbac_sync');
+    rbacChannel.onmessage = (event) => {
+      if (event.data?.type === 'REFRESH_PERMISSIONS') {
+        authService.refreshSession().catch(() => {});
+      }
+    };
+  } catch {}
+}
+
 export const authService = {
   login: async (credentials: AuthRequestDto): Promise<UserSession> => {
     const response = await apiClient.post<AuthResponseDto>('/Auth/login', credentials);
@@ -65,14 +76,78 @@ export const authService = {
     };
 
     localStorage.setItem('auth_user', JSON.stringify(session));
+    authService.notifySessionChanged();
 
     return session;
+  },
+
+  notifySessionChanged: (): void => {
+    try {
+      window.dispatchEvent(new CustomEvent('parkflow:session_updated', { detail: authService.getCurrentUser() }));
+    } catch {}
+  },
+
+  broadcastPermissionsChanged: (): void => {
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        const bc = new BroadcastChannel('parkflow_rbac_sync');
+        bc.postMessage({ type: 'REFRESH_PERMISSIONS', timestamp: Date.now() });
+        bc.close();
+      }
+      authService.notifySessionChanged();
+    } catch {}
+  },
+
+  refreshSession: async (): Promise<UserSession | null> => {
+    if (!authService.isAuthenticated()) return null;
+    try {
+      const response = await apiClient.get<any>('/Auth/validate-session');
+      if (response && response.valid) {
+        const currentUser = authService.getCurrentUser();
+        if (!currentUser) return null;
+
+        const isSuperAdmin = Boolean(response.isSuperAdmin);
+        const isAdminUser = Boolean(response.isAdmin || isSuperAdmin);
+        const permissions = isSuperAdmin
+          ? ALL_PWA_PERMISSIONS_LIST
+          : (Array.isArray(response.permissions) ? response.permissions : currentUser.permissions);
+
+        const updatedSession: UserSession = {
+          ...currentUser,
+          roleName: response.roleName || currentUser.roleName,
+          userRoleId: response.roleId ?? currentUser.userRoleId,
+          fullName: response.fullName || currentUser.fullName,
+          companyName: response.companyName || currentUser.companyName,
+          companyId: response.companyId ?? currentUser.companyId,
+          maxBranches: response.maxBranches ?? currentUser.maxBranches,
+          branches: response.branches ?? currentUser.branches,
+          isAdmin: isAdminUser,
+          isSuperAdmin,
+          permissions,
+        };
+
+        const prevPermsStr = JSON.stringify(currentUser.permissions || []);
+        const nextPermsStr = JSON.stringify(updatedSession.permissions || []);
+
+        localStorage.setItem('auth_user', JSON.stringify(updatedSession));
+
+        if (prevPermsStr !== nextPermsStr) {
+          authService.notifySessionChanged();
+        }
+
+        return updatedSession;
+      }
+      return null;
+    } catch {
+      return null;
+    }
   },
 
   logout: async (): Promise<void> => {
     // Purgar credenciales y sesión inmediatamente para evitar rebotes de navegación
     localStorage.removeItem('auth_token');
     localStorage.removeItem('auth_user');
+    authService.notifySessionChanged();
 
     try {
       await apiClient.post('/Auth/logout');

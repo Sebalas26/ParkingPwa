@@ -379,6 +379,10 @@ export const RolesTab: React.FC = () => {
       setIsPermissionsModalOpen(false);
       setTargetRole(null);
       showToast('¡Permisos del rol actualizados correctamente!', 'success');
+
+      // Sincronizar reactivamente en tiempo real la sesión y notificar a todas las ventanas abiertas
+      await authService.refreshSession();
+      authService.broadcastPermissionsChanged();
     } catch (err: any) {
       showToast(err?.message || 'Error al guardar los permisos del rol.', 'error');
     } finally {

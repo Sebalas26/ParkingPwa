@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, FileText, Car, CreditCard, Building2, Shield, FileCheck } from 'lucide-react';
-import { authService } from '../../auth/data/authService';
+import { useAuthSession } from '../../../shared/hooks/useAuthSession';
 import { UsuariosTab } from './UsuariosTab';
 import { RolesTab } from './RolesTab';
 import { ConveniosTab } from './ConveniosTab';
@@ -13,15 +13,17 @@ import './Settings.css';
 type ActiveTab = 'parqueaderos' | 'usuarios' | 'roles' | 'convenios' | 'vehiculos' | 'mediosPago' | 'resoluciones';
 
 export const Settings: React.FC = () => {
-  const canViewBranches = authService.hasPermission('branches.view') || authService.hasPermission('settings.parqueaderos.view');
-  const canViewUsers = authService.hasPermission('users.view') || authService.hasPermission('settings.usuarios.view');
-  const canViewRoles = authService.hasPermission('roles.view') || authService.hasPermission('settings.roles.view');
-  const canViewAgreements = authService.hasPermission('agreements.view') || authService.hasPermission('settings.convenios.view');
-  const canViewRates = authService.hasPermission('rates.view') || authService.hasPermission('settings.vehiculos.view') || authService.hasPermission('settings.tarifas.view');
-  const canViewPaymentMethods = authService.hasPermission('payment_methods.view') || authService.hasPermission('settings.medios_pago.view');
-  const canViewResolutions = authService.hasPermission('resolutions.view') || authService.hasPermission('settings.resoluciones.view');
+  const { hasPermission } = useAuthSession();
 
-  const getInitialTab = (): ActiveTab => {
+  const canViewBranches = hasPermission('branches.view') || hasPermission('settings.parqueaderos.view');
+  const canViewUsers = hasPermission('users.view') || hasPermission('settings.usuarios.view');
+  const canViewRoles = hasPermission('roles.view') || hasPermission('settings.roles.view');
+  const canViewAgreements = hasPermission('agreements.view') || hasPermission('settings.convenios.view');
+  const canViewRates = hasPermission('rates.view') || hasPermission('settings.vehiculos.view') || hasPermission('settings.tarifas.view');
+  const canViewPaymentMethods = hasPermission('payment_methods.view') || hasPermission('settings.medios_pago.view');
+  const canViewResolutions = hasPermission('resolutions.view') || hasPermission('settings.resoluciones.view');
+
+  const getFirstAvailableTab = (): ActiveTab => {
     if (canViewBranches) return 'parqueaderos';
     if (canViewUsers) return 'usuarios';
     if (canViewRoles) return 'roles';
@@ -32,7 +34,23 @@ export const Settings: React.FC = () => {
     return 'parqueaderos';
   };
 
-  const [activeTab, setActiveTab] = useState<ActiveTab>(getInitialTab);
+  const [activeTab, setActiveTab] = useState<ActiveTab>(getFirstAvailableTab);
+
+  // Auto-ajustar pestaña activa si se revocan permisos en tiempo real
+  useEffect(() => {
+    const isCurrentTabValid =
+      (activeTab === 'parqueaderos' && canViewBranches) ||
+      (activeTab === 'usuarios' && canViewUsers) ||
+      (activeTab === 'roles' && canViewRoles) ||
+      (activeTab === 'convenios' && canViewAgreements) ||
+      (activeTab === 'vehiculos' && canViewRates) ||
+      (activeTab === 'mediosPago' && canViewPaymentMethods) ||
+      (activeTab === 'resoluciones' && canViewResolutions);
+
+    if (!isCurrentTabValid) {
+      setActiveTab(getFirstAvailableTab());
+    }
+  }, [activeTab, canViewBranches, canViewUsers, canViewRoles, canViewAgreements, canViewRates, canViewPaymentMethods, canViewResolutions]);
 
   return (
     <div className="settings-container">

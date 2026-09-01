@@ -7,6 +7,39 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-09-01 08:38:00] - [FEATURE / RBAC / REACTIVITY] [PWA / PERMISSIONS REALTIME] - Sincronización Reactiva de Permisos y Roles en Vivo
+
+#### 💬 Prompt Original del Usuario
+> "Bueno estoy desde el super administrador e intento quitarle permisos a un rol administrador de alguna compañia por que no quiero que tenga ciertos modulos o fucniones pero no esta funcionadno le quite medios de pago el maestro le quite lo de la caja y sigue aparenciendo si te das cuenta eso debe ser reactivo me imagino que eso tiene signal R por que ya cerre sesión y volvi a ingresar y si funciono osea si esta funcionando los permisos pero no es en tiempo real y eso así no debería ser eso debe ser automatico analiza eso. y dame el plan"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Refresco Dinámico y Broadcast Multi-Pestaña (`authService.ts`)**:
+   - Se implementó `authService.refreshSession()`, `notifySessionChanged()` y `broadcastPermissionsChanged()` utilizando `BroadcastChannel('parkflow_rbac_sync')` y eventos DOM `CustomEvent('parkflow:session_updated')`.
+2. **Hook Reactivo `useAuthSession` (`src/shared/hooks/useAuthSession.ts`)**:
+   - Se creó el hook `useAuthSession` que suscribe de forma reactiva el estado del usuario y la función `hasPermission(slug)` a los cambios de sesión.
+3. **Re-renderizado en Vivo de Navegación y Vistas (`DashboardLayout.tsx` & `Settings.tsx`)**:
+   - `DashboardLayout.tsx` utiliza `useAuthSession()`: Si a un usuario se le revoca el acceso a *Caja* o *Novedades*, los botones del menú lateral desaparecen inmediatamente de la pantalla.
+   - `Settings.tsx` utiliza `useAuthSession()`: Las pestañas de configuración (*Medios de Pago*, *Convenios*, *Usuarios*, *Roles*, etc.) se muestran u ocultan en tiempo real. Si el usuario estaba en una pestaña revocada, se auto-redirige a la siguiente pestaña válida.
+4. **Disparo Inmediato al Guardar Permisos (`RolesTab.tsx`) & Sondeo en Vivo (`SessionHeartbeat`)**:
+   - Al pulsar *"Guardar Permisos"*, `RolesTab` emite el broadcast para actualizar todas las pestañas activas del navegador.
+   - `SessionHeartbeat` en `App.tsx` valida y refresca la sesión en segundo plano periódicamente (cada 6s) y al reenfocar la ventana (`focus` / `visibilitychange`).
+5. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/auth/data/authService.ts`
+- `src/shared/hooks/useAuthSession.ts` _(NUEVO)_
+- `src/shared/ui/DashboardLayout.tsx`
+- `src/features/settings/ui/Settings.tsx`
+- `src/features/settings/ui/RolesTab.tsx`
+- `src/App.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+
+---
+
 ### [2026-09-01 08:16:00] - [FEATURE / PWA / RBAC] [PWA / SERVICE WORKER & ROLES] - Restauración de Módulos de Empresa y Reingeniería PWA AutoUpdate Limpio
 
 #### 💬 Prompt Original del Usuario

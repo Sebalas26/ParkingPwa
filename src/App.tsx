@@ -11,10 +11,9 @@ import { Novedades } from './features/novedades/ui/Novedades';
 import { CompaniesPage } from './features/companies/ui/CompaniesPage';
 import { ParqueaderoProvider } from './shared/context/ParqueaderoContext';
 import { authService } from './features/auth/data/authService';
-import { apiClient } from './shared/api/apiClient';
 import { PlateQueryMockup } from './features/isolated/ui/PlateQueryMockup';
-
 import { NoPermissionsView } from './shared/ui/NoPermissionsView';
+import { useAuthSession } from './shared/hooks/useAuthSession';
 
 const SessionHeartbeat: React.FC = () => {
   useEffect(() => {
@@ -23,21 +22,25 @@ const SessionHeartbeat: React.FC = () => {
     const checkSession = async () => {
       if (!authService.isAuthenticated()) return;
       try {
-        await apiClient.get('/Auth/validate-session');
+        await authService.refreshSession();
       } catch {
         // apiClient handleResponse captura 401 y expulsa al usuario
       }
     };
 
-    const handleFocus = () => {
-      checkSession();
+    const handleFocusOrVisible = () => {
+      if (document.visibilityState === 'visible') {
+        checkSession();
+      }
     };
 
-    window.addEventListener('focus', handleFocus);
-    const intervalId = setInterval(checkSession, 30000);
+    window.addEventListener('focus', handleFocusOrVisible);
+    document.addEventListener('visibilitychange', handleFocusOrVisible);
+    const intervalId = setInterval(checkSession, 6000);
 
     return () => {
-      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('focus', handleFocusOrVisible);
+      document.removeEventListener('visibilitychange', handleFocusOrVisible);
       clearInterval(intervalId);
     };
   }, []);
@@ -121,7 +124,7 @@ const GuardedRoute: React.FC<{
   moduleName?: string;
   element: React.ReactElement;
 }> = ({ permission, moduleName, element }) => {
-  const user = authService.getCurrentUser();
+  const { user, hasPermission } = useAuthSession();
   if (user?.isSuperAdmin) return element;
 
   if (!hasUserAnyModulePermission()) {
@@ -131,7 +134,7 @@ const GuardedRoute: React.FC<{
   if (!permission) return element;
 
   const permissions = Array.isArray(permission) ? permission : [permission];
-  const isAllowed = permissions.some((p) => authService.hasPermission(p));
+  const isAllowed = permissions.some((p) => hasPermission(p));
 
   if (!isAllowed) {
     const fallbackPath = getDefaultLandingPath();

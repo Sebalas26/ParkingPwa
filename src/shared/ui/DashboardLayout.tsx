@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { authService } from '../../features/auth/data/authService';
+import { useAuthSession } from '../hooks/useAuthSession';
 import { Car, LayoutDashboard, BarChart, Settings, LogOut, User, Wallet, BellRing, RefreshCw, Building2, Menu, X, PanelLeftClose, PanelLeft } from 'lucide-react';
 import { PwaInstallPrompt } from './PwaInstallPrompt';
 import { OfflineBanner } from './OfflineBanner';
@@ -26,7 +27,7 @@ const WatermarkLogo = () => (
 export const DashboardLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const user = authService.getCurrentUser();
+  const { user, hasPermission } = useAuthSession();
   const {
     branchesList,
     activeBranchId,
@@ -101,17 +102,17 @@ export const DashboardLayout: React.FC = () => {
   });
 
   const canAccessSettings =
-    authService.hasPermission('settings.parqueaderos.view') ||
-    authService.hasPermission('settings.usuarios.view') ||
-    authService.hasPermission('settings.roles.view') ||
-    authService.hasPermission('settings.tarifas.view') ||
-    authService.hasPermission('settings.medios_pago.view') ||
-    authService.hasPermission('settings.convenios.view') ||
-    authService.hasPermission('settings.resoluciones.view');
+    hasPermission('settings.parqueaderos.view') ||
+    hasPermission('settings.usuarios.view') ||
+    hasPermission('settings.roles.view') ||
+    hasPermission('settings.tarifas.view') ||
+    hasPermission('settings.medios_pago.view') ||
+    hasPermission('settings.convenios.view') ||
+    hasPermission('settings.resoluciones.view');
 
   return (
     <div className="dashboard-layout">
-      {hasZeroBranches && (user?.isAdmin || authService.hasPermission('branches.create')) && !user?.isSuperAdmin && (
+      {hasZeroBranches && (user?.isAdmin || hasPermission('branches.create')) && !user?.isSuperAdmin && (
         <ZeroDataOnboardingWizard />
       )}
 
@@ -167,7 +168,7 @@ export const DashboardLayout: React.FC = () => {
             </button>
           ) : (
             <>
-              {authService.hasPermission('dashboard.view') && (
+              {hasPermission('dashboard.view') && (
                 <button
                   type="button"
                   className={`nav-item ${location.pathname === '/dashboard' || location.pathname === '/' ? 'active' : ''}`}
@@ -177,7 +178,7 @@ export const DashboardLayout: React.FC = () => {
                   <span>Dashboard</span>
                 </button>
               )}
-              {(authService.hasPermission('checkout.view') || authService.hasPermission('shift.view')) && (
+              {(hasPermission('checkout.view') || hasPermission('shift.view')) && (
                 <button
                   type="button"
                   className={`nav-item ${location.pathname.startsWith('/dashboard/caja') ? 'active' : ''}`}
@@ -187,7 +188,7 @@ export const DashboardLayout: React.FC = () => {
                   <span>Caja</span>
                 </button>
               )}
-              {(authService.hasPermission('recent_entries.view') || authService.hasPermission('monitoring.view_occupancy') || authService.hasPermission('checkin.view')) && (
+              {(hasPermission('recent_entries.view') || hasPermission('monitoring.view_occupancy') || hasPermission('checkin.view')) && (
                 <button
                   type="button"
                   className={`nav-item ${location.pathname.startsWith('/dashboard/vehicles') ? 'active' : ''}`}
@@ -197,7 +198,7 @@ export const DashboardLayout: React.FC = () => {
                   <span>Activos</span>
                 </button>
               )}
-              {authService.hasPermission('reports.view') && (
+              {hasPermission('reports.view') && (
                 <button
                   type="button"
                   className={`nav-item ${location.pathname.startsWith('/dashboard/reports') ? 'active' : ''}`}
@@ -207,7 +208,7 @@ export const DashboardLayout: React.FC = () => {
                   <span>Reportes</span>
                 </button>
               )}
-              {authService.hasPermission('novedades.view') && (
+              {hasPermission('novedades.view') && (
                 <button
                   type="button"
                   className={`nav-item ${location.pathname.startsWith('/dashboard/novedades') ? 'active' : ''}`}
