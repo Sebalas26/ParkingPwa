@@ -7,6 +7,32 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-09-01 13:33:00] - [PRODUCTION / PWA / POLLING] [PWA / SERVICE WORKER] - Configuración Definitiva de Sondeo a 1 Minuto y Cero Recargas Fantasma
+
+#### 💬 Prompt Original del Usuario
+> "Por favor, aplica las configuraciones definitivas de la PWA para establecer el sondeo a 1 minuto y asegurar que no haya recargas automáticas ("refresh fantasma") que afecten la pantalla de Login.
+> 1. En el archivo vite.config.ts: Verifica que la configuración del plugin VitePWA tenga explícitamente registerType: 'prompt'. Si en algún momento se cambió a autoUpdate, devuélvelo a prompt. El modo autoUpdate es el causante de recargas inesperadas sin interacción del usuario.
+> 2. Reemplaza TODO el contenido del archivo src/shared/ui/UpdatePromptModal.tsx con este código exacto para sellar la lógica..."
+
+#### 🤖 Resumen Técnico para la IA
+1. **Verificación de `registerType: 'prompt'` (`vite.config.ts`)**:
+   - Confirmado `registerType: 'prompt'` para evitar que el Service Worker se active solo y fuerce refrescos de página en segundo plano.
+2. **Sondeo Silencioso a 1 Minuto (`UpdatePromptModal.tsx`)**:
+   - `setInterval` de 60 segundos (`60 * 1000`) consultando `registration.update().catch(() => {})`.
+   - Control de recarga exclusivamente al hacer click en el botón `Actualizar Ahora` (`updateServiceWorker(true)`).
+   - Renderizado condicional estricto: `if (!needRefresh) return null;`.
+3. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/shared/ui/UpdatePromptModal.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+
+---
+
 ### [2026-09-01 13:08:00] - [CLEANUP / PRODUCTION] [PWA / SERVICE WORKER] - Retiro de Panel de Diagnóstico y Activación de Modal en Estado Estable de Producción
 
 #### 💬 Prompt Original del Usuario

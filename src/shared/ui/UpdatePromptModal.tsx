@@ -13,82 +13,44 @@ export const UpdatePromptModal: React.FC = () => {
     immediate: true,
     onRegisteredSW(_swUrl, registration) {
       if (registration) {
-        // Sondeo periódico cada 5 minutos en producción
-        const intervalId = setInterval(() => {
+        // Sondeo silencioso cada 1 minuto (60,000 ms) sin forzar recargas
+        setInterval(() => {
           registration.update().catch(() => {});
-        }, 5 * 60 * 1000);
-
-        // Sondeo proactivo al recuperar foco o visibilidad
-        const checkUpdateOnActive = () => {
-          if (document.visibilityState === 'visible') {
-            registration.update().catch(() => {});
-          }
-        };
-
-        window.addEventListener('focus', checkUpdateOnActive);
-        document.addEventListener('visibilitychange', checkUpdateOnActive);
-
-        return () => {
-          clearInterval(intervalId);
-          window.removeEventListener('focus', checkUpdateOnActive);
-          document.removeEventListener('visibilitychange', checkUpdateOnActive);
-        };
+        }, 60 * 1000);
       }
-    },
-    onRegisterError(error) {
-      console.warn('[PWA] Error al registrar Service Worker:', error);
     },
   });
 
-  // Si no hay actualización en espera, no renderizar nada
+  // Condición estricta: si no hay nueva versión, no renderiza nada en el DOM
   if (!needRefresh) {
     return null;
   }
 
+  // La actualización y recarga ocurren ÚNICAMENTE al hacer clic
   const handleUpdate = async () => {
     if (isUpdating) return;
     setIsUpdating(true);
-
-    if ('serviceWorker' in navigator) {
-      let hasReloaded = false;
-
-      const triggerReload = () => {
-        if (hasReloaded) return;
-        hasReloaded = true;
-        window.location.reload();
-      };
-
-      navigator.serviceWorker.addEventListener('controllerchange', triggerReload, { once: true });
-
-      setTimeout(() => {
-        triggerReload();
-      }, 2500);
-
-      try {
-        await updateServiceWorker(true);
-      } catch (err) {
-        console.warn('[PWA] Error al invocar updateServiceWorker:', err);
-        triggerReload();
-      }
-    } else {
+    
+    try {
+      await updateServiceWorker(true);
+    } catch (err) {
+      console.warn('[PWA] Error al actualizar:', err);
       window.location.reload();
     }
   };
 
-  const currentVersion = import.meta.env.VITE_APP_VERSION || '1.0';
-  const buildTime = new Date(__APP_BUILD_TIME__).toLocaleString();
+  const currentVersion = import.meta.env.VITE_APP_VERSION || '1.0.0 Pro';
+  const buildTime = typeof __APP_BUILD_TIME__ !== 'undefined' ? new Date(__APP_BUILD_TIME__).toLocaleString() : '';
 
   return (
-    <div className="update-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="update-modal-title">
+    <div className="update-modal-overlay" role="dialog" aria-modal="true">
       <div className="update-modal-card">
         <div className="update-icon-wrapper">
           <div className="update-icon-pulse" />
           <Sparkles size={36} />
         </div>
 
-        <h2 id="update-modal-title" className="update-modal-title">
-          ¡Nueva Versión Disponible!
-        </h2>
+        <h2 className="update-modal-title">¡Nueva Versión Disponible!</h2>
 
         <p className="update-modal-description">
           Se han implementado mejoras importantes en el sistema, correcciones de estabilidad y optimizaciones de rendimiento.
