@@ -60,6 +60,8 @@ export const RolesTab: React.FC = () => {
   // Modal Crear / Editar Rol
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<Partial<SaveRoleDto> | null>(null);
+  const [roleFormError, setRoleFormError] = useState<string | null>(null);
+  const [isSavingRole, setIsSavingRole] = useState(false);
 
   // Modal Configuración de Permisos
   const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false);
@@ -179,11 +181,46 @@ export const RolesTab: React.FC = () => {
     return true;
   };
 
+  const checkRoleNameError = (name: string, roleIdToExclude?: number): string | null => {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      return 'El nombre del rol es obligatorio.';
+    }
+    if (trimmed.length < 2) {
+      return 'El nombre del rol debe tener al menos 2 caracteres.';
+    }
+    const normalized = trimmed.toLowerCase();
+    if (normalized === 'super administrador' || normalized === 'super admin' || normalized === 'superadmin') {
+      return 'El rol Super Administrador es reservado por el sistema.';
+    }
+    const isDuplicate = roles.some((r) => {
+      const rId = r.idUserRol ?? r.id;
+      if (roleIdToExclude && rId === roleIdToExclude) return false;
+      const rName = (r.roleName || r.role || r.name || '').trim().toLowerCase();
+      return rName === normalized;
+    });
+    if (isDuplicate) {
+      return 'Este rol ya existe en la empresa. Por favor elige otro nombre.';
+    }
+    return null;
+  };
+
+  const handleRoleNameChange = (val: string) => {
+    setEditingRole((prev) => (prev ? { ...prev, roleName: val } : prev));
+    if (val.trim()) {
+      const error = checkRoleNameError(val, editingRole?.idUserRol);
+      setRoleFormError(error);
+    } else {
+      setRoleFormError('El nombre del rol es obligatorio.');
+    }
+  };
+
   const handleOpenCreateRole = () => {
     setEditingRole({
       roleName: '',
       isActive: true,
     });
+    setRoleFormError(null);
     setIsRoleModalOpen(true);
   };
 
@@ -205,18 +242,26 @@ export const RolesTab: React.FC = () => {
       roleName: role.roleName || role.role || '',
       isActive: role.isActive,
     });
+    setRoleFormError(null);
     setIsRoleModalOpen(true);
   };
 
   const handleSaveRole = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingRole || !editingRole.roleName?.trim()) return;
+    if (!editingRole) return;
+
+    const nameError = checkRoleNameError(editingRole.roleName || '', editingRole.idUserRol);
+    if (nameError) {
+      setRoleFormError(nameError);
+      return;
+    }
+    setRoleFormError(null);
 
     const currentUser = authService.getCurrentUser();
     const isSuperAdmin = currentUser?.isSuperAdmin === true;
 
     // Normalizar el nombre ingresado para validar si se intenta crear/modificar como un rol del sistema
-    const normalizedInputName = editingRole.roleName.trim().toLowerCase();
+    const normalizedInputName = (editingRole.roleName || '').trim().toLowerCase();
     const isInputSuperAdmin = normalizedInputName === 'super administrador' || normalizedInputName === 'super admin' || normalizedInputName === 'superadmin';
     const isInputAdmin = normalizedInputName === 'administrador' || normalizedInputName === 'admin';
 
@@ -241,10 +286,11 @@ export const RolesTab: React.FC = () => {
       }
     }
 
+    setIsSavingRole(true);
     try {
       await rolesService.saveOrEditRole({
         idUserRol: editingRole.idUserRol,
-        roleName: editingRole.roleName.trim(),
+        roleName: (editingRole.roleName || '').trim(),
         isActive: editingRole.isActive ?? true,
         companyId: targetCompanyId,
         branchId: targetBranchId,
@@ -255,6 +301,8 @@ export const RolesTab: React.FC = () => {
       await loadData(targetCompanyId, targetBranchId);
     } catch (err: any) {
       showToast(err?.message || 'Error al guardar el rol.', 'error');
+    } finally {
+      setIsSavingRole(false);
     }
   };
 
@@ -742,24 +790,30 @@ export const RolesTab: React.FC = () => {
       {/* Modal Crear / Editar Rol */}
       {isRoleModalOpen && editingRole && (
         <ModalPortal>
-          <div className="modal-overlay">
-            <div className="modal-card" style={{ maxWidth: '440px' }}>
+          <div className="modal-overlay" onClick={() => !isSavingRole && setIsRoleModalOpen(false)}>
+            <div className="modal-card" style={{ maxWidth: '440px' }} onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
-                <h3>{editingRole.idUserRol ? `Editar Rol (#${editingRole.idUserRol})` : 'Crear Nuevo Rol'}</h3>
+                <h3>{editingRole.idUserRol ? 'Editar Rol' : 'Crear Nuevo Rol'}</h3>
               </div>
 
-              <form onSubmit={handleSaveRole}>
+              <form onSubmit={handleSaveRole} noValidate>
                 <div className="modal-body">
-                  <div className="form-group">
-                    <label>Nombre del Rol</label>
+                  <div className={`form-group ${roleFormError ? 'has-error' : ''}`}>
+                    <label>
+                      Nombre del Rol <span className="required-asterisk">*</span>
+                    </label>
                     <input
                       type="text"
-                      className="input-field"
+                      className={`input-field ${roleFormError ? 'input-error' : ''}`}
                       placeholder="Ej: Auditor / Supervisor de Patio"
                       value={editingRole.roleName || ''}
-                      onChange={(e) => setEditingRole({ ...editingRole, roleName: e.target.value })}
-                      required
+                      onChange={(e) => handleRoleNameChange(e.target.value)}
                     />
+                    {roleFormError && (
+                      <span className="form-field-error">
+                        <AlertCircle size={12} /> {roleFormError}
+                      </span>
+                    )}
                   </div>
 
                   <div className="form-group">
@@ -776,11 +830,16 @@ export const RolesTab: React.FC = () => {
                 </div>
 
                 <div className="modal-footer">
-                  <button type="button" className="btn-secondary" onClick={() => setIsRoleModalOpen(false)}>
+                  <button type="button" className="btn-secondary" onClick={() => setIsRoleModalOpen(false)} disabled={isSavingRole}>
                     Cancelar
                   </button>
-                  <button type="submit" className="btn-primary" style={{ width: 'auto' }}>
-                    {editingRole.idUserRol ? 'Guardar Cambios' : 'Crear Rol'}
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    style={{ width: 'auto' }}
+                    disabled={isSavingRole || Boolean(roleFormError) || !editingRole.roleName?.trim()}
+                  >
+                    {isSavingRole ? <Loader2 size={16} className="animate-spin" /> : editingRole.idUserRol ? 'Guardar Cambios' : 'Crear Rol'}
                   </button>
                 </div>
               </form>
@@ -1210,9 +1269,9 @@ export const RolesTab: React.FC = () => {
       {/* Modal de Confirmación de Eliminación de Rol */}
       {roleToDelete && (
         <ModalPortal>
-          <div className="modal-backdrop" onClick={() => !isDeletingRole && setRoleToDelete(null)}>
+          <div className="modal-overlay" onClick={() => !isDeletingRole && setRoleToDelete(null)}>
             <div
-              className="modal-container modal-md"
+              className="modal-card"
               onClick={(e) => e.stopPropagation()}
               style={{ maxWidth: '440px', padding: '24px' }}
             >

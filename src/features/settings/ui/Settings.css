@@ -329,6 +329,53 @@
   cursor: pointer;
 }
 
+/* Validation Styles */
+.required-asterisk {
+  color: #ef4444;
+  font-weight: 800;
+  margin-left: 0.15rem;
+}
+
+.form-group.has-error input,
+.form-group.has-error select,
+input.input-error,
+select.input-error {
+  border-color: #ef4444 !important;
+  background-color: rgba(239, 68, 68, 0.04) !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+}
+
+.form-group.has-error input:focus,
+.form-group.has-error select:focus,
+input.input-error:focus,
+select.input-error:focus {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25) !important;
+}
+
+.form-field-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #ef4444;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+  animation: errorSlideIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  line-height: 1.2;
+}
+
+@keyframes errorSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

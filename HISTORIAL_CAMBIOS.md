@@ -7,6 +7,35 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-31 20:52:00] - [FEATURE / UX / UI] [PWA / CONFIGURACIÓN / ROLES] - Validaciones Visuales Pro, Detección de Roles Duplicados, Título Limpio y Centrado de Modal de Eliminación
+
+#### 💬 Prompt Original del Usuario
+> "mira para la modal de crear rol sucede lo mismo. al editar salen #2 eso que no deberia salir solo dejar Editar Rol y ya. le doy click eliminar y mira como sale de mal la modal por aya abajo no central como deberia. otra funcionalidad que deberia tener es que si cuando yo este digitando el rol y ese rol ignorando mayusculas y minisculas si me explico ya exista en esa compañia deberia salirle alerta en rojo este rol ya existe no es posible crearlo y bloquear el boton de crear si me explico. haz el plan y miramos como vamos."
+
+#### 🤖 Resumen Técnico para la IA
+1. **Validación Visual Pro y Eliminación de Alertas Nativas (`RolesTab.tsx` & `Settings.css`)**:
+   - Se incorporó `noValidate` en el `<form>` del modal de roles, eliminando los tooltips del navegador (*"Completa este campo"*).
+   - Se agregaron las clases `.has-error`, `.input-error`, `.required-asterisk` y `.form-field-error` a `Settings.css` para proveer bordes rojos iluminados (`#ef4444`), foco difuminado y micro-mensajes con `<AlertCircle size={12} />`.
+2. **Detección Reactiva de Roles Duplicados (*Case-Insensitive*)**:
+   - Se implementó la función `checkRoleNameError(name, roleIdToExclude)` que valida en tiempo real si el nombre digitado ya existe en la empresa (ignorando mayúsculas, minúsculas y espacios), o si coincide con nombres reservados del sistema (*"Super Administrador"*).
+   - Si se detecta duplicado, muestra inmediatamente el mensaje de error en rojo: *"Este rol ya existe en la empresa. Por favor elige otro nombre."* y deshabilita el botón de submit (*"Crear Rol"* / *"Guardar Cambios"*).
+3. **Título Limpio en Modal de Edición**:
+   - Se simplificó el encabezado del modal de edición para mostrar limpiamente **`Editar Rol`** en lugar de mostrar IDs técnicos numéricos.
+4. **Centrado Absoluto del Modal de Eliminación**:
+   - Se sustituyeron las clases desalineadas `.modal-backdrop` y `.modal-container` por las clases estándar del sistema `.modal-overlay` y `.modal-card`, logrando un centrado perfecto en pantalla tanto en escritorio como en móviles con fondo glassmorphism difuminado.
+5. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/settings/ui/RolesTab.tsx`
+- `src/features/settings/ui/Settings.css`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+
+---
+
 ### [2026-08-31 20:38:00] - [FEATURE / UX / UI] [PWA / EMPRESAS] - Sistema Profesional de Validaciones Visuales en Modales de Registro y Edición de Empresas
 
 #### 💬 Prompt Original del Usuario
