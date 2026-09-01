@@ -1,10 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Edit2, Tag, Percent, DollarSign, Trash2, Upload, Image as ImageIcon, ChevronDown } from 'lucide-react';
+import { Plus, Edit2, Tag, Percent, DollarSign, Trash2, Upload, Image as ImageIcon, ChevronDown, AlertCircle, CheckCircle2, PauseCircle, Loader2 } from 'lucide-react';
 import type { CommercialAgreementDto, SaveCommercialAgreementDto } from '../model/ConveniosContracts';
 import { conveniosService } from '../data/conveniosService';
 import { authService } from '../../auth/data/authService';
 import { ModalPortal } from '../../../shared/ui/ModalPortal';
 import { useParqueaderoContext } from '../../../shared/context/ParqueaderoContext';
+
+const formatCurrencyDisplay = (val?: number | string | null): string => {
+  if (val === undefined || val === null || val === '') return '';
+  const num = typeof val === 'number' ? val : Number(String(val).replace(/\D/g, ''));
+  if (isNaN(num)) return '';
+  return num.toLocaleString('es-CO');
+};
 
 export const ConveniosTab: React.FC = () => {
   const { selectedParqueaderoId } = useParqueaderoContext();
@@ -13,6 +20,8 @@ export const ConveniosTab: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingConvenio, setEditingConvenio] = useState<SaveCommercialAgreementDto | null>(null);
   const [discountMode, setDiscountMode] = useState<'percentage' | 'fixed'>('percentage');
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [isSaving, setIsSaving] = useState(false);
   const [expandedAgreementId, setExpandedAgreementId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -36,7 +45,7 @@ export const ConveniosTab: React.FC = () => {
     setEditingConvenio({
       storeId: '',
       name: '',
-      minPurchaseAmount: undefined as any,
+      minPurchaseAmount: 0,
       discountPercentage: undefined as any,
       discountFixedAmount: undefined as any,
       maxHoursApplicable: undefined as any,
@@ -44,6 +53,7 @@ export const ConveniosTab: React.FC = () => {
       imageUrl: null,
     });
     setDiscountMode('percentage');
+    setFormErrors({});
     setIsModalOpen(true);
   };
 
@@ -61,6 +71,7 @@ export const ConveniosTab: React.FC = () => {
       isActive: c.isActive,
       imageUrl: c.imageUrl || null,
     });
+    setFormErrors({});
     setIsModalOpen(true);
   };
 
@@ -82,23 +93,139 @@ export const ConveniosTab: React.FC = () => {
     reader.onload = (event) => {
       const base64 = event.target?.result as string;
       setEditingConvenio((prev) => (prev ? { ...prev, imageUrl: base64 } : null));
+      setFormErrors((prev) => {
+        const copy = { ...prev };
+        delete copy.imageUrl;
+        return copy;
+      });
     };
     reader.readAsDataURL(file);
   };
 
   const handleRemoveImage = () => {
     setEditingConvenio((prev) => (prev ? { ...prev, imageUrl: null } : null));
+    setFormErrors((prev) => ({ ...prev, imageUrl: 'La imagen o logo del convenio es obligatorio.' }));
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
+  const validateConvenioForm = (form: SaveCommercialAgreementDto, mode: 'percentage' | 'fixed'): Record<string, string> => {
+    const errors: Record<string, string> = {};
+
+    // 1. Imagen Obligatoria
+    if (!form.imageUrl || !form.imageUrl.trim()) {
+      errors.imageUrl = 'La imagen o logo del convenio es obligatorio.';
+    }
+
+    // 2. Nombre del Convenio
+    if (!form.name || !form.name.trim()) {
+      errors.name = 'El nombre del convenio es obligatorio.';
+    } else if (form.name.trim().length < 3) {
+      errors.name = 'El nombre debe tener al menos 3 caracteres.';
+    } else {
+      const isDup = convenios.some(
+        (c) =>
+          c.agreementId !== form.agreementId &&
+          (c.name || '').trim().toLowerCase() === form.name.trim().toLowerCase()
+      );
+      if (isDup) {
+        errors.name = 'Este nombre de convenio ya existe en el parqueadero.';
+      }
+    }
+
+    // 3. Modalidad de Descuento
+    if (mode === 'percentage') {
+      const pct = form.discountPercentage !== undefined && form.discountPercentage !== null ? Number(form.discountPercentage) : NaN;
+      if (isNaN(pct) || pct <= 0) {
+        errors.discountPercentage = 'Ingresa un porcentaje de descuento válido (mínimo 1%).';
+      } else if (pct > 100) {
+        errors.discountPercentage = 'El porcentaje no puede ser mayor al 100%.';
+      }
+    } else {
+      const fixed = form.discountFixedAmount !== undefined && form.discountFixedAmount !== null ? Number(form.discountFixedAmount) : NaN;
+      if (isNaN(fixed) || fixed <= 0) {
+        errors.discountFixedAmount = 'Ingresa un valor de descuento fijo mayor a 0.';
+      }
+    }
+
+    return errors;
+  };
+
+  const handleNameChange = (val: string) => {
+    setEditingConvenio((prev) => (prev ? { ...prev, name: val } : null));
+    if (formErrors.name) {
+      setFormErrors((prev) => {
+        const copy = { ...prev };
+        delete copy.name;
+        return copy;
+      });
+    }
+  };
+
+  const handlePercentageChange = (val: string) => {
+    const clean = val.replace(/\D/g, '');
+    let num = clean ? Number(clean) : undefined;
+    if (num !== undefined && num > 100) num = 100;
+    setEditingConvenio((prev) => (prev ? { ...prev, discountPercentage: num } : null));
+    if (formErrors.discountPercentage) {
+      setFormErrors((prev) => {
+        const copy = { ...prev };
+        delete copy.discountPercentage;
+        return copy;
+      });
+    }
+  };
+
+  const handleFixedAmountChange = (val: string) => {
+    const clean = val.replace(/\D/g, '');
+    const num = clean ? Number(clean) : undefined;
+    setEditingConvenio((prev) => (prev ? { ...prev, discountFixedAmount: num } : null));
+    if (formErrors.discountFixedAmount) {
+      setFormErrors((prev) => {
+        const copy = { ...prev };
+        delete copy.discountFixedAmount;
+        return copy;
+      });
+    }
+  };
+
+  const handleMinPurchaseChange = (val: string) => {
+    const clean = val.replace(/\D/g, '');
+    const num = clean ? Number(clean) : 0;
+    setEditingConvenio((prev) => (prev ? { ...prev, minPurchaseAmount: num } : null));
+    if (formErrors.minPurchaseAmount) {
+      setFormErrors((prev) => {
+        const copy = { ...prev };
+        delete copy.minPurchaseAmount;
+        return copy;
+      });
+    }
+  };
+
+  const handleMaxHoursChange = (val: string) => {
+    const clean = val.replace(/\D/g, '');
+    const num = clean ? Number(clean) : undefined;
+    setEditingConvenio((prev) => (prev ? { ...prev, maxHoursApplicable: num } : null));
+    if (formErrors.maxHoursApplicable) {
+      setFormErrors((prev) => {
+        const copy = { ...prev };
+        delete copy.maxHoursApplicable;
+        return copy;
+      });
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingConvenio || !editingConvenio.name.trim()) {
-      alert('Por favor ingresa el nombre del convenio.');
+    if (!editingConvenio) return;
+
+    const errors = validateConvenioForm(editingConvenio, discountMode);
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       return;
     }
+    setFormErrors({});
 
     const payload: SaveCommercialAgreementDto = {
       agreementId: editingConvenio.agreementId,
@@ -112,6 +239,7 @@ export const ConveniosTab: React.FC = () => {
       imageUrl: editingConvenio.imageUrl || null,
     };
 
+    setIsSaving(true);
     try {
       if (editingConvenio.agreementId) {
         await conveniosService.updateAgreement(editingConvenio.agreementId, payload, selectedParqueaderoId ?? undefined);
@@ -123,6 +251,8 @@ export const ConveniosTab: React.FC = () => {
       await loadData();
     } catch (err: any) {
       alert(err?.message || 'Error al guardar el convenio comercial.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -366,21 +496,24 @@ export const ConveniosTab: React.FC = () => {
         )}
       </div>
 
+      {/* Modal Crear/Editar Convenio */}
       {isModalOpen && editingConvenio && (
         <ModalPortal>
-          <div className="modal-overlay">
-            <div className="modal-content" style={{ maxWidth: '520px' }}>
+          <div className="modal-overlay" onClick={() => !isSaving && setIsModalOpen(false)}>
+            <div className="modal-content" style={{ maxWidth: '520px' }} onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h3>{editingConvenio.agreementId ? 'Editar Convenio Comercial' : 'Nuevo Convenio Comercial'}</h3>
               </div>
 
-              <form onSubmit={handleSave}>
+              <form onSubmit={handleSave} noValidate style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', flex: 1, minHeight: 0 }}>
                 <div className="modal-body">
                   {/* 1. IMAGEN / LOGO DEL CONVENIO */}
-                  <div className="form-group">
+                  <div className={`form-group ${formErrors.imageUrl ? 'has-error' : ''}`}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <ImageIcon size={16} color="#07665e" />
-                      <span>Logo / Imagen del Convenio o Comercio Aliado</span>
+                      <span>
+                        Logo / Imagen del Convenio o Comercio Aliado <span className="required-asterisk">*</span>
+                      </span>
                     </label>
 
                     {editingConvenio.imageUrl ? (
@@ -422,6 +555,7 @@ export const ConveniosTab: React.FC = () => {
                               className="btn-secondary"
                               style={{ padding: '4px 10px', fontSize: '0.78rem' }}
                               onClick={() => fileInputRef.current?.click()}
+                              disabled={isSaving}
                             >
                               <Upload size={13} /> Cambiar
                             </button>
@@ -441,6 +575,7 @@ export const ConveniosTab: React.FC = () => {
                                 fontWeight: 600,
                               }}
                               onClick={handleRemoveImage}
+                              disabled={isSaving}
                             >
                               <Trash2 size={13} /> Quitar
                             </button>
@@ -449,27 +584,31 @@ export const ConveniosTab: React.FC = () => {
                       </div>
                     ) : (
                       <div
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={() => !isSaving && fileInputRef.current?.click()}
                         style={{
-                          border: '2px dashed #cbd5e1',
+                          border: formErrors.imageUrl ? '2px dashed #ef4444' : '2px dashed #cbd5e1',
                           borderRadius: '12px',
                           padding: '20px 16px',
                           textAlign: 'center',
-                          background: '#f8fafc',
-                          cursor: 'pointer',
+                          background: formErrors.imageUrl ? 'rgba(239, 68, 68, 0.04)' : '#f8fafc',
+                          cursor: isSaving ? 'not-allowed' : 'pointer',
                           transition: 'all 0.2s ease',
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.borderColor = '#07665e';
-                          e.currentTarget.style.background = '#f0fdfa';
+                          if (!formErrors.imageUrl) {
+                            e.currentTarget.style.borderColor = '#07665e';
+                            e.currentTarget.style.background = '#f0fdfa';
+                          }
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.borderColor = '#cbd5e1';
-                          e.currentTarget.style.background = '#f8fafc';
+                          if (!formErrors.imageUrl) {
+                            e.currentTarget.style.borderColor = '#cbd5e1';
+                            e.currentTarget.style.background = '#f8fafc';
+                          }
                         }}
                       >
-                        <Upload size={24} style={{ color: '#07665e', margin: '0 auto 6px auto' }} />
-                        <div style={{ fontSize: '0.86rem', fontWeight: 600, color: '#334155' }}>
+                        <Upload size={24} style={{ color: formErrors.imageUrl ? '#ef4444' : '#07665e', margin: '0 auto 6px auto' }} />
+                        <div style={{ fontSize: '0.86rem', fontWeight: 600, color: formErrors.imageUrl ? '#dc2626' : '#334155' }}>
                           Haz clic aquí para seleccionar una imagen o logo
                         </div>
                         <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
@@ -478,26 +617,40 @@ export const ConveniosTab: React.FC = () => {
                       </div>
                     )}
 
+                    {formErrors.imageUrl && (
+                      <span className="form-field-error">
+                        <AlertCircle size={12} /> {formErrors.imageUrl}
+                      </span>
+                    )}
+
                     <input
                       ref={fileInputRef}
                       type="file"
                       accept="image/*"
                       onChange={handleImageChange}
                       style={{ display: 'none' }}
+                      disabled={isSaving}
                     />
                   </div>
 
                   {/* 2. NOMBRE DEL CONVENIO */}
-                  <div className="form-group">
-                    <label>Nombre del Convenio *</label>
+                  <div className={`form-group ${formErrors.name ? 'has-error' : ''}`}>
+                    <label>
+                      Nombre del Convenio <span className="required-asterisk">*</span>
+                    </label>
                     <input
                       type="text"
-                      className="input-field"
+                      className={`input-field ${formErrors.name ? 'input-error' : ''}`}
                       placeholder="Ej: Convenio Éxito, Descuento Cine Colombia 50%"
                       value={editingConvenio.name || ''}
-                      onChange={(e) => setEditingConvenio({ ...editingConvenio, name: e.target.value })}
-                      required
+                      onChange={(e) => handleNameChange(e.target.value)}
+                      disabled={isSaving}
                     />
+                    {formErrors.name && (
+                      <span className="form-field-error">
+                        <AlertCircle size={12} /> {formErrors.name}
+                      </span>
+                    )}
                   </div>
 
                   {/* 3. MODALIDAD DE DESCUENTO */}
@@ -506,7 +659,15 @@ export const ConveniosTab: React.FC = () => {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '4px' }}>
                       <button
                         type="button"
-                        onClick={() => setDiscountMode('percentage')}
+                        onClick={() => {
+                          setDiscountMode('percentage');
+                          setFormErrors((prev) => {
+                            const copy = { ...prev };
+                            delete copy.discountPercentage;
+                            delete copy.discountFixedAmount;
+                            return copy;
+                          });
+                        }}
                         style={{
                           padding: '10px',
                           borderRadius: '8px',
@@ -521,12 +682,21 @@ export const ConveniosTab: React.FC = () => {
                           justifyContent: 'center',
                           gap: '6px',
                         }}
+                        disabled={isSaving}
                       >
                         <Percent size={16} /> Porcentaje (%)
                       </button>
                       <button
                         type="button"
-                        onClick={() => setDiscountMode('fixed')}
+                        onClick={() => {
+                          setDiscountMode('fixed');
+                          setFormErrors((prev) => {
+                            const copy = { ...prev };
+                            delete copy.discountPercentage;
+                            delete copy.discountFixedAmount;
+                            return copy;
+                          });
+                        }}
                         style={{
                           padding: '10px',
                           borderRadius: '8px',
@@ -541,6 +711,7 @@ export const ConveniosTab: React.FC = () => {
                           justifyContent: 'center',
                           gap: '6px',
                         }}
+                        disabled={isSaving}
                       >
                         <DollarSign size={16} /> Valor Fijo ($)
                       </button>
@@ -548,77 +719,165 @@ export const ConveniosTab: React.FC = () => {
                   </div>
 
                   {discountMode === 'percentage' ? (
-                    <div className="form-group">
-                      <label>Porcentaje de Descuento (%) *</label>
+                    <div className={`form-group ${formErrors.discountPercentage ? 'has-error' : ''}`}>
+                      <label>
+                        Porcentaje de Descuento (%) <span className="required-asterisk">*</span>
+                      </label>
                       <input
-                        type="number"
-                        className="input-field"
+                        type="text"
+                        inputMode="numeric"
+                        className={`input-field ${formErrors.discountPercentage ? 'input-error' : ''}`}
                         placeholder="Ej: 50 o 100"
-                        min={1}
-                        max={100}
-                        value={editingConvenio.discountPercentage !== undefined && editingConvenio.discountPercentage !== null ? editingConvenio.discountPercentage : ''}
-                        onChange={(e) => setEditingConvenio({ ...editingConvenio, discountPercentage: e.target.value === '' ? undefined : Number(e.target.value) })}
-                        required
+                        value={editingConvenio.discountPercentage !== undefined && editingConvenio.discountPercentage !== null ? String(editingConvenio.discountPercentage) : ''}
+                        onChange={(e) => handlePercentageChange(e.target.value)}
+                        disabled={isSaving}
                       />
+                      {formErrors.discountPercentage && (
+                        <span className="form-field-error">
+                          <AlertCircle size={12} /> {formErrors.discountPercentage}
+                        </span>
+                      )}
                     </div>
                   ) : (
-                    <div className="form-group">
-                      <label>Valor de Descuento ($) *</label>
+                    <div className={`form-group ${formErrors.discountFixedAmount ? 'has-error' : ''}`}>
+                      <label>
+                        Valor de Descuento ($) <span className="required-asterisk">*</span>
+                      </label>
                       <input
-                        type="number"
-                        className="input-field"
-                        placeholder="0"
-                        min={1}
-                        value={editingConvenio.discountFixedAmount !== undefined && editingConvenio.discountFixedAmount !== null ? editingConvenio.discountFixedAmount : ''}
-                        onChange={(e) => setEditingConvenio({ ...editingConvenio, discountFixedAmount: e.target.value === '' ? undefined : Number(e.target.value) })}
-                        required
+                        type="text"
+                        inputMode="numeric"
+                        className={`input-field ${formErrors.discountFixedAmount ? 'input-error' : ''}`}
+                        placeholder="Ej: 5.000"
+                        value={formatCurrencyDisplay(editingConvenio.discountFixedAmount)}
+                        onChange={(e) => handleFixedAmountChange(e.target.value)}
+                        disabled={isSaving}
                       />
+                      {formErrors.discountFixedAmount && (
+                        <span className="form-field-error">
+                          <AlertCircle size={12} /> {formErrors.discountFixedAmount}
+                        </span>
+                      )}
                     </div>
                   )}
 
                   <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    <div className="form-group">
+                    <div className={`form-group ${formErrors.minPurchaseAmount ? 'has-error' : ''}`}>
                       <label>Compra Mínima ($)</label>
                       <input
-                        type="number"
-                        className="input-field"
+                        type="text"
+                        inputMode="numeric"
+                        className={`input-field ${formErrors.minPurchaseAmount ? 'input-error' : ''}`}
                         placeholder="0"
-                        min={0}
-                        value={editingConvenio.minPurchaseAmount !== undefined && editingConvenio.minPurchaseAmount !== null ? editingConvenio.minPurchaseAmount : ''}
-                        onChange={(e) => setEditingConvenio({ ...editingConvenio, minPurchaseAmount: e.target.value === '' ? undefined : Number(e.target.value) })}
+                        value={formatCurrencyDisplay(editingConvenio.minPurchaseAmount)}
+                        onChange={(e) => handleMinPurchaseChange(e.target.value)}
+                        disabled={isSaving}
                       />
                     </div>
-                    <div className="form-group">
+                    <div className={`form-group ${formErrors.maxHoursApplicable ? 'has-error' : ''}`}>
                       <label>Máximo Horas Aplicables</label>
                       <input
-                        type="number"
-                        className="input-field"
+                        type="text"
+                        inputMode="numeric"
+                        className={`input-field ${formErrors.maxHoursApplicable ? 'input-error' : ''}`}
                         placeholder="Ej: 2"
-                        min={1}
-                        value={editingConvenio.maxHoursApplicable !== undefined && editingConvenio.maxHoursApplicable !== null ? editingConvenio.maxHoursApplicable : ''}
-                        onChange={(e) => setEditingConvenio({ ...editingConvenio, maxHoursApplicable: e.target.value === '' ? undefined : Number(e.target.value) })}
+                        value={editingConvenio.maxHoursApplicable !== undefined && editingConvenio.maxHoursApplicable !== null ? String(editingConvenio.maxHoursApplicable) : ''}
+                        onChange={(e) => handleMaxHoursChange(e.target.value)}
+                        disabled={isSaving}
                       />
                     </div>
                   </div>
 
-                  <div className="form-group" style={{ marginTop: '8px' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                      <input
-                        type="checkbox"
-                        checked={editingConvenio.isActive ?? true}
-                        onChange={(e) => setEditingConvenio({ ...editingConvenio, isActive: e.target.checked })}
+                  {/* 5. ESTADO DEL CONVENIO - SWITCH CARD MODERNO */}
+                  <div
+                    onClick={() => !isSaving && setEditingConvenio({ ...editingConvenio, isActive: !(editingConvenio.isActive ?? true) })}
+                    style={{
+                      marginTop: '12px',
+                      padding: '14px 16px',
+                      borderRadius: '12px',
+                      border: (editingConvenio.isActive ?? true) ? '1px solid #10b981' : '1px solid #e2e8f0',
+                      background: (editingConvenio.isActive ?? true) ? 'rgba(16, 185, 129, 0.05)' : '#f8fafc',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: isSaving ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                      userSelect: 'none',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '10px',
+                          background: (editingConvenio.isActive ?? true) ? 'rgba(16, 185, 129, 0.12)' : '#e2e8f0',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: (editingConvenio.isActive ?? true) ? '#059669' : '#64748b',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        {(editingConvenio.isActive ?? true) ? <CheckCircle2 size={20} /> : <PauseCircle size={20} />}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.88rem', fontWeight: 700, color: (editingConvenio.isActive ?? true) ? '#065f46' : '#334155' }}>
+                          {(editingConvenio.isActive ?? true) ? 'Convenio Habilitado (Activo en Caja)' : 'Convenio Desactivado (Pausado)'}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
+                          {(editingConvenio.isActive ?? true)
+                            ? 'Los cajeros podrán aplicar este descuento al liquidar tickets.'
+                            : 'No estará disponible para liquidar en terminales de cobro.'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* iOS Style Toggle Switch Knob */}
+                    <div
+                      style={{
+                        width: '46px',
+                        height: '26px',
+                        borderRadius: '13px',
+                        background: (editingConvenio.isActive ?? true) ? '#07665e' : '#cbd5e1',
+                        position: 'relative',
+                        transition: 'background 0.25s ease',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '50%',
+                          background: '#ffffff',
+                          position: 'absolute',
+                          top: '3px',
+                          left: (editingConvenio.isActive ?? true) ? '23px' : '3px',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                          transition: 'left 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                        }}
                       />
-                      <span>Activar convenio</span>
-                    </label>
+                    </div>
                   </div>
                 </div>
 
                 <div className="modal-footer">
-                  <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)}>
+                  <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)} disabled={isSaving}>
                     Cancelar
                   </button>
-                  <button type="submit" className="btn-primary">
-                    Guardar Convenio
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    style={{ width: 'auto' }}
+                    disabled={isSaving || Boolean(formErrors.name) || Boolean(formErrors.imageUrl)}
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 size={16} className="spinner" /> Guardando...
+                      </>
+                    ) : (
+                      'Guardar Convenio'
+                    )}
                   </button>
                 </div>
               </form>

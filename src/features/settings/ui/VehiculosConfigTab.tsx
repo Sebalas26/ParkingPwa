@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, AlertTriangle, Loader2, Car, Bike, Truck, ChevronDown } from 'lucide-react';
+import { Plus, Edit2, Trash2, AlertTriangle, Loader2, Car, Bike, Truck, ChevronDown, AlertCircle, CheckCircle2, PauseCircle } from 'lucide-react';
 import type { VehiculoConfigDto, SaveVehiculoConfigDto } from '../model/VehiculosConfigContracts';
 import { vehiculosConfigService } from '../data/vehiculosConfigService';
 import { authService } from '../../auth/data/authService';
@@ -11,6 +11,7 @@ export const VehiculosConfigTab: React.FC = () => {
   const [configs, setConfigs] = useState<VehiculoConfigDto[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingConfig, setEditingConfig] = useState<Partial<SaveVehiculoConfigDto> | null>(null);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [deletingConfig, setDeletingConfig] = useState<VehiculoConfigDto | null>(null);
@@ -33,6 +34,51 @@ export const VehiculosConfigTab: React.FC = () => {
     }
   };
 
+  const validateVehicleForm = (form: Partial<SaveVehiculoConfigDto>): Record<string, string> => {
+    const errors: Record<string, string> = {};
+    const name = (form.category || '').trim();
+
+    if (!name) {
+      errors.category = 'El nombre o tipo de vehículo es obligatorio.';
+    } else if (name.length < 2) {
+      errors.category = 'El tipo de vehículo debe tener al menos 2 caracteres.';
+    } else {
+      const isDup = configs.some(
+        (c) =>
+          c.rateId !== form.rateId &&
+          (c.category || '').trim().toLowerCase() === name.toLowerCase()
+      );
+      if (isDup) {
+        errors.category = 'Este tipo de vehículo ya existe en el catálogo.';
+      }
+    }
+
+    return errors;
+  };
+
+  const handleCategoryChange = (val: string) => {
+    setEditingConfig((prev) => (prev ? { ...prev, category: val } : null));
+    if (formErrors.category) {
+      const updated = { ...(editingConfig || {}), category: val };
+      const errs = validateVehicleForm(updated);
+      if (!errs.category) {
+        setFormErrors((prev) => {
+          const copy = { ...prev };
+          delete copy.category;
+          return copy;
+        });
+      } else {
+        setFormErrors((prev) => ({ ...prev, category: errs.category }));
+      }
+    } else if (val.trim()) {
+      const updated = { ...(editingConfig || {}), category: val };
+      const errs = validateVehicleForm(updated);
+      if (errs.category) {
+        setFormErrors((prev) => ({ ...prev, category: errs.category }));
+      }
+    }
+  };
+
   const handleOpenCreate = () => {
     setEditingConfig({
       branchId: null,
@@ -45,11 +91,13 @@ export const VehiculosConfigTab: React.FC = () => {
       iconKey: 'IconCar',
       isActive: true,
     });
+    setFormErrors({});
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (v: VehiculoConfigDto) => {
     setEditingConfig({ ...v });
+    setFormErrors({});
     setIsModalOpen(true);
   };
 
@@ -83,17 +131,21 @@ export const VehiculosConfigTab: React.FC = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingConfig || !editingConfig.category || !editingConfig.category.trim()) {
-      alert('Por favor ingresa el nombre o tipo de vehículo.');
+    if (!editingConfig) return;
+
+    const errors = validateVehicleForm(editingConfig);
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       return;
     }
+    setFormErrors({});
 
-    const { type, icon } = inferVehicleType(editingConfig.category);
+    const { type, icon } = inferVehicleType(editingConfig.category || '');
     const payload: SaveVehiculoConfigDto = {
       rateId: editingConfig.rateId,
       branchId: null,
       vehicleType: editingConfig.vehicleType !== undefined ? editingConfig.vehicleType : type,
-      category: editingConfig.category.trim(),
+      category: (editingConfig.category || '').trim(),
       hourRate: 0,
       minuteRate: 0,
       fullDayRate: 0,
@@ -274,59 +326,132 @@ export const VehiculosConfigTab: React.FC = () => {
 
       {isModalOpen && editingConfig && (
         <ModalPortal>
-          <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '440px' }}>
-            <div className="modal-header">
-              <h3>{editingConfig.rateId ? 'Editar Tipo de Vehículo' : 'Nuevo Tipo de Vehículo'}</h3>
-            </div>
+          <div className="modal-overlay" onClick={() => !isSaving && setIsModalOpen(false)}>
+            <div className="modal-content" style={{ maxWidth: '460px' }} onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>{editingConfig.rateId ? 'Editar Tipo de Vehículo' : 'Nuevo Tipo de Vehículo'}</h3>
+              </div>
 
-            <form onSubmit={handleSave}>
-              <div className="modal-body">
-                <div className="form-group" style={{ marginBottom: '16px' }}>
-                  <label>Nombre / Tipo de Vehículo *</label>
-                  <input
-                    type="text"
-                    className="input-field"
-                    placeholder="Ej: Automóvil, Motocicleta, Camión, Bicicleta"
-                    value={editingConfig.category || ''}
-                    onChange={(e) => setEditingConfig({ ...editingConfig, category: e.target.value })}
-                    required
-                    autoFocus
-                  />
-                  <small style={{ color: 'var(--text-secondary)', fontSize: '0.78rem', marginTop: '6px', display: 'block' }}>
-                    Las tarifas de cobro por hora, minuto y día se parametrizan al asignar este tipo a cada parqueadero.
-                  </small>
-                </div>
-
-                <div className="form-group" style={{ marginTop: '8px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <form onSubmit={handleSave} noValidate style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', flex: 1, minHeight: 0 }}>
+                <div className="modal-body">
+                  <div className={`form-group ${formErrors.category ? 'has-error' : ''}`} style={{ marginBottom: '16px' }}>
+                    <label>
+                      Nombre / Tipo de Vehículo <span className="required-asterisk">*</span>
+                    </label>
                     <input
-                      type="checkbox"
-                      checked={editingConfig.isActive ?? true}
-                      onChange={(e) => setEditingConfig({ ...editingConfig, isActive: e.target.checked })}
+                      type="text"
+                      className={`input-field ${formErrors.category ? 'input-error' : ''}`}
+                      placeholder="Ej: Automóvil, Motocicleta, Camión, Bicicleta"
+                      value={editingConfig.category || ''}
+                      onChange={(e) => handleCategoryChange(e.target.value)}
+                      disabled={isSaving}
+                      autoFocus
                     />
-                    <span>Tipo de Vehículo Activo en el Sistema</span>
-                  </label>
-                </div>
-              </div>
+                    {formErrors.category && (
+                      <span className="form-field-error">
+                        <AlertCircle size={12} /> {formErrors.category}
+                      </span>
+                    )}
+                    <small style={{ color: 'var(--text-secondary)', fontSize: '0.78rem', marginTop: '6px', display: 'block' }}>
+                      Las tarifas de cobro por hora, minuto y día se parametrizan al asignar este tipo a cada parqueadero.
+                    </small>
+                  </div>
 
-              <div className="modal-footer">
-                <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)}>
-                  Cancelar
-                </button>
-                <button type="submit" className="btn-primary" disabled={isSaving}>
-                  {isSaving ? (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Loader2 size={14} className="spinner" /> Guardando...
-                    </span>
-                  ) : (
-                    'Guardar Tipo de Vehículo'
-                  )}
-                </button>
-              </div>
-            </form>
+                  {/* Estado del Tipo de Vehículo - Switch Card Moderno */}
+                  <div
+                    onClick={() => !isSaving && setEditingConfig({ ...editingConfig, isActive: !(editingConfig.isActive ?? true) })}
+                    style={{
+                      marginTop: '8px',
+                      padding: '14px 16px',
+                      borderRadius: '12px',
+                      border: (editingConfig.isActive ?? true) ? '1px solid #10b981' : '1px solid #e2e8f0',
+                      background: (editingConfig.isActive ?? true) ? 'rgba(16, 185, 129, 0.05)' : '#f8fafc',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: isSaving ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                      userSelect: 'none',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '10px',
+                          background: (editingConfig.isActive ?? true) ? 'rgba(16, 185, 129, 0.12)' : '#e2e8f0',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: (editingConfig.isActive ?? true) ? '#059669' : '#64748b',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        {(editingConfig.isActive ?? true) ? <CheckCircle2 size={20} /> : <PauseCircle size={20} />}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.88rem', fontWeight: 700, color: (editingConfig.isActive ?? true) ? '#065f46' : '#334155' }}>
+                          {(editingConfig.isActive ?? true) ? 'Tipo de Vehículo Habilitado' : 'Tipo de Vehículo Desactivado'}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
+                          {(editingConfig.isActive ?? true)
+                            ? 'Activo y disponible para operar en parqueaderos.'
+                            : 'Pausado (no se podrá asignar a nuevos parqueaderos).'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* iOS Style Toggle Switch Knob */}
+                    <div
+                      style={{
+                        width: '46px',
+                        height: '26px',
+                        borderRadius: '13px',
+                        background: (editingConfig.isActive ?? true) ? '#07665e' : '#cbd5e1',
+                        position: 'relative',
+                        transition: 'background 0.25s ease',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '50%',
+                          background: '#ffffff',
+                          position: 'absolute',
+                          top: '3px',
+                          left: (editingConfig.isActive ?? true) ? '23px' : '3px',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                          transition: 'left 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="modal-footer">
+                  <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)} disabled={isSaving}>
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    disabled={isSaving || Boolean(formErrors.category) || !editingConfig.category?.trim()}
+                  >
+                    {isSaving ? (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Loader2 size={14} className="spinner" /> Guardando...
+                      </span>
+                    ) : (
+                      'Guardar Tipo de Vehículo'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
         </ModalPortal>
       )}
 

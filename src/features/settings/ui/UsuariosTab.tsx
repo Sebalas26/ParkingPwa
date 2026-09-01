@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Edit2, Shield, Trash2, IdCard, Search, Loader2, AlertTriangle, ChevronDown, Eye, EyeOff } from 'lucide-react';
+import { Plus, Edit2, Shield, Trash2, IdCard, Search, Loader2, AlertTriangle, AlertCircle, ChevronDown, Eye, EyeOff } from 'lucide-react';
 import type { UserDto, SaveUserDto, GetIdentificationTypeDto, GetUserRoleDto } from '../model/UsuariosContracts';
 import type { BranchDto } from '../model/BranchesContracts';
 import { usuariosService } from '../data/usuariosService';
@@ -70,6 +70,7 @@ export const UsuariosTab: React.FC = () => {
   const [branchSearch, setBranchSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUsuario, setEditingUsuario] = useState<SaveUserDto | null>(null);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingUser, setIsSavingUser] = useState(false);
   const [expandedUserId, setExpandedUserId] = useState<number | null>(null);
@@ -113,9 +114,109 @@ export const UsuariosTab: React.FC = () => {
     }
   };
 
+  const validateUserForm = (form: SaveUserDto, branches: number[]): Record<string, string> => {
+    const errors: Record<string, string> = {};
+    const normIdNum = (form.identificationNumber || '').trim().toLowerCase();
+    const normUsername = (form.username || '').trim().toLowerCase();
+    const normEmail = (form.email || '').trim().toLowerCase();
+
+    // 1. Identificación
+    if (!form.identificationNumber || !form.identificationNumber.trim()) {
+      errors.identificationNumber = 'El número de identificación es obligatorio.';
+    } else if (form.identificationNumber.trim().length < 3) {
+      errors.identificationNumber = 'El documento debe tener al menos 3 caracteres.';
+    } else {
+      const dupDoc = usuarios.some(
+        (u) => u.id !== form.id && (u.identificationNumber || '').trim().toLowerCase() === normIdNum
+      );
+      if (dupDoc) {
+        errors.identificationNumber = 'Este número de identificación ya está registrado en la empresa.';
+      }
+    }
+
+    // 2. Nombres y Apellidos
+    if (!form.firstName || !form.firstName.trim()) {
+      errors.firstName = 'El primer nombre es obligatorio.';
+    } else if (form.firstName.trim().length < 2) {
+      errors.firstName = 'El primer nombre debe tener al menos 2 caracteres.';
+    }
+
+    if (!form.firstSurname || !form.firstSurname.trim()) {
+      errors.firstSurname = 'El primer apellido es obligatorio.';
+    } else if (form.firstSurname.trim().length < 2) {
+      errors.firstSurname = 'El primer apellido debe tener al menos 2 caracteres.';
+    }
+
+    // 3. Nombre de Usuario
+    if (!form.username || !form.username.trim()) {
+      errors.username = 'El nombre de usuario es obligatorio.';
+    } else if (form.username.trim().length < 3) {
+      errors.username = 'El usuario debe tener al menos 3 caracteres.';
+    } else {
+      const dupUser = usuarios.some(
+        (u) => u.id !== form.id && (u.username || '').trim().toLowerCase() === normUsername
+      );
+      if (dupUser) {
+        errors.username = 'Este nombre de usuario ya está registrado en la empresa.';
+      }
+    }
+
+    // 4. Correo Electrónico
+    if (!form.email || !form.email.trim()) {
+      errors.email = 'El correo electrónico es obligatorio.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      errors.email = 'Ingresa un correo electrónico válido (ej: usuario@empresa.com).';
+    } else {
+      const dupEmail = usuarios.some(
+        (u) => u.id !== form.id && (u.email || '').trim().toLowerCase() === normEmail
+      );
+      if (dupEmail) {
+        errors.email = 'Este correo electrónico ya está registrado en la empresa.';
+      }
+    }
+
+    // 5. Contraseña
+    if (!form.id && (!form.password || !form.password.trim())) {
+      errors.password = 'La contraseña inicial es requerida para nuevos usuarios.';
+    } else if (form.password?.trim() && form.password.trim().length < 4) {
+      errors.password = 'La contraseña debe tener al menos 4 caracteres.';
+    }
+
+    // 6. Rol del Sistema
+    if (!form.userRoleId || form.userRoleId === 0) {
+      errors.userRoleId = 'Debes seleccionar un rol para el usuario.';
+    }
+
+    // 7. Sedes para operadores no administradores
+    const selectedRole = allUserRoles.find((r) => (r.idUserRol ?? r.id) === form.userRoleId);
+    const isRoleAdmin = selectedRole?.roleName?.toLowerCase().includes('admin') || form.userRoleId === 1;
+    if (!isRoleAdmin && allBranches.length > 0 && branches.length === 0) {
+      errors.branches = 'Debes asignar al menos una sede física al operador.';
+    }
+
+    return errors;
+  };
+
+  const handleFieldChange = (field: keyof SaveUserDto, value: any) => {
+    if (!editingUsuario) return;
+    const updated = { ...editingUsuario, [field]: value };
+    setEditingUsuario(updated);
+
+    // Validación reactiva en caliente
+    const allErr = validateUserForm(updated, selectedBranchIds);
+    if (!allErr[field]) {
+      setFormErrors((prev) => {
+        const copy = { ...prev };
+        delete copy[field];
+        return copy;
+      });
+    } else {
+      setFormErrors((prev) => ({ ...prev, [field]: allErr[field] }));
+    }
+  };
+
   const handleOpenCreate = () => {
     const defaultTypeId = identTypes.length > 0 ? (identTypes[0].id || 1) : 1;
-    const defaultRoleId = allUserRoles.length > 0 ? (allUserRoles[0].idUserRol ?? allUserRoles[0].id ?? 2) : 2;
 
     setEditingUsuario({
       companyId: targetCompanyId,
@@ -129,9 +230,10 @@ export const UsuariosTab: React.FC = () => {
       username: '',
       email: '',
       password: '',
-      userRoleId: defaultRoleId,
+      userRoleId: 0, // Placeholder neutro inicial: obliga a seleccionar un rol
       isActive: true,
     });
+    setFormErrors({});
     setSelectedBranchIds([]);
     setInitialAssignedBranchIds([]);
     setBranchSearch('');
@@ -161,10 +263,11 @@ export const UsuariosTab: React.FC = () => {
       username: u.username || '',
       email: u.email || '',
       password: '', // Contraseña en blanco para edición
-      userRoleId: u.userRoleId || 2,
+      userRoleId: u.userRoleId || 0,
       isActive: u.isActive ?? true,
     });
 
+    setFormErrors({});
     setSelectedBranchIds(assignedBranchIds);
     setInitialAssignedBranchIds(assignedBranchIds);
     setBranchSearch('');
@@ -176,12 +279,14 @@ export const UsuariosTab: React.FC = () => {
     e.preventDefault();
     if (!editingUsuario) return;
 
-    if (!editingUsuario.id && !editingUsuario.password?.trim()) {
-      alert('La contraseña es requerida para nuevos usuarios.');
+    const errors = validateUserForm(editingUsuario, selectedBranchIds);
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       return;
     }
+    setFormErrors({});
 
-    const computedFullName = editingUsuario.fullName.trim() ||
+    const computedFullName = editingUsuario.fullName?.trim() ||
       `${editingUsuario.firstName} ${editingUsuario.middleName || ''} ${editingUsuario.firstSurname} ${editingUsuario.secondLastName || ''}`.replace(/\s+/g, ' ').trim();
 
     setIsSavingUser(true);
@@ -460,13 +565,13 @@ export const UsuariosTab: React.FC = () => {
       {/* Modal Crear/Editar Usuario */}
       {isModalOpen && editingUsuario && (
         <ModalPortal>
-          <div className="modal-overlay">
-            <div className="modal-content" style={{ maxWidth: '640px' }}>
+          <div className="modal-overlay" onClick={() => !isSavingUser && setIsModalOpen(false)}>
+            <div className="modal-content" style={{ maxWidth: '640px' }} onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h3>{editingUsuario.id ? 'Editar Usuario' : 'Crear Nuevo Usuario'}</h3>
               </div>
 
-              <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', flex: 1, minHeight: 0 }}>
+              <form onSubmit={handleSave} noValidate style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', flex: 1, minHeight: 0 }}>
                 <div className="modal-body">
                   {/* 1. DOCUMENTO DE IDENTIDAD */}
                   <div className="form-row">
@@ -475,8 +580,7 @@ export const UsuariosTab: React.FC = () => {
                       <select
                         className="input-field"
                         value={editingUsuario.identificationTypeId}
-                        onChange={(e) => setEditingUsuario({ ...editingUsuario, identificationTypeId: Number(e.target.value) })}
-                        required
+                        onChange={(e) => handleFieldChange('identificationTypeId', Number(e.target.value))}
                         disabled={isSavingUser}
                       >
                         {identTypes.map((t) => (
@@ -486,17 +590,23 @@ export const UsuariosTab: React.FC = () => {
                         ))}
                       </select>
                     </div>
-                    <div className="form-group">
-                      <label>Número de Identificación</label>
+                    <div className={`form-group ${formErrors.identificationNumber ? 'has-error' : ''}`}>
+                      <label>
+                        Número de Identificación <span className="required-asterisk">*</span>
+                      </label>
                       <input
                         type="text"
-                        className="input-field"
+                        className={`input-field ${formErrors.identificationNumber ? 'input-error' : ''}`}
                         placeholder="Ej: 1020304050"
                         value={editingUsuario.identificationNumber}
-                        onChange={(e) => setEditingUsuario({ ...editingUsuario, identificationNumber: e.target.value })}
-                        required
+                        onChange={(e) => handleFieldChange('identificationNumber', e.target.value)}
                         disabled={isSavingUser}
                       />
+                      {formErrors.identificationNumber && (
+                        <span className="form-field-error">
+                          <AlertCircle size={12} /> {formErrors.identificationNumber}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -506,17 +616,23 @@ export const UsuariosTab: React.FC = () => {
                   </h4>
 
                   <div className="form-row">
-                    <div className="form-group">
-                      <label>Primer Nombre *</label>
+                    <div className={`form-group ${formErrors.firstName ? 'has-error' : ''}`}>
+                      <label>
+                        Primer Nombre <span className="required-asterisk">*</span>
+                      </label>
                       <input
                         type="text"
-                        className="input-field"
+                        className={`input-field ${formErrors.firstName ? 'input-error' : ''}`}
                         placeholder="Ej: Carlos"
                         value={editingUsuario.firstName}
-                        onChange={(e) => setEditingUsuario({ ...editingUsuario, firstName: e.target.value })}
-                        required
+                        onChange={(e) => handleFieldChange('firstName', e.target.value)}
                         disabled={isSavingUser}
                       />
+                      {formErrors.firstName && (
+                        <span className="form-field-error">
+                          <AlertCircle size={12} /> {formErrors.firstName}
+                        </span>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Segundo Nombre</label>
@@ -525,24 +641,30 @@ export const UsuariosTab: React.FC = () => {
                         className="input-field"
                         placeholder="Opcional"
                         value={editingUsuario.middleName || ''}
-                        onChange={(e) => setEditingUsuario({ ...editingUsuario, middleName: e.target.value })}
+                        onChange={(e) => handleFieldChange('middleName', e.target.value)}
                         disabled={isSavingUser}
                       />
                     </div>
                   </div>
 
                   <div className="form-row">
-                    <div className="form-group">
-                      <label>Primer Apellido *</label>
+                    <div className={`form-group ${formErrors.firstSurname ? 'has-error' : ''}`}>
+                      <label>
+                        Primer Apellido <span className="required-asterisk">*</span>
+                      </label>
                       <input
                         type="text"
-                        className="input-field"
+                        className={`input-field ${formErrors.firstSurname ? 'input-error' : ''}`}
                         placeholder="Ej: Gómez"
                         value={editingUsuario.firstSurname}
-                        onChange={(e) => setEditingUsuario({ ...editingUsuario, firstSurname: e.target.value })}
-                        required
+                        onChange={(e) => handleFieldChange('firstSurname', e.target.value)}
                         disabled={isSavingUser}
                       />
+                      {formErrors.firstSurname && (
+                        <span className="form-field-error">
+                          <AlertCircle size={12} /> {formErrors.firstSurname}
+                        </span>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Segundo Apellido</label>
@@ -551,7 +673,7 @@ export const UsuariosTab: React.FC = () => {
                         className="input-field"
                         placeholder="Opcional"
                         value={editingUsuario.secondLastName || ''}
-                        onChange={(e) => setEditingUsuario({ ...editingUsuario, secondLastName: e.target.value })}
+                        onChange={(e) => handleFieldChange('secondLastName', e.target.value)}
                         disabled={isSavingUser}
                       />
                     </div>
@@ -563,44 +685,63 @@ export const UsuariosTab: React.FC = () => {
                   </h4>
 
                   <div className="form-row">
-                    <div className="form-group">
-                      <label>Nombre de Usuario *</label>
+                    <div className={`form-group ${formErrors.username ? 'has-error' : ''}`}>
+                      <label>
+                        Nombre de Usuario <span className="required-asterisk">*</span>
+                      </label>
                       <input
                         type="text"
-                        className="input-field"
+                        className={`input-field ${formErrors.username ? 'input-error' : ''}`}
                         placeholder="Ej: cgomez"
                         value={editingUsuario.username}
-                        onChange={(e) => setEditingUsuario({ ...editingUsuario, username: e.target.value })}
-                        required
+                        onChange={(e) => handleFieldChange('username', e.target.value)}
                         disabled={isSavingUser}
                       />
+                      {formErrors.username && (
+                        <span className="form-field-error">
+                          <AlertCircle size={12} /> {formErrors.username}
+                        </span>
+                      )}
                     </div>
-                    <div className="form-group">
-                      <label>Correo Electrónico *</label>
+                    <div className={`form-group ${formErrors.email ? 'has-error' : ''}`}>
+                      <label>
+                        Correo Electrónico <span className="required-asterisk">*</span>
+                      </label>
                       <input
                         type="email"
-                        className="input-field"
+                        className={`input-field ${formErrors.email ? 'input-error' : ''}`}
                         placeholder="prueba@parqueadero.com"
                         value={editingUsuario.email}
-                        onChange={(e) => setEditingUsuario({ ...editingUsuario, email: e.target.value })}
-                        required
+                        onChange={(e) => handleFieldChange('email', e.target.value)}
                         disabled={isSavingUser}
                       />
+                      {formErrors.email && (
+                        <span className="form-field-error">
+                          <AlertCircle size={12} /> {formErrors.email}
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   <div className="form-row">
-                    <div className="form-group">
-                      <label>{editingUsuario.id ? 'Nueva Contraseña (Opcional)' : 'Contraseña Inicial *'}</label>
+                    <div className={`form-group ${formErrors.password ? 'has-error' : ''}`}>
+                      <label>
+                        {editingUsuario.id ? (
+                          'Nueva Contraseña (Opcional)'
+                        ) : (
+                          <>
+                            Contraseña Inicial <span className="required-asterisk">*</span>
+                          </>
+                        )}
+                      </label>
                       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '100%' }}>
                         <input
                           type={showPassword ? 'text' : 'password'}
-                          className="input-field"
+                          className={`input-field ${formErrors.password ? 'input-error' : ''}`}
                           placeholder="••••••••••••"
                           style={{ paddingRight: '40px' }}
                           value={editingUsuario.password || ''}
-                          onChange={(e) => setEditingUsuario({ ...editingUsuario, password: e.target.value })}
-                          required={!editingUsuario.id}
+                          onChange={(e) => handleFieldChange('password', e.target.value)}
                           disabled={isSavingUser}
                         />
                         <button
@@ -624,16 +765,25 @@ export const UsuariosTab: React.FC = () => {
                           {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
                       </div>
+                      {formErrors.password && (
+                        <span className="form-field-error">
+                          <AlertCircle size={12} /> {formErrors.password}
+                        </span>
+                      )}
                     </div>
-                    <div className="form-group">
-                      <label>Rol del Sistema *</label>
+                    <div className={`form-group ${formErrors.userRoleId ? 'has-error' : ''}`}>
+                      <label>
+                        Rol del Sistema <span className="required-asterisk">*</span>
+                      </label>
                       <select
-                        className="input-field"
-                        value={editingUsuario.userRoleId}
-                        onChange={(e) => setEditingUsuario({ ...editingUsuario, userRoleId: Number(e.target.value) })}
-                        required
+                        className={`input-field ${formErrors.userRoleId ? 'input-error' : ''}`}
+                        value={editingUsuario.userRoleId || 0}
+                        onChange={(e) => handleFieldChange('userRoleId', Number(e.target.value))}
                         disabled={isSavingUser}
                       >
+                        <option value={0} disabled>
+                          -- Seleccionar Rol del Sistema --
+                        </option>
                         {(() => {
                           const isEditingAdmin = editingUsuario.userRoleId === 1;
                           const roleOptions = isEditingAdmin ? allUserRoles : assignableRoles;
@@ -648,6 +798,11 @@ export const UsuariosTab: React.FC = () => {
                           });
                         })()}
                       </select>
+                      {formErrors.userRoleId && (
+                        <span className="form-field-error">
+                          <AlertCircle size={12} /> {formErrors.userRoleId}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -656,7 +811,7 @@ export const UsuariosTab: React.FC = () => {
                     <select
                       className="input-field"
                       value={editingUsuario.isActive ? 'true' : 'false'}
-                      onChange={(e) => setEditingUsuario({ ...editingUsuario, isActive: e.target.value === 'true' })}
+                      onChange={(e) => handleFieldChange('isActive', e.target.value === 'true')}
                       disabled={isSavingUser}
                     >
                       <option value="true">Activo (Habilitado para operar)</option>
@@ -712,6 +867,11 @@ export const UsuariosTab: React.FC = () => {
                                   setSelectedBranchIds([]);
                                 } else {
                                   setSelectedBranchIds(allBranches.map((b) => b.id));
+                                  setFormErrors((prev) => {
+                                    const copy = { ...prev };
+                                    delete copy.branches;
+                                    return copy;
+                                  });
                                 }
                               }}
                               style={{ padding: '0 12px', fontSize: '0.78rem', height: '36px', whiteSpace: 'nowrap' }}
@@ -719,6 +879,14 @@ export const UsuariosTab: React.FC = () => {
                             >
                               {selectedBranchIds.length === allBranches.length ? 'Deseleccionar todas' : 'Seleccionar todas'}
                             </button>
+                          </div>
+                        )}
+
+                        {formErrors.branches && (
+                          <div style={{ marginBottom: '8px' }}>
+                            <span className="form-field-error">
+                              <AlertCircle size={12} /> {formErrors.branches}
+                            </span>
                           </div>
                         )}
 
@@ -761,6 +929,11 @@ export const UsuariosTab: React.FC = () => {
                                         onChange={(e) => {
                                           if (e.target.checked) {
                                             setSelectedBranchIds((prev) => [...prev, b.id]);
+                                            setFormErrors((prev) => {
+                                              const copy = { ...prev };
+                                              delete copy.branches;
+                                              return copy;
+                                            });
                                           } else {
                                             setSelectedBranchIds((prev) => prev.filter((id) => id !== b.id));
                                           }
@@ -805,7 +978,18 @@ export const UsuariosTab: React.FC = () => {
                   <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)} disabled={isSavingUser}>
                     Cancelar
                   </button>
-                  <button type="submit" className="btn-primary" style={{ width: 'auto' }} disabled={isSavingUser}>
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    style={{ width: 'auto' }}
+                    disabled={
+                      isSavingUser ||
+                      Boolean(formErrors.username) ||
+                      Boolean(formErrors.identificationNumber) ||
+                      Boolean(formErrors.email) ||
+                      (!editingUsuario.id && editingUsuario.userRoleId === 0)
+                    }
+                  >
                     {isSavingUser ? (
                       <>
                         <Loader2 size={16} className="spinner" />

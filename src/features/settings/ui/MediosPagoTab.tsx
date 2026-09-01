@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, CreditCard, ChevronDown } from 'lucide-react';
+import { Plus, Edit2, CreditCard, ChevronDown, AlertCircle, CheckCircle2, PauseCircle, Loader2 } from 'lucide-react';
 import type { PaymentMethodDto, SavePaymentMethodDto } from '../model/MediosPagoContracts';
 import { mediosPagoService } from '../data/mediosPagoService';
 import { authService } from '../../auth/data/authService';
@@ -30,6 +30,8 @@ export const MediosPagoTab: React.FC = () => {
   const [mediosPago, setMediosPago] = useState<PaymentMethodDto[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMedio, setEditingMedio] = useState<SavePaymentMethodDto | null>(null);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedPaymentId, setExpandedPaymentId] = useState<number | null>(null);
 
@@ -49,12 +51,58 @@ export const MediosPagoTab: React.FC = () => {
     loadMediosPago();
   }, [selectedParqueaderoId]);
 
+  const validateMedioPagoForm = (form: SavePaymentMethodDto): Record<string, string> => {
+    const errors: Record<string, string> = {};
+    const name = (form.name || '').trim();
+
+    if (!name) {
+      errors.name = 'El nombre del medio de pago es obligatorio.';
+    } else if (name.length < 2) {
+      errors.name = 'El nombre debe tener al menos 2 caracteres.';
+    } else {
+      const isDup = mediosPago.some(
+        (mp) =>
+          mp.id !== form.id &&
+          (mp.name || '').trim().toLowerCase() === name.toLowerCase()
+      );
+      if (isDup) {
+        errors.name = 'Este medio de pago ya existe en la empresa.';
+      }
+    }
+
+    return errors;
+  };
+
+  const handleNameChange = (val: string) => {
+    setEditingMedio((prev) => (prev ? { ...prev, name: val } : null));
+    if (formErrors.name) {
+      const updated = { ...(editingMedio || { name: '', icon: '💵', isActive: true }), name: val };
+      const errs = validateMedioPagoForm(updated);
+      if (!errs.name) {
+        setFormErrors((prev) => {
+          const copy = { ...prev };
+          delete copy.name;
+          return copy;
+        });
+      } else {
+        setFormErrors((prev) => ({ ...prev, name: errs.name }));
+      }
+    } else if (val.trim()) {
+      const updated = { ...(editingMedio || { name: '', icon: '💵', isActive: true }), name: val };
+      const errs = validateMedioPagoForm(updated);
+      if (errs.name) {
+        setFormErrors((prev) => ({ ...prev, name: errs.name }));
+      }
+    }
+  };
+
   const handleOpenCreate = () => {
     setEditingMedio({
       name: '',
       icon: '💵',
       isActive: true,
     });
+    setFormErrors({});
     setIsModalOpen(true);
   };
 
@@ -66,19 +114,28 @@ export const MediosPagoTab: React.FC = () => {
       icon: mp.icon || '💳',
       isActive: isAct,
     });
+    setFormErrors({});
     setIsModalOpen(true);
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingMedio || !editingMedio.name?.trim()) return;
+    if (!editingMedio) return;
 
+    const errors = validateMedioPagoForm(editingMedio);
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+    setFormErrors({});
+
+    setIsSaving(true);
     try {
       await mediosPagoService.createOrEditPaymentMethod({
         id: editingMedio.id,
         name: editingMedio.name.trim(),
         icon: editingMedio.icon || '💳',
-        isActive: editingMedio.isActive,
+        isActive: editingMedio.isActive ?? true,
         companyId: selectedParqueaderoId ?? undefined,
       });
       setIsModalOpen(false);
@@ -86,6 +143,8 @@ export const MediosPagoTab: React.FC = () => {
       await loadMediosPago();
     } catch (err: any) {
       alert(err?.message || 'Error al guardar el medio de pago en la base de datos.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -294,100 +353,179 @@ export const MediosPagoTab: React.FC = () => {
       {/* Modal Crear / Editar Medio de Pago */}
       {isModalOpen && editingMedio && (
         <ModalPortal>
-          <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '500px' }}>
-            <div className="modal-header">
-              <h3>
-                {editingMedio.id ? `Editar Medio de Pago (#${editingMedio.id})` : 'Crear Medio de Pago'}
-              </h3>
-            </div>
+          <div className="modal-overlay" onClick={() => !isSaving && setIsModalOpen(false)}>
+            <div className="modal-card" style={{ maxWidth: '500px' }} onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>{editingMedio.id ? 'Editar Medio de Pago' : 'Crear Medio de Pago'}</h3>
+              </div>
 
-            <form onSubmit={handleSave}>
-              <div className="modal-body">
-                <div className="form-group">
-                  <label>Nombre del Medio de Pago *</label>
-                  <input
-                    type="text"
-                    className="input-field"
-                    placeholder="Ej. Efectivo, Nequi, Daviplata, Tarjeta Crédito..."
-                    value={editingMedio.name}
-                    onChange={(e) => setEditingMedio({ ...editingMedio, name: e.target.value })}
-                    required
-                  />
-                </div>
+              <form onSubmit={handleSave} noValidate style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', flex: 1, minHeight: 0 }}>
+                <div className="modal-body">
+                  <div className={`form-group ${formErrors.name ? 'has-error' : ''}`}>
+                    <label>
+                      Nombre del Medio de Pago <span className="required-asterisk">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className={`input-field ${formErrors.name ? 'input-error' : ''}`}
+                      placeholder="Ej. Efectivo, Nequi, Daviplata, Tarjeta Crédito..."
+                      value={editingMedio.name}
+                      onChange={(e) => handleNameChange(e.target.value)}
+                      disabled={isSaving}
+                      autoFocus
+                    />
+                    {formErrors.name && (
+                      <span className="form-field-error">
+                        <AlertCircle size={12} /> {formErrors.name}
+                      </span>
+                    )}
+                  </div>
 
-                <div className="form-group">
-                  <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>Selecciona un Ícono Representativo</span>
-                    <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                      Seleccionado: <strong style={{ fontSize: '1.2rem', marginLeft: '4px' }}>{editingMedio.icon || '💳'}</strong>
-                    </span>
-                  </label>
+                  <div className="form-group">
+                    <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>Selecciona un Ícono Representativo</span>
+                      <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                        Seleccionado: <strong style={{ fontSize: '1.2rem', marginLeft: '4px' }}>{editingMedio.icon || '💳'}</strong>
+                      </span>
+                    </label>
 
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(8, 1fr)',
+                        gap: '6px',
+                        background: 'var(--bg-secondary, #f8fafc)',
+                        padding: '10px',
+                        borderRadius: '10px',
+                        border: '1px solid var(--border-color, #e2e8f0)',
+                      }}
+                    >
+                      {PAYMENT_EMOJIS.map(({ emoji, label }) => {
+                        const isSelected = (editingMedio.icon || '💳') === emoji;
+                        return (
+                          <button
+                            key={emoji}
+                            type="button"
+                            title={label}
+                            onClick={() => !isSaving && setEditingMedio({ ...editingMedio, icon: emoji })}
+                            disabled={isSaving}
+                            style={{
+                              fontSize: '1.35rem',
+                              padding: '8px 4px',
+                              borderRadius: '8px',
+                              border: isSelected ? '2px solid #07665e' : '1px solid #e2e8f0',
+                              background: isSelected ? 'rgba(7, 102, 94, 0.15)' : '#ffffff',
+                              cursor: isSaving ? 'not-allowed' : 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all 0.15s ease',
+                              transform: isSelected ? 'scale(1.08)' : 'scale(1)',
+                            }}
+                          >
+                            {emoji}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Estado del Medio de Pago - Switch Card Moderno */}
                   <div
+                    onClick={() => !isSaving && setEditingMedio({ ...editingMedio, isActive: !(editingMedio.isActive ?? true) })}
                     style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(8, 1fr)',
-                      gap: '6px',
-                      background: 'var(--bg-secondary, #f8fafc)',
-                      padding: '10px',
-                      borderRadius: '10px',
-                      border: '1px solid var(--border-color, #e2e8f0)',
+                      marginTop: '10px',
+                      padding: '14px 16px',
+                      borderRadius: '12px',
+                      border: (editingMedio.isActive ?? true) ? '1px solid #10b981' : '1px solid #e2e8f0',
+                      background: (editingMedio.isActive ?? true) ? 'rgba(16, 185, 129, 0.05)' : '#f8fafc',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: isSaving ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                      userSelect: 'none',
                     }}
                   >
-                    {PAYMENT_EMOJIS.map(({ emoji, label }) => {
-                      const isSelected = (editingMedio.icon || '💳') === emoji;
-                      return (
-                        <button
-                          key={emoji}
-                          type="button"
-                          title={label}
-                          onClick={() => setEditingMedio({ ...editingMedio, icon: emoji })}
-                          style={{
-                            fontSize: '1.35rem',
-                            padding: '8px 4px',
-                            borderRadius: '8px',
-                            border: isSelected ? '2px solid #07665e' : '1px solid #e2e8f0',
-                            background: isSelected ? 'rgba(7, 102, 94, 0.15)' : '#ffffff',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transition: 'all 0.15s ease',
-                            transform: isSelected ? 'scale(1.08)' : 'scale(1)',
-                          }}
-                        >
-                          {emoji}
-                        </button>
-                      );
-                    })}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '10px',
+                          background: (editingMedio.isActive ?? true) ? 'rgba(16, 185, 129, 0.12)' : '#e2e8f0',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: (editingMedio.isActive ?? true) ? '#059669' : '#64748b',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        {(editingMedio.isActive ?? true) ? <CheckCircle2 size={20} /> : <PauseCircle size={20} />}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.88rem', fontWeight: 700, color: (editingMedio.isActive ?? true) ? '#065f46' : '#334155' }}>
+                          {(editingMedio.isActive ?? true) ? 'Medio de Pago Habilitado (Activo en Caja)' : 'Medio de Pago Desactivado (Pausado)'}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
+                          {(editingMedio.isActive ?? true)
+                            ? 'Disponible para registrar cobros y recaudos en terminales de caja.'
+                            : 'No estará disponible para liquidar tickets o mensualidades.'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* iOS Style Toggle Switch Knob */}
+                    <div
+                      style={{
+                        width: '46px',
+                        height: '26px',
+                        borderRadius: '13px',
+                        background: (editingMedio.isActive ?? true) ? '#07665e' : '#cbd5e1',
+                        position: 'relative',
+                        transition: 'background 0.25s ease',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '50%',
+                          background: '#ffffff',
+                          position: 'absolute',
+                          top: '3px',
+                          left: (editingMedio.isActive ?? true) ? '23px' : '3px',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                          transition: 'left 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label>Estado</label>
-                  <select
-                    className="input-field"
-                    value={editingMedio.isActive ? 'true' : 'false'}
-                    onChange={(e) => setEditingMedio({ ...editingMedio, isActive: e.target.value === 'true' })}
+                <div className="modal-footer">
+                  <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)} disabled={isSaving}>
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    style={{ width: 'auto' }}
+                    disabled={isSaving || Boolean(formErrors.name) || !editingMedio.name?.trim()}
                   >
-                    <option value="true">Activo (Disponible en Caja)</option>
-                    <option value="false">Inactivo (Deshabilitado)</option>
-                  </select>
+                    {isSaving ? (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Loader2 size={14} className="spinner" /> Guardando...
+                      </span>
+                    ) : (
+                      editingMedio.id ? 'Guardar Cambios' : 'Crear Medio de Pago'
+                    )}
+                  </button>
                 </div>
-              </div>
-
-              <div className="modal-footer">
-                <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)}>
-                  Cancelar
-                </button>
-                <button type="submit" className="btn-primary" style={{ width: 'auto' }}>
-                  {editingMedio.id ? 'Guardar Cambios' : 'Crear Medio de Pago'}
-                </button>
-              </div>
-            </form>
+              </form>
+            </div>
           </div>
-        </div>
         </ModalPortal>
       )}
     </div>

@@ -7,6 +7,125 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-08-31 21:10:00] - [FEATURE / UX / UI] [PWA / CONFIGURACIÓN / MEDIOS DE PAGO] - Validaciones Visuales Pro, Unicidad de Medio de Pago, Título Limpio y Switch Moderno de Activación
+
+#### 💬 Prompt Original del Usuario
+> "para medios de pago aplica lo mismo no tiene validaciones y segundo el tema de no poder crear alguno que ya exista en la empresa analiza y dame plan"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Validación Visual Pro y Eliminación de Alertas Nativas (`MediosPagoTab.tsx`)**:
+   - Se añadió `noValidate` al formulario modal de medios de pago, eliminando tooltips emergentes del navegador (*"Completa este campo"*).
+   - Se aplicaron bordes iluminados en rojo (`#ef4444 !important`), asteriscos requeridos `.required-asterisk` y mensajes contextuales con `<AlertCircle size={12} />`.
+2. **Validación de Unicidad en la Empresa (*Case-Insensitive*)**:
+   - Detección y bloqueo reactivo y al guardar que impide el registro de medios de pago duplicados en la empresa (ignorando mayúsculas, minúsculas y espacios, y excluyendo al propio elemento al editar).
+   - Mensaje de alerta: *"Este medio de pago ya existe en la empresa."*
+   - Deshabilita el botón *"Crear Medio de Pago"* / *"Guardar Cambios"* mientras exista duplicidad.
+3. **Limpieza del Título del Modal**:
+   - Se estandarizó el encabezado a `"Editar Medio de Pago"` sin sufijo numérico sucio (`#ID`).
+4. **Rediseño Profesional del Switch de Activación (*Modern iOS / Glassmorphic Card*)**:
+   - Se reemplazó el `<select>` tradicional por una tarjeta interactiva con switch animado tipo iOS consistente con el diseño global, indicador esmeralda/gris, ícono contextual (`<CheckCircle2 />` / `<PauseCircle />`) y textos claros (*"Medio de Pago Habilitado (Activo en Caja)"* / *"Medio de Pago Desactivado (Pausado)"*).
+5. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/settings/ui/MediosPagoTab.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+
+---
+
+### [2026-08-31 21:08:00] - [FEATURE / UX / UI] [PWA / CONFIGURACIÓN / TIPOS DE VEHÍCULO] - Validaciones Visuales Pro, Unicidad de Tipo de Vehículo y Switch Moderno de Activación
+
+#### 💬 Prompt Original del Usuario
+> "aca en el modulo de tipo de vehiculo pasa lo mismo sin validaciones y ese check horrible aplicar el mismo que aplicaste para convenios pues se debe manejar el mismo diseño profesional para todos si me explico, tambien agregar validación de que no se pueden repetir e igual aplica para lo de convenios se me olvido decirte para que lo tengas presente por si no lo realizaste. analiza y dame plan"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Validación Visual Pro y Eliminación de Alertas Nativas (`VehiculosConfigTab.tsx`)**:
+   - Se añadió `noValidate` al formulario modal de tipos de vehículos, suprimiendo los tooltips nativos del navegador (*"Completa este campo"*).
+   - Se aplicaron estilos pro con bordes en rojo elegante (`#ef4444 !important`), asteriscos requeridos `.required-asterisk` y mensajes contextuales con `<AlertCircle size={12} />`.
+2. **Validación de Unicidad de Tipo de Vehículo (*Case-Insensitive*)**:
+   - Se implementó chequeo reactivo y al guardar que impide el registro de tipos de vehículo duplicados en el catálogo general (ignorando mayúsculas, minúsculas y espacios, y excluyendo al propio elemento al editar).
+   - Mensaje contextual: *"Este tipo de vehículo ya existe en el catálogo."*
+   - Deshabilita el botón *"Guardar Tipo de Vehículo"* mientras exista duplicidad.
+3. **Rediseño Profesional del Switch de Activación (*Modern iOS / Glassmorphic Card*)**:
+   - Se reemplazó el checkbox básico por una tarjeta interactiva con switch animado tipo iOS consistente con el módulo de Convenios, con indicador esmeralda/gris, ícono contextual (`<CheckCircle2 />` / `<PauseCircle />`) y descripciones de estado (*"Tipo de Vehículo Habilitado"* / *"Tipo de Vehículo Desactivado"*).
+4. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/settings/ui/VehiculosConfigTab.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+
+---
+
+### [2026-08-31 21:06:00] - [FEATURE / UX / UI] [PWA / CONFIGURACIÓN / CONVENIOS] - Validaciones Visuales Pro, Logo/Imagen Obligatoria, Formateo Numérico con Puntos y Switch Moderno de Activación
+
+#### 💬 Prompt Original del Usuario
+> "El tema de convenios igual el tema de reglas de validación segundo ese check de activar convenio se ve super feo necesito algo supremamente mejor mas profesional y mejor diseñdo si me explico, se debe validar que en el input de porcentaje de descuento sea solo numerico si, e igual el de compra minima y maximo horas aplicables eso no puede recibir letras ni signos o caracteres especiales. lo unico es que compra minima si cuando uno vaya escribiendo tenga el formato numero si que el mismo vaya colocando los puntos . analiza eso y dame plan completo para validar la image es obligatoria oka."
+
+#### 🤖 Resumen Técnico para la IA
+1. **Validación Visual Pro y Eliminación de Alertas Nativas (`ConveniosTab.tsx`)**:
+   - Se incorporó `noValidate` en el formulario modal de convenios comerciales, desactivando los tooltips por defecto del navegador (*"Completa este campo"*).
+   - Se integraron estados reactivos `formErrors`, bordes iluminados en rojo (`#ef4444 !important`), asteriscos requeridos `.required-asterisk` y mensajes contextuales con `<AlertCircle size={12} />`.
+2. **Logo / Imagen de Convenio Obligatoria**:
+   - Se configuró la imagen del comercio aliado como campo obligatorio.
+   - En caso de no adjuntarse imagen, el dropzone se enmarca con borde punteado en rojo y muestra el mensaje contextual: *"La imagen o logo del convenio es obligatorio."*
+3. **Restricción Estricta de Sólo Números y Formateo con Puntos en Tiempo Real**:
+   - **Porcentaje de Descuento (%)**: Acepta exclusivamente dígitos numéricos (del 1% al 100%).
+   - **Valor Fijo ($)**: Acepta exclusivamente dígitos con formateo de miles en tiempo real.
+   - **Compra Mínima ($)**: Formateo reactivo con puntos de miles (`es-CO`, ej: `50.000` o `1.000.000`) mientras se preserva el valor numérico entero limpio para el payload de la API.
+   - **Máximo Horas**: Acepta exclusivamente dígitos numéricos enteros positivos.
+4. **Validación de Unicidad de Nombre (*Case-Insensitive*)**:
+   - Valida en tiempo real que no se registren convenios duplicados con el mismo nombre en el parqueadero.
+5. **Rediseño Profesional del Switch de Activación (*Modern iOS / Glassmorphic Card*)**:
+   - Se sustituyó el checkbox estándar por una tarjeta interactiva con switch animado tipo iOS, indicador de estado esmeralda/gris, ícono contextual (`<CheckCircle2 />` / `<PauseCircle />`) y textos claros (*"Convenio Habilitado (Activo en Caja)"* / *"Convenio Desactivado (Pausado)"*).
+6. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/settings/ui/ConveniosTab.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+
+---
+
+### [2026-08-31 21:02:00] - [FEATURE / UX / UI] [PWA / CONFIGURACIÓN / USUARIOS] - Validaciones Visuales Pro, Unicidad de Usuario/Cédula/Correo y Placeholder Neutro de Rol
+
+#### 💬 Prompt Original del Usuario
+> "con el modulo de usuarios pasa lo mismo el tema de las reglas, tambien tener la validación de que no se pueda crear un nombre de usuario repetido en la misma empresa o que se registre el mismo numero de identifiacion o correo electronico si me explico ? esas 3 no se pueden repetir en el sistema por obvias razones me explico, otra cosa el select del rol del sistema no deberia estar por defecto administrador si no un placeholder que diga seleccionar rol se le puede olvidar o algo y eso es supremamente grave dejar a todos como administrador. analiza y dame plan"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Validación Visual Pro y Eliminación de Alertas Nativas (`UsuariosTab.tsx`)**:
+   - Se añadió el atributo `noValidate` en el formulario modal de usuarios, eliminando los tooltips por defecto del navegador (*"Completa este campo"*).
+   - Se integraron estados reactivos `formErrors`, bordes iluminados en rojo (`#ef4444 !important`), asteriscos requeridos `.required-asterisk` y mensajes contextuales con `<AlertCircle size={12} />`.
+2. **Validación de Unicidad Estricta en la Empresa (*Case-Insensitive*)**:
+   - **Nombre de Usuario (`username`)**: Chequeo en tiempo real y al enviar que impide nombres duplicados en la empresa (ignorando mayúsculas/minúsculas y excluyendo al propio usuario al editar).
+   - **Número de Identificación (`identificationNumber`)**: Bloquea documentos duplicados en la misma empresa.
+   - **Correo Electrónico (`email`)**: Valida formato RFC y unicidad dentro de la empresa.
+3. **Placeholder Neutro en Selector de Rol**:
+   - Se eliminó la selección automática por defecto de *Administrador* en la creación de usuarios para prevenir asignación involuntaria de privilegios globales críticos.
+   - Se estableció la opción neutra inicial: `<option value={0} disabled>-- Seleccionar Rol del Sistema --</option>` (`userRoleId: 0`) con validación obligatoria.
+4. **Validación de Sedes para Operadores**:
+   - Se añadió validación que exige asignar al menos una sede física a roles que no sean Administrador si existen sedes en el sistema.
+5. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/settings/ui/UsuariosTab.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+
+---
+
 ### [2026-08-31 20:52:00] - [FEATURE / UX / UI] [PWA / CONFIGURACIÓN / ROLES] - Validaciones Visuales Pro, Detección de Roles Duplicados, Título Limpio y Centrado de Modal de Eliminación
 
 #### 💬 Prompt Original del Usuario
