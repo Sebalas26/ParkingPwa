@@ -78,7 +78,8 @@ export const UpdatePromptModal: React.FC = () => {
     }
   };
 
-  const currentVersion = import.meta.env.VITE_APP_VERSION || '1.0.0 Pro';
+  const currentVersion = import.meta.env.VITE_APP_VERSION || '1.0';
+  const buildTime = new Date(__APP_BUILD_TIME__).toLocaleString();
 
   return (
     <div className="update-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="update-modal-title">
@@ -128,8 +129,9 @@ export const UpdatePromptModal: React.FC = () => {
           )}
         </button>
 
-        <div className="update-version-tag">
-          Parking Flow • Versión {currentVersion}
+        <div className="update-version-tag" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+          <div>Parking Flow • Versión {currentVersion}</div>
+          <div style={{ fontSize: '0.65rem', opacity: 0.7 }}>Build: {buildTime}</div>
         </div>
       </div>
     </div>

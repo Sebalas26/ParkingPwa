@@ -7,12 +7,13 @@ export default defineConfig(() => {
 
   return {
     define: {
-      __APP_BUILD_TIME__: buildTimestamp,
+      __APP_BUILD_TIME__: JSON.stringify(buildTimestamp),
     },
     plugins: [
       react(),
       VitePWA({
         registerType: 'prompt',
+        injectRegister: 'auto',
         devOptions: {
           enabled: false,
         },

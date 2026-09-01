@@ -7,6 +7,50 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-09-01 12:46:00] - [FEATURE / PWA / BUILD] [PWA / CONSTANT MUTATION STRATEGY] - Implementación de Estrategia de Mutación Constante para Forzar Registro y Actualización de SW
+
+#### 💬 Prompt Original del Usuario
+> "Aplica la "Estrategia de Mutación Constante" para forzar la actualización del Service Worker.
+> 1. En vite.config.ts:
+> - Define la variable al inicio de la función: const buildTimestamp = Date.now();
+> - En el bloque define, ajusta la variable inyectada así:
+>   define: {
+>     __APP_BUILD_TIME__: JSON.stringify(buildTimestamp),
+>   },
+> - Dentro de la configuración de VitePWA, añade la propiedad injectRegister: 'auto', justo debajo de registerType.
+> 2. En src/shared/ui/UpdatePromptModal.tsx:
+> - En la inicialización de variables, añade el renderizado del tiempo:
+>   const currentVersion = import.meta.env.VITE_APP_VERSION || '1.0';
+>   const buildTime = new Date(__APP_BUILD_TIME__).toLocaleString();
+> - En el JSX del componente, busca el <div className="update-version-tag"> y reemplázalo completamente por esto:
+>   <div className="update-version-tag" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+>     <div>Parking Flow • Versión {currentVersion}</div>
+>     <div style={{ fontSize: '0.65rem', opacity: 0.7 }}>Build: {buildTime}</div>
+>   </div>
+> 3. En src/vite-env.d.ts:
+> - Añade esta línea al final para tipar la variable global: declare const __APP_BUILD_TIME__: number;
+> analiza esto y dime que tal"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Mutación de Bundles e Inyección Automática (`vite.config.ts`)**:
+   - `__APP_BUILD_TIME__: JSON.stringify(buildTimestamp)` inyecta un timestamp único en cada compilación, alterando el hash y el contenido byte a byte del bundle JS principal para que el Service Worker siempre detecte un precache modificado.
+   - `injectRegister: 'auto'` en `VitePWA` garantiza que el registro del Service Worker se inyecte directamente en el entrypoint HTML.
+2. **Visualización de Build Time en Modal (`UpdatePromptModal.tsx`)**:
+   - Renderizado de la fecha/hora exacta del build en `<div className="update-version-tag">` para dar feedback visual inequívoco al operador de qué versión está corriendo.
+3. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `vite.config.ts`
+- `src/shared/ui/UpdatePromptModal.tsx`
+- `src/vite-env.d.ts`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+
+---
+
 ### [2026-09-01 12:32:00] - [REVERT / ROUTING] [PWA / VITE & ROUTER ROOT PATH] - Reversión de Enrutamiento Base a Raíz (/)
 
 #### 💬 Prompt Original del Usuario
