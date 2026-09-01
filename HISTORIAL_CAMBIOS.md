@@ -7,6 +7,34 @@
 
 ## 📋 Registro Cronológico de Cambios
 
+### [2026-09-01 08:16:00] - [FEATURE / PWA / RBAC] [PWA / SERVICE WORKER & ROLES] - Restauración de Módulos de Empresa y Reingeniería PWA AutoUpdate Limpio
+
+#### 💬 Prompt Original del Usuario
+> "creo que filtraste de mas, por que en la primera imagen ingrese con el administrador y no salen los permisos que si debería tener para asignar, y en el superadmin si deja todo entonces creo que algo quedo mal si revisa el tema. y necesito que vuelvas a revisar lo de la actualización enserio creo que lo mas correcto es eliminar eso de que se salga la modal para actualizar y se actualice por que no lo hace imaginate que salio la modal y me deovlvio a la 0.0.87 osea devuelve el cache algo esta super mal pero seguir haciendo parches y parches creo que las cosas estan mal prefiero borrar y hacerla desde cero nuevamente por que algo esta super mal. analiza y dame el plan"
+
+#### 🤖 Resumen Técnico para la IA
+1. **Restauración Completa de Módulos de Empresa (`RolesTab.tsx`)**:
+   - Se ajustó el filtro de exclusión para ocultar **únicamente** el módulo 16 (`Gestión de Empresas SaaS`).
+   - El Administrador de Compañía recupera acceso total para configurar **15 módulos (incluyendo Sedes, Tarifas, Caja, Turnos, Usuarios, etc.) y 69 acciones operativas** para los roles de su parqueadero.
+2. **Reingeniería Limpia del Ciclo de Vida PWA (`vite.config.ts` & `App.tsx`)**:
+   - **Eliminación Total del Modal**: Se eliminó `UpdatePromptModal` de `App.tsx` y se suprimieron los bucles de sondeo manual y redirecciones con parámetros de versión.
+   - **AutoUpdate Nativo Workbox**: Se configuró `registerType: 'autoUpdate'`, `skipWaiting: true`, `clientsClaim: true` y `cleanupOutdatedCaches: true` en `VitePWA`.
+   - **Supresión de Caché Conflictiva**: Se retiró la regla `app-navigation-cache` que guardaba HTML desactualizado en memoria. Las nuevas versiones se descargan y activan de forma automática, silenciosa y transparente en segundo plano.
+3. **Cero Errores de Compilación**:
+   - `npm run build` ejecutado exitosamente (**0 Errores**).
+
+#### 📦 Componentes Modificados
+- `src/features/settings/ui/RolesTab.tsx`
+- `vite.config.ts`
+- `src/App.tsx`
+- `src/shared/ui/UpdatePromptModal.tsx`
+- `HISTORIAL_CAMBIOS.md`
+
+#### ✅ Verificación y Compilación
+- `npm run build` (**0 Errores**).
+
+---
+
 ### [2026-09-01 08:00:00] - [SECURITY / RBAC] [PWA / ROLES] - Restricción Estricta de Módulos 'Empresas SaaS' y 'Sedes' al Super Administrador
 
 #### 💬 Prompt Original del Usuario

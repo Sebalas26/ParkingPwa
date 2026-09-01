@@ -12,7 +12,6 @@ import { CompaniesPage } from './features/companies/ui/CompaniesPage';
 import { ParqueaderoProvider } from './shared/context/ParqueaderoContext';
 import { authService } from './features/auth/data/authService';
 import { apiClient } from './shared/api/apiClient';
-import { UpdatePromptModal } from './shared/ui/UpdatePromptModal';
 import { PlateQueryMockup } from './features/isolated/ui/PlateQueryMockup';
 
 import { NoPermissionsView } from './shared/ui/NoPermissionsView';
@@ -148,7 +147,6 @@ const GuardedRoute: React.FC<{
 function App() {
   return (
     <ParqueaderoProvider>
-      <UpdatePromptModal />
       <Router>
         <Routes>
           {/* Ruta raíz limpia: Muestra el Login directamente o Dashboard si ya inició sesión */}

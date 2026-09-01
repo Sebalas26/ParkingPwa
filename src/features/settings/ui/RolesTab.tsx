@@ -387,7 +387,7 @@ export const RolesTab: React.FC = () => {
   };
 
   // Módulos y acciones permitidos según el nivel de privilegio (SuperAdmin vs Administrador de Empresa)
-  const superAdminOnlyModuleIds = [7, 16]; // 7: Gestión de Sedes, 16: Gestión de Empresas SaaS
+  const superAdminOnlyModuleIds = [16]; // 16: Gestión de Empresas SaaS (Exclusivo SuperAdmin)
   const effectiveModules = useMemo(() => {
     if (isUserSuperAdmin) return allModules;
     return allModules.filter((m) => !superAdminOnlyModuleIds.includes(m.id));
@@ -398,8 +398,7 @@ export const RolesTab: React.FC = () => {
     return allActions.filter(
       (a) =>
         !superAdminOnlyModuleIds.includes(a.moduleId ?? a.module?.id ?? 0) &&
-        !a.slug.startsWith('companies.') &&
-        !a.slug.startsWith('branches.')
+        !a.slug.startsWith('companies.')
     );
   }, [allActions, isUserSuperAdmin]);
 
